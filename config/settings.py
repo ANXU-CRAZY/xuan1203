@@ -1,4 +1,5 @@
 import os
+import platform  # 引入系统判断模块
 from pathlib import Path
 
 # 构建路径
@@ -32,8 +33,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 【汉化关键】必须添加 LocaleMiddleware，且放在 Session 之后，Common 之前
-    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # 汉化关键
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -66,25 +66,35 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'Yellow River',  # 数据库名
+        'NAME': 'Yellow River',
         'USER': 'postgres',
-        'PASSWORD': '111111',  # 您的密码
+        'PASSWORD': '111111',  # 【注意】确保你服务器上的数据库密码也是这个，否则需要修改
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
 
-# === 3. 环境变量配置 (Windows GDAL 修复) ===
-# 注意：如果您更新了 OSGeo4W，gdal312.dll 里的数字可能会变，请留意
-OSGEO4W_ROOT = r"C:\Users\Xuan\AppData\Local\Programs\OSGeo4W"
+# === 3. 环境变量配置 (这里是修改的核心！) ===
+# 逻辑：代码会自动检测：如果是 Windows，就用你的路径；如果是 Linux，就自动使用系统默认路径。
 
-# 关键：修复 PROJ 路径，避免 OGR failure
-os.environ['PROJ_LIB'] = os.path.join(OSGEO4W_ROOT, "share", "proj")
-os.environ['PATH'] = os.path.join(OSGEO4W_ROOT, "bin") + ";" + os.environ['PATH']
+if platform.system() == 'Windows':
+    # ----- Windows 本地开发环境 -----
+    OSGEO4W_ROOT = r"C:\Users\Xuan\AppData\Local\Programs\OSGeo4W"
 
-GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, "bin", "gdal312.dll")
-GEOS_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, "bin", "geos_c.dll")
-os.environ['GDAL_DATA'] = os.path.join(OSGEO4W_ROOT, "share", "gdal")
+    # 修复 PROJ 和 PATH
+    os.environ['PROJ_LIB'] = os.path.join(OSGEO4W_ROOT, "share", "proj")
+    os.environ['PATH'] = os.path.join(OSGEO4W_ROOT, "bin") + ";" + os.environ['PATH']
+
+    # 指定 DLL 路径
+    GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, "bin", "gdal312.dll")
+    GEOS_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, "bin", "geos_c.dll")
+    os.environ['GDAL_DATA'] = os.path.join(OSGEO4W_ROOT, "share", "gdal")
+
+else:
+    # ----- Linux 服务器环境 -----
+    # 只要服务器上安装了 gdal-bin，Django 通常能自己找到。
+    # 这里不需要写任何路径，保持为空即可，避免报错。
+    pass
 
 # === 4. 品牌与文件配置 ===
 LANGUAGE_CODE = 'zh-hans'
@@ -93,7 +103,6 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-# 增加 STATIC_ROOT 以支持 collectstatic 命令 (部署时需要)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 
 MEDIA_URL = '/media/'
@@ -105,7 +114,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TDT_KEY = '0de0375367832014891a9f40e0e42911'
 
 LEAFLET_CONFIG = {
-    # 1. 默认视野 (郑州)
     'DEFAULT_CENTER': (34.75, 113.62),
     'DEFAULT_ZOOM': 10,
     'MIN_ZOOM': 3,
@@ -113,14 +121,11 @@ LEAFLET_CONFIG = {
     'RESET_VIEW': False,
     'SCALE': 'metric',
     'ATTRIBUTION_PREFIX': 'Powered by Django-Leaflet & Tianditu',
-
-    # 2. 底图配置 (TILES)
     'TILES': [
         (
-            '天地图矢量底图',  # 1. 名称
+            '天地图矢量底图',
             f'http://t0.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={{z}}&TILEROW={{y}}&TILECOL={{x}}&tk={TDT_KEY}',
-            # 2. URL
-            {'attribution': '天地图'}  # 3. 参数(不能为空)
+            {'attribution': '天地图'}
         ),
         (
             '天地图卫星影像',
@@ -128,8 +133,6 @@ LEAFLET_CONFIG = {
             {'attribution': '天地图'}
         ),
     ],
-
-    # 3. 叠加层配置 (OVERLAYS)
     'OVERLAYS': [
         (
             '天地图地名注记(文字)',
@@ -150,14 +153,13 @@ SIMPLEUI_ANALYSIS = False
 SIMPLEUI_LOGO = 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png'
 SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 
-# 【汉化界面标题】
-SIMPLEUI_HOME_TITLE = '黄河生态监测平台'  # 浏览器标签页标题
-SIMPLEUI_SITE_TITLE = '黄河生态监测平台'  # 登录页/顶部标题
-SIMPLEUI_INDEX_TITLE = '监测系统后台'    # 首页标题
+SIMPLEUI_HOME_TITLE = '黄河生态监测平台'
+SIMPLEUI_SITE_TITLE = '黄河生态监测平台'
+SIMPLEUI_INDEX_TITLE = '监测系统后台'
 
 SIMPLEUI_ICON = {
-    '物种信息': 'fas fa-dove',  # 修改为更准确的鸟类图标
-    '观测记录': 'fas fa-binoculars',  # 修改为望远镜
+    '物种信息': 'fas fa-dove',
+    '观测记录': 'fas fa-binoculars',
     '监测点位': 'fas fa-map-marker-alt',
     '监测样线': 'fas fa-route',
     '模型识别记录': 'fas fa-robot',
