@@ -3,7 +3,9 @@ from leaflet.admin import LeafletGeoAdmin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ForeignKeyWidget
-from .models import SpeciesInfo, WetlandZone, MonitoringRoute, UserProfile, ObservationRecord, AIDetectionResult
+# 👇 引入所有用到的模型 (记得加 Product)
+from .models import SpeciesInfo, WetlandZone, MonitoringRoute, UserProfile, ObservationRecord, AIDetectionResult, \
+    Product
 from datetime import datetime
 
 # ====================
@@ -15,10 +17,10 @@ admin.site.index_title = '系统管理'
 
 
 # ====================
-# 1. 资源映射配置 (超级导入版)
+# 1. 资源映射配置 (Import/Export)
 # ====================
 
-# (1) 观测记录导入配置 (核心：一次性导入所有信息)
+# (1) 观测记录导入配置
 class ObservationRecordResource(resources.ModelResource):
     # 定义 Excel 列名与数据库外键的对应
     species = fields.Field(column_name='中文名', attribute='species', widget=ForeignKeyWidget(SpeciesInfo, 'name_cn'))
@@ -30,52 +32,51 @@ class ObservationRecordResource(resources.ModelResource):
 
     class Meta:
         model = ObservationRecord
-        # 即使 Excel 里没有 ID，我们用这三个字段组合来判断唯一性，防止重复
+        # 使用这三个字段组合来判断唯一性，防止重复导入
         import_id_fields = ('species', 'zone', 'observation_time')
-        # 声明要导入的字段
         fields = ('species', 'zone', 'observation_time', 'count')
         exclude = ('id',)
 
-    # 【核心逻辑】：在导入每一行之前，先把 物种 和 点位 处理好
     def before_import_row(self, row, **kwargs):
-        # --- A. 处理日期格式 (解决 2022/12/11 报错) ---
+        """
+        导入前的预处理逻辑：
+        1. 格式化日期
+        2. 自动创建不存在的物种
+        3. 自动创建不存在的点位
+        """
+        # --- A. 处理日期格式 ---
         date_str = str(row.get('date', '')).strip()
         if '/' in date_str:
             try:
-                # 把 2022/12/11 转换成 2022-12-11
                 dt = datetime.strptime(date_str, '%Y/%m/%d')
                 row['date'] = dt.strftime('%Y-%m-%d')
             except ValueError:
-                pass  # 如果转换失败，就让它按原样报错提示
+                pass
 
-        # --- B. 自动保存物种信息 (目、科、保护级别) ---
+        # --- B. 自动保存物种信息 ---
         name_cn = str(row.get('中文名', '')).strip()
-        row['中文名'] = name_cn  # 去空格
+        row['中文名'] = name_cn
 
         if name_cn:
-            # 准备要更新/创建的数据
             species_defaults = {
                 'name_latin': str(row.get('species', '')).strip(),
                 'order': str(row.get('目', '')).strip(),
                 'family': str(row.get('科', '')).strip(),
                 'protection_level': str(row.get('保护级别', '')).strip()
             }
-            # 如果 '保护级别' 是空的 (NaN)，存为 "无" 或空字符串
             if species_defaults['protection_level'] in ['nan', 'NaN', 'None']:
                 species_defaults['protection_level'] = ''
 
-            # 强行更新或创建物种 (保证数据库里一定有这个鸟，且信息是最新的)
             SpeciesInfo.objects.update_or_create(
                 name_cn=name_cn,
                 defaults=species_defaults
             )
 
-        # --- C. 自动保存点位信息 (经纬度) ---
+        # --- C. 自动保存点位信息 ---
         loc_name = str(row.get('loc', '')).strip()
-        row['loc'] = loc_name  # 去空格
+        row['loc'] = loc_name
 
         if loc_name:
-            # 尝试提取经纬度
             try:
                 x_val = float(row.get('x'))
                 y_val = float(row.get('y'))
@@ -87,14 +88,17 @@ class ObservationRecordResource(resources.ModelResource):
                 zone_defaults['longitude'] = x_val
                 zone_defaults['latitude'] = y_val
 
-            # 强行更新或创建点位
             WetlandZone.objects.update_or_create(
                 name=loc_name,
                 defaults=zone_defaults
             )
 
+        # --- D. 导入的数据默认设为已通过 (可选) ---
+        # 如果你希望 Excel 导入的历史数据直接显示，取消下面这行的注释
+        # row['status'] = 'approved'
 
-# (2) 其他简单的 Resource (保留以备单独导入使用)
+
+# (2) 其他 Resource
 class WetlandZoneResource(resources.ModelResource):
     name = fields.Field(attribute='name', column_name='loc')
     longitude = fields.Field(attribute='longitude', column_name='x')
@@ -131,40 +135,54 @@ class WetlandZoneAdmin(LeafletGeoAdmin, ImportExportModelAdmin):
     resource_class = WetlandZoneResource
     list_display = ('name', 'longitude', 'latitude')
     search_fields = ('name',)
+    # 设置地图默认中心点 (郑州附近)
     settings_overrides = {'DEFAULT_CENTER': (34.75, 113.62), 'DEFAULT_ZOOM': 10}
 
 
 @admin.register(ObservationRecord)
 class ObservationRecordAdmin(ImportExportModelAdmin):
     resource_class = ObservationRecordResource
-    # 显示所有关键信息
-    list_display = ('species', 'zone', 'observation_time', 'count', 'status')
+    # 👇 增加了 uploader 显示，方便看是谁传的
+    list_display = ('id', 'species', 'zone', 'count', 'uploader', 'status', 'observation_time')
     list_filter = ('status', 'observation_time', 'zone')
-    search_fields = ('species__name_cn', 'zone__name')
+    search_fields = ('species__name_cn', 'zone__name', 'uploader__username')
     date_hierarchy = 'observation_time'
 
+    # 注册批量操作动作
     actions = ['approve_records', 'reject_records']
 
+    # 动作1: 批量通过
+    @admin.action(description='✅ 批量通过审核')
     def approve_records(self, request, queryset):
-        queryset.update(status=1)
+        # 注意：这里必须用字符串 'approved'，不能用数字 1
+        rows_updated = queryset.update(status='approved')
+        self.message_user(request, f"{rows_updated} 条记录已审核通过。")
 
-    approve_records.short_description = "批量审核通过"
-
+    # 动作2: 批量驳回
+    @admin.action(description='❌ 批量驳回')
     def reject_records(self, request, queryset):
-        queryset.update(status=2)
+        rows_updated = queryset.update(status='rejected')
+        self.message_user(request, f"{rows_updated} 条记录已驳回。")
 
-    reject_records.short_description = "批量驳回"
 
-
-# 其他注册
 @admin.register(MonitoringRoute)
 class MonitoringRouteAdmin(LeafletGeoAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'description')
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'points')
+    # 👇 这里的字段名改为 score (对应新 Model)
+    list_display = ('user', 'score', 'avatar')
+    search_fields = ('user__username',)
+
+
+# 👇 新增：商品后台管理
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price', 'stock')
+    search_fields = ('name',)
+    list_editable = ('stock', 'price')  # 允许在列表页直接改库存和价格
 
 
 @admin.register(AIDetectionResult)

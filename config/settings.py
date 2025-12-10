@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',  # GeoDjango 核心
     'rest_framework',  # API 接口框架
     'rest_framework_gis',
+    'rest_framework.authtoken',
     'import_export',  # 导入导出支持
     'leaflet',  # GIS 后台地图控件
     'corsheaders',
@@ -157,12 +158,14 @@ SIMPLEUI_HOME_TITLE = '黄河生态监测平台'
 SIMPLEUI_SITE_TITLE = '黄河生态监测平台'
 SIMPLEUI_INDEX_TITLE = '监测系统后台'
 
+
+# === SimpleUI 图标配置 ===
 SIMPLEUI_ICON = {
-    '物种信息': 'fas fa-dove',
-    '观测记录': 'fas fa-binoculars',
-    '监测点位': 'fas fa-map-marker-alt',
-    '监测样线': 'fas fa-route',
-    '模型识别记录': 'fas fa-robot',
-    '用户积分档案': 'fas fa-user-circle',
-    '认证和授权': 'fas fa-shield-alt',
+    '积分商城商品': 'fas fa-gift',      # 🎁 对应 Product (必须填 verbose_name 的名字)
+    '观测记录': 'fas fa-binoculars',    # 🔭 对应 ObservationRecord
+    '监测点位': 'fas fa-map-marker-alt',# 📍 对应 WetlandZone
+    '监测样线': 'fas fa-route',         # 🛣️ 对应 MonitoringRoute
+    '物种信息': 'fas fa-dove',          # 🐦 对应 SpeciesInfo
+    '用户积分档案': 'fas fa-user-tag',  # 🏷️ 对应 UserProfile
+    '模型识别记录': 'fas fa-robot',      # 🤖 对应 AIDetectionResult
 }
