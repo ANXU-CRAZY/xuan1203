@@ -8316,4 +8316,9 @@
 a n x u /  
  _ _ p y c a c h e _ _ /  
  * . p y c  
- 
+ /anxu/
+__pycache__/
+*.pyc
+*.pt
+*.pth
+*.onnx
