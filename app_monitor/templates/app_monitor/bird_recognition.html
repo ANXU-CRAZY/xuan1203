@@ -1,41 +1,84 @@
-<!-- app_monitor/templates/app_monitor/bird_recognition.html -->
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <title>水鸟识别 - 黄河生态监测平台</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        .upload-area { border: 2px dashed #ccc; padding: 30px; text-align: center; margin: 20px 0; cursor: pointer; border-radius: 4px; }
-        .upload-area:hover { background: #fafafa; }
-        #preview { max-width: 100%; max-height: 400px; display: none; margin: 20px auto; border: 1px solid #ddd; }
-        .canvas-container { position: relative; display: inline-block; }
-        canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
-        #results { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
-        .result-item { background: #f9f9f9; margin-bottom: 10px; padding: 10px; border-radius: 4px; }
-        .badge { background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-        button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        #status { margin: 10px 0; color: #666; }
-    </style>
-</head>
-<body>
-<div class="container">
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}水鸟识别{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .bird-recognition-container { padding: 20px; }
+    .upload-area {
+        border: 2px dashed #ccc;
+        padding: 30px;
+        text-align: center;
+        margin: 20px 0;
+        cursor: pointer;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+    .upload-area:hover { background-color: #e9ecef; }
+    #preview-container {
+        position: relative;
+        display: inline-block;
+        margin: 20px 0;
+    }
+    #preview {
+        max-width: 100%;
+        max-height: 500px;
+        display: none;
+    }
+    #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+    }
+    .result-item {
+        background: #f8f9fa;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 4px solid #28a745;
+    }
+    .btn-recognize {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .btn-recognize:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    #status { margin: 10px 0; color: #666; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bird-recognition-container">
     <h1>🦆 水鸟识别实时检测</h1>
+    
     <div class="upload-area" id="dropArea">
         <p>点击或拖拽图片到此区域</p>
         <input type="file" id="fileInput" accept="image/*" style="display: none;">
     </div>
+    
     <div style="text-align: center;">
-        <button id="recognizeBtn" disabled>开始识别</button>
+        <button class="btn-recognize" id="recognizeBtn" disabled>开始识别</button>
     </div>
+    
     <div id="status"></div>
-    <div style="text-align: center;">
+    
+    <div id="preview-container" style="text-align: center;">
         <img id="preview" src="#" alt="预览图">
-        <canvas id="canvas" style="position: relative; display: none;"></canvas>
+        <canvas id="canvas"></canvas>
     </div>
+    
     <div id="results"></div>
 </div>
 
@@ -52,12 +95,12 @@
 
     dropArea.addEventListener('click', () => fileInput.click());
     dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.background = '#eef'; });
-    dropArea.addEventListener('dragleave', () => dropArea.style.background = '');
+    dropArea.addEventListener('dragleave', () => dropArea.style.background = '#f8f9fa');
 
     fileInput.addEventListener('change', handleFileSelect);
     dropArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropArea.style.background = '';
+        dropArea.style.background = '#f8f9fa';
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
             fileInput.files = e.dataTransfer.files;
@@ -74,7 +117,6 @@
         reader.onload = (e) => {
             preview.src = e.target.result;
             preview.style.display = 'block';
-            canvas.style.display = 'none';
             canvas.width = 0;
             canvas.height = 0;
         };
@@ -138,18 +180,16 @@
     function drawBoxes(results) {
         if (!preview.complete || preview.naturalWidth === 0) return;
 
-        const ctx = canvas.getContext('2d');
         canvas.width = preview.naturalWidth;
         canvas.height = preview.naturalHeight;
-        canvas.style.display = 'block';
         canvas.style.width = preview.clientWidth + 'px';
         canvas.style.height = preview.clientHeight + 'px';
-        canvas.width = preview.naturalWidth;
-        canvas.height = preview.naturalHeight;
+
+        const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#00ff00';
         ctx.lineWidth = 3;
-        ctx.font = '16px Arial';
+        ctx.font = 'bold 16px Arial';
         ctx.fillStyle = '#00ff00';
 
         results.forEach((r) => {
@@ -159,5 +199,4 @@
         });
     }
 </script>
-</body>
-</html>
+{% endblock %}

@@ -29,9 +29,11 @@ INSTALLED_APPS = [
     'leaflet',  # GIS 后台地图控件
     'corsheaders',
     'app_monitor',  # 我们的监控 App
+    'bird_recognition',  # 新增
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',  # 汉化关键
@@ -168,4 +170,15 @@ SIMPLEUI_ICON = {
     '物种信息': 'fas fa-dove',          # 🐦 对应 SpeciesInfo
     '用户积分档案': 'fas fa-user-tag',  # 🏷️ 对应 UserProfile
     '模型识别记录': 'fas fa-robot',      # 🤖 对应 AIDetectionResult
+}
+CORS_ALLOW_ALL_ORIGINS = True
+SIMPLEUI_CONFIG = {
+    'system_keep': True,  # 保留系统自动生成的所有菜单
+    'menus': [
+        {
+            'name': '水鸟识别',
+            'icon': 'fas fa-dove',  # 使用与“物种信息”相同的图标，风格统一
+            'url': '/bird-page/',   # 指向我们创建的水鸟识别页面
+        }
+    ]
 }

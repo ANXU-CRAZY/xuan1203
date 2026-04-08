@@ -250,3 +250,8 @@ def _default_hotspot():
         "tips": "保持100米以上距离，避免干扰",
         "location": "黄河湿地"
     }
+from django.shortcuts import render
+
+def bird_recognition_page(request):
+    """水鸟识别页面"""
+    return render(request, 'app_monitor/bird_recognition.html')

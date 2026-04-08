@@ -191,4 +191,4 @@ class Product(models.Model):
         verbose_name = "积分商城商品"
         verbose_name_plural = "积分商城商品"
     def __str__(self):
-        return self.name
+        return self.n
