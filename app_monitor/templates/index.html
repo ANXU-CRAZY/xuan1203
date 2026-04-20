@@ -21,6 +21,29 @@
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Noto Sans SC', sans-serif; background: #eef2f5; }
 
         #map { height: 100vh; width: 100%; z-index: 1; }
+        .leaflet-top { top: 72px; }
+        .leaflet-left { left: 12px; }
+        .leaflet-control-layers {
+            border: none !important;
+            border-radius: 8px !important;
+            box-shadow: var(--shadow) !important;
+            background: rgba(255,255,255,0.96) !important;
+            font-size: 13px;
+        }
+        .leaflet-control-layers-toggle {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 8px;
+        }
+        .leaflet-control-layers-expanded {
+            padding: 10px 12px;
+            min-width: 132px;
+        }
+        .leaflet-control-layers label {
+            margin: 4px 0;
+            color: var(--c-dark);
+            font-weight: 600;
+        }
 
         /* 玻璃面板通用 */
         .glass-panel {
@@ -48,6 +71,33 @@
             border-bottom: 3px solid var(--c-aqua);
         }
         .brand { font-size: 18px; font-weight: 800; color: var(--c-dark); display:flex; align-items:center; gap:10px; }
+        .nav-links { display: flex; align-items: center; gap: 10px; }
+        .nav-btn {
+            padding: 6px 14px; border-radius: 20px; text-decoration: none;
+            font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-btn-outline {
+            border: 2px solid var(--c-aqua); color: var(--c-aqua);
+        }
+        .nav-btn-outline:hover { background: var(--c-aqua); color: white; }
+        .nav-btn-primary {
+            background: linear-gradient(135deg, var(--c-aqua), #008c93); color: white; border: none;
+        }
+        .nav-btn-primary:hover { box-shadow: 0 4px 12px rgba(0,173,181,0.4); transform: translateY(-1px); }
+        .nav-avatar {
+            width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
+            border: 2px solid var(--c-aqua); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--c-aqua), #008c93); color: white; font-weight: bold;
+            transition: all 0.2s;
+        }
+        .nav-avatar:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,173,181,0.4); }
+        .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .nav-score {
+            font-size: 12px; background: linear-gradient(135deg, var(--c-orange), #d35400);
+            color: white; padding: 3px 10px; border-radius: 12px; font-weight: 600;
+        }
         .stat-box { display: flex; gap: 30px; text-align: center; }
         .stat-num { font-size: 18px; font-weight: 800; line-height: 1; display: block; }
         .stat-lbl { font-size: 10px; color: #999; text-transform: uppercase; margin-top: 4px; font-weight: 500; }
@@ -60,6 +110,32 @@
         .date-inp { border: 1px solid #ddd; padding: 5px; border-radius: 4px; font-size: 12px; width: 110px; background: #f8f9fa; }
         .btn-go { background: var(--c-aqua); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition:0.2s; }
         .btn-go:hover { background: #008c93; }
+        .btn-heat {
+            border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; font-weight: 700; color: white; background: #e74c3c;
+            display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;
+        }
+        .btn-heat:hover { background: #c0392b; }
+        .btn-heat.active { background: #2c3e50; box-shadow: 0 0 0 3px rgba(44,62,80,0.14); }
+        .btn-clear {
+            border: 1px solid #ddd; padding: 5px 9px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; color: #666; background: #fff; transition: 0.2s;
+        }
+        .btn-clear:hover { border-color: var(--c-aqua); color: var(--c-aqua); }
+        #heat-info {
+            position: absolute; top: 126px; right: 20px; z-index: 1000;
+            padding: 8px 12px; min-width: 260px; font-size: 12px; color: #2c3e50;
+            display: none; gap: 6px; line-height: 1.55;
+        }
+        #heat-info strong { color: #e74c3c; }
+        .heat-legend {
+            display: flex; align-items: center; gap: 8px; margin-top: 4px;
+        }
+        .heat-gradient {
+            flex: 1; height: 8px; border-radius: 999px;
+            background: linear-gradient(90deg, rgba(0,173,181,0.1), #00adb5, #f39c12, #e74c3c);
+        }
+        .heat-selecting #map { cursor: crosshair; }
 
         /* === 面板初始位置 === */
         /* 注意：拖动后这些 bottom/right 属性会被 JS 覆盖为 top/left */
@@ -98,33 +174,233 @@
         .sp-name { font-weight: 600; color: #333; flex: 1; display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sp-count { font-weight: 700; color: var(--c-aqua); min-width: 40px; text-align: right; }
 
-        /* Badge 标签 */
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; font-weight: 500; transform: scale(0.9); display: inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.2); flex-shrink: 0; }
-        .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .bg-orange { background: linear-gradient(135deg, #f39c12, #d35400); }
-        .bg-green { background: #e0e0e0; color: #666; box-shadow: none; }
+        /* === 新增图表区样式 === */
+        .chart-row { display:flex; gap:10px; margin-bottom:8px; }
+        .chart-col { flex:1; min-width:0; }
+        .chart-card {
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            padding: 8px 8px 4px;
+            border: 1px solid rgba(0,0,0,0.06);
+            margin-bottom: 6px;
+        }
+        .chart-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--c-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .chart-card-title i { color: var(--c-aqua); font-size: 12px; }
+        .chart-card canvas { max-height: 80px; }
 
-        /* 滚动条 */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+        /* 底部统计条 */
+        .bottom-stats-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 10px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .bottom-stat { text-align: center; padding: 0 16px; }
+        .bottom-stat + .bottom-stat { border-left: 1px solid rgba(0,0,0,0.08); }
+        .bottom-stat .b-num { font-size: 20px; font-weight: 800; color: var(--c-aqua); line-height: 1.1; }
+        .bottom-stat .b-num.red { color: var(--c-red); }
+        .bottom-stat .b-num.orange { color: var(--c-orange); }
+        .bottom-stat .b-num.green { color: var(--c-green); }
+        .bottom-stat .b-label { font-size: 10px; color: #999; white-space: nowrap; }
 
-        .btn-admin { background: var(--c-dark); color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 6px; transition:0.2s;}
-        .popup-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 5px; }
-        .popup-table td { padding: 3px 0; border-bottom: 1px solid #eee; color: #555; }
-        .leaflet-top { top: 70px; }
-    </style>
+        /* 实时数据流脉冲点 */
+        .live-dot {
+            display: inline-block; width: 6px; height: 6px;
+            background: var(--c-green); border-radius: 50%;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+            margin-right: 4px; vertical-align: middle;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        /* === 物种详情弹窗 === */
+        #detail-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 30, 50, 0.55); z-index: 9999;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(6px);
+        }
+        #detail-modal-overlay.active { display: flex; }
+
+        #detail-modal {
+            background: #fff; border-radius: 18px; width: 520px; max-width: 95vw;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+            position: relative; animation: modalIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.88) translateY(16px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        #detail-modal .modal-header {
+            padding: 18px 22px 14px;
+            background: linear-gradient(135deg, #f0fafb 0%, #e8f5f6 100%);
+            border-bottom: 1px solid #e0f2f1;
+            display: flex; justify-content: space-between; align-items: center;
+            border-radius: 18px 18px 0 0;
+        }
+        #detail-modal .modal-header .modal-title {
+            font-size: 16px; font-weight: 800; color: #1a3a4a;
+            display: flex; align-items: center; gap: 8px;
+        }
+        #detail-modal .modal-header .modal-title .sp-badge {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        .btn-modal-close {
+            background: rgba(0,0,0,0.06); border: none; cursor: pointer; font-size: 18px;
+            color: #888; transition: 0.2s; padding: 6px; line-height: 1; border-radius: 8px;
+        }
+        .btn-modal-close:hover { background: rgba(0,0,0,0.12); color: #333; }
+
+        #detail-modal .modal-body { padding: 18px 22px 22px; }
+
+        .modal-section { margin-bottom: 16px; }
+        .modal-section:last-child { margin-bottom: 0; }
+        .modal-section-title {
+            font-size: 11px; font-weight: 800; color: #bbb;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+        }
+        .modal-section-title i { color: var(--c-aqua); font-size: 12px; }
+
+        .modal-info-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-bottom: 10px;
+        }
+        .modal-info-item {
+            background: linear-gradient(145deg, #f8f9fa, #f0f2f5);
+            border-radius: 12px; padding: 12px 8px; text-align: center;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .modal-info-item .val { font-size: 17px; font-weight: 800; color: #1a3a4a; }
+        .modal-info-item .lbl { font-size: 10px; color: #aaa; margin-top: 3px; letter-spacing: 0.3px; }
+
+        /* 环形图包裹：图+中心+图例三列 */
+        .modal-chart-wrap {
+            background: linear-gradient(145deg, #f8f9fa, #f0f2f5);
+            border-radius: 14px; padding: 14px;
+            display: flex; align-items: center; gap: 12px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .modal-chart-container {
+            position: relative; width: 90px; height: 90px; flex-shrink: 0;
+        }
+        .modal-chart-container canvas { position: absolute; top: 0; left: 0; }
+        .modal-chart-center {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+        }
+        .modal-chart-center .center-val { font-size: 18px; font-weight: 900; color: #1a3a4a; line-height: 1; }
+        .modal-chart-center .center-lbl { font-size: 9px; color: #bbb; margin-top: 2px; }
+
+        .modal-chart-legend { flex: 1; font-size: 12px; }
+        .modal-chart-legend .legend-item {
+            display: flex; align-items: center; gap: 7px;
+            padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .modal-chart-legend .legend-item:last-child { border-bottom: none; }
+        .modal-chart-legend .legend-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .modal-chart-legend .legend-label { flex: 1; color: #555; font-size: 12px; }
+        .modal-chart-legend .legend-val { font-weight: 700; color: #1a3a4a; font-size: 12px; }
+        .legend-item.is-hl { background: rgba(0,173,181,0.07); border-radius: 6px; padding: 5px 6px; margin: 1px -6px; }
+        .legend-item.is-hl .legend-label { font-weight: 700; color: #1a3a4a; }
+        .legend-item.is-hl .legend-val { font-weight: 900; color: var(--c-aqua); }
+        .legend-bar-wrap { width: 50px; height: 4px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+        .legend-bar { height: 100%; border-radius: 2px; }
+
+        .modal-links {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .modal-link-btn {
+            flex: 1; min-width: 130px;
+            padding: 11px 16px; border-radius: 12px; text-decoration: none;
+            font-size: 13px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); border: none; cursor: pointer;
+        }
+        .modal-link-btn.species {
+            background: linear-gradient(135deg, #00ADB5, #007a80); color: white;
+            box-shadow: 0 4px 14px rgba(0,173,181,0.35);
+        }
+        .modal-link-btn.articles {
+            background: linear-gradient(135deg, #9B59B6, #7d3c98); color: white;
+            box-shadow: 0 4px 14px rgba(155,89,182,0.35);
+        }
+        .modal-link-btn.report {
+            background: linear-gradient(135deg, #27AE60, #1a7a40); color: white;
+            box-shadow: 0 4px 14px rgba(39,174,96,0.35);
+        }
+        .modal-link-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+
+        .modal-img-row { display: flex; gap: 12px; margin-top: 8px; }
+        .modal-img-thumb {
+            width: 80px; height: 60px; border-radius: 8px; object-fit: cover;
+            border: 1px solid #eee; cursor: pointer; transition: 0.2s;
+        }
+        .modal-img-thumb:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+</style>
 </head>
 <body>
 
 <div class="top-beam">
-    <div class="brand"><i class="fas fa-dragon" style="color:var(--c-aqua)"></i> 黄河生态方舟</div>
-    <div class="stat-box">
-        <div><span class="stat-num" style="color:var(--c-orange)" id="s-records">--</span><span class="stat-lbl">观测记录</span></div>
-        <div><span class="stat-num" style="color:var(--c-green)" id="s-species">--</span><span class="stat-lbl">物种总数</span></div>
-        <div><span class="stat-num" style="color:var(--c-red)" id="s-protected">--</span><span class="stat-lbl">珍稀保护</span></div>
+    <div class="brand">
+        <i class="fas fa-dragon" style="color:var(--c-aqua)"></i>
+        <span>黄河生态方舟</span>
     </div>
-    <a href="/admin/" target="_blank" class="btn-admin"><i class="fas fa-cog"></i> 管理后台</a>
+    <div class="nav-links" id="navArea">
+        <!-- 未登录：显示游戏入口（游客可玩但不计积分）+ 登录按钮 -->
+        <div id="navGuest" style="display:flex; align-items:center; gap:6px;">
+            <a href="/bird-guess/" class="nav-btn" style="background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; border: none;"><i class="fas fa-feather"></i><span>识鸟</span></a>
+            <a href="/bird-runner/" class="nav-btn" style="background: linear-gradient(135deg, #E74C3C, #C0392B); color: white; border: none;"><i class="fas fa-dove"></i><span>闯关</span></a>
+            <a href="/wetland-restorer/" class="nav-btn" style="background: linear-gradient(135deg, #27AE60, #1E8449); color: white; border: none;"><i class="fas fa-leaf"></i><span>修复</span></a>
+            <a href="/migration/" class="nav-btn" style="background: linear-gradient(135deg, #3498DB, #2980B9); color: white; border: none;"><i class="fas fa-feather-alt"></i><span>迁徙</span></a>
+            <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
+            <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
+            <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
+            <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
+            <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
+            <a href="/admin/" class="nav-btn" style="background: linear-gradient(135deg, #2C3E50, #1f2d3a); color: white; border: none;"><i class="fas fa-cog"></i><span>后台</span></a>
+            <a href="/login/" class="nav-btn nav-btn-outline"><i class="fas fa-user"></i><span>个人登录</span></a>
+        </div>
+        <!-- 已登录：显示游戏入口 + 积分 + 个人中心 -->
+        <div id="navUser" style="display:none; align-items:center; gap:10px;">
+            <span class="nav-score" id="navScore"><i class="fas fa-coins"></i> <span>0</span> 分</span>
+            <a href="/bird-guess/" class="nav-btn" style="background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; border: none;"><i class="fas fa-feather"></i><span>识鸟</span></a>
+            <a href="/bird-runner/" class="nav-btn" style="background: linear-gradient(135deg, #E74C3C, #C0392B); color: white; border: none;"><i class="fas fa-dove"></i><span>闯关</span></a>
+            <a href="/wetland-restorer/" class="nav-btn" style="background: linear-gradient(135deg, #27AE60, #1E8449); color: white; border: none;"><i class="fas fa-leaf"></i><span>修复</span></a>
+            <a href="/migration/" class="nav-btn" style="background: linear-gradient(135deg, #3498DB, #2980B9); color: white; border: none;"><i class="fas fa-feather-alt"></i><span>迁徙</span></a>
+            <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
+            <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
+            <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
+            <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
+            <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
+            <a href="/admin/" class="nav-btn" style="background: linear-gradient(135deg, #2C3E50, #1f2d3a); color: white; border: none;"><i class="fas fa-cog"></i><span>后台</span></a>
+            <a href="/profile/" class="nav-btn nav-btn-outline"><i class="fas fa-user"></i><span>个人</span></a>
+        </div>
+    </div>
 </div>
 
 <div id="filter-bar" class="glass-panel" style="flex-direction:row">
@@ -132,6 +408,13 @@
     <span style="color:#999">-</span>
     <input type="date" id="d-end" class="date-inp">
     <button class="btn-go" onclick="app.refresh()"><i class="fas fa-search"></i></button>
+    <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
+    <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
+</div>
+
+<div id="heat-info" class="glass-panel">
+    <div id="heat-info-text">拖拽地图圈选区域，系统将按外接矩形生成观鸟数量热力图。</div>
+    <div class="heat-legend"><span>低</span><div class="heat-gradient"></div><span>高</span></div>
 </div>
 
 <div id="rank-panel" class="glass-panel">
@@ -147,30 +430,159 @@
 
 <div id="detail-panel" class="glass-panel">
     <div class="panel-head" id="drag-right">
-        <span><i class="fas fa-chart-pie" style="color:var(--c-aqua)"></i> 监测分析概览</span>
+        <span><i class="fas fa-chart-bar" style="color:var(--c-aqua)"></i> 监测分析概览</span>
         <i class="fas fa-minus" style="cursor:pointer;opacity:0.5;font-size:12px;" onclick="event.stopPropagation(); $('#detail-panel').toggleClass('minimized');"></i>
     </div>
-    <div style="flex:1; padding:15px; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="flex:1; padding:12px; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden;">
 
-        <div style="height: 140px; display:flex; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
-            <div style="width:120px; height:120px;">
-                <canvas id="chart-pie"></canvas>
+        <!-- 快速统计行 -->
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
+                <div style="font-size:22px; font-weight:800; color:var(--c-aqua); line-height:1;" id="stat-total">0</div>
+                <div style="font-size:10px; color:#999; margin-top:2px;">累计记录</div>
             </div>
-            <div style="flex:1; padding-left:15px; font-size:11px; color:#666; line-height:1.6">
-                <div><span style="display:inline-block;width:8px;height:8px;background:#00ADB5;margin-right:5px;border-radius:50%"></span>优势物种 Top 1</div>
-                <div style="font-size:18px; font-weight:800; color:#2c3e50" id="top-species-name">--</div>
-                <div style="color:var(--c-orange)">共发现 <span id="top-species-count">0</span> 只</div>
+            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
+                <div style="font-size:22px; font-weight:800; color:var(--c-green); line-height:1;" id="stat-species">0</div>
+                <div style="font-size:10px; color:#999; margin-top:2px;">物种数</div>
+            </div>
+            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
+                <div style="font-size:22px; font-weight:800; color:var(--c-red); line-height:1;" id="stat-protected">0</div>
+                <div style="font-size:10px; color:#999; margin-top:2px;">受保护</div>
             </div>
         </div>
 
-        <div style="font-size:12px; font-weight:700; color:var(--c-dark); margin-bottom:5px;">
-            <i class="fas fa-list-ul"></i> 完整物种清单
+        <!-- 图表行1：物种分布柱状图 + 保护等级饼图 -->
+        <div class="chart-row">
+            <div class="chart-col">
+                <div class="chart-card">
+                    <div class="chart-card-title"><i class="fas fa-chart-bar"></i> 物种数量分布 Top 6</div>
+                    <canvas id="chart-bar"></canvas>
+                </div>
+            </div>
+            <div class="chart-col">
+                <div class="chart-card">
+                    <div class="chart-card-title"><i class="fas fa-shield-alt"></i> 保护等级占比</div>
+                    <canvas id="chart-level"></canvas>
+                </div>
+            </div>
         </div>
-        <div id="species-list-box" class="species-list-container"></div>
+
+        <!-- 图表行2：月度趋势 -->
+        <div class="chart-card">
+            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 月度观测趋势（近6个月）</div>
+            <canvas id="chart-trend" style="max-height:70px;"></canvas>
+        </div>
+
+        <!-- 实时动态 -->
+        <div style="font-size:11px; font-weight:700; color:var(--c-dark); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+            <span class="live-dot"></span><i class="fas fa-bolt"></i> 最新动态
+        </div>
+        <div id="species-list-box" class="species-list-container" style="max-height:120px; overflow-y:auto;"></div>
+    </div>
+</div>
+
+<div id="detail-modal-overlay">
+    <div id="detail-modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-eye" style="color:var(--c-aqua)"></i>
+                <span id="modal-species-name">—</span>
+                <span id="modal-species-badge" class="sp-badge"></span>
+            </div>
+            <button class="btn-modal-close" onclick="app.closeDetailModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <!-- 基本信息 -->
+            <div class="modal-section">
+                <div class="modal-section-title"><i class="fas fa-binoculars"></i> 观测记录</div>
+                <div class="modal-info-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="modal-info-item">
+                        <div class="val" id="modal-count">—</div>
+                        <div class="lbl">观测数量</div>
+                    </div>
+                    <div class="modal-info-item">
+                        <div class="val" id="modal-zone">—</div>
+                        <div class="lbl">所属区域</div>
+                    </div>
+                    <div class="modal-info-item">
+                        <div class="val" id="modal-time" style="font-size:13px;">—</div>
+                        <div class="lbl">观测时间</div>
+                    </div>
+                    <div class="modal-info-item">
+                        <div class="val" id="modal-transect" style="font-size:13px;">—</div>
+                        <div class="lbl">所属样线</div>
+                    </div>
+                </div>
+                <div class="modal-img-row" id="modal-images"></div>
+            </div>
+
+            <!-- 保护等级占比 -->
+            <div class="modal-section">
+                <div class="modal-section-title"><i class="fas fa-shield-alt"></i> 保护等级占比</div>
+                <div class="modal-chart-wrap">
+                    <div class="modal-chart-container">
+                        <canvas id="modal-chart-level" width="90" height="90"></canvas>
+                        <div class="modal-chart-center" id="modal-level-center">
+                            <div class="center-val">—</div>
+                            <div class="center-lbl">记录</div>
+                        </div>
+                    </div>
+                    <div class="modal-chart-legend" id="modal-level-legend"></div>
+                </div>
+            </div>
+
+            <!-- 区域分布 -->
+            <div class="modal-section">
+                <div class="modal-section-title"><i class="fas fa-map-marked-alt"></i> 区域分布</div>
+                <div class="modal-chart-wrap">
+                    <div class="modal-chart-container">
+                        <canvas id="modal-chart-zone" width="90" height="90"></canvas>
+                        <div class="modal-chart-center" id="modal-zone-center">
+                            <div class="center-val">—</div>
+                            <div class="center-lbl">记录</div>
+                        </div>
+                    </div>
+                    <div class="modal-chart-legend" id="modal-zone-legend"></div>
+                </div>
+            </div>
+
+            <!-- 快捷跳转 -->
+            <div class="modal-section">
+                <div class="modal-section-title"><i class="fas fa-link"></i> 了解更多</div>
+                <div class="modal-links">
+                    <a id="modal-link-species" href="/species/" class="modal-link-btn species" target="_blank">
+                        <i class="fas fa-book"></i> 物种百科
+                    </a>
+                    <a id="modal-link-articles" href="/articles/" class="modal-link-btn articles" target="_blank">
+                        <i class="fas fa-newspaper"></i> 科普文章
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div id="map"></div>
+
+<!-- 底部统计条 -->
+<div class="bottom-stats-bar">
+    <div class="bottom-stat">
+        <div class="b-num" id="s-records">0</div>
+        <div class="b-label">总观测记录</div>
+    </div>
+    <div class="bottom-stat">
+        <div class="b-num green" id="s-species">0</div>
+        <div class="b-label">发现物种</div>
+    </div>
+    <div class="bottom-stat">
+        <div class="b-num red" id="s-protected">0</div>
+        <div class="b-label">受保护</div>
+    </div>
+    <div class="bottom-stat">
+        <div class="b-num orange" id="s-approved">0</div>
+        <div class="b-label">已核验</div>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -180,18 +592,67 @@
         api: '/api',
         map: null,
         layers: { station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
-        charts: { pie: null },
+        charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
+        _statsData: { total: 0, species: 0, protected: 0 },
+        heatmap: {
+            active: false,
+            start: null,
+            draftRect: null,
+            boundsRect: null,
+            layer: null,
+            bounds: null
+        },
 
         init: function() {
             this.initMap();
+            this.initHeatmapTools();
             this.initDates();
             this.loadStatic();
             this.loadData();
+            this.initAuth();
 
             // 启用拖拽
             this.makeDraggable('rank-panel');
             this.makeDraggable('detail-panel');
+        },
+
+        // === 登录状态初始化 ===
+        initAuth: function() {
+            const token = localStorage.getItem('yb_token');
+            const userStr = localStorage.getItem('yb_user');
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    $('#navGuest').hide();
+                    $('#navUser').show();
+                    if (user.username) {
+                        const initial = user.username[0].toUpperCase();
+                        $('#navUser').prepend(
+                            `<div class="nav-avatar" onclick="location.href='/profile/'">${user.avatar ? '<img src="' + user.avatar + '">' : initial}</div>`
+                        );
+                    }
+                    if (user.score !== undefined) {
+                        $('#navScore span').text(user.score);
+                    }
+                    // 拉取最新积分
+                    $.ajax({
+                        url: this.api + '/profiles/me/',
+                        method: 'GET',
+                        headers: { 'Authorization': 'Token ' + token },
+                        success: function(data) {
+                            localStorage.setItem('yb_user', JSON.stringify(data));
+                            $('#navScore span').text(data.score || 0);
+                        },
+                        error: function() {
+                            localStorage.removeItem('yb_token');
+                            localStorage.removeItem('yb_user');
+                            $('#navUser').hide();
+                            $('#navGuest').show();
+                        }
+                    });
+                } catch(e) {}
+            }
         },
 
         // === 拖拽核心功能 ===
@@ -242,12 +703,222 @@
         initMap: function() {
             const tk = "0de0375367832014891a9f40e0e42911";
             const tdt = t => `http://t0.tianditu.gov.cn/${t}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${t}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${tk}`;
-            const vec = L.layerGroup([L.tileLayer(tdt('vec')), L.tileLayer(tdt('cva'))]);
-            const img = L.layerGroup([L.tileLayer(tdt('img')), L.tileLayer(tdt('cia'))]);
+            const vec = L.tileLayer(tdt('vec'));
+            const img = L.tileLayer(tdt('img'));
+            const vecLabel = L.tileLayer(tdt('cva'));
+            const imgLabel = L.tileLayer(tdt('cia'));
+            const labelLayer = L.layerGroup([vecLabel]);
+            let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [34.85, 113.55], zoom: 10, layers: [vec, this.layers.station, this.layers.line, this.layers.record], zoomControl: false, attributionControl:false });
-            L.control.layers({ "电子地图": vec, "卫星影像": img }, { "监测点位": this.layers.station, "监测样线": this.layers.line, "观测记录": this.layers.record }, { position: 'topleft' }).addTo(this.map);
+            this.map = L.map('map', { center: [34.85, 113.55], zoom: 10, layers: [vec, labelLayer, this.layers.station, this.layers.line, this.layers.record], zoomControl: false, attributionControl:false });
+            L.control.layers(
+                { "电子地图": vec, "卫星影像": img },
+                { "图层注记": labelLayer, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { position: 'topleft', collapsed: true }
+            ).addTo(this.map);
+            this.map.on('baselayerchange', (e) => {
+                const nextLabel = e.name === '卫星影像' ? imgLabel : vecLabel;
+                if (nextLabel === currentLabel) return;
+                const wasVisible = this.map.hasLayer(labelLayer);
+                labelLayer.clearLayers();
+                currentLabel = nextLabel;
+                labelLayer.addLayer(currentLabel);
+                if (wasVisible && !this.map.hasLayer(labelLayer)) {
+                    labelLayer.addTo(this.map);
+                }
+            });
             L.control.zoom({ position: 'topleft' }).addTo(this.map);
+        },
+
+        initHeatmapTools: function() {
+            this.map.on('mousedown', (e) => {
+                if (!this.heatmap.active) return;
+                this.heatmap.start = e.latlng;
+                this.map.dragging.disable();
+                if (this.heatmap.draftRect) this.map.removeLayer(this.heatmap.draftRect);
+                this.heatmap.draftRect = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
+                    color: '#e74c3c',
+                    weight: 2,
+                    fillColor: '#e74c3c',
+                    fillOpacity: 0.08,
+                    dashArray: '6,4',
+                    interactive: false
+                }).addTo(this.map);
+            });
+
+            this.map.on('mousemove', (e) => {
+                if (!this.heatmap.active || !this.heatmap.start || !this.heatmap.draftRect) return;
+                this.heatmap.draftRect.setBounds(L.latLngBounds(this.heatmap.start, e.latlng));
+            });
+
+            this.map.on('mouseup', (e) => {
+                if (!this.heatmap.active || !this.heatmap.start) return;
+                const bounds = L.latLngBounds(this.heatmap.start, e.latlng);
+                this.heatmap.start = null;
+                this.map.dragging.enable();
+                if (Math.abs(bounds.getNorth() - bounds.getSouth()) < 0.0002 || Math.abs(bounds.getEast() - bounds.getWest()) < 0.0002) {
+                    $('#heat-info').show();
+                    $('#heat-info-text').html('圈选范围太小，请按住鼠标拖出一个区域。');
+                    return;
+                }
+                this.buildHeatmapForBounds(bounds);
+                this.toggleHeatSelection(false);
+            });
+        },
+
+        toggleHeatSelection: function(forceState) {
+            this.heatmap.active = (typeof forceState === 'boolean') ? forceState : !this.heatmap.active;
+            $('#heat-toggle').toggleClass('active', this.heatmap.active);
+            $('body').toggleClass('heat-selecting', this.heatmap.active);
+            $('#heat-info').show();
+            if (this.heatmap.active) {
+                $('#heat-info-text').html('按住鼠标在地图上拖拽圈选区域；松开后自动以南北向外接矩形生成热力图。');
+                this.map.doubleClickZoom.disable();
+            } else {
+                this.map.dragging.enable();
+                this.map.doubleClickZoom.enable();
+                this.heatmap.start = null;
+            }
+        },
+
+        clearHeatmap: function() {
+            if (this.heatmap.layer) {
+                this.map.removeLayer(this.heatmap.layer);
+                this.heatmap.layer = null;
+            }
+            if (this.heatmap.draftRect) {
+                this.map.removeLayer(this.heatmap.draftRect);
+                this.heatmap.draftRect = null;
+            }
+            if (this.heatmap.boundsRect) {
+                this.map.removeLayer(this.heatmap.boundsRect);
+                this.heatmap.boundsRect = null;
+            }
+            this.heatmap.bounds = null;
+            this.toggleHeatSelection(false);
+            $('#heat-info').hide();
+        },
+
+        getObservationPosition: function(item) {
+            const lat = parseFloat(item.y || item.latitude);
+            const lng = parseFloat(item.x || item.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+            return { lat, lng };
+        },
+
+        getDateFilteredObservations: function() {
+            const start = new Date(document.getElementById('d-start').value);
+            const end = new Date(document.getElementById('d-end').value);
+            end.setHours(23, 59, 59);
+            return this.data.filter(item => {
+                const time = new Date(item.observation_time);
+                return time >= start && time <= end;
+            });
+        },
+
+        buildHeatmapForBounds: function(bounds) {
+            const points = [];
+            let totalBirds = 0;
+            const speciesSet = new Set();
+
+            this.getDateFilteredObservations().forEach(item => {
+                const pos = this.getObservationPosition(item);
+                if (!pos || !bounds.contains([pos.lat, pos.lng])) return;
+                const weight = Math.max(1, parseInt(item.count || 1, 10));
+                totalBirds += weight;
+                if (item.species_name) speciesSet.add(item.species_name);
+                points.push({ lat: pos.lat, lng: pos.lng, weight });
+            });
+
+            if (this.heatmap.layer) this.map.removeLayer(this.heatmap.layer);
+            if (this.heatmap.boundsRect) this.map.removeLayer(this.heatmap.boundsRect);
+
+            this.heatmap.bounds = bounds;
+            this.heatmap.boundsRect = L.rectangle(bounds, {
+                color: '#2c3e50',
+                weight: 2,
+                fill: false,
+                dashArray: '8,5',
+                interactive: false
+            }).addTo(this.map);
+
+            if (!points.length) {
+                $('#heat-info').show();
+                $('#heat-info-text').html('该外接矩形内没有符合当前日期筛选的观鸟记录。');
+                return;
+            }
+
+            this.heatmap.layer = this.createCanvasHeatLayer(points, bounds).addTo(this.map);
+            $('#heat-info').show();
+            $('#heat-info-text').html(
+                `外接矩形内共有 <strong>${points.length}</strong> 条记录，鸟类数量合计 <strong>${totalBirds}</strong> 只，涉及 <strong>${speciesSet.size}</strong> 个物种。`
+            );
+            this.map.fitBounds(bounds.pad(0.08));
+        },
+
+        createCanvasHeatLayer: function(points, bounds) {
+            const HeatLayer = L.Layer.extend({
+                onAdd: function(map) {
+                    this._map = map;
+                    this._canvas = L.DomUtil.create('canvas', 'leaflet-heatmap-layer');
+                    this._canvas.style.position = 'absolute';
+                    this._canvas.style.pointerEvents = 'none';
+                    this._canvas.style.opacity = '0.82';
+                    map.getPanes().overlayPane.appendChild(this._canvas);
+                    map.on('move zoom resize', this._reset, this);
+                    this._reset();
+                },
+                onRemove: function(map) {
+                    map.off('move zoom resize', this._reset, this);
+                    L.DomUtil.remove(this._canvas);
+                },
+                _reset: function() {
+                    const size = this._map.getSize();
+                    this._canvas.width = size.x;
+                    this._canvas.height = size.y;
+                    L.DomUtil.setPosition(this._canvas, this._map.containerPointToLayerPoint([0, 0]));
+                    this._draw();
+                },
+                _draw: function() {
+                    const ctx = this._canvas.getContext('2d');
+                    ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+                    const nw = this._map.latLngToContainerPoint(bounds.getNorthWest());
+                    const se = this._map.latLngToContainerPoint(bounds.getSouthEast());
+                    const clipX = Math.min(nw.x, se.x);
+                    const clipY = Math.min(nw.y, se.y);
+                    const clipW = Math.abs(se.x - nw.x);
+                    const clipH = Math.abs(se.y - nw.y);
+                    if (clipW < 2 || clipH < 2) return;
+
+                    const maxWeight = Math.max(...points.map(p => p.weight), 1);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(clipX, clipY, clipW, clipH);
+                    ctx.clip();
+
+                    points.forEach(point => {
+                        const projected = this._map.latLngToContainerPoint([point.lat, point.lng]);
+                        const strength = Math.min(1, point.weight / maxWeight);
+                        const radius = 24 + 30 * strength;
+                        const gradient = ctx.createRadialGradient(projected.x, projected.y, 0, projected.x, projected.y, radius);
+                        gradient.addColorStop(0, `rgba(231, 76, 60, ${0.48 + 0.32 * strength})`);
+                        gradient.addColorStop(0.36, `rgba(243, 156, 18, ${0.32 + 0.26 * strength})`);
+                        gradient.addColorStop(0.68, `rgba(0, 173, 181, ${0.14 + 0.18 * strength})`);
+                        gradient.addColorStop(1, 'rgba(0, 173, 181, 0)');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(projected.x - radius, projected.y - radius, radius * 2, radius * 2);
+                    });
+
+                    ctx.restore();
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(44, 62, 80, 0.24)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(clipX, clipY, clipW, clipH);
+                    ctx.restore();
+                }
+            });
+            return new HeatLayer();
         },
 
         initDates: function() {
@@ -317,21 +988,9 @@
                     if (level.includes('一') || level.includes('Ⅰ')) badgeClass = 'bg-red';
                     else if (level.includes('二') || level.includes('Ⅱ')) badgeClass = 'bg-orange';
 
-                    const popupContent = `
-                        <div style="font-size:14px; font-weight:bold; color:#00ADB5; margin-bottom:5px;">
-                            ${name} <span class="badge ${badgeClass}">${level}</span>
-                        </div>
-                        <table class="popup-table">
-                            <tr><td>数量</td><td><b>${p.count}</b></td></tr>
-                            <tr><td>区域</td><td>${p.zone_name || '-'}</td></tr>
-                            <tr><td>时间</td><td>${p.observation_time}</td></tr>
-                        </table>
-                        ${p.image ? `<img src="${p.image}" style="width:100%;height:120px;object-fit:cover;margin-top:5px;border-radius:4px;">` : ''}
-                    `;
-
-                    const color = (p.status === 1) ? '#2ECC71' : '#F39C12';
+                    const color = (p.status === 'approved') ? '#2ECC71' : (p.status === 'pending' ? '#F39C12' : '#E74C3C');
                     L.circleMarker([lat, lng], { radius: 6, fillColor: color, color: '#fff', weight: 1, fillOpacity: 0.8 })
-                     .bindPopup(popupContent)
+                     .on('click', () => this.openDetailModal(p, stats))
                      .addTo(this.layers.record);
 
                     bounds.push([lat, lng]);
@@ -343,9 +1002,23 @@
             $('#s-records').text(count);
             $('#s-species').text(Object.keys(stats).length);
             $('#s-protected').text(pCount);
+            $('#s-approved').text(filteredLogs.filter(l => l.status === 'approved').length);
+
+            // 更新面板顶部统计
+            const totalAll = this.data.filter(d => d.status === 'approved').length;
+            const speciesAll = new Set(this.data.filter(d => d.status === 'approved').map(d => d.species_name)).size;
+            const protectedAll = this.data.filter(d => d.status === 'approved' && (d.species_protection || '').match(/一|二/)).length;
+            app._statsData = { total: totalAll, species: speciesAll, protected: protectedAll };
+
+            $('#stat-total').text(totalAll);
+            $('#stat-species').text(speciesAll);
+            $('#stat-protected').text(protectedAll);
 
             this.renderDashboard(stats);
             this.renderRealTimeLogs(filteredLogs);
+            if (this.heatmap.bounds) {
+                this.buildHeatmapForBounds(this.heatmap.bounds);
+            }
         },
 
         renderRealTimeLogs: function(logs) {
@@ -354,8 +1027,10 @@
                 const imgUrl = item.image ? item.image : '';
                 const name = item.species_name || "未知物种";
                 const zone = item.zone_name || "未知区域";
-                const isVerified = (item.status === 1);
-                const statusColor = isVerified ? '#2ECC71' : '#F39C12';
+                const isApproved = (item.status === 'approved');
+                const isPending = (item.status === 'pending');
+                const statusColor = isApproved ? '#2ECC71' : (isPending ? '#F39C12' : '#E74C3C');
+                const statusText = isApproved ? '已核验' : (isPending ? '待审核' : '已驳回');
 
                 const imgTag = imgUrl
                     ? `<img src="${imgUrl}" class="log-icon">`
@@ -370,7 +1045,7 @@
                                 <span style="font-weight:normal; color:#666">${item.count}只</span>
                             </div>
                             <div class="log-meta">
-                                <span class="badge" style="background:${statusColor};padding:1px 4px;font-size:9px">${isVerified ? '已核验' : 'AI预警'}</span>
+                                <span class="badge" style="background:${statusColor};padding:1px 4px;font-size:9px">${statusText}</span>
                                 <span style="color:#999">${zone}</span>
                             </div>
                             <div class="log-time" style="margin-top:2px;">
@@ -385,48 +1060,288 @@
 
         renderDashboard: function(stats) {
             const arr = Object.keys(stats).map(k => ({ name: k, ...stats[k] })).sort((a,b) => b.count - a.count);
-
             const top10 = arr.slice(0, 10);
-            const colors10 = [
-                '#00ADB5', '#2ECC71', '#F39C12', '#E74C3C', '#9B59B6',
-                '#34495E', '#16A085', '#27AE60', '#2980B9', '#8E44AD'
-            ];
+            const colors10 = ['#00ADB5','#2ECC71','#F39C12','#E74C3C','#9B59B6','#34495E','#16A085','#27AE60','#2980B9','#8E44AD'];
 
-            if(this.charts.pie) this.charts.pie.destroy();
-            this.charts.pie = new Chart(document.getElementById('chart-pie'), {
-                type: 'doughnut',
+            // === 1. 物种柱状图 ===
+            const barData = arr.slice(0, 6);
+            if(this.charts.bar) this.charts.bar.destroy();
+            this.charts.bar = new Chart(document.getElementById('chart-bar'), {
+                type: 'bar',
                 data: {
-                    labels: top10.map(i => i.name),
+                    labels: barData.map(i => i.name.length > 4 ? i.name.slice(0,4)+'…' : i.name),
                     datasets: [{
-                        data: top10.map(i => i.count),
-                        backgroundColor: colors10,
-                        borderWidth: 0
+                        data: barData.map(i => i.count),
+                        backgroundColor: colors10.slice(0, barData.length),
+                        borderRadius: 4,
+                        borderSkipped: false,
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 条' } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#999' } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1, font: { size: 9 }, color: '#999' } }
+                    }
+                }
             });
 
-            if(arr.length > 0) {
-                $('#top-species-name').text(arr[0].name);
-                $('#top-species-count').text(arr[0].count);
-            }
+            // === 2. 保护等级饼图 ===
+            const levelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
+            arr.forEach(item => {
+                if (item.level.includes('一')) levelStats['国家一级']++;
+                else if (item.level.includes('二')) levelStats['国家二级']++;
+                else if (item.level.includes('三有')) levelStats['三有动物']++;
+                else levelStats['无危/其他']++;
+            });
+            const levelColors = ['#E74C3C','#F39C12','#3498DB','#2ECC71'];
+            if(this.charts.level) this.charts.level.destroy();
+            this.charts.level = new Chart(document.getElementById('chart-level'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(levelStats),
+                    datasets: [{ data: Object.values(levelStats), backgroundColor: levelColors, borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '60%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 4, font: { size: 9 }, color: '#666' } } }
+                }
+            });
 
+            // === 3. 月度趋势图 ===
+            const months = [];
+            const monthCounts = {};
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                months.push(`${d.getMonth()+1}月`);
+                monthCounts[key] = 0;
+            }
+            this.data.forEach(item => {
+                const key = item.observation_time ? item.observation_time.slice(0, 7) : '';
+                if (key && monthCounts[key] !== undefined) monthCounts[key]++;
+            });
+            if(this.charts.trend) this.charts.trend.destroy();
+            this.charts.trend = new Chart(document.getElementById('chart-trend'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        data: Object.values(monthCounts),
+                        borderColor: '#00ADB5',
+                        backgroundColor: 'rgba(0,173,181,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#00ADB5',
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 条' } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#999' } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1, font: { size: 9 }, color: '#999' } }
+                    }
+                }
+            });
+
+            // === 4. 物种清单 ===
             const listHtml = arr.map((item, i) => {
-                let badgeClass = 'bg-green';
-                let levelText = '';
+                let badgeClass = 'bg-green'; let levelText = '';
                 if (item.level.includes('一') || item.level.includes('Ⅰ')) { badgeClass = 'bg-red'; levelText = `<span class="badge ${badgeClass}">${item.level}</span>`; }
                 else if (item.level.includes('二') || item.level.includes('Ⅱ')) { badgeClass = 'bg-orange'; levelText = `<span class="badge ${badgeClass}">${item.level}</span>`; }
-
-                return `
-                    <div class="species-row">
-                        <span class="sp-rank">#${i + 1}</span>
-                        <div class="sp-name">${item.name} ${levelText}</div>
-                        <span class="sp-count">${item.count}</span>
-                    </div>`;
+                return `<div class="species-row"><span class="sp-rank">#${i+1}</span><div class="sp-name">${item.name} ${levelText}</div><span class="sp-count">${item.count}</span></div>`;
             }).join('');
-            $('#species-list-box').html(listHtml);
+            $('#species-list-box').html(listHtml || '<div style="text-align:center;color:#ccc;margin-top:10px;font-size:12px;">暂无数据</div>');
+        },
+
+        // === 物种详情弹窗 ===
+        openDetailModal: function(record, stats) {
+            const name = record.species_name || '未知物种';
+            const level = record.species_protection || '普通';
+            const zone = record.zone_name || '未知区域';
+            const count = record.count || 1;
+            const time = record.observation_time ? record.observation_time.slice(0, 16).replace('T', ' ') : '—';
+
+            // 保护等级徽章样式
+            let badgeBg = '#e0e0e0', badgeColor = '#666';
+            if (level.includes('一') || level.includes('Ⅰ')) { badgeBg = '#e74c3c'; badgeColor = '#fff'; }
+            else if (level.includes('二') || level.includes('Ⅱ')) { badgeBg = '#f39c12'; badgeColor = '#fff'; }
+            else if (level.includes('三有')) { badgeBg = '#3498db'; badgeColor = '#fff'; }
+
+            $('#modal-species-name').text(name);
+            $('#modal-species-badge').text(level).css({ background: badgeBg, color: badgeColor });
+            $('#modal-count').text(count + '只');
+            $('#modal-zone').text(zone);
+            $('#modal-time').text(time);
+            $('#modal-transect').text(record.transect_name || '—');
+
+            // 图片
+            if (record.image) {
+                $('#modal-images').html(`<img src="${record.image}" class="modal-img-thumb" onclick="window.open(this.src,'_blank')">`);
+            } else {
+                $('#modal-images').html('');
+            }
+
+            // 百科链接（用名称搜索，确保能找到）
+            const speciesName = record.species_name || '未知物种';
+            $('#modal-link-species').attr('href', `/species/?search=${encodeURIComponent(speciesName)}`);
+            $('#modal-link-articles').attr('href', `/articles/?search=${encodeURIComponent(name)}`);
+
+            // === 保护等级占比图：显示全局所有等级的占比，当前物种所属等级高亮 ===
+            const ALL_LEVELS = ['国家一级', '国家二级', '三有动物', '无危/其他'];
+            const LEVEL_COLORS = { '国家一级': '#e74c3c', '国家二级': '#f39c12', '三有动物': '#3498db', '无危/其他': '#2ecc71' };
+
+            const globalLevelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
+            this.data.forEach(d => {
+                const lv = d.species_protection || '无危/其他';
+                if (lv.includes('一') || lv.includes('Ⅰ')) globalLevelStats['国家一级']++;
+                else if (lv.includes('二') || lv.includes('Ⅱ')) globalLevelStats['国家二级']++;
+                else if (lv.includes('三有')) globalLevelStats['三有动物']++;
+                else globalLevelStats['无危/其他']++;
+            });
+
+            // 保护等级占比：当前等级扇形浮动向外突出（插件方式，不破坏底层）
+            const levelData = ALL_LEVELS.map(lv => globalLevelStats[lv]);
+            const levelColors2 = ALL_LEVELS.map(lv => LEVEL_COLORS[lv]);
+            const levelBorders = ALL_LEVELS.map(lv => lv === level ? 2 : 1);
+            const levelBorderColors = ALL_LEVELS.map(lv => lv === level ? LEVEL_COLORS[lv] : '#fff');
+
+            const levelHighlightIdx = ALL_LEVELS.indexOf(level);
+
+            if (this.charts.modalLevel) this.charts.modalLevel.destroy();
+            this.charts.modalLevel = new Chart(document.getElementById('modal-chart-level'), {
+                type: 'doughnut',
+                data: { labels: ALL_LEVELS, datasets: [{ data: levelData, backgroundColor: levelColors2, borderWidth: levelBorders, borderColor: levelBorderColors }] },
+                options: {
+                    responsive: false, cutout: '55%',
+                    plugins: { legend: { display: false } },
+                    animation: { duration: 600 }
+                },
+                plugins: [{
+                    id: 'floatLevel',
+                    beforeDatasetsDraw(chart) {
+                        const meta = chart.getDatasetMeta(0);
+                        const cx = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const cy = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        meta.data.forEach((arc, i) => {
+                            if (i !== levelHighlightIdx) return;
+                            const mid = (arc.startAngle + arc.endAngle) / 2;
+                            arc.x = cx + Math.cos(mid) * 9;
+                            arc.y = cy + Math.sin(mid) * 9;
+                        });
+                    },
+                    afterDatasetsDraw(chart) {
+                        const meta = chart.getDatasetMeta(0);
+                        meta.data.forEach((arc, i) => {
+                            if (i !== levelHighlightIdx) return;
+                            arc.x = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            arc.y = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        });
+                    }
+                }]
+            });
+
+            let levelLegendHtml = '';
+            const totalLv = levelData.reduce((a, b) => a + b, 0) || 1;
+            $('#modal-level-center .center-val').text(totalLv);
+            ALL_LEVELS.forEach((lv, i) => {
+                const pct = ((levelData[i] / totalLv) * 100).toFixed(0);
+                const isHighlight = lv === level;
+                levelLegendHtml += `<div class="legend-item${isHighlight ? ' is-hl' : ''}">
+                    <span class="legend-dot" style="background:${levelColors2[i]}; ${isHighlight ? 'box-shadow: 0 0 0 2px #fff, 0 0 0 4px ' + levelColors2[i] : ''}"></span>
+                    <span class="legend-label">${lv}</span>
+                    <div class="legend-bar-wrap"><div class="legend-bar" style="width:${pct}%; background:${levelColors2[i]};"></div></div>
+                    <span class="legend-val">${pct}%</span>
+                </div>`;
+            });
+            $('#modal-level-legend').html(levelLegendHtml);
+
+            // === 区域分布图：显示全局所有区域的占比，当前物种所在区域高亮 ===
+            const globalZoneStats = {};
+            this.data.forEach(d => {
+                const zn = d.zone_name || '未知区域';
+                globalZoneStats[zn] = (globalZoneStats[zn] || 0) + 1;
+            });
+
+            // 区域分布：当前区域扇形浮动向外突出
+            const allZoneNames = Object.keys(globalZoneStats).sort();
+            const zonePalette = ['#00ADB5','#2ECC71','#F39C12','#E74C3C','#9B59B6','#34495E','#16A085','#27AE60','#2980B9','#8E44AD','#D35400','#7F8C8D'];
+            const zoneData = allZoneNames.map(zn => globalZoneStats[zn]);
+            const zoneColors2 = allZoneNames.map((_, i) => zonePalette[i % zonePalette.length]);
+            const zoneBorders = allZoneNames.map(zn => zn === zone ? 2 : 1);
+            const zoneBorderColors = allZoneNames.map(zn => zn === zone ? zonePalette[allZoneNames.indexOf(zn)] : '#fff');
+            const zoneHighlightIdx = allZoneNames.indexOf(zone);
+
+            if (this.charts.modalZone) this.charts.modalZone.destroy();
+            this.charts.modalZone = new Chart(document.getElementById('modal-chart-zone'), {
+                type: 'doughnut',
+                data: { labels: allZoneNames, datasets: [{ data: zoneData, backgroundColor: zoneColors2, borderWidth: zoneBorders, borderColor: zoneBorderColors }] },
+                options: {
+                    responsive: false, cutout: '55%',
+                    plugins: { legend: { display: false } },
+                    animation: { duration: 600 }
+                },
+                plugins: [{
+                    id: 'floatZone',
+                    beforeDatasetsDraw(chart) {
+                        const meta = chart.getDatasetMeta(0);
+                        const cx = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const cy = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        meta.data.forEach((arc, i) => {
+                            if (i !== zoneHighlightIdx) return;
+                            const mid = (arc.startAngle + arc.endAngle) / 2;
+                            arc.x = cx + Math.cos(mid) * 9;
+                            arc.y = cy + Math.sin(mid) * 9;
+                        });
+                    },
+                    afterDatasetsDraw(chart) {
+                        const meta = chart.getDatasetMeta(0);
+                        meta.data.forEach((arc, i) => {
+                            if (i !== zoneHighlightIdx) return;
+                            arc.x = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            arc.y = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        });
+                    }
+                }]
+            });
+
+            let zoneLegendHtml = '';
+            const totalZn = zoneData.reduce((a, b) => a + b, 0) || 1;
+            $('#modal-zone-center .center-val').text(totalZn);
+            allZoneNames.forEach((zn, i) => {
+                const pct = ((zoneData[i] / totalZn) * 100).toFixed(0);
+                const isHighlight = zn === zone;
+                zoneLegendHtml += `<div class="legend-item${isHighlight ? ' is-hl' : ''}">
+                    <span class="legend-dot" style="background:${zoneColors2[i]}; ${isHighlight ? 'box-shadow: 0 0 0 2px #fff, 0 0 0 4px ' + zoneColors2[i] : ''}"></span>
+                    <span class="legend-label">${zn}</span>
+                    <div class="legend-bar-wrap"><div class="legend-bar" style="width:${pct}%; background:${zoneColors2[i]};"></div></div>
+                    <span class="legend-val">${pct}%</span>
+                </div>`;
+            });
+            $('#modal-zone-legend').html(zoneLegendHtml);
+
+            // 显示弹窗
+            $('#detail-modal-overlay').addClass('active');
+        },
+
+        closeDetailModal: function() {
+            $('#detail-modal-overlay').removeClass('active');
         }
     };
+
+    // 点击遮罩关闭
+    document.getElementById('detail-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) app.closeDetailModal();
+    });
+
+    // ESC 关闭弹窗
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') app.closeDetailModal();
+    });
 
     app.init();
 </script>

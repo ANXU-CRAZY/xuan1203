@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">物种详情 | 黄河生态方舟</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --earth: #8B6914;
+            --moss: #3D6B4F;
+            --deep-forest: #1B3A2D;
+            --warm-cream: #FAF6EE;
+            --amber: #D4A853;
+            --amber-dark: #B8892E;
+            --river: #2D6A8A;
+            --river-deep: #1A4A6B;
+            --text: #2C2C2C;
+            --muted: #8A8A8A;
+            --border: #E8E0D5;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #F2EDE4;
+            min-height: 100vh; color: var(--text);
+        }
+        .navbar {
+            background: rgba(10,46,56,0.97); backdrop-filter: blur(20px);
+            padding: 0 24px; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        }
+        .navbar-brand { display: flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-size: 18px; font-weight: 700; }
+        .navbar-brand .logo { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #3498db); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .nav-links { display: flex; align-items: center; gap: 4px; }
+        .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; transition: all 0.2s; }
+        .nav-links a:hover { background: rgba(14,191,167,0.2); color: var(--primary); }
+        .nav-links a.active { color: var(--primary); background: rgba(14,191,167,0.15); }
+        .nav-back { margin-left: auto; padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; transition: all 0.2s; }
+        .nav-back:hover { background: rgba(255,255,255,0.2); color: white; }
+
+        .detail-container { max-width: 740px; margin: 80px auto 60px; padding: 0 20px; }
+
+        /* Hero */
+        .detail-hero { border-radius: 20px; overflow: hidden; margin-bottom: 24px; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .detail-hero-bg { height: 280px; display: flex; align-items: center; justify-content: center; font-size: 120px; color: rgba(255,255,255,0.2); position: relative; }
+        .detail-hero-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; }
+        .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .hero-badge { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: white; backdrop-filter: blur(4px); }
+        .hero-title { font-size: 32px; font-weight: 900; color: white; line-height: 1.2; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .hero-latin { font-style: italic; color: rgba(255,255,255,0.7); font-size: 15px; margin-top: 4px; }
+
+        /* 数据指标 */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: #FAF7EE; border: 1px solid #E8E0D5; border-radius: 14px; padding: 16px; text-align: center; color: var(--deep-forest); }
+        .stat-card .num { font-size: 26px; font-weight: 900; line-height: 1; color: var(--deep-forest); }
+        .stat-card .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+        /* 区块 */
+        .detail-card { background: rgba(255,255,255,0.97); border-radius: 18px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .section-title { font-size: 13px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+        .section-title i { color: var(--amber); }
+
+        /* 分类学 */
+        .taxonomy-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .taxonomy-item { background: #F8F5EF; border-radius: 10px; padding: 12px 14px; border: 1px solid rgba(0,0,0,0.04); }
+        .taxonomy-item .t-lbl { font-size: 10px; color: #C0B8AE; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .taxonomy-item .t-val { font-size: 14px; font-weight: 700; color: var(--text); }
+
+        /* IUCN */
+        .iucn-card { background: #F8F5EF; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 16px; border: 1px solid rgba(0,0,0,0.04); }
+        .iucn-code { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: white; flex-shrink: 0; }
+        .iucn-info .iucn-label { font-size: 18px; font-weight: 800; color: var(--deep-forest); }
+        .iucn-info .iucn-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+        .iucn-bar { height: 5px; background: rgba(0,0,0,0.06); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .iucn-bar-fill { height: 100%; border-radius: 3px; }
+
+        /* 习性 */
+        .habit-text { background: #F0F7F3; border-left: 4px solid var(--moss); border-radius: 0 14px 14px 0; padding: 16px; font-size: 15px; line-height: 1.9; color: #3A5042; }
+
+        /* 快捷操作 */
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .action-btn { flex: 1; min-width: 140px; padding: 13px 16px; border-radius: 14px; text-decoration: none; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+        .action-btn.articles { background: linear-gradient(135deg, var(--amber-dark), var(--earth)); color: white; box-shadow: 0 6px 20px rgba(180,137,46,0.35); }
+        .action-btn.report { background: linear-gradient(135deg, var(--river), var(--river-deep)); color: white; box-shadow: 0 6px 20px rgba(45,106,138,0.35); }
+        .action-btn.list { background: linear-gradient(135deg, var(--moss), #4A8C6F); color: white; box-shadow: 0 6px 20px rgba(61,107,79,0.35); }
+        .action-btn.gallery { background: linear-gradient(135deg, var(--earth), #7A5C12); color: white; box-shadow: 0 6px 20px rgba(139,105,20,0.35); }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.25); }
+
+        /* 加载 */
+        .loading { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.5); }
+        .loading i { font-size: 48px; margin-bottom: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+        .error-msg { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .error-msg h3 { color: var(--muted); margin-bottom: 8px; }
+        .error-msg a { color: var(--amber-dark); text-decoration: none; }
+        @media (max-width: 640px) {
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .taxonomy-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a href="/" class="navbar-brand">
+        <div class="logo"><i class="fas fa-feather" style="color:white"></i></div>
+        黄河生态方舟
+    </a>
+    <div class="nav-links">
+        <a href="/"><i class="fas fa-map-marked-alt"></i> 大屏</a>
+        <a href="/report/"><i class="fas fa-camera"></i> 上报</a>
+        <a href="/species/"><i class="fas fa-book"></i> 物种百科</a>
+        <a href="/articles/"><i class="fas fa-newspaper"></i> 科普</a>
+        <a href="/gallery/"><i class="fas fa-images"></i> 图库</a>
+        <a href="/profile/"><i class="fas fa-user"></i> 个人</a>
+    </div>
+    <a href="/species/" class="nav-back"><i class="fas fa-arrow-left"></i> 返回百科</a>
+</nav>
+
+<div class="detail-container" id="app">
+    <div class="loading">
+        <i class="fas fa-spinner"></i>
+        <h3>正在加载物种信息...</h3>
+    </div>
+</div>
+
+<script>
+const API = '/api';
+
+// 物种真实图片映射（Wikimedia Commons 直链，全部135种）
+const SPECIES_IMG = {
+    '大天鹅': 'https://upload.wikimedia.org/wikipedia/commons/2/28/Cygnus_cygnus.jpg',
+    '白鹭': 'https://upload.wikimedia.org/wikipedia/commons/9/91/Egretta_garzetta.jpg',
+    '鸿雁': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Anser_cygnoides.jpg',
+    '黑鹳': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Ciconia_nigra.jpg',
+    '东方白鹳': 'https://upload.wikimedia.org/wikipedia/commons/0/03/Stamp_of_India_-_1994_-_Colnect_163829_-_Oriental_White_Stork_Ciconia_ciconia_boyciana.jpeg',
+    '灰鹤': 'https://upload.wikimedia.org/wikipedia/commons/f/f8/Grus_grus.jpg',
+    '普通鸬鹚': 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Phalacrocorax_carbo.jpg',
+    '斑嘴鸭': 'https://upload.wikimedia.org/wikipedia/commons/3/39/Anas_zonorhyncha.jpg',
+    '白头鹤': 'https://upload.wikimedia.org/wikipedia/commons/2/25/Grus_monacha.jpg',
+    '豆雁': 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Anser_fabalis.jpg',
+    '苍鹭': 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Ardea_cinerea.jpg',
+    '绿头鸭': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Anas_platyrhynchos.jpg',
+    '夜鹭': 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Nycticorax_nycticorax.jpg',
+    '黑水鸡': 'https://upload.wikimedia.org/wikipedia/commons/2/26/Gallinula_chloropus.jpg',
+    '白骨顶': 'https://upload.wikimedia.org/wikipedia/commons/2/20/Fulica_atra.jpg',
+    '凤头麦鸡': 'https://upload.wikimedia.org/wikipedia/commons/2/29/Vanellus_vanellus.jpg',
+    '金眶鸻': 'https://upload.wikimedia.org/wikipedia/commons/d/df/Charadrius_dubius.jpg',
+    '普通翠鸟': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Alcedo_atthis.jpg',
+    '斑鱼狗': 'https://upload.wikimedia.org/wikipedia/commons/0/04/Ceryle_rudis.jpg',
+    '小天鹅': 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Cygnus_bewickii_01.jpg',
+    '灰雁': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Anser_anser.jpg',
+    '白额雁': 'https://upload.wikimedia.org/wikipedia/commons/0/0f/Greater_white-fronted_goose_in_flight-1045.jpg',
+    '翘鼻麻鸭': 'https://upload.wikimedia.org/wikipedia/commons/f/fc/Tadorna_tadorna_2.jpg',
+    '赤颈鸭': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Mareca_penelope.jpg',
+    '绿翅鸭': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Anas_crecca.jpg',
+    '赤膀鸭': 'https://upload.wikimedia.org/wikipedia/commons/d/de/Mareca_strepera.jpg',
+    '罗纹鸭': 'https://upload.wikimedia.org/wikipedia/commons/d/de/Mareca_falcata.jpg',
+    '赤嘴潜鸭': 'https://upload.wikimedia.org/wikipedia/commons/2/23/Netta_rufina_1.jpg',
+    '凤头潜鸭': 'https://upload.wikimedia.org/wikipedia/commons/1/14/Aythya_nyroca%2C_captive.jpg',
+    '普通秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/9/95/Mergus_merganser.jpg',
+    '中华秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/9/97/Scaly-sided_Merganser_RWD.jpg',
+    '白秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Mergellus_albellus.jpg',
+    '鹌鹑': 'https://upload.wikimedia.org/wikipedia/commons/d/de/Coturnix_coturnix.jpg',
+    '环颈雉': 'https://upload.wikimedia.org/wikipedia/commons/9/9f/Phasianus_colchicus.jpg',
+    '黑翅长脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Himantopus_hemantopus.jpg',
+    '反嘴鹬': 'https://upload.wikimedia.org/wikipedia/commons/6/62/Recurvirostra_avosetta_2.jpg',
+    '黑尾塍鹬': 'https://upload.wikimedia.org/wikipedia/commons/b/b5/Limosa_limosa.jpg',
+    '白腰杓鹬': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Numenius_arquata.jpg',
+    '大滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/2/28/Calidris_tenuirostris.jpg',
+    '红嘴鸥': 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Chroicocephalus_ridibundus.jpg',
+    '普通燕鸥': 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Sterna_hirundo.jpg',
+    '白琵鹭': 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Platalea_leucorodia.jpg',
+    '戴胜': 'https://upload.wikimedia.org/wikipedia/commons/2/25/Upupa_epops.jpg',
+    '大斑啄木鸟': 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Dendrocopos_major.jpg',
+    '星头啄木鸟': 'https://upload.wikimedia.org/wikipedia/commons/d/dc/Grey-cap_Pygmy_Woodpecker_%28Dendrocopus_canicapillus%29_at_Jayanti%2C_Duars%2C_West_Bengal_W_IMG_5275.jpg',
+    '灰头绿啄木鸟': 'https://upload.wikimedia.org/wikipedia/commons/9/91/Picus_canus.jpg',
+    '大杜鹃': 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Cuculus_canorus.jpg',
+    '四声杜鹃': 'https://upload.wikimedia.org/wikipedia/commons/0/02/Indian_cuckoo_%28Cuculus_micropterus%29_46.jpg',
+    '红隼': 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Falco_tinnunculus.jpg',
+    '红脚隼': 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Falco_amurensis_1.jpg',
+    '游隼': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Falco_peregrinus.jpg',
+    '雀鹰': 'https://upload.wikimedia.org/wikipedia/commons/3/31/Accipiter_nisus.jpg',
+    '日本松雀鹰': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Inokashira_Park_Zoo_PC052955.jpg',
+    '苍鹰': 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Accipiter_gentilis.jpg',
+    '普通鵟': 'https://upload.wikimedia.org/wikipedia/commons/d/dc/Buteo_japonicus_108780228.jpg',
+    '大鵟': 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Buteo_hemilasius.jpg',
+    '白尾鹞': 'https://upload.wikimedia.org/wikipedia/commons/8/87/Circus_cyaneus.jpg',
+    '鹊鹞': 'https://upload.wikimedia.org/wikipedia/commons/f/fc/Female_Pied_Harrier_in_Flight_%28retouched%29.jpg',
+    '黑翅鸢': 'https://upload.wikimedia.org/wikipedia/commons/4/49/Elanus_caeruleus.jpg',
+    '白头鹞': 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Circus_aeruginosus.jpg',
+    '纵纹腹小鸮': 'https://upload.wikimedia.org/wikipedia/commons/d/dd/Athene_noctua.jpg',
+    '长耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Asio_otus.jpg',
+    '短耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Asio_flammeus.jpg',
+    '领鸺鹠': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Collared_Owlet_%28Glaucidium_brodiei%29_%2848027990903%29.jpg',
+    '斑头鸺鹠': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Asian_Barred_Owlet_in_Kaziranga_National_Park_March_2025_by_Tisha_Mukherjee_01.jpg',
+    '草鸮': 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Tyto_longimembris_from_Gould%2C_Birds_of_Asia.jpg',
+    '东方大苇莺': 'https://upload.wikimedia.org/wikipedia/commons/7/74/Oriental_Reed_Warbler_I_IMG_0246.jpg',
+    '黑眉苇莺': 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Acrocephalus_bistrigiceps.jpg',
+    '纯色山鹪莺': 'https://upload.wikimedia.org/wikipedia/commons/6/64/Plain_prinia_%2849385881393%29.jpg',
+    '棕扇尾莺': 'https://upload.wikimedia.org/wikipedia/commons/2/21/Cisticola_juncidis.jpg',
+    '小鸦鹃': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Lesser_Coucal_0A2A6107.jpg',
+    '噪鹃': 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Eudynamys_scolopaceus.jpg',
+    '八哥': 'https://upload.wikimedia.org/wikipedia/commons/8/83/Acridotheres_cristatellus.jpg',
+    '灰椋鸟': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Spodiopsar_cineraceus.jpg',
+    '丝光椋鸟': 'https://upload.wikimedia.org/wikipedia/commons/9/9b/Calling_Spodiopsar_sericeus.jpg',
+    '黑领椋鸟': 'https://upload.wikimedia.org/wikipedia/commons/6/68/Garrulax_pectoralis_-_Kaeng_Krachan.jpg',
+    '灰喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/0/00/Cyanopica_cyanus.jpg',
+    '喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/3/33/Pica_pica.jpg',
+    '达乌里寒鸦': 'https://upload.wikimedia.org/wikipedia/commons/9/96/Coloeus_dauuricus_MHNT.ZOO.2010.11.172.1.jpg',
+    '小嘴乌鸦': 'https://upload.wikimedia.org/wikipedia/commons/3/35/Corvus_corone.jpg',
+    '大嘴乌鸦': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Large-billed_Crow_in_Bhigwan_August_2025_by_Tisha_Mukherjee_01.jpg',
+    '白颈鸦': 'https://upload.wikimedia.org/wikipedia/commons/4/4b/20090908%E5%8E%A6%E9%97%A8-%E7%99%BD%E9%A2%88%E9%B8%A6.jpg',
+    '松鸦': 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Garrulus_glandarius.jpg',
+    '红尾水鸲': 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Rhyacornis_fuliginosus.jpg',
+    '白顶溪鸲': 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Chaimarrornis_leucocephalus_1_-_Doi_Inthanon.jpg',
+    '北红尾鸲': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Phoenicurus_auroreus.jpg',
+    '红喉姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Ficedula_parva.jpg',
+    '白眉姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Ficedula_zanthopygia_1.jpg',
+    '鸲姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/1/16/Ficedula_mugimaki_-_Khao_Yai.jpg',
+    '北灰鹟': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Muscicapa_dauurica_1.jpg',
+    '乌鹟': 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Muscicapa_sibirica.jpg',
+    '灰纹鹟': 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Muscicapa_griseisticta_MHNT.ZOO.2010.11.227.13.jpg',
+    '红喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/f/f7/Luscinia_calliope.jpg',
+    '蓝喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/5/54/Luscinia_svecica.jpg',
+    '黑枕黄鹂': 'https://upload.wikimedia.org/wikipedia/commons/7/78/Oriolus_chinensis.jpg',
+    '黑卷尾': 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Black_Drongo_in_Purulia_June_2025_by_Tisha_Mukherjee_02.jpg',
+    '灰卷尾': 'https://upload.wikimedia.org/wikipedia/commons/9/93/Dicrurus_leucophaeus_2.jpg',
+    '发冠卷尾': 'https://upload.wikimedia.org/wikipedia/commons/6/69/Dicrurus_hottentottus.jpg',
+    '寿带鸟': 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Naturalis_Biodiversity_Center_-_RMNH.AVES.136695_2_-_Terpsiphone_paradisi_affinis_%28Blyth%2C_1849%29_-_Monarchidae_-_bird_skin_specimen.jpeg',
+    '山麻雀': 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Russet_Sparrow_%28Passer_rutilans%29_%2847617083041%29.jpg',
+    '树麻雀': 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Passer_montanus.jpg',
+    '白鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/d/dd/Motacilla_alba.jpg',
+    '灰鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Motacilla_cinerea.jpg',
+    '黄头鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/6/6c/Motacilla_citreola.jpg',
+    '黄鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Eastern_Yellow_Wagtail_in_Baruipur_September_2025_by_Tisha_Mukherjee_01.jpg',
+    '小鹀': 'https://upload.wikimedia.org/wikipedia/commons/7/73/Emberiza_pusilla.jpg',
+    '黄眉鹀': 'https://upload.wikimedia.org/wikipedia/commons/d/d2/Emberiza_chrysophrys_Egg.jpg',
+    '白眉鹀': 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Tristram%27s_Bunting_9849.jpg',
+    '栗耳鹀': 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Emberiza_fucata.jpg',
+    '黄喉鹀': 'https://upload.wikimedia.org/wikipedia/commons/5/56/Emberiza_elegans.jpg',
+    '灰头鹀': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Emberiza_spodocephala.jpg',
+    '三道眉草鹀': 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Emberiza_cioides.jpg',
+    '燕雀': 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Fringilla_montifringilla.jpg',
+    '金翅雀': 'https://upload.wikimedia.org/wikipedia/commons/5/51/Chloris_sinica_MHNT_226_%C3%8Eles_Kouriles_HdB.jpg',
+    '黑头蜡嘴雀': 'https://upload.wikimedia.org/wikipedia/commons/9/97/Eophona_personata.jpg',
+    '黑尾蜡嘴雀': 'https://upload.wikimedia.org/wikipedia/commons/d/de/Eophona_migratoria.jpg',
+    '锡嘴雀': 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Coccothraustes_coccothraustes.jpg',
+    '苍头燕雀': 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Fringilla_coelebs.jpg',
+    '黄雀': 'https://upload.wikimedia.org/wikipedia/commons/5/5b/Spinus_spinus.jpg',
+    '红颈滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Calidris_ruficollis.jpg',
+    '青脚滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/7/75/Calidris_temminckii.jpg',
+    '弯嘴滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/c/cc/Calidris_ferruginea%2C_winter_adult%2C_Pak_Thale.jpg',
+    '黑腹滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Calidris_alpina.jpg',
+    '白腰草鹬': 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Common_Sandpiper_%28Actitis_hypoleucos%29%2C_Sfax%2C_Tunisia.jpg',
+    '林鹬': 'https://upload.wikimedia.org/wikipedia/commons/1/19/Tringa_glareola.jpg',
+    '青脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Tringa_nebularia.jpg',
+    '红脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Tringa_totanus.jpg',
+    '泽鹬': 'https://upload.wikimedia.org/wikipedia/commons/7/73/Tringa_stagnatilis.jpg',
+    '鹤鹬': 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Tringa_erythropus_2.jpg',
+    '矸鹬': 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Actitis_hypoleucos.jpg',
+    '扇尾沙锥': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gallinago_gallinago.jpg',
+    '针尾沙锥': 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Gallinago_stenura_-_Laem_Pak_Bia.jpg',
+    '勺嘴鹬': 'https://upload.wikimedia.org/wikipedia/commons/d/d7/Spoon-billed_Sandpiper_in_Bakkhali_April_2026_by_Tisha_Mukherjee_04.jpg',
+    '小青脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/2/20/TotanusHaughtoniSmit.jpg',
+    '遗鸥': 'https://upload.wikimedia.org/wikipedia/commons/3/31/Relict_Gull.jpg',
+};
+
+function getSpeciesImage(nameCn) {
+    return SPECIES_IMG[nameCn] || null;
+}
+
+function getLevelBg(level) {
+    if (!level) return 'rgba(255,255,255,0.4)';
+    if (level.includes('一级')) return '#e74c3c';
+    if (level.includes('二级')) return '#f39c12';
+    if (level.includes('三有')) return '#27ae60';
+    return 'rgba(255,255,255,0.4)';
+}
+
+function getLevelLabel(level) {
+    if (!level || level === '无') return '无保护';
+    return level;
+}
+
+function cardGradient(name) {
+    const palette = [
+        'linear-gradient(145deg,#2D5A3E,#1B3A2D)',
+        'linear-gradient(145deg,#1A4A6B,#0F3050)',
+        'linear-gradient(145deg,#3A5A6E,#1A3A50)',
+        'linear-gradient(145deg,#4A3A6E,#2A1A50)',
+        'linear-gradient(145deg,#6A3A2A,#3A1A0A)',
+        'linear-gradient(145deg,#1A5A5A,#0A3A3A)',
+    ];
+    if (!name) return palette[0];
+    let h = 0; for (let i=0;i<name.length;i++) h=name.charCodeAt(i)+((h<<5)-h);
+    return palette[Math.abs(h)%palette.length];
+}
+
+function renderPage(s) {
+    document.title = `${s.name_cn} | 黄河生态方舟`;
+    const iucn = s.iucn_status || { code:'LC',label:'无危',color:'#27ae60',desc:'种群稳定' };
+    const riskMap = { 'EN':80,'VU':55,'NT':30,'LC':10 };
+
+    document.getElementById('app').innerHTML = `
+        <div class="detail-hero">
+            ${s.cover_image || getSpeciesImage(s.name_cn)
+                ? `<div style="height:280px;position:relative;overflow:hidden;">
+                     <img src="${s.cover_image || getSpeciesImage(s.name_cn)}" alt="${s.name_cn}" style="width:100%;height:100%;object-fit:cover;">
+                     <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.65));"></div>
+                   </div>`
+                : `<div class="detail-hero-bg" style="background:${cardGradient(s.name_cn)}"></div>`
+            }
+            <div class="hero-overlay">
+                <div class="hero-badges">
+                    <span class="hero-badge" style="background:${getLevelBg(s.protection_level)}">${getLevelLabel(s.protection_level)}</span>
+                    <span class="hero-badge" style="background:${iucn.color}">${iucn.code} ${iucn.label}</span>
+                    ${s.order ? `<span class="hero-badge" style="background:rgba(255,255,255,0.2)">${s.order}</span>` : ''}
+                </div>
+                <div class="hero-title">${s.name_cn}</div>
+                <div class="hero-latin">${s.name_latin || ''}</div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="num">${s.observation_count || 0}</div>
+                <div class="lbl">观测次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">${s.last_observed || '—'}</div>
+                <div class="lbl">最新观测</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">${s.article_count || 0}</div>
+                <div class="lbl">相关文章</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" style="color:${iucn.color}">${iucn.code}</div>
+                <div class="lbl">IUCN等级</div>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="section-title"><i class="fas fa-paw"></i> 分类学信息</div>
+            <div class="taxonomy-grid">
+                <div class="taxonomy-item"><div class="t-lbl">中文名</div><div class="t-val">${s.name_cn}</div></div>
+                <div class="taxonomy-item"><div class="t-lbl">保护级别</div><div class="t-val">${getLevelLabel(s.protection_level)}</div></div>
+                <div class="taxonomy-item"><div class="t-lbl">目</div><div class="t-val">${s.order || '—'}</div></div>
+                <div class="taxonomy-item"><div class="t-lbl">科</div><div class="t-val">${s.family || '—'}</div></div>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="section-title"><i class="fas fa-globe-asia"></i> IUCN 濒危等级</div>
+            <div class="iucn-card">
+                <div class="iucn-code" style="background:${iucn.color}">${iucn.code}</div>
+                <div class="iucn-info">
+                    <div class="iucn-label">${iucn.label}</div>
+                    <div class="iucn-desc">${iucn.desc}</div>
+                    <div class="iucn-bar"><div class="iucn-bar-fill" style="width:${riskMap[iucn.code]||10}%;background:${iucn.color}"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="section-title"><i class="fas fa-leaf"></i> 分布与习性</div>
+            <div class="habit-text">${s.distribution_habit || '暂无详细分布与习性数据'}</div>
+        </div>
+
+        <div class="detail-card">
+            <div class="section-title"><i class="fas fa-bolt"></i> 快捷操作</div>
+            <div class="action-row">
+                <a href="/articles/?search=${encodeURIComponent(s.name_cn)}" class="action-btn articles">
+                    <i class="fas fa-newspaper"></i> 相关科普文章
+                </a>
+                <a href="/report/" class="action-btn report">
+                    <i class="fas fa-camera"></i> 上报该物种观测
+                </a>
+                <a href="#" id="galleryLink" class="action-btn gallery" target="_blank">
+                    <i class="fas fa-images"></i> 查看完整图库
+                </a>
+                <a href="/species/" class="action-btn list">
+                    <i class="fas fa-list"></i> 返回物种百科
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+async function init() {
+    const id = window.location.pathname.match(/\/species\/(\d+)\//)?.[1];
+    if (!id) {
+        document.getElementById('app').innerHTML = `<div class="error-msg"><h3>未找到物种ID</h3><a href="/species/">返回物种百科</a></div>`;
+        return;
+    }
+    try {
+        const res = await fetch(`${API}/species/${id}/`);
+        if (!res.ok) throw new Error('not found');
+        const s = await res.json();
+        renderPage(s);
+
+        // 设置"查看完整图库"链接
+        const galleryLink = document.getElementById('galleryLink');
+        if (galleryLink) {
+            galleryLink.href = '/gallery/?species_id=' + id;
+        }
+    } catch (e) {
+        document.getElementById('app').innerHTML = `<div class="error-msg"><i class="fas fa-search" style="font-size:48px;display:block;margin-bottom:16px"></i><h3>未找到该物种</h3><p style="margin-bottom:16px">可能已被删除或ID无效</p><a href="/species/">返回物种百科</a></div>`;
+    }
+}
+init();
+</script>
+</body>
+</html>

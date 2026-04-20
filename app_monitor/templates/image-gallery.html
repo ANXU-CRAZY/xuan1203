@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鸟类图库 | 黄河生态方舟</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1A1A2E;
+            --cream: #FAF7F2;
+            --warm: #F5F0E8;
+            --amber: #C8922A;
+            --amber-dark: #A67520;
+            --card-bg: #ffffff;
+            --text: #1C1C1C;
+            --muted: #7A7A8A;
+            --border: #EAE6DF;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.07);
+            --shadow-md: 0 8px 28px rgba(0,0,0,0.11);
+            --shadow-lg: 0 18px 56px rgba(0,0,0,0.17);
+            --moss: #4A8C6F;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+            background: var(--warm);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3 { font-family: 'Noto Serif SC', serif; }
+
+        .navbar {
+            background: rgba(26,26,46,0.97);
+            backdrop-filter: blur(16px);
+            padding: 0 28px; height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .navbar-brand {
+            display: flex; align-items: center; gap: 10px;
+            color: white; text-decoration: none; font-size: 17px; font-weight: 700;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .navbar-brand .logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--amber), #D4A853);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .navbar-links { display: flex; gap: 2px; align-items: center; }
+        .nav-btn {
+            padding: 6px 13px; border-radius: 8px;
+            color: rgba(255,255,255,0.7); text-decoration: none;
+            font-size: 13px; font-weight: 500; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
+        .nav-btn.active { color: var(--amber); background: rgba(200,146,42,0.12); }
+        .nav-btn i { font-size: 12px; }
+
+        .page-hero {
+            margin-top: 58px;
+            background: var(--ink);
+            padding: 52px 24px 0;
+            position: relative; overflow: hidden;
+        }
+        .page-hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 70%, rgba(200,146,42,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 30%, rgba(74,138,180,0.18) 0%, transparent 50%);
+        }
+        .page-hero::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(200,146,42,0.4), transparent);
+        }
+        .hero-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(200,146,42,0.15);
+            border: 1px solid rgba(200,146,42,0.3);
+            color: var(--amber); padding: 5px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+        .hero-title {
+            font-size: clamp(26px, 5vw, 42px); font-weight: 900;
+            color: white; line-height: 1.15; margin-bottom: 10px;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .hero-title em { color: var(--amber); font-style: normal; }
+        .hero-sub {
+            font-size: 14px; color: rgba(255,255,255,0.5);
+            max-width: 520px; line-height: 1.7; margin-bottom: 28px; font-weight: 300;
+        }
+        .hero-stats {
+            display: flex; gap: 0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .hero-stat {
+            flex: 1; padding: 14px 20px;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            text-align: center; position: relative;
+        }
+        .hero-stat:last-child { border-right: none; }
+        .hero-stat::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--amber); transform: scaleX(0); transition: transform 0.3s;
+        }
+        .hero-stat:hover::before { transform: scaleX(1); }
+        .hero-stat .num {
+            font-size: 24px; font-weight: 900; color: white; line-height: 1;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .hero-stat .lbl { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+        .filter-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 58px; z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .filter-inner {
+            max-width: 1100px; margin: 0 auto;
+            padding: 12px 24px;
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        }
+        .search-wrap { flex: 1; min-width: 180px; position: relative; }
+        .search-wrap i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--muted); font-size: 13px;
+        }
+        .search-wrap input {
+            width: 100%; padding: 9px 12px 9px 36px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            background: var(--cream); font-size: 13px; color: var(--text);
+            outline: none; transition: 0.2s; font-family: inherit;
+        }
+        .search-wrap input:focus {
+            border-color: var(--amber); background: white;
+            box-shadow: 0 0 0 3px rgba(200,146,42,0.1);
+        }
+        .search-wrap input::placeholder { color: #B8B0A8; }
+
+        .species-select-wrap { position: relative; min-width: 160px; }
+        .species-select {
+            width: 100%; padding: 9px 32px 9px 12px;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            background: var(--cream); font-size: 13px; color: var(--text);
+            outline: none; cursor: pointer; font-family: inherit; appearance: none;
+            transition: 0.2s;
+        }
+        .species-select:focus {
+            border-color: var(--amber); background: white;
+            box-shadow: 0 0 0 3px rgba(200,146,42,0.1);
+        }
+        .species-select-wrap::after {
+            content: ''; position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--muted);
+            pointer-events: none;
+        }
+
+        .filter-btn {
+            padding: 8px 16px; border-radius: 20px;
+            background: var(--cream);
+            border: 1.5px solid var(--border);
+            color: var(--muted); cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s;
+            font-family: inherit; white-space: nowrap;
+        }
+        .filter-btn:hover { border-color: var(--amber); color: var(--amber); }
+        .filter-btn.active { background: var(--ink); border-color: var(--ink); color: white; }
+
+        .gallery-container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+        .result-hint { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+        .result-hint span { color: var(--amber); font-weight: 700; }
+
+        .masonry-grid { columns: 4 220px; column-gap: 16px; }
+
+        .img-card {
+            break-inside: avoid; margin-bottom: 16px;
+            background: var(--card-bg); border-radius: 14px; overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .img-card:hover {
+            transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent;
+        }
+        .img-card:hover .img-overlay { opacity: 1; }
+
+        .img-thumb { width: 100%; position: relative; overflow: hidden; }
+        .img-thumb img {
+            width: 100%; display: block;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .img-card:hover .img-thumb img { transform: scale(1.05); }
+
+        .img-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: flex-end; padding: 12px;
+        }
+        .img-overlay-actions { display: flex; gap: 8px; }
+        .img-overlay-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; text-decoration: none;
+        }
+        .img-overlay-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .featured-badge {
+            position: absolute; top: 10px; left: 10px;
+            padding: 3px 8px; border-radius: 6px;
+            background: rgba(200,146,42,0.92);
+            color: white; font-size: 10px; font-weight: 700;
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .img-card-body { padding: 12px 14px; }
+        .img-species {
+            font-size: 14px; font-weight: 800; color: var(--ink);
+            font-family: 'Noto Serif SC', serif; margin-bottom: 4px;
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .img-species .latin { font-size: 11px; color: var(--muted); font-style: italic; font-weight: 400; }
+        .img-caption {
+            font-size: 12px; color: var(--muted); line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .img-meta { display: flex; align-items: center; justify-content: space-between; }
+        .source-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 6px;
+            font-size: 10px; font-weight: 700;
+            background: #F5F0E8; color: var(--amber-dark);
+        }
+        .source-badge.wikimedia { background: #E8F0E8; color: #3A7055; }
+        .source-badge.birdsourcing { background: #E8F0F8; color: #3A5A8C; }
+        .source-badge.ibc { background: #F8F0E8; color: #8C5A3A; }
+        .source-badge.xeno_canto { background: #F0E8F8; color: #6A3A8C; }
+        .source-badge.manual { background: #F0F8F0; color: #3A7A4A; }
+        .img-views { font-size: 11px; color: #C0BAB2; display: flex; align-items: center; gap: 4px; }
+
+        .lightbox-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,20,0.92);
+            backdrop-filter: blur(12px);
+            z-index: 3000;
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .lightbox-overlay.show { display: flex; }
+
+        .lightbox-content {
+            max-width: 900px; width: 100%;
+            background: var(--card-bg); border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 100px rgba(0,0,0,0.6);
+            animation: lbIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes lbIn {
+            from { opacity: 0; transform: scale(0.92) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .lb-img-wrap {
+            width: 100%; max-height: 65vh; overflow: hidden;
+            position: relative; background: #111;
+        }
+        .lb-img-wrap img {
+            width: 100%; max-height: 65vh; object-fit: contain; display: block;
+        }
+        .lb-close {
+            position: absolute; top: 14px; right: 14px;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); border: none; color: white;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: background 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .lb-close:hover { background: rgba(0,0,0,0.8); }
+        .lb-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); border: none; color: white;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: background 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .lb-nav:hover { background: rgba(0,0,0,0.8); }
+        .lb-prev { left: 12px; }
+        .lb-next { right: 12px; }
+
+        .lb-body { padding: 20px 24px; }
+        .lb-species {
+            font-size: 20px; font-weight: 900; color: var(--ink);
+            font-family: 'Noto Serif SC', serif; margin-bottom: 2px;
+        }
+        .lb-latin { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 10px; }
+        .lb-caption { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 14px; }
+        .lb-source-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .lb-source-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 8px;
+            font-size: 12px; font-weight: 700; color: white;
+        }
+        .lb-source-info { font-size: 12px; color: var(--muted); }
+        .lb-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+        .lb-action-btn {
+            flex: 1; min-width: 120px; padding: 10px 16px;
+            border-radius: 12px; text-decoration: none; font-size: 13px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .lb-action-btn.species {
+            background: linear-gradient(135deg, var(--moss), #3A7055); color: white;
+            box-shadow: 0 4px 14px rgba(74,140,111,0.35);
+        }
+        .lb-action-btn.external {
+            background: var(--cream); color: var(--ink); border: 1px solid var(--border);
+        }
+        .lb-action-btn:hover { transform: translateY(-2px); }
+        .lb-footer {
+            margin-top: 12px; font-size: 11px; color: #C0BAB2;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state i { font-size: 48px; color: var(--border); margin-bottom: 12px; }
+        .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+        .empty-state p { font-size: 13px; color: #C0BAB2; }
+
+        .load-more-btn {
+            display: block; width: 100%; padding: 14px;
+            background: var(--card-bg); border: 1.5px solid var(--border);
+            border-radius: 14px; font-size: 14px; font-weight: 700; color: var(--muted);
+            cursor: pointer; text-align: center; margin-top: 24px;
+            transition: all 0.2s; font-family: inherit;
+        }
+        .load-more-btn:hover { border-color: var(--amber); color: var(--amber); }
+        .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .skeleton-card {
+            break-inside: avoid; margin-bottom: 16px;
+            background: var(--card-bg); border-radius: 14px; overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .skeleton-img { height: 200px; background: #EEEAE3; }
+        .skeleton-body { padding: 12px 14px; }
+        .skeleton-line { height: 11px; background: #EEEAE3; border-radius: 6px; margin-bottom: 8px; }
+
+        @media (max-width: 768px) { .masonry-grid { columns: 2 150px; } }
+        @media (max-width: 480px) { .masonry-grid { columns: 1; } .lb-img-wrap img { max-height: 50vh; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/" class="navbar-brand">
+        <div class="logo"><i class="fas fa-images" style="color:white;font-size:14px"></i></div>
+        黄河生态方舟
+    </a>
+    <div class="navbar-links">
+        <a href="/" class="nav-btn"><i class="fas fa-map-marked-alt"></i> 大屏</a>
+        <a href="/report/" class="nav-btn"><i class="fas fa-camera"></i> 上报</a>
+        <a href="/species/" class="nav-btn"><i class="fas fa-book"></i> 物种百科</a>
+        <a href="/articles/" class="nav-btn"><i class="fas fa-newspaper"></i> 科普</a>
+        <a href="/gallery/" class="nav-btn active"><i class="fas fa-images"></i> 图库</a>
+        <a href="/profile/" class="nav-btn"><i class="fas fa-user"></i> 个人</a>
+    </div>
+</nav>
+
+<div class="page-hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow"><i class="fas fa-images"></i> 黄河湿地鸟类影像资料库</div>
+        <h1 class="hero-title">鸟类<em style="color:rgba(255,255,255,0.2)"> &middot; </em><em>图库</em></h1>
+        <p class="hero-sub">收录黄河湿地鸟类真实生态照片，标注来源信息，向摄影师与学术机构致敬。</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="num" id="totalImages">--</div>
+                <div class="lbl">精选图片</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num" id="totalSpecies">--</div>
+                <div class="lbl">收录物种</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num" id="totalSources">--</div>
+                <div class="lbl">图片来源</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num" id="totalViews">--</div>
+                <div class="lbl">总浏览量</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <div class="filter-inner">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="搜索物种名、图片说明..." oninput="applyFilters()">
+        </div>
+        <div class="species-select-wrap">
+            <select id="speciesFilter" class="species-select" onchange="applyFilters()">
+                <option value="">全部物种</option>
+            </select>
+        </div>
+        <button class="filter-btn active" data-source="" onclick="setSource(this)">全部来源</button>
+        <button class="filter-btn" data-source="wikimedia" onclick="setSource(this)">维基百科</button>
+        <button class="filter-btn" data-source="birdsourcing" onclick="setSource(this)">Birdsourcing</button>
+        <button class="filter-btn" data-source="ibc" onclick="setSource(this)">IBC</button>
+        <button class="filter-btn" data-source="manual" onclick="setSource(this)">本地上传</button>
+    </div>
+</div>
+
+<div class="gallery-container">
+    <div class="result-hint" id="resultHint" style="display:none">
+        找到 <span id="resultCount">0</span> 张图片
+    </div>
+    <div class="masonry-grid" id="galleryGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+        <i class="fas fa-image"></i>
+        <h3>暂无图片</h3>
+        <p>该分类下还没有图片</p>
+    </div>
+    <button class="load-more-btn" id="loadMoreBtn" style="display:none" onclick="loadMore()">
+        <i class="fas fa-arrow-down"></i> 加载更多
+    </button>
+</div>
+
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+        <div class="lb-img-wrap">
+            <img id="lb-img" src="" alt="">
+            <button class="lb-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+            <button class="lb-nav lb-prev" onclick="navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+            <button class="lb-nav lb-next" onclick="navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="lb-body">
+            <div class="lb-species" id="lb-species">--</div>
+            <div class="lb-latin" id="lb-latin">--</div>
+            <div class="lb-caption" id="lb-caption">--</div>
+            <div class="lb-source-row">
+                <span class="lb-source-badge" id="lb-source-badge">--</span>
+                <span class="lb-source-info" id="lb-author">--</span>
+            </div>
+            <div class="lb-actions">
+                <a id="lb-species-link" href="#" class="lb-action-btn species" target="_blank">
+                    <i class="fas fa-book"></i> 查看物种百科
+                </a>
+                <a id="lb-source-link" href="#" class="lb-action-btn external" target="_blank" style="display:none">
+                    <i class="fas fa-external-link-alt"></i> 查看原图
+                </a>
+            </div>
+            <div class="lb-footer">
+                <span id="lb-views"><i class="fas fa-eye"></i> 0 浏览</span>
+                <span id="lb-counter"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var API = '/api';
+var allImages = [];
+var filteredImages = [];
+var currentSpecies = '';
+var currentSource = '';
+var searchKeyword = '';
+var page = 1;
+var PAGE_SIZE = 24;
+var speciesList = [];
+var lightboxIndex = 0;
+
+var SOURCE_META = {
+    'wikimedia':    { label: '维基百科',         cls: 'wikimedia',    icon: 'fab fa-wikipedia-w',   color: '#3A7055' },
+    'birdsourcing': { label: 'Birdsourcing',   cls: 'birdsourcing', icon: 'fas fa-globe',        color: '#3A5A8C' },
+    'ibc':         { label: 'Internet Bird Coll.', cls: 'ibc',     icon: 'fas fa-bird',         color: '#8C5A3A' },
+    'xeno_canto':  { label: 'Xeno-Canto',     cls: 'xeno_canto',  icon: 'fas fa-microphone',   color: '#6A3A8C' },
+    'npc':         { label: '中国鸟类图库',   cls: 'npc',         icon: 'fas fa-dragon',       color: '#4A6A8C' },
+    'manual':      { label: '本地上传',       cls: 'manual',       icon: 'fas fa-upload',       color: '#3A7A4A' },
+    'other':       { label: '其他来源',       cls: 'other',        icon: 'fas fa-link',         color: '#888888' },
+};
+
+function getSourceMeta(source) {
+    return SOURCE_META[source] || SOURCE_META['other'];
+}
+
+function renderCards(images) {
+    var grid = document.getElementById('galleryGrid');
+    var empty = document.getElementById('emptyState');
+    var hint = document.getElementById('resultHint');
+
+    if (images.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        hint.style.display = 'none';
+        return;
+    }
+    empty.style.display = 'none';
+    hint.style.display = 'block';
+    document.getElementById('resultCount').textContent = images.length;
+
+    var html = '';
+    for (var i = 0; i < images.length; i++) {
+        var img = images[i];
+        var sm = getSourceMeta(img.source);
+        var featuredHtml = img.is_featured
+            ? '<div class="featured-badge"><i class="fas fa-star"></i> 精选</div>'
+            : '';
+        var externalLinkHtml = img.source_url
+            ? '<a class="img-overlay-btn" href="' + img.source_url + '" target="_blank" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i></a>'
+            : '';
+        var latinHtml = img.species_latin
+            ? '<span class="latin">' + img.species_latin + '</span>'
+            : '';
+        var captionHtml = img.caption ? img.caption : '';
+
+        html += '<div class="img-card" onclick="openLightbox(' + i + ')">' +
+            '<div class="img-thumb">' +
+                '<img src="' + img.full_url + '" alt="' + img.species_name + '" loading="lazy"' +
+                    ' onerror="this.style.display=\'none\'; var errDiv=document.createElement(\'div\');' +
+                    'errDiv.style.cssText=\'width:100%;height:180px;background:#EEEAE3;display:flex;align-items:center;justify-content:center;color:#C0BAB2;font-size:36px;\';' +
+                    'errDiv.innerHTML=\'<i class="fas fa-image"></i>\';' +
+                    'this.parentNode.appendChild(errDiv);">' +
+                '<div class="img-overlay">' +
+                    '<div class="img-overlay-actions">' +
+                        '<button class="img-overlay-btn" onclick="event.stopPropagation(); openLightbox(' + i + ')"><i class="fas fa-expand"></i></button>' +
+                        externalLinkHtml +
+                    '</div>' +
+                '</div>' +
+                featuredHtml +
+            '</div>' +
+            '<div class="img-card-body">' +
+                '<div class="img-species">' + img.species_name + latinHtml + '</div>' +
+                '<div class="img-caption">' + captionHtml + '</div>' +
+                '<div class="img-meta">' +
+                    '<span class="source-badge ' + sm.cls + '"><i class="' + sm.icon + '"></i> ' + sm.label + '</span>' +
+                    '<span class="img-views"><i class="fas fa-eye"></i> ' + (img.views || 0) + '</span>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+    grid.innerHTML = html;
+}
+
+function openLightbox(idx) {
+    lightboxIndex = idx;
+    var img = filteredImages[idx];
+    if (!img) return;
+    var sm = getSourceMeta(img.source);
+
+    document.getElementById('lb-img').src = img.full_url;
+    document.getElementById('lb-species').textContent = img.species_name;
+    document.getElementById('lb-latin').textContent = img.species_latin || '';
+    document.getElementById('lb-caption').textContent = img.caption || '暂无说明';
+    document.getElementById('lb-views').innerHTML = '<i class="fas fa-eye"></i> ' + (img.views || 0) + ' 浏览';
+
+    var badge = document.getElementById('lb-source-badge');
+    badge.innerHTML = '<i class="' + sm.icon + '"></i> ' + sm.label;
+    badge.style.background = sm.color;
+
+    document.getElementById('lb-author').textContent = img.source_author ? '  ' + img.source_author : '';
+    document.getElementById('lb-species-link').href = '/species/?search=' + encodeURIComponent(img.species_name);
+
+    var srcLink = document.getElementById('lb-source-link');
+    if (img.source_url) {
+        srcLink.href = img.source_url;
+        srcLink.style.display = 'flex';
+    } else {
+        srcLink.style.display = 'none';
+    }
+
+    document.getElementById('lb-counter').textContent = (idx + 1) + ' / ' + filteredImages.length;
+    document.getElementById('lightbox').classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    fetch(API + '/species-images/' + img.id + '/view_image/', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            img.views = d.views || ((img.views || 0) + 1);
+            document.getElementById('lb-views').innerHTML = '<i class="fas fa-eye"></i> ' + img.views + ' 浏览';
+        })
+        .catch(function() {});
+}
+
+function closeLightbox(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('lightbox').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function navigateLightbox(dir) {
+    lightboxIndex = (lightboxIndex + dir + filteredImages.length) % filteredImages.length;
+    openLightbox(lightboxIndex);
+}
+
+function setSource(el) {
+    currentSource = el.dataset.source;
+    var btns = document.querySelectorAll('.filter-btn');
+    for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+    el.classList.add('active');
+    page = 1;
+    applyFilters();
+}
+
+function applyFilters() {
+    searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    currentSpecies = document.getElementById('speciesFilter').value;
+
+    filteredImages = allImages.filter(function(img) {
+        if (currentSource && img.source !== currentSource) return false;
+        if (currentSpecies && String(img.species_id) !== currentSpecies) return false;
+        if (searchKeyword) {
+            var kw = searchKeyword;
+            return (img.species_name && img.species_name.toLowerCase().indexOf(kw) !== -1) ||
+                   (img.caption && img.caption.toLowerCase().indexOf(kw) !== -1) ||
+                   (img.source_author && img.source_author.toLowerCase().indexOf(kw) !== -1);
+        }
+        return true;
+    });
+
+    page = 1;
+    renderCards(filteredImages.slice(0, PAGE_SIZE));
+    var loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (filteredImages.length > PAGE_SIZE) {
+        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.innerHTML = '<i class="fas fa-arrow-down"></i> 加载更多';
+    } else {
+        loadMoreBtn.style.display = 'none';
+    }
+}
+
+function loadMore() {
+    page++;
+    var btn = document.getElementById('loadMoreBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+
+    setTimeout(function() {
+        renderCards(filteredImages.slice(0, page * PAGE_SIZE));
+        btn.disabled = false;
+        if (filteredImages.length > page * PAGE_SIZE) {
+            btn.innerHTML = '<i class="fas fa-arrow-down"></i> 加载更多';
+        } else {
+            btn.innerHTML = '已加载全部';
+            btn.style.display = 'none';
+        }
+    }, 400);
+}
+
+function populateSpeciesSelect() {
+    var select = document.getElementById('speciesFilter');
+    var unique = {};
+    for (var i = 0; i < allImages.length; i++) {
+        var img = allImages[i];
+        if (!unique[img.species_id]) {
+            unique[img.species_id] = { id: img.species_id, name: img.species_name };
+        }
+    }
+    speciesList = Object.keys(unique).map(function(k) { return unique[k]; });
+    speciesList.sort(function(a, b) { return a.name.localeCompare(b.name, 'zh'); });
+
+    var optionsHtml = '<option value="">全部物种</option>';
+    for (var j = 0; j < speciesList.length; j++) {
+        var s = speciesList[j];
+        optionsHtml += '<option value="' + s.id + '">' + s.name + '</option>';
+    }
+    select.innerHTML = optionsHtml;
+}
+
+async function loadGallery() {
+    var grid = document.getElementById('galleryGrid');
+    var skeletons = '';
+    for (var s = 0; s < 8; s++) {
+        skeletons += '<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line" style="width:50%"></div><div class="skeleton-line" style="width:80%"></div></div></div>';
+    }
+    grid.innerHTML = skeletons;
+
+    try {
+        var res = await fetch(API + '/species-images/');
+        var data = await res.json();
+        allImages = data.results || data || [];
+        filteredImages = allImages.slice();
+
+        var uniqueSpeciesCount = 0;
+        var speciesMap = {};
+        var sourceSet = {};
+        var totalViews = 0;
+        for (var i = 0; i < allImages.length; i++) {
+            var img = allImages[i];
+            totalViews += (img.views || 0);
+            sourceSet[img.source] = true;
+            if (!speciesMap[img.species_id]) {
+                speciesMap[img.species_id] = true;
+                uniqueSpeciesCount++;
+            }
+        }
+
+        document.getElementById('totalImages').textContent = allImages.length;
+        document.getElementById('totalSpecies').textContent = uniqueSpeciesCount;
+        document.getElementById('totalSources').textContent = Object.keys(sourceSet).length;
+        document.getElementById('totalViews').textContent = totalViews.toLocaleString();
+
+        populateSpeciesSelect();
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var spName = urlParams.get('species');
+        var spId = urlParams.get('species_id');
+        if (spId) {
+            document.getElementById('speciesFilter').value = spId;
+            applyFilters();
+        } else if (spName) {
+            for (var j = 0; j < speciesList.length; j++) {
+                if (speciesList[j].name.indexOf(spName) !== -1) {
+                    document.getElementById('speciesFilter').value = speciesList[j].id;
+                    break;
+                }
+            }
+            applyFilters();
+        } else {
+            applyFilters();
+        }
+
+    } catch (err) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-wifi"></i><h3>数据加载失败</h3><p>请检查网络连接后刷新重试</p></div>';
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('lightbox').classList.contains('show')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(1);
+});
+
+loadGallery();
+</script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 | 黄河生态方舟</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --c-aqua: #00ADB5;
+            --c-green: #2ECC71;
+            --c-orange: #F39C12;
+            --c-red: #E74C3C;
+            --c-dark: #2C3E50;
+            --bg-glass: rgba(255, 255, 255, 0.96);
+            --shadow: 0 8px 32px rgba(0,0,0,0.12);
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #e8f6f7 0%, #d4edf0 50%, #c5e6e8 100%);
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--c-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--c-aqua);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .avatar-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--c-aqua), #008c93);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .avatar-edit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .avatar-wrap:hover .avatar-edit-overlay {
+            display: flex;
+        }
+
+        .main-content {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--bg-glass);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--c-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 用户信息卡片 */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--c-aqua);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-avatar .placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--c-aqua), #008c93);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h2 {
+            font-size: 22px;
+            color: var(--c-dark);
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--c-aqua);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* 编辑资料表单 */
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--c-aqua);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--c-aqua), #008c93);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 18px rgba(0,173,181,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* 观测记录列表 */
+        .record-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .record-tab {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .record-tab.active {
+            border-color: var(--c-aqua);
+            background: var(--c-aqua);
+            color: white;
+        }
+
+        .record-list {
+            list-style: none;
+        }
+
+        .record-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+        .record-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f0f0f0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .record-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .record-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .record-name {
+            font-weight: 700;
+            color: var(--c-dark);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .record-meta {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .record-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .btn-edit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-delete {
+            background: #fbe9e7;
+            color: #d32f2f;
+        }
+
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* 隐藏的文件输入 */
+        #avatarInput {
+            display: none;
+        }
+
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .toast.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .profile-stats {
+                justify-content: center;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .record-item {
+                flex-wrap: wrap;
+            }
+            .record-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="brand">
+        <i class="fas fa-dragon" style="color: var(--c-aqua)"></i>
+        黄河生态方舟
+    </div>
+    <div class="user-info">
+        <span id="navUsername" style="font-size:14px;color:#555;font-weight:500"></span>
+        <div class="avatar-wrap" onclick="logout()">
+            <div id="navAvatar" class="avatar-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="avatar-edit-overlay">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <!-- 用户信息卡片 -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-user-circle" style="color: var(--c-aqua)"></i>
+            个人资料
+        </div>
+        <div class="profile-header">
+            <div class="profile-avatar" onclick="$('#avatarInput').click()">
+                <div id="profileAvatar" class="placeholder">
+                    <i class="fas fa-user" style="font-size:28px;color:white"></i>
+                </div>
+                <div class="avatar-edit-overlay" style="border-radius:50%">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <h2 id="dispUsername">--</h2>
+                <p id="dispEmail"><i class="fas fa-envelope" style="margin-right:5px;color:#aaa"></i> --</p>
+                <p id="dispJoined" style="font-size:12px"><i class="fas fa-clock" style="margin-right:5px;color:#aaa"></i> --</p>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="statScore">0</div>
+                        <div class="stat-label">积分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">总记录</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="statApproved">0</div>
+                        <div class="stat-label">已通过</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
+    </div>
+
+    <!-- 编辑资料卡片 -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-edit" style="color: var(--c-orange)"></i>
+            编辑资料
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="editUsername" disabled placeholder="用户名不可修改">
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="editEmail" placeholder="用于找回密码">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="loadProfile()">重置</button>
+            <button class="btn btn-primary" onclick="saveProfile()">保存修改</button>
+        </div>
+    </div>
+
+    <!-- 我的观测记录 -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-list" style="color: var(--c-green)"></i>
+            我的观测记录
+            <span style="font-weight:400;font-size:12px;color:#aaa;margin-left:auto">仅显示本人上传的记录</span>
+        </div>
+
+        <div class="record-tabs">
+            <button class="record-tab active" onclick="filterRecords('all')">全部</button>
+            <button class="record-tab" onclick="filterRecords('pending')">待审核</button>
+            <button class="record-tab" onclick="filterRecords('approved')">已通过</button>
+            <button class="record-tab" onclick="filterRecords('rejected')">已驳回</button>
+        </div>
+
+        <ul class="record-list" id="recordList">
+            <li class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <div>暂无观测记录</div>
+                <div style="font-size:12px;margin-top:8px">去<a href="/report/" style="color:var(--c-aqua)">上报</a>一条吧！</div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- 消息提示 -->
+<div id="toast" class="toast"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const API = '/api';
+    const TOKEN_KEY = 'yb_token';
+    const USER_KEY = 'yb_user';
+    let currentFilter = 'all';
+    let myRecords = [];
+
+    function getToken() {
+        return localStorage.getItem(TOKEN_KEY);
+    }
+
+    function getUser() {
+        try {
+            return JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+        } catch { return {}; }
+    }
+
+    function isLoggedIn() {
+        return !!getToken();
+    }
+
+    function checkAuth() {
+        if (!isLoggedIn()) {
+            window.location.href = '/login/';
+            return false;
+        }
+        return true;
+    }
+
+    function toast(msg, type) {
+        const t = $('#toast').text(msg).removeClass('success error').addClass(type || 'success').addClass('show');
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => t.removeClass('show'), 3000);
+    }
+
+    function loadProfile() {
+        if (!checkAuth()) return;
+        const token = getToken();
+        const user = getUser();
+
+        // 显示用户名
+        $('#dispUsername').text(user.username || '--');
+        $('#navUsername').text(user.username || '--');
+        $('#editUsername').val(user.username || '');
+        $('#editEmail').val(user.email || '');
+
+        // 显示头像
+        const avatarUrl = user.avatar;
+        const initial = (user.username || 'U')[0].toUpperCase();
+        if (avatarUrl) {
+            $('#profileAvatar').html(`<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover">`);
+            $('#navAvatar').html(`<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover">`);
+        } else {
+            $('#profileAvatar').html(`<div style="width:100%;height:100%;background:linear-gradient(135deg,#00ADB5,#008c93);display:flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:bold">${initial}</div>`);
+            $('#navAvatar').html(`<div style="width:100%;height:100%;background:linear-gradient(135deg,#00ADB5,#008c93);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:bold">${initial}</div>`);
+        }
+
+        // 从 API 拉取最新数据
+        $.ajax({
+            url: API + '/profiles/me/',
+            method: 'GET',
+            headers: { 'Authorization': 'Token ' + token },
+            success: function(data) {
+                $('#statScore').text(data.score || 0);
+                localStorage.setItem(USER_KEY, JSON.stringify(data));
+                loadRecords();
+            },
+            error: function() {
+                loadRecords();
+            }
+        });
+    }
+
+    function loadRecords() {
+        const token = getToken();
+        // 只拉自己的记录（用 uploader 过滤）
+        $.ajax({
+            url: API + '/observations/',
+            method: 'GET',
+            headers: { 'Authorization': 'Token ' + token },
+            success: function(res) {
+                // 过滤只显示当前用户的记录
+                const userId = getUser().id;
+                myRecords = (res.results || res).filter(r => r.uploader_name === getUser().username || r.uploader === userId);
+                updateStats();
+                renderRecords(myRecords);
+            },
+            error: function() {
+                toast('加载记录失败', 'error');
+            }
+        });
+    }
+
+    function updateStats() {
+        $('#statTotal').text(myRecords.length);
+        $('#statApproved').text(myRecords.filter(r => r.status === 'approved').length);
+    }
+
+    function filterRecords(filter) {
+        currentFilter = filter;
+        $('.record-tab').removeClass('active');
+        $(`.record-tab`).eq(filter === 'all' ? 0 : filter === 'pending' ? 1 : filter === 'approved' ? 2 : 3).addClass('active');
+        const filtered = filter === 'all' ? myRecords : myRecords.filter(r => r.status === filter);
+        renderRecords(filtered);
+    }
+
+    function renderRecords(records) {
+        if (!records || records.length === 0) {
+            $('#recordList').html(`
+                <li class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <div>暂无观测记录</div>
+                    <div style="font-size:12px;margin-top:8px">去<a href="/report/" style="color:var(--c-aqua)">上报</a>一条吧！</div>
+                </li>
+            `);
+            return;
+        }
+
+        const html = records.map(r => {
+            const statusMap = { pending: ['待审核', 'status-pending'], approved: ['已通过', 'status-approved'], rejected: ['已驳回', 'status-rejected'] };
+            const [sText, sClass] = statusMap[r.status] || ['未知', ''];
+            const imgTag = r.image
+                ? `<img src="${r.image}" onerror="this.outerHTML='<i class=\\'fas fa-camera\\' style=\\'color:#ccc;font-size:20px\\'></i>'">`
+                : `<i class="fas fa-camera" style="color:#ccc;font-size:20px"></i>`;
+            const editBtn = r.status !== 'approved'
+                ? `<button class="btn-icon btn-edit" title="编辑" onclick="editRecord(${r.id})"><i class="fas fa-edit"></i></button>`
+                : '';
+            const delBtn = `<button class="btn-icon btn-delete" title="删除" onclick="deleteRecord(${r.id})"><i class="fas fa-trash"></i></button>`;
+
+            return `
+                <li class="record-item">
+                    <div class="record-img">${imgTag}</div>
+                    <div class="record-info">
+                        <div class="record-name">${r.species_name || '未知物种'} <span class="record-status ${sClass}">${sText}</span></div>
+                        <div class="record-meta">
+                            <span><i class="fas fa-map-marker" style="color:var(--c-aqua)"></i> ${r.zone_name || '--'}</span>
+                            <span><i class="fas fa-calendar" style="color:var(--c-orange)"></i> ${r.observation_time || '--'}</span>
+                            <span><i class="fas fa-layer-group" style="color:var(--c-green)"></i> ${r.count || 1}只</span>
+                        </div>
+                    </div>
+                    <div class="record-actions">${editBtn}${delBtn}</div>
+                </li>
+            `;
+        }).join('');
+
+        $('#recordList').html(html);
+    }
+
+    function saveProfile() {
+        const token = getToken();
+        const email = $('#editEmail').val().trim();
+
+        $.ajax({
+            url: API + '/profiles/update_profile/',
+            method: 'PUT',
+            headers: { 'Authorization': 'Token ' + token, 'Content-Type': 'application/json' },
+            data: JSON.stringify({ email }),
+            success: function() {
+                toast('资料更新成功', 'success');
+                loadProfile();
+            },
+            error: function(xhr) {
+                toast(xhr.responseJSON ? Object.values(xhr.responseJSON).flat().join('；') : '更新失败', 'error');
+            }
+        });
+    }
+
+    function uploadAvatar(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const token = getToken();
+        $.ajax({
+            url: API + '/profiles/me/avatar/',
+            method: 'POST',
+            headers: { 'Authorization': 'Token ' + token },
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                toast('头像上传成功', 'success');
+                loadProfile();
+            },
+            error: function() {
+                toast('头像上传失败', 'error');
+            }
+        });
+    }
+
+    function deleteRecord(id) {
+        if (!confirm('确定要删除这条观测记录吗？')) return;
+        const token = getToken();
+        $.ajax({
+            url: API + '/observations/' + id + '/',
+            method: 'DELETE',
+            headers: { 'Authorization': 'Token ' + token },
+            success: function() {
+                toast('删除成功', 'success');
+                loadRecords();
+            },
+            error: function() {
+                toast('删除失败', 'error');
+            }
+        });
+    }
+
+    function editRecord(id) {
+        // 简单的编辑：跳转到上报页面（带参数）
+        window.location.href = '/report/?edit=' + id;
+    }
+
+    function logout() {
+        if (!confirm('确定要退出登录吗？')) return;
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        window.location.href = '/login/';
+    }
+
+    // 页面加载时初始化
+    $(function() {
+        if (!checkAuth()) return;
+        loadProfile();
+    });
+</script>
+</body>
+</html>

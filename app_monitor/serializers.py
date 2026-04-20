@@ -1,7 +1,76 @@
 from rest_framework import serializers
 # 引入所有需要的模型
-from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile
+from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+
+
+# ==========================================
+# 0. 用户注册序列化器
+# ==========================================
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'password_confirm']
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({"password_confirm": "两次密码输入不一致"})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        return User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password']
+        )
+
+
+# ==========================================
+# 0b. 物种列表序列化器
+# ==========================================
+class SpeciesInfoSerializer(serializers.ModelSerializer):
+    observation_count = serializers.SerializerMethodField()
+    last_observed = serializers.SerializerMethodField()
+    iucn_status = serializers.SerializerMethodField()
+    article_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpeciesInfo
+        fields = [
+            'id', 'name_cn', 'name_latin', 'order', 'family',
+            'protection_level', 'distribution_habit',
+            'observation_count', 'last_observed', 'iucn_status', 'article_count'
+        ]
+
+    def get_observation_count(self, obj):
+        return ObservationRecord.objects.filter(species=obj, status='approved').count()
+
+    def get_last_observed(self, obj):
+        latest = ObservationRecord.objects.filter(
+            species=obj,
+            status='approved'
+        ).order_by('-observation_time').first()
+        if latest and latest.observation_time:
+            return latest.observation_time.strftime('%Y-%m-%d')
+        return None
+
+    def get_iucn_status(self, obj):
+        level = obj.protection_level or ''
+        if '一级' in level or 'Ⅰ' in level:
+            return {'code': 'EN', 'label': '濒危', 'color': '#e74c3c', 'desc': '野外濒危物种，数量极为稀少'}
+        if '二级' in level or 'Ⅱ' in level:
+            return {'code': 'VU', 'label': '易危', 'color': '#f39c12', 'desc': '易受威胁，需保护关注'}
+        if '三有' in level:
+            return {'code': 'NT', 'label': '近危', 'color': '#3498db', 'desc': '数量下降，需监控'}
+        return {'code': 'LC', 'label': '无危', 'color': '#27ae60', 'desc': '种群稳定，无灭绝风险'}
+
+    def get_article_count(self, obj):
+        return 1
 
 
 # ==========================================

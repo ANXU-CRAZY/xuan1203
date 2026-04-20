@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生态浮岛 | 黄河生态方舟</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="../static/app_monitor/css/games.css">
+    <style>
+        .toolbar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .tool-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: rgba(255,255,255,0.9);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .tool-btn:hover {
+            transform: scale(1.05);
+        }
+        .tool-btn.selected {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        .tool-btn span {
+            font-size: 9px;
+            margin-top: 2px;
+            color: #333;
+        }
+        .stats-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            z-index: 10;
+        }
+        .stats-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+        .balance-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 30px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .balance-ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border-radius: 50%;
+            top: 5px;
+            left: 90px;
+            transition: left 0.3s;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        .balance-needle {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            left: 50%;
+            background: #FF5722;
+        }
+        .inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        .inv-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 8px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .inv-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .inv-item.selected {
+            background: var(--c-aqua);
+        }
+        .inv-item .count {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .diversity-bar {
+            width: 120px;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .diversity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s;
+        }
+        .wave-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            overflow: hidden;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-header">
+            <div class="game-title">
+                <i class="fas fa-water"></i>
+                生态浮岛
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/" style="color: var(--c-dark); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+            </div>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="gameCanvas" class="game-canvas"></canvas>
+
+            <div class="toolbar">
+                <button class="tool-btn selected" data-tool="platform" title="浮动框架">
+                    <i class="fas fa-square"></i>
+                    <span>框架</span>
+                </button>
+                <button class="tool-btn" data-tool="plant" title="水生植物">
+                    <i class="fas fa-seedling"></i>
+                    <span>植物</span>
+                </button>
+                <button class="tool-btn" data-tool="animal" title="动物">
+                    <i class="fas fa-fish"></i>
+                    <span>动物</span>
+                </button>
+                <button class="tool-btn" data-tool="remove" title="移除">
+                    <i class="fas fa-trash"></i>
+                    <span>移除</span>
+                </button>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat-row">
+                    <span><i class="fas fa-balance-left" style="color: #FFD700;"></i> 平衡度</span>
+                    <span id="balanceVal">100%</span>
+                </div>
+                <div class="stat-row">
+                    <span><i class="fas fa-paw" style="color: #4CAF50;"></i> 生物多样性</span>
+                    <div class="diversity-bar">
+                        <div class="diversity-fill" id="diversityBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span><i class="fas fa-star" style="color: #FFD700;"></i> 得分</span>
+                    <span id="scoreDisplay">0</span>
+                </div>
+            </div>
+
+            <div class="balance-indicator">
+                <div class="balance-needle"></div>
+                <div class="balance-ball" id="balanceBall"></div>
+            </div>
+
+            <div class="inventory" id="inventory">
+                <!-- 由JS生成 -->
+            </div>
+
+            <div class="game-overlay" id="startOverlay">
+                <h2><i class="fas fa-water"></i> 生态浮岛搭建</h2>
+                <p style="color: #666;">拖拽组件搭建稳定的生态系统</p>
+                
+                <div style="margin: 15px 0; text-align: left; padding: 0 20px; font-size: 13px; color: #555;">
+                    <p><i class="fas fa-mouse" style="color: var(--c-aqua);"></i> 点击放置组件，拖拽调整位置</p>
+                    <p><i class="fas fa-balance-scale" style="color: #FFD700;"></i> 保持浮岛平衡，太偏会倾覆</p>
+                    <p><i class="fas fa-leaf" style="color: #4CAF50;"></i> 合理搭配植物和动物提高多样性</p>
+                    <p><i class="fas fa-trophy" style="color: #FF5722;"></i> 达到100%多样性获得高评分</p>
+                </div>
+                <button class="start-btn" style="margin-top: 15px;" onclick="floatingIsland.start()">
+                    <i class="fas fa-play"></i> 开始搭建
+                </button>
+            </div>
+
+            <div class="game-overlay" id="winOverlay" style="display: none;">
+                <div style="text-align: center;">
+                    <h2 style="color: #4CAF50;"><i class="fas fa-trophy"></i> 生态系统完成!</h2>
+                    <p style="font-size: 36px; margin: 15px 0;">
+                        <i class="fas fa-star" style="color: #FFD700;"></i>
+                        <span id="winScore">0</span>
+                        <i class="fas fa-star" style="color: #FFD700;"></i>
+                    </p>
+                    <p id="ecosystemStatus">完美的湿地生态系统!</p>
+                    <p style="font-size: 13px; color: #888;">
+                        生物多样性: <span id="finalDiversity">0%</span>
+                    </p>
+                    <button class="start-btn" style="margin-top: 20px;" onclick="floatingIsland.restart()">
+                        <i class="fas fa-redo"></i> 再建一座
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="margin-top: 15px; text-align: center;">
+            <h4 style="color: var(--c-dark); margin-bottom: 10px;">
+                <i class="fas fa-lightbulb" style="color: #FFD700;"></i> 生态小贴士
+            </h4>
+            <p style="color: #666; font-size: 13px; line-height: 1.8;">
+                浮岛中央放置重物（如框架、石头），四周放置轻物（如植物）<br>
+                不同生物会形成共生关系：荷花吸引蜻蜓，蜻蜓吸引青蛙，青蛙吸引蛇...
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const inventoryItems = {
+            platform: [
+                { id: 'wood', name: '木框架', icon: 'fa-square', color: '#8B4513', weight: 30, size: 80 },
+                { id: 'plastic', name: '塑料浮筒', icon: 'fa-circle', color: '#4169E1', weight: 15, size: 60 },
+                { id: 'bamboo', name: '竹筏', icon: 'fa-grip-lines', color: '#DEB887', weight: 25, size: 70 }
+            ],
+            plant: [
+                { id: 'lotus', name: '荷花', icon: 'fa-circle', color: '#FF69B4', weight: 5, size: 40, diversity: 10 },
+                { id: 'reed', name: '芦苇', icon: 'fa-long-arrow-alt-up', color: '#556B2F', weight: 3, size: 50, diversity: 15 },
+                { id: 'watergrass', name: '水草', icon: 'fa-leaf', color: '#228B22', weight: 2, size: 30, diversity: 8 },
+                { id: 'cattail', name: '香蒲', icon: 'fa-fire', color: '#8B4513', weight: 4, size: 45, diversity: 12 }
+            ],
+            animal: [
+                { id: 'fish', name: '小鱼', icon: 'fa-fish', color: '#1E90FF', weight: 3, size: 25, diversity: 20 },
+                { id: 'frog', name: '青蛙', icon: 'fa-frog', color: '#32CD32', weight: 4, size: 30, diversity: 18 },
+                { id: 'dragonfly', name: '蜻蜓', icon: 'fa-feather', color: '#00CED1', weight: 1, size: 20, diversity: 10 },
+                { id: 'bird', name: '候鸟', icon: 'fa-dove', color: '#DDA0DD', weight: 5, size: 35, diversity: 25 }
+            ]
+        };
+
+        const floatingIsland = {
+            canvas: null,
+            ctx: null,
+            isRunning: false,
+            score: 0,
+            balance: 100,
+            diversity: 0,
+            currentTool: 'platform',
+            selectedItem: 0,
+            components: [],
+            draggedComponent: null,
+            dragOffset: { x: 0, y: 0 },
+            frameCount: 0,
+            animationId: null,
+            targetDiversity: 100,
+
+            init: function() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 工具栏点击
+                $('.tool-btn').click((e) => {
+                    const tool = $(e.currentTarget).data('tool');
+                    this.selectTool(tool);
+                });
+
+                // 画布点击
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+
+                this.renderInventory();
+                this.drawStaticScene();
+            },
+
+            resizeCanvas: function() {
+                const container = document.getElementById('canvasContainer');
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+            },
+
+            selectTool: function(tool) {
+                this.currentTool = tool;
+                this.selectedItem = 0;
+                $('.tool-btn').removeClass('selected');
+                $(`.tool-btn[data-tool="${tool}"]`).addClass('selected');
+                this.renderInventory();
+            },
+
+            renderInventory: function() {
+                const container = $('#inventory');
+                container.empty();
+
+                const items = inventoryItems[this.currentTool] || [];
+                items.forEach((item, i) => {
+                    const cls = i === this.selectedItem ? 'selected' : '';
+                    container.append(`
+                        <div class="inv-item ${cls}" onclick="floatingIsland.selectItem(${i})">
+                            <i class="fas ${item.icon}" style="color: ${item.color}; font-size: 20px;"></i>
+                            <span>${item.name}</span>
+                        </div>
+                    `);
+                });
+            },
+
+            selectItem: function(index) {
+                this.selectedItem = index;
+                this.renderInventory();
+            },
+
+            start: function() {
+                $('#startOverlay').hide();
+                $('#winOverlay').hide();
+
+                this.isRunning = true;
+                this.score = 0;
+                this.balance = 100;
+                this.diversity = 0;
+                this.components = [];
+                this.draggedComponent = null;
+                this.frameCount = 0;
+
+                this.updateUI();
+                this.gameLoop();
+            },
+
+            restart: function() {
+                this.start();
+            },
+
+            gameLoop: function() {
+                if (!this.isRunning) return;
+
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.gameLoop());
+                this.frameCount++;
+            },
+
+            update: function() {
+                // 计算平衡度（基于所有组件的位置重心）
+                if (this.components.length > 0) {
+                    const centerX = this.canvas.width / 2;
+                    const centerY = this.canvas.height / 2;
+                    
+                    let totalWeight = 0;
+                    let weightedOffset = 0;
+
+                    this.components.forEach(comp => {
+                        totalWeight += comp.weight;
+                        const offset = Math.abs(comp.x - centerX);
+                        weightedOffset += offset * comp.weight;
+                    });
+
+                    const avgOffset = totalWeight > 0 ? weightedOffset / totalWeight : 0;
+                    this.balance = Math.max(0, Math.min(100, 100 - avgOffset * 0.5));
+                }
+
+                // 计算生物多样性
+                let totalDiversity = 0;
+                let plantCount = 0;
+                let animalCount = 0;
+
+                this.components.forEach(comp => {
+                    if (comp.diversity) {
+                        if (inventoryItems.plant.find(p => p.id === comp.type)) plantCount++;
+                        if (inventoryItems.animal.find(a => a.id === comp.type)) animalCount++;
+                        totalDiversity += comp.diversity;
+                    }
+                });
+
+                // 共生加成
+                if (plantCount > 0 && animalCount > 0) {
+                    totalDiversity += Math.min(plantCount, animalCount) * 10;
+                }
+
+                this.diversity = Math.min(100, totalDiversity);
+                this.score = Math.floor(this.diversity * 10 + this.balance * 5);
+
+                // 平衡度过低游戏结束
+                if (this.balance < 10) {
+                    this.gameOver();
+                }
+
+                // 达到目标多样性获胜
+                if (this.diversity >= this.targetDiversity && this.balance > 50) {
+                    this.win();
+                }
+
+                this.updateUI();
+            },
+
+            handleMouseDown: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // 检查是否点击了组件
+                for (let i = this.components.length - 1; i >= 0; i--) {
+                    const comp = this.components[i];
+                    if (this.isPointInComponent(x, y, comp)) {
+                        if (this.currentTool === 'remove') {
+                            this.components.splice(i, 1);
+                            return;
+                        }
+                        this.draggedComponent = comp;
+                        this.dragOffset = { x: x - comp.x, y: y - comp.y };
+                        return;
+                    }
+                }
+            },
+
+            handleMouseMove: function(e) {
+                if (this.draggedComponent) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.draggedComponent.x = e.clientX - rect.left - this.dragOffset.x;
+                    this.draggedComponent.y = e.clientY - rect.top - this.dragOffset.y;
+                }
+            },
+
+            handleMouseUp: function(e) {
+                this.draggedComponent = null;
+            },
+
+            handleClick: function(e) {
+                if (this.draggedComponent) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // 检查是否点击了组件
+                for (let comp of this.components) {
+                    if (this.isPointInComponent(x, y, comp)) {
+                        return;
+                    }
+                }
+
+                // 放置新组件
+                if (this.currentTool !== 'remove') {
+                    const items = inventoryItems[this.currentTool];
+                    if (items && items[this.selectedItem]) {
+                        const item = items[this.selectedItem];
+                        this.components.push({
+                            x: x,
+                            y: y,
+                            type: item.id,
+                            icon: item.icon,
+                            color: item.color,
+                            weight: item.weight,
+                            size: item.size,
+                            diversity: item.diversity || 0,
+                            rotation: 0
+                        });
+                        this.updateUI();
+                    }
+                }
+            },
+
+            isPointInComponent: function(x, y, comp) {
+                const halfSize = comp.size / 2;
+                return x >= comp.x - halfSize && x <= comp.x + halfSize &&
+                       y >= comp.y - halfSize && y <= comp.y + halfSize;
+            },
+
+            updateUI: function() {
+                $('#scoreDisplay').text(this.score);
+                $('#balanceVal').text(Math.floor(this.balance) + '%');
+                $('#diversityBar').css('width', this.diversity + '%');
+
+                // 平衡球
+                const ballPos = 90 + (50 - this.balance) * 1.5;
+                $('#balanceBall').css('left', ballPos + 'px');
+            },
+
+            gameOver: function() {
+                this.isRunning = false;
+                cancelAnimationFrame(this.animationId);
+                alert('浮岛倾覆了！平衡度过低。得分: ' + this.score);
+                this.start();
+            },
+
+            win: function() {
+                this.isRunning = false;
+                cancelAnimationFrame(this.animationId);
+                this.score += 500;
+                $('#winScore').text(this.score);
+                $('#finalDiversity').text(this.diversity + '%');
+                $('#ecosystemStatus').text('完美的湿地生态系统!');
+                $('#winOverlay').show();
+            },
+
+            draw: function() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // 天空
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+                skyGrad.addColorStop(0, '#87CEEB');
+                skyGrad.addColorStop(1, '#B0E0E6');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // 水下背景
+                const waterGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+                waterGrad.addColorStop(0, 'rgba(30,144,255,0.3)');
+                waterGrad.addColorStop(1, 'rgba(0,100,200,0.6)');
+                ctx.fillStyle = waterGrad;
+                ctx.fillRect(0, h * 0.3, w, h * 0.7);
+
+                // 水波
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 5; i++) {
+                    const y = h * 0.35 + i * 40;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    for (let x = 0; x <= w; x += 20) {
+                        ctx.lineTo(x, y + Math.sin(x * 0.02 + this.frameCount * 0.03 + i) * 8);
+                    }
+                    ctx.stroke();
+                }
+
+                // 水下气泡
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                for (let i = 0; i < 10; i++) {
+                    const x = (i * 120 + this.frameCount * 0.5) % w;
+                    const y = h * 0.5 + Math.sin(this.frameCount * 0.02 + i) * 30;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4 + Math.sin(i) * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 水下植物
+                ctx.fillStyle = 'rgba(34,139,34,0.4)';
+                for (let i = 0; i < w; i += 60) {
+                    const sway = Math.sin(this.frameCount * 0.05 + i * 0.1) * 10;
+                    ctx.beginPath();
+                    ctx.moveTo(i, h);
+                    ctx.quadraticCurveTo(i + sway, h * 0.6, i + sway * 2, h * 0.4);
+                    ctx.lineTo(i + 5 + sway * 2, h * 0.4);
+                    ctx.quadraticCurveTo(i + 5 + sway, h * 0.6, i + 5, h);
+                    ctx.fill();
+                }
+
+                // 绘制组件
+                this.components.forEach(comp => {
+                    this.drawComponent(ctx, comp);
+                });
+
+                // 中心标记
+                ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(w / 2, h / 2, 80, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = 'rgba(255,215,0,0.2)';
+                ctx.beginPath();
+                ctx.arc(w / 2, h / 2, 30, 0, Math.PI * 2);
+                ctx.fill();
+            },
+
+            drawComponent: function(ctx, comp) {
+                ctx.save();
+                ctx.translate(comp.x, comp.y);
+
+                // 阴影
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(5, 5, comp.size / 2, comp.size / 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 根据类型绘制
+                if (comp.id === 'platform' || comp.type === 'wood') {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-comp.size / 2, -comp.size / 2, comp.size, comp.size);
+                    ctx.strokeStyle = '#654321';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-comp.size / 2, -comp.size / 2, comp.size, comp.size);
+                    
+                    // 木纹
+                    ctx.strokeStyle = '#654321';
+                    ctx.lineWidth = 1;
+                    for (let i = -comp.size / 2 + 10; i < comp.size / 2; i += 15) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, -comp.size / 2);
+                        ctx.lineTo(i, comp.size / 2);
+                        ctx.stroke();
+                    }
+                } else if (comp.type === 'plastic') {
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, comp.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#1E40AF';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else if (comp.type === 'bamboo') {
+                    ctx.strokeStyle = '#DEB887';
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(-comp.size / 2, 0);
+                    ctx.lineTo(comp.size / 2, 0);
+                    ctx.stroke();
+                    
+                    ctx.lineWidth = 2;
+                    for (let i = -comp.size / 2; i < comp.size / 2; i += 12) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, -4);
+                        ctx.lineTo(i, 4);
+                        ctx.stroke();
+                    }
+                } else if (comp.type === 'lotus') {
+                    // 荷叶
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 5, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 花
+                    ctx.fillStyle = '#FF69B4';
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i / 6) * Math.PI * 2;
+                        ctx.beginPath();
+                        ctx.ellipse(
+                            Math.cos(angle) * 10,
+                            Math.sin(angle) * 6 - 5,
+                            8, 5, angle, 0, Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(0, -5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (comp.type === 'reed') {
+                    const sway = Math.sin(this.frameCount * 0.05) * 5;
+                    ctx.strokeStyle = '#556B2F';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(0, comp.size / 2);
+                    ctx.quadraticCurveTo(sway, 0, sway * 2, -comp.size / 2);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#8B7355';
+                    ctx.beginPath();
+                    ctx.ellipse(sway * 2, -comp.size / 2, 4, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (comp.type === 'watergrass') {
+                    const sway = Math.sin(this.frameCount * 0.08) * 3;
+                    ctx.strokeStyle = '#228B22';
+                    ctx.lineWidth = 3;
+                    for (let i = -1; i <= 1; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(i * 8, comp.size / 2);
+                        ctx.quadraticCurveTo(i * 8 + sway, 0, i * 8 + sway * 2, -comp.size / 2);
+                        ctx.stroke();
+                    }
+                } else if (comp.type === 'cattail') {
+                    ctx.strokeStyle = '#556B2F';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(0, comp.size / 2);
+                    ctx.lineTo(0, -comp.size / 3);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -comp.size / 2, 5, 15, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (comp.type === 'fish') {
+                    const swim = Math.sin(this.frameCount * 0.15) * 10;
+                    ctx.save();
+                    ctx.translate(swim, 0);
+                    
+                    ctx.fillStyle = '#1E90FF';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#1E90FF';
+                    ctx.beginPath();
+                    ctx.moveTo(comp.size / 3, 0);
+                    ctx.lineTo(comp.size / 2 + 8, -5);
+                    ctx.lineTo(comp.size / 2 + 8, 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(-comp.size / 4, -2, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                } else if (comp.type === 'frog') {
+                    ctx.fillStyle = '#32CD32';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 眼睛
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.arc(-8, -5, 5, 0, Math.PI * 2);
+                    ctx.arc(8, -5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(-8, -6, 2, 0, Math.PI * 2);
+                    ctx.arc(8, -6, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (comp.type === 'dragonfly') {
+                    const wingFlap = Math.sin(this.frameCount * 0.5) * 0.5;
+                    
+                    ctx.strokeStyle = '#87CEEB';
+                    ctx.lineWidth = 1;
+                    ctx.save();
+                    ctx.rotate(wingFlap);
+                    ctx.beginPath();
+                    ctx.ellipse(-15, 0, 15, 4, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.save();
+                    ctx.rotate(-wingFlap);
+                    ctx.beginPath();
+                    ctx.ellipse(15, 0, 15, 4, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                    
+                    ctx.fillStyle = '#00CED1';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 12, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (comp.type === 'bird') {
+                    const hop = Math.sin(this.frameCount * 0.1) * 3;
+                    ctx.save();
+                    ctx.translate(0, hop);
+                    
+                    ctx.fillStyle = '#DDA0DD';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#DDA0DD';
+                    ctx.beginPath();
+                    ctx.arc(comp.size / 3, -3, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FF69B4';
+                    ctx.beginPath();
+                    ctx.moveTo(comp.size / 2 + 2, -3);
+                    ctx.lineTo(comp.size / 2 + 10, -2);
+                    ctx.lineTo(comp.size / 2 + 2, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(comp.size / 3 + 2, -5, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                } else {
+                    // 默认绘制
+                    ctx.fillStyle = comp.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, comp.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            },
+
+            drawStaticScene: function() {
+                this.draw();
+            }
+        };
+
+        $(function() {
+            floatingIsland.init();
+        });
+    </script>
+</body>
+</html>

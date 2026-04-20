@@ -1,0 +1,57 @@
+:root {
+    --c-aqua: #00adb5;
+    --c-green: #2ecc71;
+    --c-orange: #f39c12;
+    --c-red: #e74c3c;
+    --c-dark: #2c3e50;
+    --c-muted: #6b7b8c;
+    --bg-page: #eef5f3;
+    --bg-panel: rgba(255, 255, 255, 0.94);
+    --shadow: 0 12px 32px rgba(31, 48, 59, 0.14);
+    --radius: 8px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+    background: var(--bg-page);
+    color: var(--c-dark);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.game-card,
+.panel,
+.glass-panel {
+    background: var(--bg-panel);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.start-btn,
+.action-btn,
+.nav-btn,
+.btn {
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+
+.start-btn:hover,
+.action-btn:hover,
+.nav-btn:hover,
+.btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.94;
+}

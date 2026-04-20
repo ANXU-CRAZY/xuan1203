@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看图识鸟 | 黄河生态方舟</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-light: #40916c;
+            --primary-dark: #1b4332;
+            --accent: #e9c46a;
+            --accent-warm: #f4a261;
+            --bg-wetland: #f0f7f4;
+            --bg-dark: #1a2e1a;
+            --card-bg: #ffffff;
+            --text-dark: #1b2d1b;
+            --text-muted: #6b7c6b;
+            --correct: #2d6a4f;
+            --wrong: #c0392b;
+            --shadow-sm: 0 2px 8px rgba(45,106,79,0.1);
+            --shadow-md: 0 4px 20px rgba(45,106,79,0.15);
+            --shadow-lg: 0 8px 40px rgba(45,106,79,0.2);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-wetland);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           BACKGROUND DECORATION
+           ============================================================ */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -100px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(45,106,79,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -80px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(233,196,106,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        /* Floating reeds decoration */
+        .reed {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to top, #2d6a4f, transparent);
+            border-radius: 2px;
+            opacity: 0.15;
+            animation: sway 4s ease-in-out infinite;
+        }
+        @keyframes sway {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .game-header {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .game-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+        }
+        .game-logo .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .game-logo .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .score-bar {
+            display: flex;
+            gap: 20px;
+        }
+        .score-item {
+            text-align: center;
+            color: white;
+            min-width: 56px;
+        }
+        .score-item .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.75;
+        }
+        .score-item .value {
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .score-item.combo .value {
+            color: var(--accent);
+        }
+
+        /* ============================================================
+           MAIN CONTENT
+           ============================================================ */
+        .game-wrapper {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px 48px;
+            max-width: 720px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ============================================================
+           PROGRESS BAR
+           ============================================================ */
+        .progress-container {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(45,106,79,0.12);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 3px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ============================================================
+           LOADING OVERLAY
+           ============================================================ */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(26,46,26,0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        .loading-overlay .spinner-ring {
+            width: 56px;
+            height: 56px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-overlay p {
+            color: rgba(255,255,255,0.75);
+            font-size: 15px;
+            font-weight: 400;
+        }
+        .loading-overlay .loading-bird {
+            font-size: 42px;
+            margin-bottom: 16px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* ============================================================
+           START SCREEN
+           ============================================================ */
+        .screen {
+            width: 100%;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .start-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 48px 40px;
+            text-align: center;
+            border: 1px solid rgba(45,106,79,0.08);
+        }
+        .start-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 4px 20px rgba(45,106,79,0.3);
+        }
+        .start-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        .start-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 36px;
+        }
+        .start-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 36px;
+            padding: 20px;
+            background: var(--bg-wetland);
+            border-radius: var(--radius-md);
+        }
+        .start-stat {
+            text-align: center;
+        }
+        .start-stat .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+        .start-stat .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(45,106,79,0.35);
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45,106,79,0.45);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            color: var(--primary);
+            border: none;
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .btn-secondary:hover {
+            background: rgba(45,106,79,0.06);
+        }
+
+        /* ============================================================
+           GAME SCREEN
+           ============================================================ */
+        .bird-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(45,106,79,0.08);
+        }
+
+        .bird-image-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #e8f0e8;
+            overflow: hidden;
+        }
+        .bird-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .bird-image-wrap:hover img {
+            transform: scale(1.02);
+        }
+        .bird-image-wrap.correct {
+            box-shadow: inset 0 0 0 4px var(--correct);
+            transition: box-shadow 0.3s;
+        }
+        .bird-image-wrap.wrong {
+            box-shadow: inset 0 0 0 4px var(--wrong);
+            transition: box-shadow 0.3s;
+        }
+        .bird-image-wrap .question-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(27,67,50,0.85);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+        .bird-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #a0b8a0;
+        }
+        .bird-placeholder .icon {
+            font-size: 64px;
+            opacity: 0.5;
+        }
+        .bird-placeholder .text {
+            font-size: 14px;
+        }
+
+        .game-prompt {
+            text-align: center;
+            padding: 20px 24px 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .game-prompt .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ============================================================
+           OPTIONS
+           ============================================================ */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 8px 24px 24px;
+        }
+        .option-btn {
+            background: var(--bg-wetland);
+            border: 2px solid rgba(45,106,79,0.15);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(45,106,79,0.04);
+            transform: translateY(-1px);
+        }
+        .option-btn:hover:not(:disabled)::before {
+            opacity: 0.04;
+        }
+        .option-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        .option-btn .latin {
+            display: block;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-style: italic;
+        }
+        .option-btn.correct {
+            border-color: var(--correct);
+            background: rgba(45,106,79,0.1);
+            color: var(--correct);
+        }
+        .option-btn.correct::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            background: var(--correct);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .option-btn.wrong {
+            border-color: var(--wrong);
+            background: rgba(192,57,43,0.08);
+            color: var(--wrong);
+            opacity: 0.7;
+        }
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* ============================================================
+           COMBO EFFECT
+           ============================================================ */
+        .combo-pop {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+            pointer-events: none;
+            z-index: 300;
+            animation: comboAnim 0.8s ease-out forwards;
+            text-shadow: 0 2px 12px rgba(233,196,106,0.5);
+        }
+        @keyframes comboAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(0.9); }
+        }
+
+        /* ============================================================
+           RESULT SCREEN
+           ============================================================ */
+        .result-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 40px 32px;
+            text-align: center;
+            border: 1px solid rgba(45,106,79,0.08);
+        }
+        .result-grade {
+            font-size: 72px;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .result-grade-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .result-score {
+            font-size: 52px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        .result-score-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .result-stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            background: var(--bg-wetland);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+        .result-stat {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .result-stat .val {
+            font-size: 22px;
+            font-weight: 700;
+            display: block;
+        }
+        .result-stat .lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .result-stat.correct .val { color: var(--correct); }
+        .result-stat.wrong .val { color: var(--wrong); }
+        .result-stat.combo .val { color: var(--accent-warm); }
+
+        .review-section {
+            margin-bottom: 28px;
+            text-align: left;
+        }
+        .review-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+        .review-list {
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .review-list::-webkit-scrollbar { width: 4px; }
+        .review-list::-webkit-scrollbar-track { background: transparent; }
+        .review-list::-webkit-scrollbar-thumb { background: rgba(45,106,79,0.2); border-radius: 2px; }
+        .review-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 4px;
+            background: var(--bg-wetland);
+        }
+        .review-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+            background: #e0e8e0;
+        }
+        .review-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        .review-icon.correct { background: rgba(45,106,79,0.15); color: var(--correct); }
+        .review-icon.wrong { background: rgba(192,57,43,0.12); color: var(--wrong); }
+        .review-info { flex: 1; min-width: 0; }
+        .review-info .name { font-size: 13px; font-weight: 500; }
+        .review-info .your-choice { font-size: 11px; color: var(--text-muted); }
+        .review-info .your-choice.wrong { color: var(--wrong); }
+
+        .result-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* ============================================================
+           FEEDBACK TOAST
+           ============================================================ */
+        .feedback-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .feedback-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .feedback-toast.correct { background: var(--correct); color: white; }
+        .feedback-toast.wrong { background: var(--wrong); color: white; }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 480px) {
+            .game-wrapper { padding: 20px 12px 32px; }
+            .start-card { padding: 36px 24px; }
+            .options-grid { gap: 8px; padding: 8px 16px 20px; }
+            .option-btn { padding: 12px 10px; font-size: 13px; }
+            .score-bar { gap: 12px; }
+            .score-item .value { font-size: 18px; }
+            .start-stats { gap: 16px; padding: 16px; }
+            .result-stats-grid { gap: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background decoration -->
+    <div class="bg-decoration" id="bgDecoration"></div>
+
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-bird">
+            <i class="fas fa-feather-pointed"></i>
+        </div>
+        <div class="spinner-ring"></div>
+        <p id="loadingText">正在加载鸟类图库...</p>
+    </div>
+
+    <!-- Feedback toast -->
+    <div class="feedback-toast" id="feedbackToast"></div>
+
+    <!-- Header -->
+    <header class="game-header">
+        <a href="/" class="game-logo">
+            <div class="logo-icon">
+                <i class="fas fa-feather"></i>
+            </div>
+            <span class="logo-text">看图识鸟</span>
+        </a>
+        <div class="score-bar" id="scoreBar" style="display:none">
+            <div class="score-item">
+                <div class="label">得分</div>
+                <div class="value" id="score">0</div>
+            </div>
+            <div class="score-item combo">
+                <div class="label">连击</div>
+                <div class="value" id="combo">0</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="game-wrapper">
+
+        <!-- START SCREEN -->
+        <div class="screen" id="startScreen">
+            <div class="start-card">
+                <div class="start-icon">
+                    <i class="fas fa-feather-pointed"></i>
+                </div>
+                <h1 class="start-title">看图识鸟</h1>
+                <p class="start-subtitle">
+                    黄河湿地水鸟知识大挑战！<br>
+                    从精美图库中随机抽取10张图片，考验你的鸟类识别能力<br>
+                    <strong>答对 +10 分</strong>，<strong>3 连击 +5 分</strong>
+                </p>
+                <div class="start-stats">
+                    <div class="start-stat">
+                        <span class="num" id="totalSpecies">—</span>
+                        <span class="desc">图库物种</span>
+                    </div>
+                    <div class="start-stat">
+                        <span class="num" id="totalImages">—</span>
+                        <span class="desc">精选图片</span>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="game.start()">
+                    <i class="fas fa-play"></i>
+                    开始挑战
+                </button>
+                <div style="margin-top: 16px;">
+                    <a href="/" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div class="screen" id="gameScreen" style="display:none; width:100%;">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span id="questionHint">第 1 题</span>
+                    <span id="accuracyHint">正确率 —</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div class="bird-card">
+                <div class="bird-image-wrap" id="birdImageContainer">
+                    <div class="bird-placeholder" id="birdPlaceholder">
+                        <i class="fas fa-feather icon"></i>
+                        <span class="text">正在加载图片...</span>
+                    </div>
+                    <img id="birdImage" src="" alt="" style="display:none" onload="onImageLoaded()" onerror="onImageError()">
+                    <div class="question-badge" id="questionBadge">第 1 / 10 题</div>
+                </div>
+
+                <div class="game-prompt">
+                    这是什么鸟类？
+                    <div class="hint" id="latinHint"></div>
+                </div>
+
+                <div class="options-grid" id="optionsGrid"></div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div class="screen" id="resultScreen" style="display:none; width:100%;">
+            <div class="result-card">
+                <div class="result-grade" id="resultGrade"></div>
+                <div class="result-grade-label" id="resultGradeLabel"></div>
+                <div class="result-score" id="finalScore">0</div>
+                <div class="result-score-label">本轮得分</div>
+
+                <div class="result-stats-grid">
+                    <div class="result-stat correct">
+                        <span class="val" id="correctCount">0</span>
+                        <span class="lbl">答对</span>
+                    </div>
+                    <div class="result-stat wrong">
+                        <span class="val" id="wrongCount">0</span>
+                        <span class="lbl">答错</span>
+                    </div>
+                    <div class="result-stat combo">
+                        <span class="val" id="maxCombo">0</span>
+                        <span class="lbl">最高连击</span>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <div class="review-title">答题回顾</div>
+                    <div class="review-list" id="reviewList"></div>
+                </div>
+
+                <div class="result-actions">
+                    <button class="btn-primary" onclick="game.restart()">
+                        <i class="fas fa-redo"></i>
+                        再来一局
+                    </button>
+                    <a href="/" class="btn-secondary">
+                        <i class="fas fa-home"></i> 返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        /* ============================================================
+           DATA
+           ============================================================ */
+        const API = '/api';
+
+        // 图片映射: speciesId -> [{url, caption, source}]
+        let speciesImageMap = {};
+
+        // 物种列表
+        let BIRD_DATA = [];
+        let totalImages = 0;
+
+        // 备用图（纯URL，直接可用）
+        const FALLBACK_IMAGES = {
+            '大天鹅': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Cygnus_cygnus.jpg/800px-Cygnus_cygnus.jpg',
+            '白鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Egretta_garzetta.jpg/800px-Egretta_garzetta.jpg',
+            '鸿雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Anser_cygnoides.jpg/800px-Anser_cygnoides.jpg',
+            '黑鹳': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Ciconia_nigra.jpg/800px-Ciconia_nigra.jpg',
+            '东方白鹳': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ciconia_boyciana.jpg/800px-Ciconia_boyciana.jpg',
+            '灰鹤': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Grus_grus.jpg/800px-Grus_grus.jpg',
+            '普通鸬鹚': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Phalacrocorax_carbo.jpg/800px-Phalacrocorax_carbo.jpg',
+            '斑嘴鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Anas_zonorhyncha.jpg/800px-Anas_zonorhyncha.jpg',
+            '白头鹤': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Grus_monacha.jpg/800px-Grus_monacha.jpg',
+            '豆雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Anser_fabalis.jpg/800px-Anser_fabalis.jpg',
+            '苍鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Ardea_cinerea.jpg/800px-Ardea_cinerea.jpg',
+            '绿头鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Anas_platyrhynchos.jpg/800px-Anas_platyrhynchos.jpg',
+            '夜鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Nycticorax_nycticorax.jpg/800px-Nycticorax_nycticorax.jpg',
+            '黑水鸡': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Gallinula_chloropus.jpg/800px-Gallinula_chloropus.jpg',
+            '白骨顶': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Fulica_atra.jpg/800px-Fulica_atra.jpg',
+            '凤头麦鸡': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Vanellus_vanellus.jpg/800px-Vanellus_vanellus.jpg',
+            '金眶鸻': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Charadrius_dubius.jpg/800px-Charadrius_dubius.jpg',
+            '普通翠鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Alcedo_atthis.jpg/800px-Alcedo_atthis.jpg',
+            '斑鱼狗': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Ceryle_rudis.jpg/800px-Ceryle_rudis.jpg',
+            '小天鹅': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Cygnus_bewickii_01.jpg/800px-Cygnus_bewickii_01.jpg',
+            '灰雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Anser_anser.jpg/800px-Anser_anser.jpg',
+            '白额雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Greater_white-fronted_goose_in_flight-1045.jpg/800px-Greater_white-fronted_goose_in_flight-1045.jpg',
+            '翘鼻麻鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Tadorna_tadorna_2.jpg/800px-Tadorna_tadorna_2.jpg',
+            '赤颈鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Mareca_penelope.jpg/800px-Mareca_penelope.jpg',
+            '绿翅鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Anas_crecca.jpg/800px-Anas_crecca.jpg',
+            '赤膀鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Mareca_strepera.jpg/800px-Mareca_strepera.jpg',
+            '普通秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Mergus_merganser.jpg/800px-Mergus_merganser.jpg',
+            '中华秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Scaly-sided_Merganser_RWD.jpg/800px-Scaly-sided_Merganser_RWD.jpg',
+            '白秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Mergellus_albellus.jpg/800px-Mergellus_albellus.jpg',
+            '鹌鹑': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Coturnix_coturnix.jpg/800px-Coturnix_coturnix.jpg',
+            '环颈雉': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Phasianus_colchicus.jpg/800px-Phasianus_colchicus.jpg',
+            '黑翅长脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Himantopus_hemantopus.jpg/800px-Himantopus_hemantopus.jpg',
+            '反嘴鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Recurvirostra_avosetta_2.jpg/800px-Recurvirostra_avosetta_2.jpg',
+            '红嘴鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Chroicocephalus_ridibundus.jpg/800px-Chroicocephalus_ridibundus.jpg',
+            '普通燕鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Sterna_hirundo.jpg/800px-Sterna_hirundo.jpg',
+            '白琵鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Platalea_leucorodia.jpg/800px-Platalea_leucorodia.jpg',
+            '戴胜': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Upupa_epops.jpg/800px-Upupa_epops.jpg',
+            '大斑啄木鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Dendrocopos_major.jpg/800px-Dendrocopos_major.jpg',
+            '大杜鹃': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Cuculus_canorus.jpg/800px-Cuculus_canorus.jpg',
+            '红隼': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Falco_tinnunculus.jpg/800px-Falco_tinnunculus.jpg',
+            '游隼': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Falco_peregrinus.jpg/800px-Falco_peregrinus.jpg',
+            '雀鹰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Accipiter_nisus.jpg/800px-Accipiter_nisus.jpg',
+            '苍鹰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Accipiter_gentilis.jpg/800px-Accipiter_gentilis.jpg',
+            '普通鵟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Buteo_japonicus_108780228.jpg/800px-Buteo_japonicus_108780228.jpg',
+            '白尾鹞': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Circus_cyaneus.jpg/800px-Circus_cyaneus.jpg',
+            '黑翅鸢': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Elanus_caeruleus.jpg/800px-Elanus_caeruleus.jpg',
+            '纵纹腹小鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Athene_noctua.jpg/800px-Athene_noctua.jpg',
+            '长耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Asio_otus.jpg/800px-Asio_otus.jpg',
+            '短耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Asio_flammeus.jpg/800px-Asio_flammeus.jpg',
+            '八哥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Acridotheres_cristatellus.jpg/800px-Acridotheres_cristatellus.jpg',
+            '灰椋鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Spodiopsar_cineraceus.jpg/800px-Spodiopsar_cineraceus.jpg',
+            '灰喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Cyanopica_cyanus.jpg/800px-Cyanopica_cyanus.jpg',
+            '喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Pica_pica.jpg/800px-Pica_pica.jpg',
+            '松鸦': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Garrulus_glandarius.jpg/800px-Garrulus_glandarius.jpg',
+            '北红尾鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Phoenicurus_auroreus.jpg/800px-Phoenicurus_auroreus.jpg',
+            '红喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Luscinia_calliope.jpg/800px-Luscinia_calliope.jpg',
+            '蓝喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Luscinia_svecica.jpg/800px-Luscinia_svecica.jpg',
+            '黑枕黄鹂': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Oriolus_chinensis.jpg/800px-Oriolus_chinensis.jpg',
+            '树麻雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Passer_montanus.jpg/800px-Passer_montanus.jpg',
+            '白鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Motacilla_alba.jpg/800px-Motacilla_alba.jpg',
+            '灰鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Motacilla_cinerea.jpg/800px-Motacilla_cinerea.jpg',
+            '小鹀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Emberiza_pusilla.jpg/800px-Emberiza_pusilla.jpg',
+            '黄喉鹀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Emberiza_elegans.jpg/800px-Emberiza_elegans.jpg',
+            '金翅雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chloris_sinica_MHNT_226_%25C3%258Ele_s_Kouriles_HdB.jpg/800px-Chloris_sinica_MHNT_226_%25C3%258Ele_s_Kouriles_HdB.jpg',
+            '黄雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Spinus_spinus.jpg/800px-Spinus_spinus.jpg',
+            '燕雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Fringilla_montifringilla.jpg/800px-Fringilla_montifringilla.jpg',
+            '红颈滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Calidris_ruficollis.jpg/800px-Calidris_ruficollis.jpg',
+            '黑腹滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Calidris_alpina.jpg/800px-Calidris_alpina.jpg',
+            '青脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Tringa_nebularia.jpg/800px-Tringa_nebularia.jpg',
+            '白腰草鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Common_Sandpiper_%28Actitis_hypoleucos%29%2C_Sfax%2C_Tunisia.jpg/800px-Common_Sandpiper_%28Actitis_hypoleucos%29%2C_Sfax%2C_Tunisia.jpg',
+            '遗鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Relict_Gull.jpg/800px-Relict_Gull.jpg',
+        };
+
+        /* ============================================================
+           LOAD DATA
+           ============================================================ */
+        async function loadGameData() {
+            try {
+                speciesImageMap = {};
+                totalImages = 0;
+
+                // 1. Load species list — each species includes gallery_images
+                const speciesRes = await fetch(`${API}/species/`);
+                if (!speciesRes.ok) throw new Error('Species API error');
+                const speciesData = await speciesRes.json();
+                const speciesList = speciesData.results || speciesData;
+
+                // 2. Build BIRD_DATA and the speciesId -> images map
+                BIRD_DATA = speciesList.map(s => {
+                    // Build image array for this species from its embedded gallery_images
+                    const imgs = (s.gallery_images || []).filter(g => g.url);
+                    imgs.forEach(img => {
+                        // Register in global map keyed by species id
+                        if (!speciesImageMap[img.species]) {
+                            speciesImageMap[img.species] = [];
+                        }
+                        // Avoid duplicate URLs
+                        if (!speciesImageMap[img.species].some(existing => existing.url === img.url)) {
+                            speciesImageMap[img.species].push(img);
+                        }
+                    });
+
+                    totalImages += imgs.length;
+
+                    return {
+                        id: s.id,
+                        name: s.name_cn,
+                        latin: s.name_latin || '',
+                        protection: s.protection_level || '',
+                        galleryCount: imgs.length,
+                    };
+                });
+
+                // 3. Also load the separate species-images endpoint for any images
+                // not embedded in species (belt-and-suspenders approach)
+                try {
+                    const imagesRes = await fetch(`${API}/species-images/`);
+                    if (imagesRes.ok) {
+                        const imagesData = await imagesRes.json();
+                        const imgList = imagesData.results || imagesData;
+                        imgList.forEach(img => {
+                            const speciesKey = img.species || img.species_id;
+                            const imageUrl = img.url || img.full_url;
+                            if (!imageUrl || !speciesKey) return;
+                            if (!speciesImageMap[speciesKey]) {
+                                speciesImageMap[speciesKey] = [];
+                            }
+                            if (!speciesImageMap[speciesKey].some(existing => existing.url === imageUrl)) {
+                                speciesImageMap[speciesKey].push({
+                                    ...img,
+                                    species: speciesKey,
+                                    url: imageUrl,
+                                });
+                                totalImages++;
+                            }
+                        });
+                    }
+                } catch (_) { /* non-critical */ }
+
+                BIRD_DATA = BIRD_DATA.filter(b => {
+                    const imgs = speciesImageMap[b.id];
+                    return (imgs && imgs.length > 0) || FALLBACK_IMAGES[b.name];
+                });
+
+                // 4. Update start screen stats
+                $('#totalSpecies').text(BIRD_DATA.length);
+                $('#totalImages').text(totalImages);
+
+                // 5. Hide loading
+                $('#loadingOverlay').fadeOut(300);
+
+            } catch (e) {
+                console.error('加载失败:', e);
+                $('#loadingText').text('数据加载失败，请刷新重试');
+                $('.spinner-ring').hide();
+            }
+        }
+
+        /* ============================================================
+           GET IMAGE FOR A SPECIES
+           Priority: speciesImageMap[id] > FALLBACK_IMAGES[name] > null
+           ============================================================ */
+        function getSpeciesImage(bird) {
+            // 1. From the enriched gallery (speciesId -> images)
+            const imgs = speciesImageMap[bird.id];
+            if (imgs && imgs.length > 0) {
+                // Pick a random one from the gallery for variety
+                const idx = Math.floor(Math.random() * imgs.length);
+                return imgs[idx].url;
+            }
+            // 2. Fallback URL map
+            if (FALLBACK_IMAGES[bird.name]) {
+                return FALLBACK_IMAGES[bird.name];
+            }
+            return null;
+        }
+
+        /* ============================================================
+           DECORATION
+           ============================================================ */
+        function buildBackgroundReeds() {
+            const container = document.getElementById('bgDecoration');
+            const count = 12;
+            for (let i = 0; i < count; i++) {
+                const reed = document.createElement('div');
+                reed.className = 'reed';
+                const height = 120 + Math.random() * 200;
+                reed.style.height = height + 'px';
+                reed.style.left = (Math.random() * 100) + '%';
+                reed.style.bottom = '0';
+                reed.style.animationDelay = (Math.random() * 4) + 's';
+                reed.style.animationDuration = (3 + Math.random() * 3) + 's';
+                container.appendChild(reed);
+            }
+        }
+        buildBackgroundReeds();
+
+        /* ============================================================
+           IMAGE LOAD HANDLERS
+           ============================================================ */
+        function onImageLoaded() {
+            $('#birdPlaceholder').hide();
+            $('#birdImage').show();
+        }
+        function onImageError() {
+            // Fallback already handled by getSpeciesImage; if we get here, use placeholder
+            $('#birdPlaceholder').show();
+            $('#birdImage').hide();
+        }
+        window.onImageLoaded = onImageLoaded;
+        window.onImageError = onImageError;
+
+        /* ============================================================
+           TOAST FEEDBACK
+           ============================================================ */
+        function showFeedback(message, type) {
+            const toast = $('#feedbackToast');
+            toast.text(message).removeClass('correct wrong').addClass(type).addClass('show');
+            clearTimeout(window._feedbackTimer);
+            window._feedbackTimer = setTimeout(() => toast.removeClass('show'), 1500);
+        }
+
+        /* ============================================================
+           GAME ENGINE
+           ============================================================ */
+        const game = {
+            TOTAL: 10,
+            questions: [],
+            answers: [],
+            current: 0,
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            correct: 0,
+            wrong: 0,
+            answered: false,
+
+            shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            },
+
+            start() {
+                if (BIRD_DATA.length === 0) {
+                    showFeedback('数据加载中，请稍候...', 'wrong');
+                    return;
+                }
+
+                this.questions = this.shuffle([...BIRD_DATA]).slice(0, this.TOTAL);
+                this.current = 0;
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.correct = 0;
+                this.wrong = 0;
+                this.answers = [];
+                this.answered = false;
+
+                $('#scoreBar').show();
+                $('#startScreen').hide();
+                $('#resultScreen').hide();
+                $('#gameScreen').fadeIn(300);
+
+                this.showQuestion();
+            },
+
+            restart() {
+                this.start();
+            },
+
+            showQuestion() {
+                const q = this.questions[this.current];
+                const progress = (this.current / this.TOTAL) * 100;
+                const accuracy = this.current > 0
+                    ? Math.round((this.correct / this.current) * 100) + '%'
+                    : '—';
+
+                $('#progressFill').css('width', progress + '%');
+                $('#questionHint').text('第 ' + (this.current + 1) + ' 题');
+                $('#accuracyHint').text('正确率 ' + accuracy);
+                $('#score').text(this.score);
+                $('#combo').text(this.combo);
+                $('#questionBadge').text('第 ' + (this.current + 1) + ' / ' + this.TOTAL + ' 题');
+                $('#latinHint').text(q.latin ? q.latin : '');
+
+                // Load image
+                const imgUrl = getSpeciesImage(q);
+                const container = $('#birdImageContainer');
+                container.removeClass('correct wrong');
+
+                if (imgUrl) {
+                    $('#birdPlaceholder').show();
+                    $('#birdImage').hide();
+                    $('#birdImage').attr('src', imgUrl);
+                } else {
+                    $('#birdPlaceholder').show();
+                    $('#birdImage').hide();
+                    $('#birdImage').attr('src', '');
+                }
+
+                // Build options
+                const options = this.buildOptions(q);
+                const html = options.map((b, i) =>
+                    `<button class="option-btn" data-name="${this.esc(b.name)}" onclick="game.selectAnswer('${this.esc(b.name)}', this)">
+                        <span>${b.name}</span>
+                        ${b.latin ? `<span class="latin">${b.latin}</span>` : ''}
+                    </button>`
+                ).join('');
+                $('#optionsGrid').html(html);
+
+                this.answered = false;
+            },
+
+            buildOptions(correctBird) {
+                const others = BIRD_DATA.filter(b => b.id !== correctBird.id);
+                const shuffled = this.shuffle([...others]);
+                const distractors = shuffled.slice(0, 3);
+                return this.shuffle([correctBird, ...distractors]);
+            },
+
+            esc(str) {
+                return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+            },
+
+            selectAnswer(selectedName, btnEl) {
+                if (this.answered) return;
+                this.answered = true;
+
+                const q = this.questions[this.current];
+                const isCorrect = selectedName === q.name;
+                const container = $('#birdImageContainer');
+
+                // Disable all buttons and highlight correct
+                $('.option-btn').attr('disabled', true);
+                $('.option-btn').each(function() {
+                    if ($(this).data('name') === q.name) {
+                        $(this).addClass('correct');
+                    }
+                });
+
+                if (isCorrect) {
+                    container.addClass('correct');
+                    this.score += 10;
+                    this.correct++;
+                    this.combo++;
+                    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+                    showFeedback(this.combo >= 3 ? '连击！+' + this.combo : '正确！', 'correct');
+                    if (this.combo >= 3) this.showComboEffect();
+                } else {
+                    container.addClass('wrong');
+                    $(btnEl).addClass('wrong');
+                    this.wrong++;
+                    this.combo = 0;
+                    const correctOption = $('.option-btn').filter(function() {
+                        return $(this).data('name') === q.name;
+                    });
+                    correctOption.addClass('correct');
+                    showFeedback('正确：' + q.name, 'wrong');
+                }
+
+                // Record
+                this.answers.push({
+                    bird: q,
+                    selected: selectedName,
+                    correct: isCorrect,
+                    imageUrl: getSpeciesImage(q),
+                });
+
+                $('#score').text(this.score);
+                $('#combo').text(this.combo);
+
+                setTimeout(() => {
+                    this.current++;
+                    if (this.current >= this.TOTAL) {
+                        this.showResult();
+                    } else {
+                        this.showQuestion();
+                    }
+                }, 1600);
+            },
+
+            showComboEffect() {
+                const pop = document.createElement('div');
+                pop.className = 'combo-pop';
+                pop.textContent = this.combo + ' 连击！';
+                document.body.appendChild(pop);
+                setTimeout(() => pop.remove(), 900);
+            },
+
+            showResult() {
+                $('#gameScreen').hide();
+                $('#scoreBar').hide();
+                $('#resultScreen').fadeIn(300);
+
+                const pct = (this.correct / this.TOTAL) * 100;
+                let grade = '', gradeLabel = '';
+                if (pct === 100)      { grade = 'S'; gradeLabel = '满分！鸟类专家！'; }
+                else if (pct >= 80)   { grade = 'A'; gradeLabel = '优秀！观鸟达人'; }
+                else if (pct >= 60)   { grade = 'B'; gradeLabel = '良好，还需努力'; }
+                else if (pct >= 40)   { grade = 'C'; gradeLabel = '继续加油！'; }
+                else                  { grade = 'D'; gradeLabel = '多看看图库吧'; }
+
+                $('#resultGrade').text(grade);
+                $('#resultGradeLabel').text(gradeLabel);
+                $('#finalScore').text(this.score);
+                $('#correctCount').text(this.correct);
+                $('#wrongCount').text(this.wrong);
+                $('#maxCombo').text(this.maxCombo);
+
+                // Review
+                const reviewHtml = this.answers.map(a => {
+                    const icon = a.correct
+                        ? '<i class="fas fa-check"></i>'
+                        : '<i class="fas fa-times"></i>';
+                    const wrongClass = a.correct ? '' : 'wrong';
+                    const img = a.imageUrl
+                        ? `<img src="${a.imageUrl}" alt="${a.bird.name}" onerror="this.style.display='none'">`
+                        : '';
+                    return `
+                        <div class="review-item">
+                            ${img}
+                            <div class="review-icon ${a.correct ? 'correct' : 'wrong'}">${icon}</div>
+                            <div class="review-info">
+                                <div class="name">${a.bird.name}</div>
+                                <div class="your-choice ${wrongClass}">
+                                    ${a.correct ? '正确' : '你的选择：' + a.selected}
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+                $('#reviewList').html(reviewHtml);
+
+                this.updateScore();
+            },
+
+            updateScore() {
+                const token = localStorage.getItem('yb_token');
+                if (!token) return;
+                $.ajax({
+                    url: '/api/profiles/me/',
+                    method: 'GET',
+                    headers: { 'Authorization': 'Token ' + token },
+                    success: (data) => {
+                        const newScore = (data.score || 0) + this.score;
+                        $.ajax({
+                            url: '/api/profiles/me/',
+                            method: 'PATCH',
+                            headers: { 'Authorization': 'Token ' + token },
+                            contentType: 'application/json',
+                            data: JSON.stringify({ score: newScore }),
+                        });
+                    }
+                });
+            }
+        };
+
+        // Expose globally
+        window.game = game;
+
+        // Kick off
+        loadGameData();
+
+    })();
+    </script>
+</body>
+</html>

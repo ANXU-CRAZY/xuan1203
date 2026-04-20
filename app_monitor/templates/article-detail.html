@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">文章详情 | 黄河生态方舟</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1A1A2E;
+            --ink-light: #2D2D4A;
+            --cream: #FAF7F2;
+            --warm: #F5F0E8;
+            --amber: #C8922A;
+            --amber-dark: #A67520;
+            --card-bg: #ffffff;
+            --text: #1C1C1C;
+            --muted: #7A7A8A;
+            --border: #EAE6DF;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.07);
+            --shadow-md: 0 8px 28px rgba(0,0,0,0.11);
+            --shadow-lg: 0 18px 56px rgba(0,0,0,0.17);
+            --c-habitat: #4A8C6F;
+            --c-species: #B85450;
+            --c-knowledge: #4A7A9C;
+            --c-news: #C08040;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+            background: var(--warm);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3 { font-family: 'Noto Serif SC', serif; }
+
+        #reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--amber), var(--c-species)); width: 0%; z-index: 9999; transition: width 0.1s; }
+
+        /* ========== 导航 ========== */
+        .navbar {
+            background: rgba(26,26,46,0.97);
+            backdrop-filter: blur(16px);
+            padding: 0 28px; height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .navbar-brand {
+            display: flex; align-items: center; gap: 10px;
+            color: white; text-decoration: none; font-size: 17px; font-weight: 700;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .navbar-brand .logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--amber), #D4A853);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-links { display: flex; align-items: center; gap: 2px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7); text-decoration: none;
+            padding: 6px 13px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
+        .nav-links a.active { color: var(--amber); background: rgba(200,146,42,0.12); }
+        .nav-links a i { font-size: 12px; }
+        .nav-back {
+            margin-left: auto; padding: 6px 14px; border-radius: 8px;
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
+            text-decoration: none; font-size: 13px; font-weight: 500;
+            transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .nav-back:hover { background: rgba(255,255,255,0.15); color: white; }
+
+        /* ========== 主容器 ========== */
+        .detail-container { max-width: 820px; margin: 76px auto 60px; padding: 0 20px; }
+
+        /* 封面 */
+        .article-cover {
+            border-radius: 20px; overflow: hidden; margin-bottom: 28px;
+            position: relative; height: 340px;
+            box-shadow: var(--shadow-lg);
+        }
+        .article-cover img { width: 100%; height: 100%; object-fit: cover; }
+        .cover-placeholder {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .cover-placeholder .cp-deco { position: absolute; inset: 0; }
+        .cover-placeholder .cp-emoji {
+            font-size: 110px; position: relative; z-index: 1;
+            filter: drop-shadow(0 6px 20px rgba(0,0,0,0.2));
+        }
+
+        /* 头部信息 */
+        .article-header { margin-bottom: 24px; }
+        .article-meta-row {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;
+        }
+        .article-cat-badge {
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; color: white;
+        }
+        .article-date {
+            font-size: 12px; color: var(--muted);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .article-stats {
+            display: flex; align-items: center; gap: 16px;
+            font-size: 12px; color: var(--muted); margin-top: 8px; flex-wrap: wrap;
+        }
+        .article-stats span { display: flex; align-items: center; gap: 5px; }
+        .article-stats .reads { color: var(--c-species); }
+
+        .article-title {
+            font-size: clamp(22px, 4vw, 32px); font-weight: 900;
+            color: var(--ink); line-height: 1.3; margin-bottom: 12px;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .article-summary {
+            font-size: 15px; color: var(--muted); line-height: 1.8;
+            border-left: 4px solid var(--amber);
+            padding-left: 16px; margin-bottom: 6px;
+        }
+        .article-tags {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+        }
+        .article-tag {
+            padding: 4px 12px; border-radius: 8px;
+            background: var(--cream); color: var(--amber-dark);
+            font-size: 12px; font-weight: 600;
+        }
+
+        /* 正文区 */
+        .article-body {
+            background: var(--card-bg); border-radius: 20px;
+            padding: 32px; margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+            font-size: 16px; line-height: 1.95; color: #3A3A4A;
+        }
+        .article-body p { margin-bottom: 18px; }
+        .article-body img { max-width: 100%; border-radius: 12px; margin: 16px 0; box-shadow: var(--shadow-sm); }
+        .article-body h2, .article-body h3 { color: var(--ink); margin: 28px 0 14px; font-weight: 800; font-family: 'Noto Serif SC', serif; }
+        .article-body h2 { font-size: 22px; }
+        .article-body h3 { font-size: 18px; }
+        .article-body a { color: var(--amber); }
+        .article-body blockquote {
+            border-left: 4px solid var(--amber);
+            padding: 14px 18px; margin: 20px 0;
+            background: var(--cream); border-radius: 0 12px 12px 0;
+            color: var(--ink-light); font-style: italic;
+        }
+
+        /* 相关文章 */
+        .related-section {
+            background: var(--card-bg); border-radius: 20px;
+            padding: 28px; box-shadow: var(--shadow-sm); margin-bottom: 20px;
+        }
+        .related-title {
+            font-size: 11px; font-weight: 800; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.2px;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .related-title i { color: var(--amber); }
+        .related-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .related-card {
+            background: var(--cream); border-radius: 14px; padding: 16px;
+            cursor: pointer; transition: all 0.2s;
+            border: 1px solid transparent; text-decoration: none; display: block;
+        }
+        .related-card:hover {
+            border-color: var(--amber); background: #FFF8EE;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
+        }
+        .related-card .r-cat {
+            display: inline-block; padding: 3px 10px; border-radius: 8px;
+            font-size: 11px; font-weight: 700; color: white; margin-bottom: 10px;
+        }
+        .related-card .r-title {
+            font-size: 14px; font-weight: 700; color: var(--ink);
+            line-height: 1.45; margin-bottom: 8px;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .related-card .r-meta { font-size: 11px; color: var(--muted); }
+
+        /* 操作按钮 */
+        .action-row { display: flex; gap: 14px; flex-wrap: wrap; }
+        .action-btn {
+            flex: 1; min-width: 150px; padding: 14px 18px;
+            border-radius: 14px; text-decoration: none; font-size: 14px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .action-btn.species {
+            background: linear-gradient(135deg, #3A7055, #4A8C6F); color: white;
+            box-shadow: 0 6px 20px rgba(74,140,111,0.35);
+        }
+        .action-btn.list {
+            background: linear-gradient(135deg, var(--amber-dark), var(--amber)); color: white;
+            box-shadow: 0 6px 20px rgba(200,146,42,0.35);
+        }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.25); }
+
+        /* 加载和错误状态 */
+        .loading { text-align: center; padding: 100px 20px; color: var(--muted); }
+        .loading i { font-size: 40px; margin-bottom: 16px; animation: spin 1s linear infinite; display: block; }
+        .loading h3 { font-size: 16px; font-weight: 500; font-family: 'Noto Serif SC', serif; }
+        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+        .error-msg { text-align: center; padding: 80px 20px; color: var(--muted); }
+        .error-msg i { font-size: 48px; margin-bottom: 14px; display: block; color: var(--border); }
+        .error-msg h3 { font-size: 18px; font-family: 'Noto Serif SC', serif; margin-bottom: 8px; }
+        .error-msg p { font-size: 13px; margin-bottom: 16px; }
+        .error-msg a { color: var(--amber); text-decoration: none; font-weight: 600; }
+
+        @media (max-width: 640px) {
+            .related-grid { grid-template-columns: 1fr; }
+            .article-body { padding: 22px 18px; }
+            .related-section { padding: 22px 18px; }
+        }
+    </style>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav class="navbar">
+    <a href="/" class="navbar-brand">
+        <div class="logo"><i class="fas fa-feather-alt" style="color:white;font-size:14px"></i></div>
+        黄河生态方舟
+    </a>
+    <div class="nav-links">
+        <a href="/"><i class="fas fa-map-marked-alt"></i> 大屏</a>
+        <a href="/report/"><i class="fas fa-camera"></i> 上报</a>
+        <a href="/species/"><i class="fas fa-book"></i> 物种百科</a>
+        <a href="/articles/" class="active"><i class="fas fa-newspaper"></i> 科普</a>
+        <a href="/gallery/"><i class="fas fa-images"></i> 图库</a>
+        <a href="/profile/"><i class="fas fa-user"></i> 个人</a>
+    </div>
+    <a href="/articles/" class="nav-back"><i class="fas fa-arrow-left"></i> 返回文章</a>
+</nav>
+
+<div class="detail-container" id="app">
+    <div class="loading">
+        <i class="fas fa-spinner"></i>
+        <h3>正在加载文章...</h3>
+    </div>
+</div>
+
+<script>
+const API = '/api';
+
+const CAT = {
+    'habitat':   { label:'栖息地保护', cls:'cat-habitat',   bg:'linear-gradient(135deg,#4A8C6F,#3A7055)', img:'https://upload.wikimedia.org/wikipedia/commons/3/3d/D%C3%BClmen%2C_Rorup%2C_NSG_Roruper_Holz_--_2021_--_8187-91.jpg' },
+    'species':   { label:'物种保护',   cls:'cat-species',   bg:'linear-gradient(135deg,#B85450,#963830)', img:'https://upload.wikimedia.org/wikipedia/commons/9/9f/Wildlife-photography-in-kerala.jpg' },
+    'knowledge': { label:'生态知识',   cls:'cat-knowledge', bg:'linear-gradient(135deg,#4A7A9C,#3A5A7C)', img:'https://upload.wikimedia.org/wikipedia/commons/d/da/Leaf_Litter_-_Guelph%2C_Ontario.jpg' },
+    'news':      { label:'保护动态',   cls:'cat-news',      bg:'linear-gradient(135deg,#C08040,#A06020)', img:'https://upload.wikimedia.org/wikipedia/commons/8/82/LEKKI_CONSERVATION_CENTRE.jpg' },
+};
+
+function getCat(cat) { return CAT[cat] || CAT['knowledge']; }
+
+function calcReadTime(content) {
+    if (!content) return '1 分钟';
+    const w = content.replace(/<[^>]+>/g,'').length;
+    return `${Math.max(1,Math.round(w/400))} 分钟阅读`;
+}
+
+function friendlyDate(d) {
+    if (!d) return '—';
+    const dd = new Date(d), now = new Date();
+    const diff = Math.floor((now-dd)/1000);
+    if (diff<60) return '刚刚';
+    if (diff<3600) return `${Math.floor(diff/60)} 分钟前`;
+    if (diff<86400) return `${Math.floor(diff/3600)} 小时前`;
+    if (diff<2592000) return `${Math.floor(diff/86400)} 天前`;
+    return dd.toLocaleDateString('zh-CN',{year:'numeric',month:'short',day:'numeric'});
+}
+
+async function init() {
+    const id = window.location.pathname.match(/\/articles\/(\d+)\//)?.[1];
+    if (!id) {
+        document.getElementById('app').innerHTML = `
+            <div class="error-msg">
+                <i class="fas fa-search"></i>
+                <h3>未找到文章ID</h3>
+                <a href="/articles/">返回文章列表</a>
+            </div>`;
+        return;
+    }
+
+    try {
+        const [detailRes, listRes] = await Promise.all([
+            fetch(`${API}/articles/${id}/`),
+            fetch(`${API}/articles/`),
+        ]);
+        if (!detailRes.ok) throw new Error('not found');
+        const detail = await detailRes.json();
+        const allArticles = (await listRes.json()).results || [];
+
+        document.title = `${detail.title} | 黄河生态方舟`;
+        const ci = getCat(detail.category);
+        const readtime = calcReadTime(detail.content);
+        const kwList = ['黄河','湿地','保护','生态','鸟类','水鸟','候鸟','濒危','栖息地','迁徙'];
+        const tags = kwList.filter(k => detail.content && detail.content.includes(k)).slice(0, 4);
+        const related = allArticles.filter(a => a.category === detail.category && a.id !== detail.id).slice(0, 2);
+
+        document.getElementById('app').innerHTML = `
+            <div class="article-cover">
+                ${detail.cover_image
+                    ? `<img src="${detail.cover_image}" alt="${detail.title}">`
+                    : `<img src="${ci.img}" alt="${detail.title}" style="width:100%;height:100%;object-fit:cover;">`
+                }
+            </div>
+
+            <div class="article-header">
+                <div class="article-meta-row">
+                    <span class="article-cat-badge ${ci.cls}" style="background:${ci.bg}">
+                        ${ci.label}
+                    </span>
+                    <span class="article-date"><i class="fas fa-clock"></i> ${readtime}</span>
+                </div>
+                <h1 class="article-title">${detail.title}</h1>
+                ${detail.summary ? `<div class="article-summary">${detail.summary}</div>` : ''}
+                <div class="article-stats">
+                    <span><i class="fas fa-user"></i> ${detail.author_name || '未知作者'}</span>
+                    <span class="reads"><i class="fas fa-eye"></i> <span id="views-display">${detail.views || 0}</span> 阅读</span>
+                    <span><i class="fas fa-calendar"></i> ${friendlyDate(detail.created_at)}</span>
+                </div>
+                ${tags.length ? `<div class="article-tags">${tags.map(t=>`<span class="article-tag">${t}</span>`).join('')}</div>` : ''}
+            </div>
+
+            <div class="article-body" id="article-content">
+                ${detail.content || '<p style="color:#999;text-align:center;padding:40px">暂无正文内容</p>'}
+            </div>
+
+            ${related.length ? `
+            <div class="related-section">
+                <div class="related-title"><i class="fas fa-feather-alt"></i> 相关推荐</div>
+                <div class="related-grid">
+                    ${related.map(r => {
+                        const rc = getCat(r.category);
+                        return `<a href="/articles/${r.id}/" class="related-card">
+                            <span class="r-cat" style="background:${rc.bg}">${rc.icon} ${rc.label}</span>
+                            <div class="r-title">${r.title}</div>
+                            <div class="r-meta">${friendlyDate(r.created_at)} · ${calcReadTime(r.content)}</div>
+                        </a>`;
+                    }).join('')}
+                </div>
+            </div>` : ''}
+
+            <div class="related-section">
+                <div class="action-row">
+                    <a href="/species/" class="action-btn species"><i class="fas fa-book"></i> 探索物种百科</a>
+                    <a href="/articles/" class="action-btn list"><i class="fas fa-list"></i> 返回文章列表</a>
+                </div>
+            </div>
+        `;
+
+        // 阅读进度条
+        const bar = document.getElementById('reading-progress');
+        const content = document.getElementById('article-content');
+        bar.style.width = '0%';
+        content.addEventListener('scroll', () => {
+            const s = content.scrollTop, h = content.scrollHeight - content.clientHeight;
+            bar.style.width = h > 0 ? (s/h*100).toFixed(1)+'%' : '0%';
+        });
+
+        // 记录阅读次数
+        fetch(`${API}/articles/${id}/view/`, { method:'POST' })
+            .then(res => res.json())
+            .then(data => {
+                const v = data.views || (detail.views||0)+1;
+                detail.views = v;
+                const el = document.getElementById('views-display');
+                if (el) el.textContent = v;
+            }).catch(() => {});
+
+    } catch(e) {
+        document.getElementById('app').innerHTML = `
+            <div class="error-msg">
+                <i class="fas fa-search"></i>
+                <h3>未找到该文章</h3>
+                <p>可能已被删除或ID无效</p>
+                <a href="/articles/">返回文章列表</a>
+            </div>`;
+    }
+}
+init();
+</script>
+</body>
+</html>
