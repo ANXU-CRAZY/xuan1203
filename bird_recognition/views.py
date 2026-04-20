@@ -30,8 +30,13 @@ class BirdRecognitionView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         image_file = serializer.validated_data['image']
+        detection_threshold = serializer.validated_data.get('detection_threshold', 0.25)
+        classification_threshold = serializer.validated_data.get('classification_threshold', 0.0)
         image_bytes = image_file.read()
-        logger.info(f"收到图片: {image_file.name}, 大小: {len(image_bytes)} 字节")
+        logger.info(
+            f"收到图片: {image_file.name}, 大小: {len(image_bytes)} 字节, "
+            f"检测阈值={detection_threshold:.2f}, 分类阈值={classification_threshold:.2f}"
+        )
 
         try:
             # 预处理现在返回四个值：填充后的图像、原始PIL图像、缩放比例ratio、填充的(left, top)
@@ -82,8 +87,7 @@ class BirdRecognitionView(APIView):
 
                 # 过滤低置信度
                 if dets.shape[0] > 0:
-                    conf_thres = 0.25
-                    mask = dets[:, 4] > conf_thres
+                    mask = dets[:, 4] >= detection_threshold
                     dets = dets[mask]
                 logger.info(f"过滤后保留 {dets.shape[0]} 个目标")
             else:
@@ -130,6 +134,12 @@ class BirdRecognitionView(APIView):
                     logger.error(f"分类器处理失败: {e}\n{traceback.format_exc()}")
                     fine_class_id, fine_conf = -1, 0.0
 
+                if fine_conf < classification_threshold:
+                    logger.info(
+                        f"分类置信度 {fine_conf:.4f} 低于阈值 {classification_threshold:.4f}，跳过"
+                    )
+                    continue
+
                 output.append({
                     'detection_bbox': [x1, y1, x2, y2],
                     'detection_confidence': float(conf),
@@ -138,4 +148,15 @@ class BirdRecognitionView(APIView):
                     'fine_confidence': float(fine_conf)
                 })
 
-        return Response({'success': True, 'results': output}, status=status.HTTP_200_OK)
+        return Response({
+            'success': True,
+            'thresholds': {
+                'detection': float(detection_threshold),
+                'classification': float(classification_threshold),
+            },
+            'image': {
+                'width': original_pil.width,
+                'height': original_pil.height,
+            },
+            'results': output
+        }, status=status.HTTP_200_OK)

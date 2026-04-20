@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 class ImageUploadSerializer(serializers.Serializer):
     image = serializers.ImageField(required=True)
+    detection_threshold = serializers.FloatField(required=False, min_value=0.01, max_value=0.95, default=0.25)
+    classification_threshold = serializers.FloatField(required=False, min_value=0.0, max_value=0.95, default=0.0)
 
     def validate_image(self, value):
         # 文件大小限制（10MB）
