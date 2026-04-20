@@ -6,175 +6,599 @@
 {% block extrastyle %}
 {{ block.super }}
 <style>
-    .bird-recognition-container { padding: 20px; }
-    .upload-area {
-        border: 2px dashed #ccc;
-        padding: 30px;
-        text-align: center;
-        margin: 20px 0;
-        cursor: pointer;
-        border-radius: 4px;
-        background-color: #f8f9fa;
+    .br-page {
+        --br-ink: #1d2630;
+        --br-muted: #667085;
+        --br-line: #e4e7ec;
+        --br-soft: #f6f8fb;
+        --br-panel: #ffffff;
+        --br-green: #26745c;
+        --br-blue: #2f6fed;
+        --br-warn: #b7791f;
+        --br-red: #c2413d;
+        padding: 18px 20px 32px;
+        color: var(--br-ink);
     }
-    .upload-area:hover { background-color: #e9ecef; }
-    #preview-container {
+    .br-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    .br-title h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        font-weight: 700;
+    }
+    .br-title p {
+        margin: 0;
+        color: var(--br-muted);
+        font-size: 13px;
+        line-height: 1.7;
+    }
+    .br-shell {
+        display: grid;
+        grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+    .br-card {
+        background: var(--br-panel);
+        border: 1px solid var(--br-line);
+        border-radius: 8px;
+        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.06);
+        overflow: hidden;
+    }
+    .br-card-head {
+        padding: 15px 16px 12px;
+        border-bottom: 1px solid var(--br-line);
+        background: linear-gradient(180deg, #fff, #fafbfc);
+    }
+    .br-card-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+    }
+    .br-card-body {
+        padding: 16px;
+    }
+    .br-upload {
+        border: 2px dashed #b7c7be;
+        border-radius: 8px;
+        padding: 26px 18px;
+        text-align: center;
+        background: #f5faf7;
+        cursor: pointer;
+        transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .br-upload:hover,
+    .br-upload.is-dragging {
+        border-color: var(--br-green);
+        background: #edf7f2;
+        transform: translateY(-1px);
+    }
+    .br-upload strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+    }
+    .br-upload span {
+        color: var(--br-muted);
+        font-size: 12px;
+    }
+    .br-file-meta {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: var(--br-soft);
+        color: var(--br-muted);
+        font-size: 12px;
+        display: none;
+    }
+    .br-setting {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid var(--br-line);
+    }
+    .br-setting-row {
+        display: grid;
+        grid-template-columns: 1fr 56px;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+    }
+    .br-setting-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .br-setting-label small {
+        color: var(--br-muted);
+        font-weight: 400;
+    }
+    .br-range {
+        width: 100%;
+        accent-color: var(--br-green);
+    }
+    .br-number {
+        width: 56px;
+        padding: 7px 6px;
+        border: 1px solid var(--br-line);
+        border-radius: 6px;
+        text-align: center;
+        font-size: 13px;
+    }
+    .br-hint {
+        margin-top: 8px;
+        color: var(--br-muted);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .br-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+    }
+    .br-btn {
+        border: 0;
+        border-radius: 7px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        transition: opacity .18s ease, transform .18s ease;
+    }
+    .br-btn:hover {
+        transform: translateY(-1px);
+    }
+    .br-btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .br-btn-primary {
+        flex: 1;
+        color: #fff;
+        background: linear-gradient(135deg, var(--br-green), #1f5c4b);
+    }
+    .br-btn-ghost {
+        color: var(--br-ink);
+        background: var(--br-soft);
+        border: 1px solid var(--br-line);
+    }
+    .br-status {
+        margin-top: 14px;
+        min-height: 20px;
+        font-size: 13px;
+        color: var(--br-muted);
+        line-height: 1.6;
+    }
+    .br-status.is-error {
+        color: var(--br-red);
+    }
+    .br-status.is-ok {
+        color: var(--br-green);
+    }
+    .br-preview-wrap {
+        padding: 16px;
+        background: #0f1720;
+    }
+    .br-preview-stage {
         position: relative;
         display: inline-block;
-        margin: 20px 0;
+        max-width: 100%;
+        min-height: 220px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #182230;
     }
     #preview {
-        max-width: 100%;
-        max-height: 500px;
         display: none;
+        max-width: 100%;
+        max-height: 620px;
+        vertical-align: top;
     }
     #canvas {
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
         pointer-events: none;
-        width: 100%;
-        height: 100%;
     }
-    .result-item {
-        background: #f8f9fa;
-        margin-bottom: 10px;
-        padding: 10px;
-        border-radius: 4px;
-        border-left: 4px solid #28a745;
+    .br-empty-preview {
+        width: min(760px, 100%);
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #98a2b3;
+        text-align: center;
+        padding: 24px;
     }
-    .btn-recognize {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
+    .br-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
     }
-    .btn-recognize:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
+    .br-metric {
+        background: var(--br-soft);
+        border: 1px solid var(--br-line);
+        border-radius: 8px;
+        padding: 12px;
     }
-    #status { margin: 10px 0; color: #666; }
+    .br-metric strong {
+        display: block;
+        font-size: 22px;
+        color: var(--br-ink);
+        line-height: 1;
+    }
+    .br-metric span {
+        display: block;
+        margin-top: 6px;
+        color: var(--br-muted);
+        font-size: 12px;
+    }
+    .br-results {
+        display: grid;
+        gap: 10px;
+    }
+    .br-result {
+        border: 1px solid var(--br-line);
+        border-left: 4px solid var(--br-green);
+        border-radius: 8px;
+        padding: 12px;
+        background: #fff;
+    }
+    .br-result-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    .br-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 12px;
+        background: #eaf7f1;
+        color: var(--br-green);
+        white-space: nowrap;
+    }
+    .br-result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        color: var(--br-muted);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+    .br-result-grid b {
+        color: var(--br-ink);
+    }
+    .br-empty-result {
+        padding: 18px;
+        border: 1px dashed var(--br-line);
+        border-radius: 8px;
+        color: var(--br-muted);
+        text-align: center;
+        background: var(--br-soft);
+    }
+    @media (max-width: 980px) {
+        .br-shell {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 640px) {
+        .br-header {
+            flex-direction: column;
+        }
+        .br-summary,
+        .br-result-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="bird-recognition-container">
-    <h1>🦆 水鸟识别实时检测</h1>
-    
-    <div class="upload-area" id="dropArea">
-        <p>点击或拖拽图片到此区域</p>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+<div class="br-page">
+    <div class="br-header">
+        <div class="br-title">
+            <h1>水鸟识别实时检测</h1>
+            <p>上传现场照片后，系统会先定位鸟类目标，再对裁剪区域做细分类识别。阈值越高，结果越严格。</p>
+        </div>
     </div>
-    
-    <div style="text-align: center;">
-        <button class="btn-recognize" id="recognizeBtn" disabled>开始识别</button>
+
+    <div class="br-shell">
+        <section class="br-card">
+            <div class="br-card-head">
+                <h2>上传与参数</h2>
+            </div>
+            <div class="br-card-body">
+                <div class="br-upload" id="dropArea">
+                    <strong>点击选择图片，或拖拽到这里</strong>
+                    <span>支持 JPEG、PNG、BMP，单张不超过 10MB</span>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/bmp" style="display:none;">
+                </div>
+                <div class="br-file-meta" id="fileMeta"></div>
+
+                <div class="br-setting">
+                    <div class="br-setting-label">
+                        <span>检测阈值</span>
+                        <small>过滤低置信度检测框</small>
+                    </div>
+                    <div class="br-setting-row">
+                        <input class="br-range" id="detectionThreshold" type="range" min="5" max="95" value="25" step="1">
+                        <input class="br-number" id="detectionNumber" type="number" min="5" max="95" value="25">
+                    </div>
+                    <div class="br-hint">建议范围：20-40。漏检时调低，误检多时调高。</div>
+
+                    <div class="br-setting-label" style="margin-top:18px;">
+                        <span>分类阈值</span>
+                        <small>过滤低置信度细分类</small>
+                    </div>
+                    <div class="br-setting-row">
+                        <input class="br-range" id="classificationThreshold" type="range" min="0" max="95" value="0" step="1">
+                        <input class="br-number" id="classificationNumber" type="number" min="0" max="95" value="0">
+                    </div>
+                    <div class="br-hint">设为 0 表示不过滤分类结果。若只想看高把握结果，可调到 30 以上。</div>
+                </div>
+
+                <div class="br-actions">
+                    <button class="br-btn br-btn-primary" id="recognizeBtn" disabled>开始识别</button>
+                    <button class="br-btn br-btn-ghost" id="resetBtn" type="button">清空</button>
+                </div>
+                <div class="br-status" id="status">请选择一张图片。</div>
+            </div>
+        </section>
+
+        <section class="br-card">
+            <div class="br-card-head">
+                <h2>图片预览</h2>
+            </div>
+            <div class="br-preview-wrap">
+                <div class="br-preview-stage" id="previewStage">
+                    <div class="br-empty-preview" id="emptyPreview">识别框会叠加显示在预览图上</div>
+                    <img id="preview" src="#" alt="预览图">
+                    <canvas id="canvas"></canvas>
+                </div>
+            </div>
+        </section>
     </div>
-    
-    <div id="status"></div>
-    
-    <div id="preview-container" style="text-align: center;">
-        <img id="preview" src="#" alt="预览图">
-        <canvas id="canvas"></canvas>
-    </div>
-    
-    <div id="results"></div>
+
+    <section class="br-card" style="margin-top:18px;">
+        <div class="br-card-head">
+            <h2>识别结果</h2>
+        </div>
+        <div class="br-card-body">
+            <div class="br-summary">
+                <div class="br-metric">
+                    <strong id="metricCount">0</strong>
+                    <span>保留目标</span>
+                </div>
+                <div class="br-metric">
+                    <strong id="metricDetection">--</strong>
+                    <span>最高检测置信度</span>
+                </div>
+                <div class="br-metric">
+                    <strong id="metricFine">--</strong>
+                    <span>最高分类置信度</span>
+                </div>
+            </div>
+            <div id="results" class="br-results">
+                <div class="br-empty-result">暂无结果。上传图片并点击“开始识别”。</div>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
     const dropArea = document.getElementById('dropArea');
     const fileInput = document.getElementById('fileInput');
+    const fileMeta = document.getElementById('fileMeta');
     const preview = document.getElementById('preview');
+    const emptyPreview = document.getElementById('emptyPreview');
     const canvas = document.getElementById('canvas');
     const recognizeBtn = document.getElementById('recognizeBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const statusDiv = document.getElementById('status');
     const resultsDiv = document.getElementById('results');
+    const metricCount = document.getElementById('metricCount');
+    const metricDetection = document.getElementById('metricDetection');
+    const metricFine = document.getElementById('metricFine');
+    const detectionThreshold = document.getElementById('detectionThreshold');
+    const detectionNumber = document.getElementById('detectionNumber');
+    const classificationThreshold = document.getElementById('classificationThreshold');
+    const classificationNumber = document.getElementById('classificationNumber');
 
     let selectedFile = null;
+    let lastResults = [];
+
+    function setStatus(message, state) {
+        statusDiv.textContent = message;
+        statusDiv.classList.toggle('is-error', state === 'error');
+        statusDiv.classList.toggle('is-ok', state === 'ok');
+    }
+
+    function syncPair(rangeEl, numberEl) {
+        rangeEl.addEventListener('input', () => {
+            numberEl.value = rangeEl.value;
+        });
+        numberEl.addEventListener('input', () => {
+            const min = Number(numberEl.min);
+            const max = Number(numberEl.max);
+            const val = Math.min(max, Math.max(min, Number(numberEl.value || min)));
+            numberEl.value = val;
+            rangeEl.value = val;
+        });
+    }
+    syncPair(detectionThreshold, detectionNumber);
+    syncPair(classificationThreshold, classificationNumber);
 
     dropArea.addEventListener('click', () => fileInput.click());
-    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.background = '#eef'; });
-    dropArea.addEventListener('dragleave', () => dropArea.style.background = '#f8f9fa');
-
-    fileInput.addEventListener('change', handleFileSelect);
-    dropArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropArea.style.background = '#f8f9fa';
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            fileInput.files = e.dataTransfer.files;
-            handleFileSelect();
+    dropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropArea.classList.add('is-dragging');
+    });
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('is-dragging'));
+    dropArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropArea.classList.remove('is-dragging');
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            loadSelectedFile(file);
+        }
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) {
+            loadSelectedFile(fileInput.files[0]);
         }
     });
 
-    function handleFileSelect() {
-        const file = fileInput.files[0];
-        if (!file) return;
+    resetBtn.addEventListener('click', () => {
+        selectedFile = null;
+        lastResults = [];
+        fileInput.value = '';
+        preview.src = '#';
+        preview.style.display = 'none';
+        emptyPreview.style.display = 'flex';
+        canvas.width = 0;
+        canvas.height = 0;
+        fileMeta.style.display = 'none';
+        recognizeBtn.disabled = true;
+        resetMetrics();
+        resultsDiv.innerHTML = '<div class="br-empty-result">暂无结果。上传图片并点击“开始识别”。</div>';
+        setStatus('请选择一张图片。');
+    });
+
+    function loadSelectedFile(file) {
+        if (!file.type.startsWith('image/')) {
+            setStatus('请选择图片文件。', 'error');
+            return;
+        }
         selectedFile = file;
+        const sizeMb = (file.size / 1024 / 1024).toFixed(2);
+        fileMeta.textContent = `${file.name} / ${sizeMb} MB`;
+        fileMeta.style.display = 'block';
 
         const reader = new FileReader();
-        reader.onload = (e) => {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            canvas.width = 0;
-            canvas.height = 0;
+        reader.onload = (event) => {
+            preview.onload = () => {
+                emptyPreview.style.display = 'none';
+                preview.style.display = 'block';
+                drawBoxes(lastResults);
+            };
+            preview.src = event.target.result;
         };
         reader.readAsDataURL(file);
+
+        lastResults = [];
+        canvas.width = 0;
+        canvas.height = 0;
         recognizeBtn.disabled = false;
-        statusDiv.innerText = '已选择图片，点击识别';
+        resetMetrics();
+        resultsDiv.innerHTML = '<div class="br-empty-result">图片已加载，可以开始识别。</div>';
+        setStatus('已选择图片，点击“开始识别”。', 'ok');
     }
 
     recognizeBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
 
         recognizeBtn.disabled = true;
-        statusDiv.innerText = '正在识别中...';
-        resultsDiv.innerHTML = '';
+        setStatus('正在识别中，模型加载时可能需要稍等...');
+        resultsDiv.innerHTML = '<div class="br-empty-result">正在运行检测和分类模型...</div>';
+        clearCanvas();
 
         const formData = new FormData();
         formData.append('image', selectedFile);
+        formData.append('detection_threshold', String(Number(detectionThreshold.value) / 100));
+        formData.append('classification_threshold', String(Number(classificationThreshold.value) / 100));
 
         try {
             const response = await fetch('/bird/recognize/', {
                 method: 'POST',
                 body: formData
             });
+            const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`服务器错误 (${response.status}): ${errorText}`);
+                const detail = data ? JSON.stringify(data) : response.statusText;
+                throw new Error(`服务器错误 (${response.status}): ${detail}`);
             }
 
-            const data = await response.json();
-            statusDiv.innerText = `识别完成，发现 ${data.results.length} 个目标`;
-            displayResults(data.results);
-            drawBoxes(data.results);
+            lastResults = data.results || [];
+            updateMetrics(lastResults);
+            displayResults(lastResults, data.thresholds || {});
+            drawBoxes(lastResults);
+            setStatus(`识别完成，当前阈值下保留 ${lastResults.length} 个目标。`, 'ok');
         } catch (error) {
-            statusDiv.innerText = '识别失败: ' + error.message;
+            lastResults = [];
+            resetMetrics();
+            clearCanvas();
+            resultsDiv.innerHTML = '<div class="br-empty-result">识别失败，请检查图片或模型服务。</div>';
+            setStatus('识别失败：' + error.message, 'error');
         } finally {
             recognizeBtn.disabled = false;
         }
     });
 
-    function displayResults(results) {
-        if (results.length === 0) {
-            resultsDiv.innerHTML = '<p>未检测到水鸟</p>';
+    function resetMetrics() {
+        metricCount.textContent = '0';
+        metricDetection.textContent = '--';
+        metricFine.textContent = '--';
+    }
+
+    function updateMetrics(results) {
+        metricCount.textContent = String(results.length);
+        if (!results.length) {
+            metricDetection.textContent = '--';
+            metricFine.textContent = '--';
             return;
         }
-        let html = '<h3>检测结果：</h3>';
-        results.forEach((r, idx) => {
-            html += `
-                <div class="result-item">
-                    <strong>目标 ${idx+1}</strong><br>
-                    检测框: [${r.detection_bbox.join(', ')}]<br>
-                    检测置信度: ${(r.detection_confidence * 100).toFixed(1)}%<br>
-                    细分类别ID: ${r.fine_class_id}<br>
-                    细分类别置信度: ${(r.fine_confidence * 100).toFixed(1)}%
+        const maxDetection = Math.max(...results.map(r => Number(r.detection_confidence || 0)));
+        const maxFine = Math.max(...results.map(r => Number(r.fine_confidence || 0)));
+        metricDetection.textContent = `${(maxDetection * 100).toFixed(1)}%`;
+        metricFine.textContent = `${(maxFine * 100).toFixed(1)}%`;
+    }
+
+    function displayResults(results, thresholds) {
+        if (!results.length) {
+            const det = thresholds.detection !== undefined ? `${(thresholds.detection * 100).toFixed(0)}%` : `${detectionThreshold.value}%`;
+            const cls = thresholds.classification !== undefined ? `${(thresholds.classification * 100).toFixed(0)}%` : `${classificationThreshold.value}%`;
+            resultsDiv.innerHTML = `<div class="br-empty-result">当前阈值下未检测到水鸟。检测阈值 ${det}，分类阈值 ${cls}。可以尝试降低阈值或换一张更清晰的图片。</div>`;
+            return;
+        }
+
+        resultsDiv.innerHTML = results.map((r, idx) => {
+            const det = Number(r.detection_confidence || 0);
+            const fine = Number(r.fine_confidence || 0);
+            const bbox = Array.isArray(r.detection_bbox) ? r.detection_bbox.join(', ') : '--';
+            return `
+                <div class="br-result">
+                    <div class="br-result-title">
+                        <span>目标 ${idx + 1}</span>
+                        <span class="br-badge">${(det * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="br-result-grid">
+                        <div>检测框：<b>[${bbox}]</b></div>
+                        <div>检测类别 ID：<b>${r.detection_class_id}</b></div>
+                        <div>细分类别 ID：<b>${r.fine_class_id}</b></div>
+                        <div>分类置信度：<b>${(fine * 100).toFixed(1)}%</b></div>
+                    </div>
                 </div>
             `;
-        });
-        resultsDiv.innerHTML = html;
+        }).join('');
+    }
+
+    function clearCanvas() {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
     function drawBoxes(results) {
@@ -187,16 +611,25 @@
 
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 3;
-        ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = '#00ff00';
+        ctx.lineWidth = Math.max(3, Math.round(preview.naturalWidth / 360));
+        ctx.font = `bold ${Math.max(18, Math.round(preview.naturalWidth / 42))}px Arial`;
+        ctx.textBaseline = 'top';
 
-        results.forEach((r) => {
+        results.forEach((r, idx) => {
             const [x1, y1, x2, y2] = r.detection_bbox;
+            const label = `#${idx + 1} ${(Number(r.detection_confidence || 0) * 100).toFixed(0)}%`;
+            const labelWidth = ctx.measureText(label).width + 12;
+            const labelHeight = Math.max(22, Math.round(preview.naturalWidth / 34));
+
+            ctx.strokeStyle = '#2ee59d';
+            ctx.fillStyle = 'rgba(31, 92, 75, 0.88)';
             ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-            ctx.fillText(`${r.fine_class_id} (${(r.detection_confidence*100).toFixed(0)}%)`, x1, y1-5);
+            ctx.fillRect(x1, Math.max(0, y1 - labelHeight), labelWidth, labelHeight);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(label, x1 + 6, Math.max(0, y1 - labelHeight + 3));
         });
     }
+
+    window.addEventListener('resize', () => drawBoxes(lastResults));
 </script>
 {% endblock %}
