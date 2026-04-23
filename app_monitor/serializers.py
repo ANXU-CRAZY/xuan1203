@@ -1,6 +1,6 @@
 from rest_framework import serializers
 # 引入所有需要的模型
-from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo
+from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 
@@ -33,17 +33,56 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 # ==========================================
 # 0b. 物种列表序列化器
 # ==========================================
+class SpeciesImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+    source_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpeciesImage
+        fields = [
+            'id', 'species', 'url', 'caption', 'source', 'source_display',
+            'source_url', 'source_author', 'views', 'is_featured', 'created_at'
+        ]
+
+    def get_url(self, obj):
+        if obj.image and str(obj.image) not in ('', 'False', 'None'):
+            request = self.context.get('request')
+            path = str(obj.image).lstrip('/')
+            if request:
+                return request.build_absolute_uri('/media/' + path)
+            return '/media/' + path
+        if obj.image_url:
+            return obj.image_url
+        return None
+
+    def get_source_display(self, obj):
+        source_map = {
+            'wikimedia': '维基百科',
+            'birdsourcing': 'Birdsourcing',
+            'ibc': 'Internet Bird Collection',
+            'xeno_canto': 'Xeno-Canto',
+            'npc': '中国鸟类图库',
+            'manual': '手动上传',
+            'other': '其他来源',
+        }
+        return source_map.get(obj.source, obj.source)
+
+
 class SpeciesInfoSerializer(serializers.ModelSerializer):
     observation_count = serializers.SerializerMethodField()
     last_observed = serializers.SerializerMethodField()
     iucn_status = serializers.SerializerMethodField()
     article_count = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
+    gallery_images = SpeciesImageSerializer(source='images', many=True, read_only=True)
+    gallery_count = serializers.SerializerMethodField()
 
     class Meta:
         model = SpeciesInfo
         fields = [
             'id', 'name_cn', 'name_latin', 'order', 'family',
-            'protection_level', 'distribution_habit',
+            'protection_level', 'distribution_habit', 'cover_image',
+            'cover_image_url', 'gallery_images', 'gallery_count',
             'observation_count', 'last_observed', 'iucn_status', 'article_count'
         ]
 
@@ -71,6 +110,32 @@ class SpeciesInfoSerializer(serializers.ModelSerializer):
 
     def get_article_count(self, obj):
         return 1
+
+    def get_cover_image_url(self, obj):
+        if obj.cover_image and str(obj.cover_image) not in ('', 'False', 'None'):
+            request = self.context.get('request')
+            path = str(obj.cover_image).lstrip('/')
+            if request:
+                return request.build_absolute_uri('/media/' + path)
+            return '/media/' + path
+
+        featured = obj.images.filter(is_featured=True).first()
+        if featured:
+            return self._resolve_image_url(featured)
+
+        first_image = obj.images.order_by('-views', '-created_at').first()
+        if first_image:
+            return self._resolve_image_url(first_image)
+
+        return None
+
+    def _resolve_image_url(self, img_obj):
+        if img_obj.image and str(img_obj.image) not in ('', 'False', 'None'):
+            return '/media/' + str(img_obj.image).lstrip('/')
+        return img_obj.image_url if img_obj.image_url else None
+
+    def get_gallery_count(self, obj):
+        return obj.images.count()
 
 
 # ==========================================
@@ -140,8 +205,10 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
     # --- B. 新功能的字段 (后台管理用) ---
     uploader_name = serializers.ReadOnlyField(source='uploader.username')
     species_name = serializers.ReadOnlyField(source='species.name_cn')
+    species_id = serializers.ReadOnlyField(source='species.id')
     species_protection = serializers.ReadOnlyField(source='species.protection_level')
     zone_name = serializers.ReadOnlyField(source='zone.name')
+    transect_name = serializers.SerializerMethodField()
 
     # --- C. 备用新字段 (建议前端以后慢慢迁移到这两个字段) ---
     lat = serializers.SerializerMethodField()
@@ -160,8 +227,10 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
 
             # === 显示字段 ===
             'species_name',
+            'species_id',
             'species_protection',
             'zone_name',
+            'transect_name',
 
             # === 坐标字段 (新旧共存) ===
             'x', 'y',  # 🚑 旧前端救命字段
@@ -199,6 +268,21 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
 
     def get_lat(self, obj):
         return self.get_y(obj)
+
+    def get_transect_name(self, obj):
+        if not obj.zone:
+            return None
+
+        routes = self.context.get('_route_names')
+        if routes is None:
+            routes = list(MonitoringRoute.objects.values_list('name', flat=True))
+            self.context['_route_names'] = routes
+
+        zone_name = obj.zone.name or ''
+        for route_name in routes:
+            if zone_name and zone_name in route_name:
+                return route_name
+        return None
 
     def get_reporter_name(self, obj):
         # 逻辑：这行代码同时兼容了新数据(uploader)和旧数据(reporter)

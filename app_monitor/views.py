@@ -26,7 +26,7 @@ except ImportError:
 
 # === 引入模型 ===
 # 确保包含 Product, UserProfile
-from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo
+from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -38,6 +38,7 @@ from .serializers import (
     UserInfoSerializer,
     UserRegisterSerializer,
     SpeciesInfoSerializer,
+    SpeciesImageSerializer,
 )
 
 
@@ -415,11 +416,34 @@ class ArticleViewSet(viewsets.ViewSet):
         return Response({'views': 1})
 
 
-class SpeciesImageViewSet(viewsets.ViewSet):
+class SpeciesImageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SpeciesImage.objects.all().order_by('-is_featured', '-views', '-created_at')
+    serializer_class = SpeciesImageSerializer
     permission_classes = [permissions.AllowAny]
 
-    def list(self, request):
-        return Response(_species_image_items(request))
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        species_id = self.request.query_params.get('species_id')
+        if species_id:
+            queryset = queryset.filter(species_id=species_id)
+        return queryset
+
+    @action(detail=True, methods=['post'], url_path='set-featured')
+    def set_featured(self, request, pk=None):
+        image = self.get_object()
+        species_id = request.data.get('species_id') or image.species_id
+        SpeciesImage.objects.filter(species_id=species_id).exclude(pk=image.pk).update(is_featured=False)
+        image.is_featured = True
+        image.save(update_fields=['is_featured'])
+        species = SpeciesInfo.objects.get(pk=species_id)
+        cover_url = SpeciesInfoSerializer(species, context={'request': request}).data.get('cover_image_url')
+        return Response({
+            'success': True,
+            'image_id': image.pk,
+            'species_id': species_id,
+            'cover_image_url': cover_url,
+            'message': '精选封面已更新'
+        })
 
     def retrieve(self, request, pk=None):
         for image in _species_image_items(request):
@@ -429,10 +453,10 @@ class SpeciesImageViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def view_image(self, request, pk=None):
-        for image in _species_image_items(request):
-            if str(image['id']) == str(pk):
-                return Response({'views': image.get('views', 0) + 1})
-        return Response({'views': 1})
+        image = self.get_object()
+        image.views += 1
+        image.save(update_fields=['views'])
+        return Response({'views': image.views})
 
 
 # ==========================================

@@ -155,8 +155,17 @@
             border: 1px solid #ddd;
         }
         .log-content { flex: 1; font-size: 12px; }
-        .log-title { font-weight: 700; color: #333; display: flex; justify-content: space-between; }
+        .log-title { font-weight: 700; color: #333; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .log-title > span:first-child { flex: 1; }
         .log-time { color: #999; font-size: 10px; }
+        .log-item.locatable { cursor: pointer; }
+        .log-item.locatable:hover { background: rgba(0,173,181,0.06); }
+        .log-locate-btn {
+            border: none; border-radius: 999px; padding: 2px 7px;
+            background: rgba(0,173,181,0.12); color: var(--c-aqua);
+            font-size: 10px; font-weight: 700; cursor: pointer;
+        }
+        .log-locate-btn:hover { background: var(--c-aqua); color: #fff; }
         .log-meta { display: flex; gap: 5px; margin-top: 2px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; display: inline-block; }
         .status-dot.active { background: var(--c-green); box-shadow: 0 0 5px var(--c-green); animation: blink 1.5s infinite; }
@@ -594,6 +603,10 @@
         layers: { station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
+        speciesData: [],
+        speciesById: {},
+        speciesByName: {},
+        recordMarkers: {},
         _statsData: { total: 0, species: 0, protected: 0 },
         heatmap: {
             active: false,
@@ -702,11 +715,16 @@
 
         initMap: function() {
             const tk = "0de0375367832014891a9f40e0e42911";
-            const tdt = t => `http://t0.tianditu.gov.cn/${t}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${t}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${tk}`;
-            const vec = L.tileLayer(tdt('vec'));
-            const img = L.tileLayer(tdt('img'));
-            const vecLabel = L.tileLayer(tdt('cva'));
-            const imgLabel = L.tileLayer(tdt('cia'));
+            const tdt = t => `https://t{s}.tianditu.gov.cn/${t}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${t}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${tk}`;
+            const tileOptions = {
+                subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+                maxZoom: 18,
+                attribution: '天地图'
+            };
+            const vec = L.tileLayer(tdt('vec'), tileOptions);
+            const img = L.tileLayer(tdt('img'), tileOptions);
+            const vecLabel = L.tileLayer(tdt('cva'), tileOptions);
+            const imgLabel = L.tileLayer(tdt('cia'), tileOptions);
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
@@ -800,10 +818,45 @@
         },
 
         getObservationPosition: function(item) {
-            const lat = parseFloat(item.y || item.latitude);
-            const lng = parseFloat(item.x || item.longitude);
+            const lat = parseFloat(item.y || item.latitude || item.lat);
+            const lng = parseFloat(item.x || item.longitude || item.lng);
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
             return { lat, lng };
+        },
+
+        normalizeName: function(name) {
+            return (name || '').trim();
+        },
+
+        getSpeciesForRecord: function(record) {
+            if (!record) return null;
+            const recordSpeciesId = record.species_id || record.species;
+            const byId = recordSpeciesId !== undefined && recordSpeciesId !== null
+                ? this.speciesById[String(recordSpeciesId)]
+                : null;
+            return byId || this.speciesByName[this.normalizeName(record.species_name)] || null;
+        },
+
+        getProtectionGroup: function(level) {
+            const text = (level || '').trim();
+            if (!text || text === '无') return '无危/其他';
+            if (text === 'Ⅰ' || text === 'I' || text.includes('一级')) return '国家一级';
+            if (text === 'Ⅱ' || text === 'II' || text.includes('二级')) return '国家二级';
+            if (text.includes('三有')) return '三有动物';
+            return '无危/其他';
+        },
+
+        getProtectionLabel: function(level) {
+            return this.getProtectionGroup(level);
+        },
+
+        enrichObservation: function(record) {
+            const species = this.getSpeciesForRecord(record);
+            if (!species) return record;
+            record.species_info = species;
+            record.species_name = record.species_name || species.name_cn;
+            record.species_protection = species.protection_level || record.species_protection || '';
+            return record;
         },
 
         getDateFilteredObservations: function() {
@@ -949,8 +1002,21 @@
         },
 
         loadData: function() {
-            $.get(`${this.api}/observations/`).done(res => {
-                this.data = res.results || res || [];
+            $.when(
+                $.get(`${this.api}/observations/`),
+                $.get(`${this.api}/species/`)
+            ).done((obsRes, speciesRes) => {
+                const obsPayload = obsRes[0];
+                const speciesPayload = speciesRes[0];
+                this.speciesData = speciesPayload.results || speciesPayload || [];
+                this.speciesById = {};
+                this.speciesByName = {};
+                this.speciesData.forEach(s => {
+                    this.speciesById[String(s.id)] = s;
+                    this.speciesByName[this.normalizeName(s.name_cn)] = s;
+                });
+
+                this.data = (obsPayload.results || obsPayload || []).map(item => this.enrichObservation(item));
                 // 时间倒序
                 this.data.sort((a, b) => new Date(b.observation_time) - new Date(a.observation_time));
                 this.refresh();
@@ -961,6 +1027,7 @@
             const start = new Date(document.getElementById('d-start').value);
             const end = new Date(document.getElementById('d-end').value); end.setHours(23,59,59);
             this.layers.record.clearLayers();
+            this.recordMarkers = {};
 
             const stats = {};
             let count = 0, pCount = 0;
@@ -970,28 +1037,33 @@
             this.data.forEach(item => {
                 const p = item;
                 const time = new Date(p.observation_time);
-                const lat = p.y || p.latitude;
-                const lng = p.x || p.longitude;
+                const pos = this.getObservationPosition(p);
+                const lat = pos ? pos.lat : null;
+                const lng = pos ? pos.lng : null;
 
                 if (lat && lng && time >= start && time <= end) {
                     count++;
                     filteredLogs.push(p);
 
-                    const name = p.species_name || "未知";
-                    const level = p.species_protection || "普通";
+                    const species = this.getSpeciesForRecord(p);
+                    const name = (species && species.name_cn) || p.species_name || "未知";
+                    const rawLevel = (species && species.protection_level) || p.species_protection || "";
+                    const level = this.getProtectionLabel(rawLevel);
+                    const levelGroup = this.getProtectionGroup(rawLevel);
 
                     if(!stats[name]) stats[name] = { count: 0, level: level };
                     stats[name].count++;
-                    if(level.includes('一') || level.includes('Ⅰ') || level.includes('二') || level.includes('Ⅱ')) pCount++;
+                    if(levelGroup === '国家一级' || levelGroup === '国家二级') pCount++;
 
                     let badgeClass = 'bg-green';
-                    if (level.includes('一') || level.includes('Ⅰ')) badgeClass = 'bg-red';
-                    else if (level.includes('二') || level.includes('Ⅱ')) badgeClass = 'bg-orange';
+                    if (levelGroup === '国家一级') badgeClass = 'bg-red';
+                    else if (levelGroup === '国家二级') badgeClass = 'bg-orange';
 
                     const color = (p.status === 'approved') ? '#2ECC71' : (p.status === 'pending' ? '#F39C12' : '#E74C3C');
-                    L.circleMarker([lat, lng], { radius: 6, fillColor: color, color: '#fff', weight: 1, fillOpacity: 0.8 })
+                    const marker = L.circleMarker([lat, lng], { radius: 6, fillColor: color, color: '#fff', weight: 1, fillOpacity: 0.8 })
                      .on('click', () => this.openDetailModal(p, stats))
                      .addTo(this.layers.record);
+                    if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
 
                     bounds.push([lat, lng]);
                 }
@@ -1007,7 +1079,11 @@
             // 更新面板顶部统计
             const totalAll = this.data.filter(d => d.status === 'approved').length;
             const speciesAll = new Set(this.data.filter(d => d.status === 'approved').map(d => d.species_name)).size;
-            const protectedAll = this.data.filter(d => d.status === 'approved' && (d.species_protection || '').match(/一|二/)).length;
+            const protectedAll = this.data.filter(d => {
+                const species = this.getSpeciesForRecord(d);
+                const group = this.getProtectionGroup((species && species.protection_level) || d.species_protection || '');
+                return d.status === 'approved' && (group === '国家一级' || group === '国家二级');
+            }).length;
             app._statsData = { total: totalAll, species: speciesAll, protected: protectedAll };
 
             $('#stat-total').text(totalAll);
@@ -1031,18 +1107,25 @@
                 const isPending = (item.status === 'pending');
                 const statusColor = isApproved ? '#2ECC71' : (isPending ? '#F39C12' : '#E74C3C');
                 const statusText = isApproved ? '已核验' : (isPending ? '待审核' : '已驳回');
+                const recordId = (item.id !== undefined && item.id !== null) ? String(item.id).replace(/'/g, "\\'") : '';
+                const itemClass = recordId ? 'log-item locatable' : 'log-item';
+                const itemClick = recordId ? ` onclick="app.locateObservation('${recordId}')"` : '';
+                const locateButton = recordId
+                    ? `<button class="log-locate-btn" onclick="event.stopPropagation(); app.locateObservation('${recordId}')"><i class="fas fa-location-crosshairs"></i> 定位</button>`
+                    : '';
 
                 const imgTag = imgUrl
                     ? `<img src="${imgUrl}" class="log-icon">`
                     : `<div class="log-icon" style="display:flex;align-items:center;justify-content:center;color:#ccc"><i class="fas fa-camera"></i></div>`;
 
                 return `
-                    <div class="log-item">
+                    <div class="${itemClass}"${itemClick}>
                         ${imgTag}
                         <div class="log-content">
                             <div class="log-title">
                                 <span>${name}</span>
                                 <span style="font-weight:normal; color:#666">${item.count}只</span>
+                                ${locateButton}
                             </div>
                             <div class="log-meta">
                                 <span class="badge" style="background:${statusColor};padding:1px 4px;font-size:9px">${statusText}</span>
@@ -1056,6 +1139,23 @@
                 `;
             }).join('');
             $('#realtime-log-box').html(html || '<div style="text-align:center;color:#ccc;margin-top:20px;">暂无实时数据</div>');
+        },
+
+        locateObservation: function(recordId) {
+            const record = this.data.find(item => String(item.id) === String(recordId));
+            if (!record) return;
+
+            const pos = this.getObservationPosition(record);
+            if (pos && this.map) {
+                const targetZoom = Math.max(this.map.getZoom(), 13);
+                this.map.flyTo([pos.lat, pos.lng], targetZoom, { animate: true, duration: 0.7 });
+            }
+
+            const marker = this.recordMarkers ? this.recordMarkers[recordId] : null;
+            window.setTimeout(() => {
+                if (marker) marker.fire('click');
+                else this.openDetailModal(record, {});
+            }, pos ? 350 : 0);
         },
 
         renderDashboard: function(stats) {
@@ -1160,17 +1260,27 @@
 
         // === 物种详情弹窗 ===
         openDetailModal: function(record, stats) {
-            const name = record.species_name || '未知物种';
-            const level = record.species_protection || '普通';
+            const species = this.getSpeciesForRecord(record);
+            const name = (species && species.name_cn) || record.species_name || '未知物种';
+            const rawLevel = (species && species.protection_level) || record.species_protection || '';
+            const level = this.getProtectionLabel(rawLevel);
+            const levelGroup = this.getProtectionGroup(rawLevel);
             const zone = record.zone_name || '未知区域';
             const count = record.count || 1;
             const time = record.observation_time ? record.observation_time.slice(0, 16).replace('T', ' ') : '—';
+            const selectedSpeciesId = species ? String(species.id) : String(record.species_id || record.species || '');
+            const selectedSpeciesName = this.normalizeName(name);
+            const speciesRecords = this.data.filter(d => {
+                const dSpeciesId = String(d.species_id || d.species || '');
+                if (selectedSpeciesId && dSpeciesId === selectedSpeciesId) return true;
+                return this.normalizeName(d.species_name) === selectedSpeciesName;
+            });
 
             // 保护等级徽章样式
             let badgeBg = '#e0e0e0', badgeColor = '#666';
-            if (level.includes('一') || level.includes('Ⅰ')) { badgeBg = '#e74c3c'; badgeColor = '#fff'; }
-            else if (level.includes('二') || level.includes('Ⅱ')) { badgeBg = '#f39c12'; badgeColor = '#fff'; }
-            else if (level.includes('三有')) { badgeBg = '#3498db'; badgeColor = '#fff'; }
+            if (levelGroup === '国家一级') { badgeBg = '#e74c3c'; badgeColor = '#fff'; }
+            else if (levelGroup === '国家二级') { badgeBg = '#f39c12'; badgeColor = '#fff'; }
+            else if (levelGroup === '三有动物') { badgeBg = '#3498db'; badgeColor = '#fff'; }
 
             $('#modal-species-name').text(name);
             $('#modal-species-badge').text(level).css({ background: badgeBg, color: badgeColor });
@@ -1179,16 +1289,19 @@
             $('#modal-time').text(time);
             $('#modal-transect').text(record.transect_name || '—');
 
-            // 图片
-            if (record.image) {
-                $('#modal-images').html(`<img src="${record.image}" class="modal-img-thumb" onclick="window.open(this.src,'_blank')">`);
-            } else {
-                $('#modal-images').html('');
-            }
+            // 图片：优先使用该条观测照片，其次使用对应物种图库
+            const speciesImages = species ? (species.gallery_images || []) : [];
+            const imageUrls = [];
+            if (record.image) imageUrls.push(record.image);
+            if (species && species.cover_image_url) imageUrls.push(species.cover_image_url);
+            speciesImages.forEach(img => { if (img.url) imageUrls.push(img.url); });
+            const uniqueImages = [...new Set(imageUrls)].slice(0, 4);
+            $('#modal-images').html(uniqueImages.map(url =>
+                `<img src="${url}" class="modal-img-thumb" onclick="window.open(this.src,'_blank')">`
+            ).join(''));
 
             // 百科链接（用名称搜索，确保能找到）
-            const speciesName = record.species_name || '未知物种';
-            $('#modal-link-species').attr('href', `/species/?search=${encodeURIComponent(speciesName)}`);
+            $('#modal-link-species').attr('href', species ? `/species/${species.id}/` : `/species/?search=${encodeURIComponent(name)}`);
             $('#modal-link-articles').attr('href', `/articles/?search=${encodeURIComponent(name)}`);
 
             // === 保护等级占比图：显示全局所有等级的占比，当前物种所属等级高亮 ===
@@ -1197,20 +1310,18 @@
 
             const globalLevelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
             this.data.forEach(d => {
-                const lv = d.species_protection || '无危/其他';
-                if (lv.includes('一') || lv.includes('Ⅰ')) globalLevelStats['国家一级']++;
-                else if (lv.includes('二') || lv.includes('Ⅱ')) globalLevelStats['国家二级']++;
-                else if (lv.includes('三有')) globalLevelStats['三有动物']++;
-                else globalLevelStats['无危/其他']++;
+                const sp = this.getSpeciesForRecord(d);
+                const lv = this.getProtectionGroup((sp && sp.protection_level) || d.species_protection || '');
+                globalLevelStats[lv] = (globalLevelStats[lv] || 0) + 1;
             });
 
             // 保护等级占比：当前等级扇形浮动向外突出（插件方式，不破坏底层）
             const levelData = ALL_LEVELS.map(lv => globalLevelStats[lv]);
             const levelColors2 = ALL_LEVELS.map(lv => LEVEL_COLORS[lv]);
-            const levelBorders = ALL_LEVELS.map(lv => lv === level ? 2 : 1);
-            const levelBorderColors = ALL_LEVELS.map(lv => lv === level ? LEVEL_COLORS[lv] : '#fff');
+            const levelBorders = ALL_LEVELS.map(lv => lv === levelGroup ? 2 : 1);
+            const levelBorderColors = ALL_LEVELS.map(lv => lv === levelGroup ? LEVEL_COLORS[lv] : '#fff');
 
-            const levelHighlightIdx = ALL_LEVELS.indexOf(level);
+            const levelHighlightIdx = ALL_LEVELS.indexOf(levelGroup);
 
             if (this.charts.modalLevel) this.charts.modalLevel.destroy();
             this.charts.modalLevel = new Chart(document.getElementById('modal-chart-level'), {
@@ -1250,7 +1361,7 @@
             $('#modal-level-center .center-val').text(totalLv);
             ALL_LEVELS.forEach((lv, i) => {
                 const pct = ((levelData[i] / totalLv) * 100).toFixed(0);
-                const isHighlight = lv === level;
+                const isHighlight = lv === levelGroup;
                 levelLegendHtml += `<div class="legend-item${isHighlight ? ' is-hl' : ''}">
                     <span class="legend-dot" style="background:${levelColors2[i]}; ${isHighlight ? 'box-shadow: 0 0 0 2px #fff, 0 0 0 4px ' + levelColors2[i] : ''}"></span>
                     <span class="legend-label">${lv}</span>
@@ -1260,9 +1371,9 @@
             });
             $('#modal-level-legend').html(levelLegendHtml);
 
-            // === 区域分布图：显示全局所有区域的占比，当前物种所在区域高亮 ===
+            // === 区域分布图：显示当前物种在各区域的分布，当前点位高亮 ===
             const globalZoneStats = {};
-            this.data.forEach(d => {
+            (speciesRecords.length ? speciesRecords : [record]).forEach(d => {
                 const zn = d.zone_name || '未知区域';
                 globalZoneStats[zn] = (globalZoneStats[zn] || 0) + 1;
             });

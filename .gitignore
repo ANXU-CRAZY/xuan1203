@@ -23,7 +23,13 @@ db.sqlite3
 *.pyc
 
 # Media and generated static output
-media/
+media/*
+!media/species/
+!media/species/gallery/
+!media/species/gallery/**
+media/observations/
+media/uploads/
+media/__pycache__/
 static_root/
 
 # Local model weights

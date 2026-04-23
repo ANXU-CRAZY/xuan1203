@@ -20,6 +20,12 @@ class SpeciesInfo(models.Model):
         default="暂无详细习性数据",
         help_text="AI识别后展示给用户的本地化习性描述"
     )
+    cover_image = models.ImageField(
+        upload_to='species/covers/',
+        blank=True,
+        null=True,
+        verbose_name="物种封面图"
+    )
 
     class Meta:
         verbose_name = "物种信息"
@@ -192,3 +198,49 @@ class Product(models.Model):
         verbose_name_plural = "积分商城商品"
     def __str__(self):
         return self.name
+
+
+# ====================
+# 7. 物种图片库
+# ====================
+class SpeciesImage(models.Model):
+    SOURCE_CHOICES = (
+        ('wikimedia', '维基百科'),
+        ('birdsourcing', 'Birdsourcing'),
+        ('ibc', 'Internet Bird Collection'),
+        ('xeno_canto', 'Xeno-Canto'),
+        ('npc', '中国鸟类图库'),
+        ('manual', '手动上传'),
+        ('other', '其他来源'),
+    )
+
+    species = models.ForeignKey(
+        SpeciesInfo,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name="关联物种"
+    )
+    image_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="图片URL")
+    image = models.ImageField(upload_to='species/gallery/', blank=True, null=True, verbose_name="本地上传图片")
+    caption = models.CharField(max_length=300, blank=True, verbose_name="图片说明")
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='manual', verbose_name="图片来源")
+    source_url = models.URLField(max_length=500, blank=True, verbose_name="来源链接")
+    source_author = models.CharField(max_length=100, blank=True, verbose_name="来源作者")
+    views = models.IntegerField(default=0, verbose_name="浏览量")
+    is_featured = models.BooleanField(default=False, verbose_name="精选图片")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = "物种图片"
+        verbose_name_plural = "物种图片库"
+        ordering = ['-is_featured', '-views', '-created_at']
+
+    def __str__(self):
+        species_name = self.species.name_cn if self.species else "未知物种"
+        caption = self.caption[:30] if self.caption else "无说明"
+        return f"{species_name} - {caption}"
+
+    def get_image_url(self):
+        if self.image:
+            return self.image.url
+        return self.image_url or None

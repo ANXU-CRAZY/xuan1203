@@ -273,6 +273,37 @@ function getSpeciesImage(nameCn) {
     return SPECIES_IMG[nameCn] || null;
 }
 
+// Wikimedia 缩略图 URL 转为原始大图 URL
+function toOriginalUrl(url) {
+    if (!url || url.indexOf('wikimedia.org') === -1) return url;
+    if (url.indexOf('/thumb/') !== -1) {
+        return url.replace('/thumb/', '/').replace(/\/\d+px-[^/]+$/, '');
+    }
+    return url;
+}
+
+// 解析封面图 URL：优先 DB 封面 > DB 图库 > 备用原图（全部转为原始图）
+function resolveDetailCover(s) {
+    if (s.cover_image_url) return toOriginalUrl(s.cover_image_url);
+    var imgs = s.gallery_images;
+    if (imgs && imgs.length > 0 && imgs[0].url) return toOriginalUrl(imgs[0].url);
+    return SPECIES_IMG[s.name_cn] || null;
+}
+
+// 图片加载失败时，尝试获取下一个可用图片 URL
+function resolveDetailCoverFallback(s) {
+    var tried = new Set();
+    if (s.cover_image_url) tried.add(toOriginalUrl(s.cover_image_url));
+    var imgs = s.gallery_images || [];
+    for (var i = 0; i < imgs.length; i++) {
+        var url = toOriginalUrl(imgs[i].url || '');
+        if (url && !tried.has(url)) return url;
+    }
+    var fb = SPECIES_IMG[s.name_cn];
+    if (fb && !tried.has(fb)) return fb;
+    return null;
+}
+
 function getLevelBg(level) {
     if (!level) return 'rgba(255,255,255,0.4)';
     if (level.includes('一级')) return '#e74c3c';
@@ -305,13 +336,16 @@ function renderPage(s) {
     const iucn = s.iucn_status || { code:'LC',label:'无危',color:'#27ae60',desc:'种群稳定' };
     const riskMap = { 'EN':80,'VU':55,'NT':30,'LC':10 };
 
-    document.getElementById('app').innerHTML = `
+        const heroImg = resolveDetailCover(s);
+        document.getElementById('app').innerHTML = `
         <div class="detail-hero">
-            ${s.cover_image || getSpeciesImage(s.name_cn)
+            ${heroImg
                 ? `<div style="height:280px;position:relative;overflow:hidden;">
-                     <img src="${s.cover_image || getSpeciesImage(s.name_cn)}" alt="${s.name_cn}" style="width:100%;height:100%;object-fit:cover;">
+                     <img src="${heroImg}" alt="${s.name_cn}" style="width:100%;height:100%;object-fit:cover;"
+                       onerror="var fb=resolveDetailCoverFallback(s);if(fb){this.src=fb;}else{this.parentElement.parentElement.querySelector('.detail-hero-bg').style.display='block';this.parentElement.style.display='none';}">
                      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.65));"></div>
-                   </div>`
+                   </div>
+                   <div class="detail-hero-bg" style="background:${cardGradient(s.name_cn)};display:none"></div>`
                 : `<div class="detail-hero-bg" style="background:${cardGradient(s.name_cn)}"></div>`
             }
             <div class="hero-overlay">
