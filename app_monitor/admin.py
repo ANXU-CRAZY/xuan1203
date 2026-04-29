@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from leaflet.admin import LeafletGeoAdmin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
@@ -22,11 +23,35 @@ admin.site.index_title = '系统管理'
 
 # (1) 观测记录导入配置
 class ObservationRecordResource(resources.ModelResource):
-    # 定义 Excel 列名与数据库外键的对应
-    species = fields.Field(column_name='中文名', attribute='species', widget=ForeignKeyWidget(SpeciesInfo, 'name_cn'))
-    zone = fields.Field(column_name='loc', attribute='zone', widget=ForeignKeyWidget(WetlandZone, 'name'))
+    # 兼容不同来源的 CSV 表头，统一转换成内部使用的标准列名。
+    HEADER_ALIASES = {
+        '中文名': '中文名',
+        '种': '中文名',
+        'loc': 'loc',
+        '地址': 'loc',
+        'date': 'date',
+        '日期': 'date',
+        'abundance': 'abundance',
+        '数量': 'abundance',
+        'species': 'latin_name',
+        '学名': 'latin_name',
+        '目': 'order_name',
+        '科': 'family_name',
+        '保护级别': 'protection_level',
+        'x': 'x',
+        'y': 'y',
+    }
 
-    # 映射简单字段
+    species = fields.Field(
+        column_name='中文名',
+        attribute='species',
+        widget=ForeignKeyWidget(SpeciesInfo, 'name_cn'),
+    )
+    zone = fields.Field(
+        column_name='loc',
+        attribute='zone',
+        widget=ForeignKeyWidget(WetlandZone, 'name'),
+    )
     observation_time = fields.Field(attribute='observation_time', column_name='date')
     count = fields.Field(attribute='count', column_name='abundance')
 
@@ -36,6 +61,55 @@ class ObservationRecordResource(resources.ModelResource):
         import_id_fields = ('species', 'zone', 'observation_time')
         fields = ('species', 'zone', 'observation_time', 'count')
         exclude = ('id',)
+
+    def before_import(self, dataset, **kwargs):
+        normalized_headers = []
+        for header in dataset.headers:
+            clean_header = str(header or '').strip().lstrip('\ufeff')
+            normalized_headers.append(self.HEADER_ALIASES.get(clean_header, clean_header))
+        dataset.headers = normalized_headers
+
+        last_loc = ''
+        last_x = ''
+        last_y = ''
+        loc_idx = dataset.headers.index('loc') if 'loc' in dataset.headers else None
+        x_idx = dataset.headers.index('x') if 'x' in dataset.headers else None
+        y_idx = dataset.headers.index('y') if 'y' in dataset.headers else None
+
+        if loc_idx is None:
+            return
+
+        normalized_rows = []
+        for row in dataset:
+            row_values = list(row)
+
+            loc_value = str(row_values[loc_idx] or '').strip()
+            x_value = str(row_values[x_idx] or '').strip() if x_idx is not None else ''
+            y_value = str(row_values[y_idx] or '').strip() if y_idx is not None else ''
+
+            if loc_value:
+                last_loc = loc_value
+            elif last_loc:
+                row_values[loc_idx] = last_loc
+
+            if x_idx is not None:
+                if x_value:
+                    last_x = x_value
+                elif last_x and str(row_values[loc_idx] or '').strip() == last_loc:
+                    row_values[x_idx] = last_x
+
+            if y_idx is not None:
+                if y_value:
+                    last_y = y_value
+                elif last_y and str(row_values[loc_idx] or '').strip() == last_loc:
+                    row_values[y_idx] = last_y
+
+            normalized_rows.append(row_values)
+
+        dataset.wipe()
+        dataset.headers = normalized_headers
+        for row_values in normalized_rows:
+            dataset.append(row_values)
 
     def before_import_row(self, row, **kwargs):
         """
@@ -56,13 +130,25 @@ class ObservationRecordResource(resources.ModelResource):
         # --- B. 自动保存物种信息 ---
         name_cn = str(row.get('中文名', '')).strip()
         row['中文名'] = name_cn
+        loc_name = str(row.get('loc', '')).strip()
+        row['loc'] = loc_name
+
+        missing_fields = []
+        if not name_cn:
+            missing_fields.append('中文名/种')
+        if not str(row.get('date', '')).strip():
+            missing_fields.append('date/日期')
+        if not loc_name:
+            missing_fields.append('loc/地址')
+        if missing_fields:
+            raise ValidationError(f"缺少必填字段值: {', '.join(missing_fields)}")
 
         if name_cn:
             species_defaults = {
-                'name_latin': str(row.get('species', '')).strip(),
-                'order': str(row.get('目', '')).strip(),
-                'family': str(row.get('科', '')).strip(),
-                'protection_level': str(row.get('保护级别', '')).strip()
+                'name_latin': str(row.get('latin_name', '')).strip(),
+                'order': str(row.get('order_name', '')).strip(),
+                'family': str(row.get('family_name', '')).strip(),
+                'protection_level': str(row.get('protection_level', '')).strip(),
             }
             if species_defaults['protection_level'] in ['nan', 'NaN', 'None']:
                 species_defaults['protection_level'] = ''
@@ -73,9 +159,6 @@ class ObservationRecordResource(resources.ModelResource):
             )
 
         # --- C. 自动保存点位信息 ---
-        loc_name = str(row.get('loc', '')).strip()
-        row['loc'] = loc_name
-
         if loc_name:
             try:
                 x_val = float(row.get('x'))
@@ -96,6 +179,10 @@ class ObservationRecordResource(resources.ModelResource):
         # --- D. 导入的数据默认设为已通过 (可选) ---
         # 如果你希望 Excel 导入的历史数据直接显示，取消下面这行的注释
         # row['status'] = 'approved'
+
+    def before_save_instance(self, instance, row, **kwargs):
+        # CSV 导入的是历史监测数据，默认直接标记为已通过。
+        instance.status = 'approved'
 
 
 # (2) 其他 Resource

@@ -1,1008 +1,1347 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>候鸟迁徙记 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="../static/app_monitor/css/games.css">
+    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <style>
-        .stats-panel {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0,0,0,0.75);
-            color: white;
-            padding: 12px 15px;
-            border-radius: 12px;
-            font-size: 13px;
-            z-index: 10;
+        :root {
+            --g-primary: #5C6BC0;
+            --g-primary-light: #7986CB;
+            --g-primary-dark: #3949AB;
+            --g-accent: #FFCA28;
+            --g-accent-warm: #FFA726;
+            --g-btn-gradient: linear-gradient(135deg, #5C6BC0 0%, #7986CB 100%);
         }
-        .stats-panel .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-        }
-        .stats-panel .stat-bar {
-            width: 100px;
-            height: 10px;
-            background: #333;
-            border-radius: 5px;
+        .mg-sky {
+            position: absolute; inset: 0;
+            z-index: 0;
+            background: linear-gradient(180deg,
+                #0D1B2A 0%,
+                #1B263B 20%,
+                #415A77 45%,
+                #778DA9 65%,
+                #E0E1DD 80%,
+                #FF8C42 92%,
+                #E85D04 100%);
             overflow: hidden;
         }
-        .stats-panel .stat-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.3s;
+        .mg-sky::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 70% 90%, rgba(255,140,66,0.25) 0%, transparent 60%);
+            pointer-events: none;
         }
-        .stats-panel .bird-info {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .mg-sky .mg-star {
+            position: absolute; width: 2px; height: 2px;
+            background: white; border-radius: 50%;
+            animation: mg-twinkle 2s ease-in-out infinite;
         }
-        .stats-panel .bird-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
+        @keyframes mg-twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+        /* ── Overlay title tweaks ── */
+        #startOverlay h2 { font-size: 22px !important; margin-bottom: 4px !important; }
+        #startOverlay .g-subtitle { font-size: 12px !important; margin-bottom: 10px !important; }
+
+        /* ── Bird selection cards ── */
+        .mg-bird-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            width: 100%; max-width: 420px; margin-bottom: 12px;
         }
-        .stats-panel .bird-name {
-            font-weight: bold;
-            font-size: 14px;
+        .mg-bird-card {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 14px; padding: 10px 8px; cursor: pointer;
+            transition: all 0.3s ease; text-align: center;
         }
-        .stats-panel .bird-ability {
-            font-size: 10px;
-            color: #aaa;
-        }
-        .progress-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0,0,0,0.75);
-            color: white;
-            padding: 12px 15px;
-            border-radius: 12px;
-            font-size: 13px;
-            z-index: 10;
-        }
-        .bird-selector {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-radius: 25px;
-            z-index: 10;
-        }
-        .bird-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px 16px;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: white;
-            font-size: 12px;
-            min-width: 80px;
-            border: 2px solid transparent;
-        }
-        .bird-option:hover {
-            background: rgba(255,255,255,0.1);
+        .mg-bird-card:hover {
+            border-color: rgba(255,202,40,0.6);
             transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255,202,40,0.18);
+            background: rgba(255,255,255,0.18);
         }
-        .bird-option.selected {
-            border-color: #FFD700;
-            background: rgba(255,215,0,0.2);
+        .mg-bird-card.selected {
+            border-color: var(--g-accent);
+            background: rgba(255,202,40,0.14);
+            box-shadow: 0 0 0 2px rgba(255,202,40,0.4), 0 6px 24px rgba(255,202,40,0.22);
         }
-        .bird-option .icon {
-            font-size: 28px;
-            margin-bottom: 5px;
+        .mg-bird-icon { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 22px; overflow: hidden; }
+        .mg-bird-canvas { display: block; }
+        .mg-bird-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        .mg-bird-stats { display: flex; flex-direction: column; gap: 3px; }
+        .mg-stat-row { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.65); }
+        .mg-stat-bar { width: 55px; height: 4px; background: rgba(255,255,255,0.12); border-radius: 2px; overflow: hidden; }
+        .mg-stat-fill { height: 100%; border-radius: 2px; }
+
+        /* ── Rules ── */
+        .mg-rules { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; width: 100%; max-width: 400px; }
+        .mg-rule-item { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 6px 12px; border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.8); }
+        .mg-rule-item i { color: var(--g-accent); min-width: 14px; }
+
+        /* ── In-game HUD ── */
+        .mg-hud { position: absolute; top: 0; left: 0; right: 0; padding: 16px 20px; display: none; justify-content: space-between; align-items: flex-start; z-index: 10; pointer-events: none; }
+        .mg-hud.show { display: flex; }
+        .mg-hud-panel {
+            background: rgba(13,27,42,0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: white; padding: 14px 18px; border-radius: 14px; font-size: 14px; pointer-events: auto;
         }
-        .bird-option .name {
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-        .bird-option .stats {
-            font-size: 10px;
-            color: #aaa;
-            text-align: center;
-        }
-        .distance-bar {
-            width: 150px;
-            height: 12px;
-            background: #333;
-            border-radius: 6px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-        .distance-fill {
+        .mg-hud-panel h4 { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--g-accent); letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; }
+        .mg-stat-line { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+        .mg-energy-bar { width: 130px; height: 9px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+        .mg-energy-fill { height: 100%; border-radius: 5px; transition: width 0.3s, background 0.5s; }
+        .mg-distance-bar { width: 160px; height: 9px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+        .mg-distance-fill {
             height: 100%;
-            background: linear-gradient(90deg, #37474F, #607D8B, #87CEEB, #8B4513, #228B22);
-            border-radius: 6px;
-            transition: width 0.5s;
+            background: linear-gradient(90deg, #3949AB, #5C6BC0, #7986CB, #4FC3F7, #26A69A, #66BB6A);
+            border-radius: 4px; transition: width 0.5s;
         }
-        .obstacle-count {
-            position: absolute;
-            top: 85px;
-            left: 15px;
-            background: rgba(0,0,0,0.6);
-            color: white;
+        .mg-zone-badge {
+            display: inline-block;
+            background: rgba(255,202,40,0.15);
+            border: 1px solid rgba(255,202,40,0.3);
+            color: #FFCA28;
+            padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;
+        }
+        @media (max-width: 480px) { .mg-bird-grid { max-width: 380px; gap: 10px; } }
+
+        /* === 科普知识卡片 === */
+        .mg-fact-card {
+            position: fixed;
+            top: 80px; right: 16px;
+            z-index: 200;
+            width: 280px;
+            background: rgba(13, 27, 42, 0.97);
+            border: 1.5px solid rgba(255, 202, 40, 0.3);
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: mgFactSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+        }
+        @keyframes mgFactSlideIn {
+            from { opacity: 0; transform: translateX(30px) scale(0.9); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .mg-fact-card.fade-out {
+            animation: mgFactSlideOut 0.3s ease forwards;
+        }
+        @keyframes mgFactSlideOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to   { opacity: 0; transform: translateX(30px) scale(0.9); }
+        }
+        .mg-fact-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+        }
+        .mg-fact-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .mg-fact-title {
+            font-size: 13px; font-weight: 700; color: #FFCA28; flex: 1;
+        }
+        .mg-fact-badge {
+            font-size: 10px; padding: 2px 7px; border-radius: 8px;
+            background: rgba(255,202,40,0.15); color: #FFCA28; font-weight: 600;
+        }
+        .mg-fact-content {
+            font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.6;
+            max-height: 120px; overflow-y: auto;
+        }
+        .mg-fact-footer {
+            margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,202,40,0.15);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .mg-fact-close {
+            background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.5);
+            font-size: 11px; padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
+        }
+        .mg-fact-close:hover { background: rgba(255,202,40,0.1); color: #FFCA28; }
+        .mg-fact-hint {
+            font-size: 10px; color: rgba(255,255,255,0.35); display: flex; align-items: center; gap: 4px;
+        }
+        /* === 区域提示条 === */
+        .mg-zone-fact {
+            position: fixed;
+            bottom: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 200;
+            background: rgba(13,27,42,0.95);
+            border: 1.5px solid rgba(255,202,40,0.3);
+            border-radius: 14px;
+            padding: 10px 20px;
+            text-align: center;
+            animation: mgFactSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            min-width: 260px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .mg-zone-fact.fade-out {
+            animation: mgFactSlideOut 0.3s ease forwards;
+        }
+        .mg-zone-fact-title {
+            font-size: 12px; color: #FFCA28; font-weight: 700; margin-bottom: 4px;
+        }
+        .mg-zone-fact-content {
+            font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5;
+        }
+        /* === 科普按钮 === */
+        .mg-fact-btn {
+            position: absolute; top: 0; right: 16px; z-index: 16;
+            background: rgba(255,202,40,0.85); color: #263238;
+            border: none; padding: 5px 13px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            display: none; align-items: center; gap: 5px;
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            transition: all 0.2s; pointer-events: auto;
+        }
+        .mg-fact-btn.show { display: flex; }
+        .mg-fact-btn:hover { background: rgba(255,202,40,1); transform: scale(1.05); }
+        /* === 鸟类选择页科普信息 === */
+        .mg-bird-fact-text {
+            background: rgba(255,202,40,0.08);
+            border: 1px solid rgba(255,202,40,0.2);
+            border-radius: 10px;
             padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 10;
+            margin-top: 8px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
         }
+        .mg-bird-card-fact {
+            background: rgba(255,202,40,0.06);
+            border-top: 1px dashed rgba(255,202,40,0.2);
+            padding: 7px 12px 8px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.5;
+            border-radius: 0 0 16px 16px;
+            margin: 0 -12px -14px;
+            display: none;
+        }
+        .mg-bird-card.selected .mg-bird-card-fact { display: block; }
+        #winOverlay, #gameOverOverlay { justify-content: center; }
+        #winOverlay > div, #gameOverOverlay > div { margin: auto; }
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
-        <div class="game-header">
-            <div class="game-title">
-                <i class="fas fa-feather"></i>
-                候鸟迁徙记
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="/" style="color: var(--c-dark); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-arrow-left"></i> 返回
-                </a>
-            </div>
-        </div>
+    <header class="gh">
+        <a href="/" class="gh-logo">
+            <div class="gh-icon"><i class="fas fa-feather"></i></div>
+            <span class="gh-title">候鸟迁徙记</span>
+        </a>
+        <nav class="gh-nav">
+            <a href="/"><i class="fas fa-home"></i> 返回首页</a>
+        </nav>
+    </header>
 
-        <div class="canvas-container" id="canvasContainer">
-            <canvas id="gameCanvas" class="game-canvas"></canvas>
-            
-            <div class="stats-panel" id="statsPanel" style="display: none;">
-                <div class="stat-item">
-                    <i class="fas fa-bolt" style="color: #FFD700;"></i>
-                    <span>体力</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill" id="energyBar" style="width: 100%; background: #FFD700;"></div>
+    <main class="gw">
+        <div class="g-canvas-wrap">
+            <div class="mg-sky" id="mgSky"></div>
+
+            <div class="mg-hud" id="mgHud">
+                <div class="mg-hud-panel">
+                    <h4><i class="fas fa-bolt"></i> 体力</h4>
+                    <div class="mg-stat-line">
+                        <div class="mg-energy-bar"><div class="mg-energy-fill" id="mgEnergyFill" style="width:100%"></div></div>
+                        <span id="mgEnergyPct">100%</span>
                     </div>
                 </div>
-                <div class="bird-info" id="birdInfo">
-                    <div class="bird-icon" id="birdIcon" style="background: #fff;"></div>
-                    <div>
-                        <div class="bird-name" id="birdName">白天鹅</div>
-                        <div class="bird-ability" id="birdAbility">速度: 中 | 体力: 高</div>
+                <div class="mg-hud-panel">
+                    <h4><i class="fas fa-star"></i> 得分</h4>
+                    <div class="mg-stat-line">
+                        <div class="mg-distance-bar"><div class="mg-distance-fill" id="mgDistanceFill" style="width:0%"></div></div>
+                        <span id="mgProgressPct">0</span>
+                    </div>
+                    <div class="mg-stat-line">
+                        <i class="fas fa-map-marker-alt" style="color:#FFCA28"></i>
+                        <span class="mg-zone-badge" id="mgZone">荒原</span>
                     </div>
                 </div>
             </div>
 
-            <div class="progress-panel" id="progressPanel" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-route" style="color: #4CAF50;"></i>
-                    <span>迁徙进度</span>
-                </div>
-                <div class="distance-bar">
-                    <div class="distance-fill" id="distanceBar" style="width: 0%;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px;">
-                    <span style="color: #90CAF9;">当前: <span id="currentScore">0</span></span>
-                    <span style="color: #A5D6A7;" id="currentZone">荒原</span>
-                    <span style="color: #A5D6A7;">目标: <span id="targetScore">500</span></span>
-                </div>
-            </div>
+            <!-- 科普按钮 -->
+            <button class="mg-fact-btn" id="mgFactBtn" onclick="migrationGame.showBirdFactCard()">
+                <i class="fas fa-graduation-cap"></i> 科普
+            </button>
 
-            <div class="obstacle-count" id="obstacleCount" style="display: none;">
-                <i class="fas fa-exclamation-triangle" style="color: #FF5722;"></i>
-                障碍: <span id="obstacleNum">0</span>
-            </div>
+            <canvas id="gameCanvas" class="g-canvas"></canvas>
 
-            <div class="bird-selector" id="birdSelector">
-                <div class="bird-option selected" data-index="0" onclick="migrationGame.selectBird(0)">
-                    <i class="fas fa-feather-alt" style="color: #FFFFFF;"></i>
-                    <span class="name">白天鹅</span>
-                    <span class="stats">速度: 中<br>体力: 充足<br>灵活: 中</span>
+            <div class="g-overlay" id="startOverlay" style="background:rgba(13,27,42,0.82);">
+                <h2 style="color:#FFCA28;text-shadow:0 2px 12px rgba(255,202,40,0.3)"><i class="fas fa-feather"></i> 候鸟迁徙记</h2>
+                <p class="g-subtitle" style="color:rgba(255,255,255,0.65)">从北方飞往黄河湿地，躲避危险，收集食物</p>
+                <div class="mg-bird-grid" id="mgBirdGrid"></div>
+                <div class="mg-rules">
+                    <div class="mg-rule-item"><i class="fas fa-star"></i> 飞行距离越远，得分越高</div>
+                    <div class="mg-rule-item"><i class="fas fa-utensils"></i> 收集食物得50分+回复体力</div>
+                    <div class="mg-rule-item"><i class="fas fa-exclamation-triangle"></i> 撞到障碍物会扣体力</div>
+                    <div class="mg-rule-item"><i class="fas fa-bolt"></i> 空格键加速（消耗体力）</div>
                 </div>
-                <div class="bird-option" data-index="1" onclick="migrationGame.selectBird(1)">
-                    <i class="fas fa-crane" style="color: #F5F5F5;"></i>
-                    <span class="name">丹顶鹤</span>
-                    <span class="stats">速度: 快<br>体力: 中<br>灵活: 高</span>
-                </div>
-                <div class="bird-option" data-index="2" onclick="migrationGame.selectBird(2)">
-                    <i class="fas fa-bird" style="color: #8B7355;"></i>
-                    <span class="name">大雁</span>
-                    <span class="stats">速度: 中<br>体力: 充沛<br>灵活: 低</span>
-                </div>
-                <div class="bird-option" data-index="3" onclick="migrationGame.selectBird(3)">
-                    <i class="fas fa-wind" style="color: #E8E8E8;"></i>
-                    <span class="name">海鸥</span>
-                    <span class="stats">速度: 最快<br>体力: 较低<br>灵活: 高</span>
-                </div>
-            </div>
-
-            <div class="game-overlay" id="startOverlay">
-                <h2>候鸟迁徙记</h2>
-                <p style="color: #666; margin: 10px 0;">从北方飞往黄河湿地，躲避危险，收集食物</p>
-                
-                <div style="text-align: left; margin: 15px 20px; font-size: 12px; color: #666;">
-                    <p><i class="fas fa-hand-pointer" style="color: var(--c-aqua);"></i> 点击选择候鸟，每种有不同的能力</p>
-                    <p><i class="fas fa-keyboard" style="color: var(--c-aqua);"></i> 方向键/WSAD 控制飞行，空格加速</p>
-                    <p><i class="fas fa-utensils" style="color: #4CAF50;"></i> 收集食物补充体力</p>
-                    <p><i class="fas fa-exclamation-triangle" style="color: #FF5722;"></i> 躲避障碍物</p>
-                </div>
-                <button class="start-btn" style="margin-top: 15px;" onclick="migrationGame.start()">
+                <button class="g-btn" style="background:linear-gradient(135deg,#FFCA28,#FFA726);color:#263238;font-weight:700" onclick="migrationGame.start()">
                     <i class="fas fa-play"></i> 开始迁徙
                 </button>
             </div>
 
-            <div class="game-overlay" id="winOverlay" style="display: none;">
-                <div style="text-align: center;">
-                    <h2 style="color: #4CAF50;"><i class="fas fa-home"></i> 抵达黄河湿地!</h2>
-                    <p style="font-size: 24px; margin: 10px 0;">
-                        <i class="fas fa-star" style="color: #FFD700;"></i>
-                        <span id="winScore">0</span>
-                        <i class="fas fa-star" style="color: #FFD700;"></i>
-                    </p>
-                    <p id="winBirdName" style="font-size: 18px; color: #8b4513;"></p>
-                    <p>成功完成迁徙之旅!</p>
-                    <p style="margin-top: 10px; color: #888;">
-                        剩余体力: <span id="winEnergy">0</span>%
-                    </p>
-                    <button class="start-btn" style="margin-top: 20px;" onclick="migrationGame.restart()">
+            <div class="g-overlay" id="winOverlay" style="display:none;background:rgba(13,27,42,0.88);">
+                <div style="text-align:center;">
+                    <h2 style="color:#81C784;"><i class="fas fa-home"></i> 抵达黄河湿地！</h2>
+                    <div style="font-size:28px;margin:10px 0;color:#FFCA28;">
+                        <i class="fas fa-star"></i> <span id="mgWinScore">0</span> <i class="fas fa-star"></i>
+                    </div>
+                    <p style="font-size:15px;color:white;" id="mgWinBirdName"></p>
+                    <p style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:6px;">剩余体力 <strong id="mgWinEnergy" style="color:#FFCA28">0</strong>%</p>
+                    <button class="g-btn" style="background:linear-gradient(135deg,#FFCA28,#FFA726);color:#263238;font-weight:700;margin-top:14px;" onclick="migrationGame.restart()">
                         <i class="fas fa-redo"></i> 再来一局
                     </button>
                 </div>
             </div>
 
-            <div class="game-overlay" id="gameOverOverlay" style="display: none;">
-                <div class="game-over-content">
-                    <h2>迁徙失败</h2>
-                    <p style="font-size: 24px; margin: 10px 0;" id="finalDistance">0%</p>
-                    <p id="failReason" style="font-size: 13px; color: #888;"></p>
-                    <p style="margin: 10px 0; font-size: 13px;">
-                        得分: <span id="finalScore">0</span>
-                    </p>
-                    <button class="start-btn" style="margin-top: 15px;" onclick="migrationGame.restart()">
+            <div class="g-overlay" id="gameOverOverlay" style="display:none;background:rgba(13,27,42,0.88);">
+                <div style="text-align:center;">
+                    <h2 style="color:#ef5350;"><i class="fas fa-wind"></i> 迁徙失败</h2>
+                    <div style="font-size:26px;margin:8px 0;color:#FFCA28;" id="mgFinalDistance">0 分</div>
+                    <p style="font-size:12px;color:rgba(255,255,255,0.55);" id="mgFailReason"></p>
+                    <p style="font-size:14px;color:rgba(255,255,255,0.8);margin:8px 0;">得分 <strong id="mgFinalScore" style="color:#FFCA28">0</strong></p>
+                    <button class="g-btn" style="background:linear-gradient(135deg,#FFCA28,#FFA726);color:#263238;font-weight:700;margin-top:14px;" onclick="migrationGame.restart()">
                         <i class="fas fa-redo"></i> 重新迁徙
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="glass-panel" style="margin-top: 15px; text-align: center;">
-            <h4 style="color: var(--c-dark); margin-bottom: 10px;">
-                <i class="fas fa-info-circle" style="color: var(--c-aqua);"></i> 候鸟能力说明
-            </h4>
-            <p style="color: #666; font-size: 13px; line-height: 1.8;">
-                <strong>白天鹅</strong>：平衡型，体力充足，适合新手<br>
-                <strong>丹顶鹤</strong>：速度快又灵活，但体力消耗较快<br>
-                <strong>大雁</strong>：体力充沛续航久，但转向较慢<br>
-                <strong>海鸥</strong>：极速型，灵活敏捷，但体力最少
-            </p>
+        <div class="g-info-panel">
+            <h4><i class="fas fa-graduation-cap" style="color:#FFCA28"></i> 候鸟知识百科</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;text-align:left;">
+                <div style="background:rgba(21,101,192,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#1565C0;margin-bottom:3px;"><i class="fas fa-feather-alt"></i> 白天鹅</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">飞行高度可达8000米，每年迁徙超5000公里</div>
+                </div>
+                <div style="background:rgba(136,14,79,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#880E4F;margin-bottom:3px;"><i class="fas fa-crane"></i> 丹顶鹤</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">国家一级保护动物，全球野生不足3000只</div>
+                </div>
+                <div style="background:rgba(27,94,32,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#1B5E20;margin-bottom:3px;"><i class="fas fa-bird"></i> 大雁</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">"人"字飞行可省30%体力，速度达70-90km/h</div>
+                </div>
+                <div style="background:rgba(0,105,92,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#00695C;margin-bottom:3px;"><i class="fas fa-wind"></i> 海鸥</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">可饮用海水，能通过盐腺排出多余盐分</div>
+                </div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script>
-        const birdTypes = [
-            {
-                id: 'swan',
-                name: '白天鹅',
-                icon: 'fa-feather-alt',
-                color: '#FFFFFF',
-                speed: 2.5,
-                maxSpeed: 5,
-                energy: 120,
-                agility: 0.4,
-                boostCost: 8,
-                desc: '速度中等，体力充足'
-            },
-            {
-                id: 'crane',
-                name: '丹顶鹤',
-                icon: 'fa-crane',
-                color: '#F5F5F5',
-                speed: 3,
-                maxSpeed: 6.5,
-                energy: 90,
-                agility: 0.55,
-                boostCost: 6,
-                desc: '速度快，灵活敏捷'
-            },
-            {
-                id: 'goose',
-                name: '大雁',
-                icon: 'fa-bird',
-                color: '#8B7355',
-                speed: 2.8,
-                maxSpeed: 4.5,
-                energy: 150,
-                agility: 0.25,
-                boostCost: 10,
-                desc: '体力充沛，适合长途'
-            },
-            {
-                id: 'gull',
-                name: '海鸥',
-                icon: 'fa-wind',
-                color: '#E8E8E8',
-                speed: 3.5,
-                maxSpeed: 7,
-                energy: 70,
-                agility: 0.65,
-                boostCost: 5,
-                desc: '速度最快，但体力较低'
-            }
-        ];
-
-        const migrationGame = {
-            canvas: null,
-            ctx: null,
-            isRunning: false,
-            score: 0,
-            distance: 0,
-            targetScore: 10000,
-            energy: 100,
-            currentBird: null,
-            frameCount: 0,
-            bird: null,
-            obstacles: [],
-            foods: [],
-            particles: [],
-            animationId: null,
-            keys: {},
-            selectedBirdIndex: 0,
-            boosting: false,
-            autoForward: 0,
-
-            init: function() {
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-
-                document.addEventListener('keydown', (e) => {
-                    this.keys[e.code] = true;
-                    if (e.code === 'Space') {
-                        e.preventDefault();
-                        this.boosting = true;
-                    }
-                });
-                document.addEventListener('keyup', (e) => {
-                    this.keys[e.code] = false;
-                    if (e.code === 'Space') {
-                        this.boosting = false;
-                    }
-                });
-
-                this.drawStaticScene();
-            },
-
-            resizeCanvas: function() {
-                const container = document.getElementById('canvasContainer');
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-            },
-
-            selectBird: function(index) {
-                this.selectedBirdIndex = index;
-                document.querySelectorAll('.bird-option').forEach((el, i) => {
-                    el.classList.toggle('selected', i === index);
-                });
-            },
-
-            start: function() {
-                $('#startOverlay').hide();
-                $('#gameOverOverlay').hide();
-                $('#winOverlay').hide();
-                $('#birdSelector').hide();
-                $('#statsPanel').show();
-                $('#progressPanel').show();
-                $('#obstacleCount').show();
-
-                this.isRunning = true;
-                this.score = 0;
-                this.distance = 0;
-                this.frameCount = 0;
-                this.obstacles = [];
-                this.foods = [];
-                this.particles = [];
-                this.boosting = false;
-                this.autoForward = 0;
-
-                const birdConfig = birdTypes[this.selectedBirdIndex];
-                this.currentBird = birdConfig;
-                this.energy = birdConfig.energy;
-
-                this.bird = {
-                    x: 100,
-                    y: this.canvas.height / 2,
-                    vx: 0,
-                    vy: 0,
-                    wingPhase: 0,
-                    trail: []
-                };
-
-                this.updateUI();
-                this.updateBirdInfo();
-                this.gameLoop();
-            },
-
-            restart: function() {
-                $('#birdSelector').show();
-                this.start();
-            },
-
-            gameLoop: function() {
-                if (!this.isRunning) return;
-
-                this.update();
-                this.draw();
-                this.animationId = requestAnimationFrame(() => this.gameLoop());
-                this.frameCount++;
-            },
-
-            update: function() {
-                const bird = this.bird;
-                const cfg = this.currentBird;
-
-                const ax = this.keys['ArrowLeft'] || this.keys['KeyA'] ? -1 :
-                           this.keys['ArrowRight'] || this.keys['KeyD'] ? 1 : 0;
-                const ay = this.keys['ArrowUp'] || this.keys['KeyW'] ? -1 :
-                           this.keys['ArrowDown'] || this.keys['KeyS'] ? 1 : 0;
-
-                bird.vx += ax * cfg.agility;
-                bird.vy += ay * cfg.agility;
-
-                bird.vx *= 0.88;
-                bird.vy *= 0.88;
-
-                const boostActive = this.boosting && this.energy > 0;
-                const baseSpeed = cfg.speed;
-                const forwardBoost = boostActive ? cfg.maxSpeed - cfg.speed : 0;
-
-                bird.vx = Math.max(-cfg.maxSpeed * 0.5, Math.min(cfg.maxSpeed * 0.5, bird.vx));
-                bird.vy = Math.max(-cfg.maxSpeed * 0.5, Math.min(cfg.maxSpeed * 0.5, bird.vy));
-
-                const actualForward = baseSpeed + forwardBoost + this.autoForward * 0.3;
-                this.distance += Math.max(0, actualForward);
-
-                bird.x += bird.vx;
-                bird.y += bird.vy;
-
-                const margin = 40;
-                bird.x = Math.max(margin, Math.min(this.canvas.width - margin, bird.x));
-                bird.y = Math.max(margin, Math.min(this.canvas.height - margin, bird.y));
-
-                if (this.frameCount % 8 === 0) {
-                    this.energy -= 0.2;
-                    if (boostActive) this.energy -= 0.3;
-                    if (Math.abs(bird.vy) > 2) this.energy -= 0.1;
-                }
-
-                if (this.score >= this.targetScore) {
-                    this.win();
-                    return;
-                }
-                if (this.energy <= 0) {
-                    this.gameOver('体力耗尽');
-                    return;
-                }
-
-                bird.wingPhase += boostActive ? 0.5 : 0.25;
-
-                if (this.frameCount % 4 === 0) {
-                    bird.trail.push({ x: bird.x - 20, y: bird.y, alpha: 0.6, size: boostActive ? 4 : 2 });
-                }
-                bird.trail = bird.trail.filter(t => {
-                    t.alpha -= 0.03;
-                    t.x -= 1.5;
-                    t.size *= 0.98;
-                    return t.alpha > 0;
-                });
-
-                if (this.frameCount % 50 === 0) this.spawnObstacle();
-                if (this.frameCount % 30 === 0) this.spawnFood();
-
-                const scrollSpeed = actualForward * 0.8;
-
-                this.obstacles.forEach(obs => {
-                    obs.x -= scrollSpeed;
-                    if (obs.type === 'turbine') {
-                        obs.windPhase += 0.08;
-                    } else if (obs.type === 'hunter') {
-                        obs.aimX = bird.x;
-                        obs.aimY = bird.y;
-                    } else if (obs.type === 'net') {
-                        obs.swayPhase += 0.03;
-                    }
-                });
-                this.obstacles = this.obstacles.filter(obs => obs.x > -150);
-
-                this.foods.forEach(f => {
-                    f.x -= scrollSpeed;
-                    f.y += Math.sin(this.frameCount * 0.03 + f.phase) * 0.8;
-                    f.phase += 0.05;
-                });
-                this.foods = this.foods.filter(f => f.x > -50 && f.x < this.canvas.width + 50);
-
-                for (let obs of this.obstacles) {
-                    if (this.checkCollision(bird, obs)) {
-                        this.energy -= 25;
-                        this.score -= 20;
-                        this.createParticles(bird.x, bird.y, '#FF5722', 12);
-                        bird.vx = -8;
-                        bird.vy = (Math.random() - 0.5) * 10;
-                        this.score = Math.max(0, this.score);
-                    }
-                }
-
-                for (let i = this.foods.length - 1; i >= 0; i--) {
-                    const f = this.foods[i];
-                    const dist = Math.hypot(bird.x - f.x, bird.y - f.y);
-                    if (dist < 45) {
-                        this.energy = Math.min(cfg.energy, this.energy + 12);
-                        this.score += 30;
-                        this.createParticles(f.x, f.y, '#FFD700', 8);
-                        this.foods.splice(i, 1);
-                    }
-                }
-
-                this.score += Math.floor(actualForward * 0.5);
-                this.updateUI();
-            },
-
-            spawnObstacle: function() {
-                const types = ['turbine', 'building', 'hunter', 'net'];
-                const weights = [0.3, 0.3, 0.2, 0.2];
-                let r = Math.random();
-                let type = types[0];
-                let cum = 0;
-                for (let i = 0; i < types.length; i++) {
-                    cum += weights[i];
-                    if (r < cum) { type = types[i]; break; }
-                }
-                
-                const margin = 80;
-                let obs = {
-                    x: this.canvas.width + 60,
-                    y: margin + Math.random() * (this.canvas.height - margin * 2),
-                    type: type
-                };
-
-                if (type === 'turbine') {
-                    obs.y = 100 + Math.random() * (this.canvas.height - 250);
-                    obs.width = 80;
-                    obs.height = 200;
-                    obs.windPhase = Math.random() * Math.PI * 2;
-                } else if (type === 'building') {
-                    obs.y = this.canvas.height - 80 - Math.random() * 120;
-                    obs.width = 55 + Math.random() * 35;
-                    obs.height = 80 + Math.random() * 120;
-                } else if (type === 'hunter') {
-                    obs.width = 40;
-                    obs.height = 40;
-                    obs.aimX = 0;
-                    obs.aimY = 0;
-                } else {
-                    obs.y = 100 + Math.random() * (this.canvas.height - 250);
-                    obs.width = 90;
-                    obs.height = 70;
-                    obs.swayPhase = Math.random() * Math.PI * 2;
-                }
-
-                this.obstacles.push(obs);
-            },
-
-            spawnFood: function() {
-                const types = ['fish', 'berry', 'seed'];
-                const t = types[Math.floor(Math.random() * types.length)];
-                this.foods.push({
-                    x: this.canvas.width + 30,
-                    y: 60 + Math.random() * (this.canvas.height - 120),
-                    type: t,
-                    phase: Math.random() * Math.PI * 2
-                });
-            },
-
-            checkCollision: function(bird, obs) {
-                const bx = bird.x;
-                const by = bird.y;
-                const br = 18;
-
-                if (obs.type === 'turbine') {
-                    const bladeAngle = obs.windPhase;
-                    const bladeLen = 70;
-                    const cx = obs.x;
-                    const cy = obs.y;
-                    for (let i = 0; i < 3; i++) {
-                        const angle = bladeAngle + (i * Math.PI * 2 / 3);
-                        const tipX = cx + Math.cos(angle) * bladeLen;
-                        const tipY = cy + Math.sin(angle) * bladeLen;
-                        if (this.pointToLineDistance(bx, by, cx, cy, tipX, tipY) < br + 4) return true;
-                    }
-                    return Math.hypot(bx - cx, by - cy) < br + 25;
-                }
-
-                if (obs.type === 'hunter') {
-                    const dist = Math.hypot(bx - obs.x - 20, by - obs.y - 20);
-                    return dist < br + 18;
-                }
-
-                if (obs.type === 'net') {
-                    const sway = Math.sin(obs.swayPhase) * 8;
-                    const closestX = Math.max(obs.x + sway, Math.min(bx, obs.x + obs.width + sway));
-                    const closestY = Math.max(obs.y, Math.min(by, obs.y + obs.height));
-                    return Math.hypot(bx - closestX, by - closestY) < br;
-                }
-
-                const closestX = Math.max(obs.x, Math.min(bx, obs.x + obs.width));
-                const closestY = Math.max(obs.y, Math.min(by, obs.y + obs.height));
-                return Math.hypot(bx - closestX, by - closestY) < br;
-            },
-
-            pointToLineDistance: function(px, py, x1, y1, x2, y2) {
-                const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
-                const dot = A * C + B * D;
-                const lenSq = C * C + D * D;
-                let param = lenSq !== 0 ? dot / lenSq : -1;
-                let xx, yy;
-                if (param < 0) { xx = x1; yy = y1; }
-                else if (param > 1) { xx = x2; yy = y2; }
-                else { xx = x1 + param * C; yy = y1 + param * D; }
-                return Math.hypot(px - xx, py - yy);
-            },
-
-            createParticles: function(x, y, color, count) {
-                for (let i = 0; i < count; i++) {
-                    this.particles.push({
-                        x, y,
-                        vx: (Math.random() - 0.5) * 10,
-                        vy: (Math.random() - 0.5) * 10,
-                        life: 1,
-                        color
-                    });
+        /* ============================================================
+           科普知识数据
+        ============================================================ */
+        var MIGRATION_FACTS = {
+            birdTypes: {
+                swan: {
+                    title: '白天鹅',
+                    badge: '国家二级保护',
+                    icon: 'fa-feather-alt',
+                    color: '#FFFFFF',
+                    content: '白天鹅是忠贞的"爱情鸟"，一生只有一个伴侣。它们在迁徙时飞行高度可达 8000 米，利用山谷气流节省体力。每年飞行距离超过 5000 公里，从西伯利亚飞到中国黄河湿地越冬。'
+                },
+                crane: {
+                    title: '丹顶鹤',
+                    badge: '国家一级保护',
+                    icon: 'fa-crane',
+                    color: '#F5F5F5',
+                    content: '丹顶鹤是中国一级保护动物，因头顶红色肉冠而得名。它们拥有优美的求偶舞蹈，鸣声可传播 500 米以外。丹顶鹤每年在东北繁殖，黄河三角洲是其重要越冬地，目前全球野生种群不足 3000 只。'
+                },
+                goose: {
+                    title: '大雁',
+                    badge: '迁徙冠军',
+                    icon: 'fa-bird',
+                    color: '#8B7355',
+                    content: '大雁是最守纪律的迁徙者，飞行时排成"人"字形，利用气流减少 30% 的体力消耗。领头雁最为辛苦，需要不断变换位置让其他成员轮流领飞。大雁的飞行速度可达每小时 70-90 公里。'
+                },
+                gull: {
+                    title: '海鸥',
+                    badge: '湿地清道夫',
+                    icon: 'fa-wind',
+                    color: '#E8E8E8',
+                    content: '海鸥是海洋与湿地的"清洁工"，以腐肉、垃圾和小型鱼类为食，能帮助清理海岸线垃圾。它们还具有预测天气的能力——低飞预示暴风雨将至。海鸥可以喝海水，通过眼眶旁的盐腺排出多余盐分。'
                 }
             },
-
-            updateUI: function() {
-                const pct = Math.min(100, (this.energy / this.currentBird.energy) * 100);
-                const bar = $('#energyBar');
-                bar.css('width', pct + '%');
-                bar.css('background', pct < 25 ? '#F44336' : pct < 50 ? '#FF9800' : '#FFD700');
-                
-                const scorePct = Math.min(100, (this.score / this.targetScore) * 100);
-                $('#distanceBar').css('width', scorePct + '%');
-                $('#currentScore').text(this.score);
-                $('#targetScore').text(this.targetScore);
-                
-                $('#obstacleNum').text(this.obstacles.length);
-
-                const zones = ['荒原', '荒漠', '农田', '城市边缘', '河流', '湿地'];
-                const zoneIndex = Math.floor(scorePct / 100 * (zones.length - 1));
-                $('#currentZone').text(zones[Math.min(zoneIndex, zones.length - 1)]);
+            zones: {
+                '荒原': '荒原是迁徙候鸟的重要中转站，提供了稀缺的觅食和休息场所。草原生态系统支撑着数百种鸟类的生活。',
+                '荒漠': '荒漠上空的气流可以帮助候鸟滑翔节省体力，但缺乏水源补充。荒漠中的绿洲是候鸟的生命补给站。',
+                '农田': '农田是候鸟重要的觅食地，收割后的麦田遗留的谷物是宝贵的能量来源，但也存在农药中毒风险。每年有大量候鸟在迁徙途中因农药中毒死亡。',
+                '城市边缘': '城市热岛效应使城区温度高于郊区，可能缩短候鸟的迁徙距离。但玻璃幕墙造成的光污染每年导致全球约 10 亿只鸟死亡。',
+                '河流': '河流是迁徙路线上的"绿色走廊"，为候鸟提供饮水和食物补给。黄河作为候鸟迁徙的南北通道，每年接待超过 100 万只候鸟。',
+                '湿地': '湿地是候鸟迁徙的终点站，提供了繁殖、越冬所需的一切资源。黄河三角洲是中国最重要的湿地之一，被列入国际重要湿地名录。'
             },
-
-            updateBirdInfo: function() {
-                const cfg = this.currentBird;
-                $('#birdIcon').html(`<i class="fas ${cfg.icon}" style="color:${cfg.color}; font-size:18px;"></i>`);
-                $('#birdIcon').css('background', cfg.color === '#FFFFFF' ? '#f0f0f0' : cfg.color);
-                $('#birdName').text(cfg.name);
-                $('#birdAbility').text(`速度:${Math.round(cfg.speed*10)/10} 体力:${cfg.energy}`);
-            },
-
-            win: function() {
-                this.isRunning = false;
-                cancelAnimationFrame(this.animationId);
-                this.score += Math.floor(this.energy * 3);
-                $('#winScore').text(this.score);
-                $('#winBirdName').text(`${this.currentBird.name}成功抵达！`);
-                $('#winEnergy').text(Math.floor(this.energy));
-                $('#winOverlay').show();
-            },
-
-            gameOver: function(reason) {
-                this.isRunning = false;
-                cancelAnimationFrame(this.animationId);
-                const scorePct = Math.min(100, Math.floor((this.score / this.targetScore) * 100));
-                $('#finalDistance').text(scorePct + '%');
-                $('#failReason').text(reason || '体力耗尽或撞到障碍物');
-                $('#finalScore').text(this.score);
-                $('#gameOverOverlay').show();
-            },
-
-            draw: function() {
-                const ctx = this.ctx;
-                const w = this.canvas.width;
-                const h = this.canvas.height;
-
-                ctx.clearRect(0, 0, w, h);
-
-                const progress = this.score / this.targetScore;
-                
-                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-                skyGrad.addColorStop(0, this.lerpColor('#1a1a2e', '#37474F', progress));
-                skyGrad.addColorStop(0.3, this.lerpColor('#16213e', '#607D8B', progress));
-                skyGrad.addColorStop(0.6, this.lerpColor('#0f3460', '#87CEEB', progress));
-                skyGrad.addColorStop(1, this.lerpColor('#1a1a2e', '#228B22', progress));
-                ctx.fillStyle = skyGrad;
-                ctx.fillRect(0, 0, w, h);
-
-                this.drawClouds(ctx, w, h, progress);
-                this.drawTerrain(ctx, w, h, progress);
-                this.obstacles.forEach(obs => this.drawObstacle(ctx, obs));
-                this.foods.forEach(f => this.drawFood(ctx, f));
-
-                this.particles = this.particles.filter(p => {
-                    p.x += p.vx; p.y += p.vy;
-                    p.vx *= 0.95; p.vy *= 0.95;
-                    p.life -= 0.04;
-                    if (p.life > 0) {
-                        ctx.globalAlpha = p.life;
-                        ctx.fillStyle = p.color;
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.globalAlpha = 1;
-                    }
-                    return p.life > 0;
-                });
-
-                if (this.bird) this.drawBird(ctx, this.bird);
-            },
-
-            lerpColor: function(c1, c2, t) {
-                const a = this.hexToRgb(c1), b = this.hexToRgb(c2);
-                const r = Math.round(a.r + (b.r - a.r) * t);
-                const g = Math.round(a.g + (b.g - a.g) * t);
-                const bl = Math.round(a.b + (b.b - a.b) * t);
-                return `rgb(${r},${g},${bl})`;
-            },
-
-            hexToRgb: function(hex) {
-                const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                return r ? {r: parseInt(r[1],16), g: parseInt(r[2],16), b: parseInt(r[3],16)} : {r:0,g:0,b:0};
-            },
-
-            drawClouds: function(ctx, w, h, progress) {
-                ctx.fillStyle = `rgba(255,255,255,${0.15 + progress * 0.15})`;
-                for (let i = 0; i < 6; i++) {
-                    const x = ((this.frameCount * 0.5 + i * 180) % (w + 200)) - 100;
-                    const y = 40 + i * 25 + progress * 20;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 22, 0, Math.PI * 2);
-                    ctx.arc(x + 28, y - 8, 28, 0, Math.PI * 2);
-                    ctx.arc(x + 56, y, 22, 0, Math.PI * 2);
-                    ctx.fill();
+            obstacles: {
+                turbine: {
+                    title: '风力发电机',
+                    content: '风力发电机是近年新增的候鸟杀手。每年全球约有 10-50 万只候鸟在风机叶片下丧生，夜间趋光飞行的鸟类尤其危险。在候鸟迁徙高峰期，美国部分风电场会临时关闭以减少鸟击。'
+                },
+                building: {
+                    title: '玻璃幕墙',
+                    content: '玻璃幕墙在夜间反射天空和树木影像，造成鸟类撞击死亡。据估计，美国每年约有 6 亿只鸟因此死亡，高层建筑的玻璃窗是城市鸟类死亡的首要原因。'
+                },
+                hunter: {
+                    title: '非法捕猎',
+                    content: '非法捕猎仍是候鸟面临的主要威胁之一。候鸟迁徙高峰期，捕鸟网、诱鸟器等工具在部分地区仍然泛滥。全球每年约有 1200-3600 万只鸟死于非法捕猎。'
+                },
+                net: {
+                    title: '防鸟网',
+                    content: '防鸟网常用于保护果园和鱼塘，但逃逸困难，每年造成大量候鸟死亡。仅在欧洲，每年就有约 2500 万只鸟被防鸟网困住，其中许多是受保护物种。'
                 }
             },
-
-            drawTerrain: function(ctx, w, h, progress) {
-                const groundColors = ['#37474F', '#5D4037', '#8D6E63', '#795548', '#4E342E', '#33691E'];
-                const gc = groundColors[Math.min(Math.floor(progress * groundColors.length), groundColors.length - 1)];
-                ctx.fillStyle = gc;
-                ctx.beginPath();
-                ctx.moveTo(0, h);
-                for (let x = 0; x <= w; x += 40) {
-                    const baseY = h - 60 + progress * 30;
-                    ctx.lineTo(x, baseY + Math.sin(x * 0.015 + this.frameCount * 0.01) * 15);
+            foods: {
+                fish: {
+                    title: '鱼类',
+                    content: '鱼类是鸬鹚、苍鹭等涉禽的主要能量来源，富含优质蛋白质和脂肪。一条小鱼可提供候鸟迁徙途中所需能量的 15-20%。'
+                },
+                berry: {
+                    title: '浆果',
+                    content: '浆果类食物富含糖分，能快速补充候鸟迁徙中消耗的能量，也是许多雀形目鸟类的最爱。迁徙前候鸟会大量进食浆果以积累脂肪。'
+                },
+                seed: {
+                    title: '谷物种子',
+                    content: '谷物种子是雁类和鸭类的重要食物，脂肪含量高，有助于候鸟积累迁徙所需的脂肪储备。迁徙期间，候鸟体重可增加 30-50%。'
                 }
-                ctx.lineTo(w, h);
-                ctx.closePath();
-                ctx.fill();
-
-                if (progress > 0.3) {
-                    ctx.fillStyle = 'rgba(30,144,255,0.2)';
-                    ctx.beginPath();
-                    ctx.moveTo(0, h);
-                    for (let x = 0; x <= w; x += 40) {
-                        ctx.lineTo(x, h - 30 + Math.sin(x * 0.02 + this.frameCount * 0.015) * 8);
-                    }
-                    ctx.lineTo(w, h);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-
-                ctx.strokeStyle = 'rgba(255,215,0,0.2)';
-                ctx.setLineDash([12, 12]);
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(60, h * 0.5);
-                ctx.lineTo(w - 60, h * 0.5);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            },
-
-            drawObstacle: function(ctx, obs) {
-                if (obs.type === 'turbine') {
-                    ctx.fillStyle = '#CFD8DC';
-                    ctx.fillRect(obs.x - 4, obs.y, 8, 180);
-                    for (let i = 0; i < 3; i++) {
-                        const angle = obs.windPhase + (i * Math.PI * 2 / 3);
-                        const tipX = obs.x + Math.cos(angle) * 65;
-                        const tipY = obs.y + Math.sin(angle) * 65;
-                        ctx.strokeStyle = '#B0BEC5';
-                        ctx.lineWidth = 5;
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x, obs.y);
-                        ctx.lineTo(tipX, tipY);
-                        ctx.stroke();
-                    }
-                    ctx.fillStyle = '#78909C';
-                    ctx.beginPath();
-                    ctx.arc(obs.x, obs.y, 7, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (obs.type === 'building') {
-                    ctx.fillStyle = '#455A64';
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    ctx.fillStyle = '#FFC107';
-                    for (let i = 0; i < obs.width; i += 12) {
-                        for (let j = 0; j < obs.height; j += 15) {
-                            if (Math.sin(i + j + this.frameCount * 0.1) > 0) {
-                                ctx.fillRect(obs.x + i + 2, obs.y + j + 2, 6, 9);
-                            }
-                        }
-                    }
-                } else if (obs.type === 'hunter') {
-                    ctx.fillStyle = '#5D4037';
-                    ctx.fillRect(obs.x, obs.y + 15, 25, 18);
-                    ctx.fillStyle = '#FFCCBC';
-                    ctx.beginPath();
-                    ctx.arc(obs.x + 12, obs.y + 8, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#37474F';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(obs.x + 20, obs.y + 18);
-                    ctx.lineTo(obs.x + 40, obs.y + 15);
-                    ctx.stroke();
-                    
-                    if (this.frameCount % 60 < 40) {
-                        ctx.strokeStyle = 'rgba(255,0,0,0.4)';
-                        ctx.lineWidth = 1;
-                        ctx.setLineDash([4, 4]);
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x + 40, obs.y + 15);
-                        ctx.lineTo(obs.aimX, obs.aimY);
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
-                } else if (obs.type === 'net') {
-                    const sway = Math.sin(obs.swayPhase) * 6;
-                    ctx.strokeStyle = '#546E7A';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i < obs.width; i += 12) {
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x + i + sway, obs.y);
-                        ctx.lineTo(obs.x + i - sway, obs.y + obs.height);
-                        ctx.stroke();
-                    }
-                    for (let j = 0; j < obs.height; j += 12) {
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x + sway, obs.y + j);
-                        ctx.lineTo(obs.x + obs.width - sway, obs.y + j);
-                        ctx.stroke();
-                    }
-                    ctx.strokeStyle = '#37474F';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
-                }
-            },
-
-            drawFood: function(ctx, f) {
-                const bob = Math.sin(this.frameCount * 0.08 + f.phase) * 3;
-                if (f.type === 'fish') {
-                    ctx.fillStyle = '#1E88E5';
-                    ctx.beginPath();
-                    ctx.ellipse(f.x, f.y + bob, 14, 7, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FFC107';
-                    ctx.beginPath();
-                    ctx.moveTo(f.x + 11, f.y + bob);
-                    ctx.lineTo(f.x + 18, f.y - 3 + bob);
-                    ctx.lineTo(f.x + 18, f.y + 3 + bob);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (f.type === 'berry') {
-                    ctx.fillStyle = '#E53935';
-                    ctx.beginPath();
-                    ctx.arc(f.x, f.y + bob, 7, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#43A047';
-                    ctx.beginPath();
-                    ctx.ellipse(f.x, f.y - 10 + bob, 4, 5, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillStyle = '#FDD835';
-                    ctx.beginPath();
-                    ctx.ellipse(f.x, f.y + bob, 6, 4, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            },
-
-            drawBird: function(ctx, bird) {
-                const cfg = this.currentBird;
-
-                bird.trail.forEach(t => {
-                    ctx.fillStyle = `rgba(255,255,255,${t.alpha * 0.4})`;
-                    ctx.beginPath();
-                    ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-
-                ctx.save();
-                ctx.translate(bird.x, bird.y);
-
-                const tiltX = Math.min(0.4, Math.max(-0.4, bird.vx * 0.05));
-                ctx.rotate(tiltX);
-
-                const bodyColor = cfg.color === '#FFFFFF' ? '#F5F5F5' : cfg.color;
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 22, 11, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(18, -2, 9, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#FFC107';
-                ctx.beginPath();
-                ctx.moveTo(25, -2);
-                ctx.lineTo(34, -1);
-                ctx.lineTo(25, 1);
-                ctx.closePath();
-                ctx.fill();
-
-                const wingY = Math.sin(bird.wingPhase) * 10;
-                ctx.fillStyle = this.darkenColor(bodyColor, 30);
-                ctx.beginPath();
-                ctx.ellipse(-4, wingY, 16, 7, -0.2, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (this.boosting && this.energy > 0) {
-                    ctx.fillStyle = 'rgba(255,152,0,0.6)';
-                    ctx.beginPath();
-                    ctx.moveTo(-20, 0);
-                    ctx.lineTo(-35 - Math.random() * 10, -3);
-                    ctx.lineTo(-35 - Math.random() * 10, 3);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-
-                ctx.fillStyle = '#263238';
-                ctx.beginPath();
-                ctx.arc(22, -4, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = '#FF8F00';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(-4, 9);
-                ctx.lineTo(-7, 16);
-                ctx.moveTo(4, 9);
-                ctx.lineTo(7, 16);
-                ctx.stroke();
-
-                ctx.restore();
-            },
-
-            darkenColor: function(color, amount) {
-                const rgb = this.hexToRgb(color);
-                return `rgb(${Math.max(0,rgb.r-amount)},${Math.max(0,rgb.g-amount)},${Math.max(0,rgb.b-amount)})`;
-            },
-
-            drawStaticScene: function() {
-                this.draw();
             }
         };
 
-        $(function() {
-            migrationGame.init();
-        });
+        var birdTypes = [
+            {id:'swan',  name:'白天鹅', icon:'fa-feather-alt', color:'#FFFFFF', bg:'#1565C0', speed:2.5, maxSpeed:5, energy:120, agility:0.4, boostCost:8, desc:'速度中等，体力充足'},
+            {id:'crane', name:'丹顶鹤', icon:'fa-crane',      color:'#F5F5F5', bg:'#880E4F', speed:3,   maxSpeed:6.5, energy:90,  agility:0.55, boostCost:6, desc:'速度快，灵活敏捷'},
+            {id:'goose', name:'大雁',   icon:'fa-bird',       color:'#8B7355', bg:'#1B5E20', speed:2.8, maxSpeed:4.5, energy:150, agility:0.25, boostCost:10,desc:'体力充沛，适合长途'},
+            {id:'gull',  name:'海鸥',   icon:'fa-wind',       color:'#E8E8E8', bg:'#00695C', speed:3.5, maxSpeed:7,   energy:70,  agility:0.65, boostCost:5, desc:'速度最快，但体力较低'},
+        ];
+
+        var migrationGame = {
+            canvas:null, ctx:null, isRunning:false, score:0, distance:0,
+            targetScore:10000, energy:100, currentBird:null,
+            frameCount:0, bird:null, obstacles:[], foods:[], particles:[],
+            animationId:null, keys:{}, selectedBirdIndex:0, boosting:false,
+            lastZone:null, factCooldown:0, seenFacts:new Set(),
+
+            init:function() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resizeCanvas();
+                window.addEventListener('resize', function(){ migrationGame.resizeCanvas(); });
+
+                document.addEventListener('keydown', function(e){
+                    migrationGame.keys[e.code] = true;
+                    if (e.code === 'Space') { e.preventDefault(); migrationGame.boosting = true; }
+                });
+                document.addEventListener('keyup', function(e){
+                    migrationGame.keys[e.code] = false;
+                    if (e.code === 'Space') migrationGame.boosting = false;
+                });
+
+                var sky = document.getElementById('mgSky');
+                for (var i = 0; i < 30; i++) {
+                    var star = document.createElement('div');
+                    star.className = 'mg-star';
+                    star.style.left = (Math.random()*100) + '%';
+                    star.style.top = (Math.random()*60) + '%';
+                    star.style.animationDelay = (Math.random()*2) + 's';
+                    sky.appendChild(star);
+                }
+                this.renderBirdGrid();
+                this.drawStaticScene();
+            },
+
+            renderBirdGrid:function() {
+                var grid = document.getElementById('mgBirdGrid');
+                grid.innerHTML = '';
+                for (var i = 0; i < birdTypes.length; i++) {
+                    var b = birdTypes[i];
+                    var sel = i === this.selectedBirdIndex;
+                    var fact = MIGRATION_FACTS.birdTypes[b.id];
+                    var card = document.createElement('div');
+                    card.className = 'mg-bird-card' + (sel ? ' selected' : '');
+                    card.setAttribute('data-idx', i);
+                    card.innerHTML =
+                        '<div class="mg-bird-icon" style="background:' + b.bg + '">' +
+                        '<canvas class="mg-bird-canvas" width="50" height="50"></canvas></div>' +
+                        '<div class="mg-bird-name">' + b.name + '</div>' +
+                        '<div class="mg-bird-stats">' +
+                        '<div class="mg-stat-row"><i class="fas fa-bolt" style="color:#FFCA28"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.energy/1.5) + '%;background:#FFCA28"></div></div>体力</div>' +
+                        '<div class="mg-stat-row"><i class="fas fa-running" style="color:#7986CB"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.speed*20) + '%;background:#7986CB"></div></div>速度</div>' +
+                        '<div class="mg-stat-row"><i class="fas fa-sync" style="color:#90CAF9"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.agility*100) + '%;background:#90CAF9"></div></div>灵活</div>' +
+                        '</div>' +
+                        '<div class="mg-bird-card-fact"><i class="fas fa-graduation-cap" style="color:#FFCA28;margin-right:4px"></i>' + (fact ? fact.content.substring(0, 60) + '...' : '') + '</div>';
+                    var self = this;
+                    card.addEventListener('click', function(idx){ return function(){ self.selectBird(idx); }; }(i));
+                    grid.appendChild(card);
+                    var canvas = card.querySelector('.mg-bird-canvas');
+                    this.drawCardBird(canvas.getContext('2d'), b);
+                }
+            },
+
+            drawCardBird:function(ctx, b) {
+                ctx.clearRect(0, 0, 50, 50);
+                ctx.save();
+                ctx.translate(25, 25);
+                if (b.id === 'swan') {
+                    // Swan: white body, graceful curved neck, orange beak, pink eye
+                    ctx.fillStyle = '#F5F5F5';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                    ctx.lineWidth = 1;
+                    // Body (oval)
+                    ctx.beginPath();
+                    ctx.ellipse(-4, 6, 13, 9, -0.1, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Curved neck (S-curve)
+                    ctx.beginPath();
+                    ctx.moveTo(6, 0);
+                    ctx.bezierCurveTo(10, -6, 14, -14, 10, -20);
+                    ctx.bezierCurveTo(8, -24, 4, -24, 2, -20);
+                    ctx.bezierCurveTo(0, -16, 4, -12, 6, -6);
+                    ctx.lineWidth = 6;
+                    ctx.strokeStyle = '#F5F5F5';
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.stroke();
+                    // Head
+                    ctx.fillStyle = '#F5F5F5';
+                    ctx.beginPath();
+                    ctx.ellipse(8, -22, 5, 4, -0.3, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Beak - orange/red
+                    ctx.fillStyle = '#FF7043';
+                    ctx.beginPath();
+                    ctx.moveTo(13, -22);
+                    ctx.lineTo(18, -20);
+                    ctx.lineTo(13, -20);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Eye
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.arc(10, -23, 1.2, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.beginPath();
+                    ctx.arc(10.3, -23.3, 0.5, 0, Math.PI*2);
+                    ctx.fill();
+                    // Wing
+                    ctx.fillStyle = '#E8E8E8';
+                    ctx.beginPath();
+                    ctx.ellipse(-8, 4, 8, 5, -0.2, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.stroke();
+                    // Wing feather lines
+                    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-12, 2);
+                    ctx.lineTo(-4, 2);
+                    ctx.moveTo(-13, 5);
+                    ctx.lineTo(-4, 5);
+                    ctx.stroke();
+
+                } else if (b.id === 'crane') {
+                    // Red-crowned crane: white body with black wing tips, red crown patch
+                    ctx.fillStyle = '#F8F8F8';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                    ctx.lineWidth = 1;
+                    // Body
+                    ctx.beginPath();
+                    ctx.ellipse(-4, 4, 13, 8, -0.05, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Neck (long, slender, black)
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 5;
+                    ctx.beginPath();
+                    ctx.moveTo(6, 2);
+                    ctx.bezierCurveTo(10, -4, 12, -12, 8, -18);
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.stroke();
+                    // Head
+                    ctx.fillStyle = '#F8F8F8';
+                    ctx.beginPath();
+                    ctx.ellipse(8, -19, 5, 4, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.stroke();
+                    // Red crown patch
+                    ctx.fillStyle = '#D32F2F';
+                    ctx.beginPath();
+                    ctx.ellipse(8, -21, 3.5, 2, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    // Beak - gray
+                    ctx.fillStyle = '#607D8B';
+                    ctx.beginPath();
+                    ctx.moveTo(13, -19);
+                    ctx.lineTo(18, -18);
+                    ctx.lineTo(13, -17);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Eye
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.arc(10, -19, 1.2, 0, Math.PI*2);
+                    ctx.fill();
+                    // Black wing primary feathers
+                    ctx.fillStyle = '#263238';
+                    ctx.beginPath();
+                    ctx.ellipse(-12, 4, 7, 4, -0.3, 0, Math.PI*2);
+                    ctx.fill();
+                    // LegS (long, thin)
+                    ctx.strokeStyle = '#78909C';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-2, 11);
+                    ctx.lineTo(-3, 22);
+                    ctx.moveTo(4, 11);
+                    ctx.lineTo(5, 22);
+                    ctx.stroke();
+                    // Feet
+                    ctx.strokeStyle = '#78909C';
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(-3, 22); ctx.lineTo(-6, 24); ctx.moveTo(-3, 22); ctx.lineTo(-3, 24); ctx.moveTo(-3, 22); ctx.lineTo(0, 24);
+                    ctx.moveTo(5, 22); ctx.lineTo(2, 24); ctx.moveTo(5, 22); ctx.lineTo(5, 24); ctx.moveTo(5, 22); ctx.lineTo(8, 24);
+                    ctx.stroke();
+
+                } else if (b.id === 'goose') {
+                    // Goose: brown/gray body, typical silhouette, orange beak
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                    ctx.lineWidth = 1;
+                    // Body
+                    ctx.beginPath();
+                    ctx.ellipse(-2, 4, 14, 9, -0.05, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Head
+                    ctx.beginPath();
+                    ctx.arc(12, -2, 6, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Beak - orange
+                    ctx.fillStyle = '#FF9800';
+                    ctx.beginPath();
+                    ctx.moveTo(17, -2);
+                    ctx.lineTo(23, -1);
+                    ctx.lineTo(17, 1);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Nostril
+                    ctx.fillStyle = '#E65100';
+                    ctx.beginPath();
+                    ctx.ellipse(19, -1, 1.5, 0.8, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    // Eye
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.arc(14, -3, 1.2, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(14.3, -3.3, 0.5, 0, Math.PI*2);
+                    ctx.fill();
+                    // White cheek patch
+                    ctx.fillStyle = '#EFEBE9';
+                    ctx.beginPath();
+                    ctx.ellipse(14, 0, 3, 2, 0.3, 0, Math.PI*2);
+                    ctx.fill();
+                    // Wing coverts pattern
+                    ctx.fillStyle = '#6D4C41';
+                    ctx.beginPath();
+                    ctx.ellipse(-8, 2, 7, 5, -0.2, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.lineWidth = 0.5;
+                    for (var wi = -14; wi < -2; wi += 3) {
+                        ctx.beginPath();
+                        ctx.moveTo(wi, 0);
+                        ctx.lineTo(wi - 2, 5);
+                        ctx.stroke();
+                    }
+                    // Tail
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-16, 2);
+                    ctx.lineTo(-20, 0);
+                    ctx.lineTo(-19, 5);
+                    ctx.lineTo(-16, 8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                } else if (b.id === 'gull') {
+                    // Seagull: white body, gray wings, yellow beak
+                    ctx.fillStyle = '#FAFAFA';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                    ctx.lineWidth = 1;
+                    // Body
+                    ctx.beginPath();
+                    ctx.ellipse(0, 3, 13, 8, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Gray wing top
+                    ctx.fillStyle = '#90A4AE';
+                    ctx.beginPath();
+                    ctx.ellipse(-5, 1, 9, 5, -0.15, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.stroke();
+                    // Wing feather details
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 0.5;
+                    for (var fi = -12; fi < 2; fi += 3) {
+                        ctx.beginPath();
+                        ctx.moveTo(fi, -2);
+                        ctx.lineTo(fi + 1, 4);
+                        ctx.stroke();
+                    }
+                    // White head
+                    ctx.fillStyle = '#FAFAFA';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(13, -1, 7, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Gray hood on head
+                    ctx.fillStyle = '#78909C';
+                    ctx.beginPath();
+                    ctx.ellipse(12, -4, 4, 3, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    // Yellow beak
+                    ctx.fillStyle = '#FDD835';
+                    ctx.beginPath();
+                    ctx.moveTo(19, -1);
+                    ctx.lineTo(26, 0);
+                    ctx.lineTo(19, 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Red spot on beak
+                    ctx.fillStyle = '#E53935';
+                    ctx.beginPath();
+                    ctx.ellipse(21, 0, 1.5, 1, 0, 0, Math.PI*2);
+                    ctx.fill();
+                    // Eye
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.arc(16, -1, 1.2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            },
+
+            selectBird:function(idx) { this.selectedBirdIndex = idx; this.renderBirdGrid(); },
+
+            resizeCanvas:function() {
+                var c = document.getElementById('startOverlay').parentElement;
+                this.canvas.width  = c.clientWidth;
+                this.canvas.height = c.clientHeight;
+            },
+
+            start:function() {
+                if (this.isRunning) return;
+                if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+                document.getElementById('startOverlay').style.display = 'none';
+                document.getElementById('winOverlay').style.display = 'none';
+                document.getElementById('gameOverOverlay').style.display = 'none';
+                document.getElementById('mgHud').classList.add('show');
+                $('#mgFactBtn').addClass('show');
+                this.isRunning = true;
+                this.score = 0; this.distance = 0;
+                this.frameCount = 0; this.obstacles = []; this.foods = []; this.particles = [];
+                this.boosting = false;
+                this.keys = {};
+                this.lastZone = null; this.factCooldown = 0; this.seenFacts = new Set();
+                var cfg = birdTypes[this.selectedBirdIndex];
+                this.currentBird = cfg;
+                this.energy = cfg.energy;
+                this.bird = {x:100, y:this.canvas.height/2, vx:0, vy:0, wingPhase:0, trail:[]};
+                this.updateUI();
+                this.gameLoop();
+            },
+
+            restart:function() {
+                this.isRunning = false;
+                if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+                this.obstacles = []; this.foods = []; this.particles = [];
+                document.getElementById('mgHud').classList.remove('show');
+                $('#mgFactBtn').removeClass('show');
+                document.getElementById('winOverlay').style.display = 'none';
+                document.getElementById('gameOverOverlay').style.display = 'none';
+                document.getElementById('startOverlay').style.display = '';
+                this.renderBirdGrid();
+            },
+
+            gameLoop:function() {
+                if (!this.isRunning) { this.animationId = null; return; }
+                this.update(); this.draw();
+                this.animationId = requestAnimationFrame(function(){ migrationGame.gameLoop(); });
+                this.frameCount++;
+            },
+
+            update:function() {
+                var b = this.bird, cfg = this.currentBird;
+                var ax = (this.keys['ArrowLeft']||this.keys['KeyA'])?-1:(this.keys['ArrowRight']||this.keys['KeyD'])?1:0;
+                var ay = (this.keys['ArrowUp']||this.keys['KeyW'])?-1:(this.keys['ArrowDown']||this.keys['KeyS'])?1:0;
+                b.vx += ax * cfg.agility; b.vy += ay * cfg.agility;
+                b.vx *= 0.88; b.vy *= 0.88;
+                var boost = this.boosting && this.energy > 0;
+                var fwd = cfg.speed + (boost ? cfg.maxSpeed - cfg.speed : 0);
+                this.distance += Math.max(0, fwd);
+                this.score += Math.floor(fwd * 1.5);
+                b.x += b.vx; b.y += b.vy;
+                var mg = 40;
+                b.x = Math.max(mg, Math.min(this.canvas.width-mg, b.x));
+                b.y = Math.max(mg, Math.min(this.canvas.height-mg, b.y));
+                if (this.frameCount % 8 === 0) {
+                    this.energy -= 0.2;
+                    if (boost) this.energy -= 0.3;
+                    if (Math.abs(b.vy) > 2) this.energy -= 0.1;
+                }
+                if (this.score >= this.targetScore) { this.win(); return; }
+                if (this.energy <= 0) { this.gameOver('体力耗尽'); return; }
+                b.wingPhase += boost ? 0.5 : 0.25;
+                if (this.frameCount % 4 === 0) b.trail.push({x:b.x-20, y:b.y, alpha:0.6, size:boost?4:2});
+                b.trail = b.trail.filter(function(t){ t.alpha -= 0.03; t.x -= 1.5; t.size *= 0.98; return t.alpha > 0; });
+                if (this.frameCount % 50 === 0) this.spawnObstacle();
+                if (this.frameCount % 30 === 0) this.spawnFood();
+                var spd = fwd * 0.8;
+                var self = this;
+
+                // Zone fact check
+                var zones=['荒原','荒漠','农田','城市边缘','河流','湿地'];
+                var spct = Math.min(1, this.score / this.targetScore);
+                var curZone = zones[Math.min(Math.floor(spct/100*(zones.length-1)), zones.length-1)];
+                if (curZone !== this.lastZone && this.factCooldown <= 0) {
+                    this.lastZone = curZone;
+                    this.showZoneFact(curZone);
+                    this.factCooldown = 180;
+                }
+                if (this.factCooldown > 0) this.factCooldown--;
+
+                this.obstacles.forEach(function(o){
+                    o.x -= spd;
+                    if(o.type==='turbine') o.windPhase += 0.08;
+                    if (o.hitCooldown > 0) o.hitCooldown--;
+                });
+                this.obstacles = this.obstacles.filter(function(o){ return o.x > -150; });
+                this.foods.forEach(function(f){ f.x -= spd; f.y += Math.sin(self.frameCount*0.03+f.phase)*0.8; });
+                this.foods = this.foods.filter(function(f){ return f.x > -50 && f.x < self.canvas.width+50; });
+                for (var i = 0; i < this.obstacles.length; i++) {
+                    if (this.checkCollision(b, this.obstacles[i])) {
+                        this.energy -= 20;
+                        this.score = Math.max(0, this.score - 15);
+                        this.createParticles(b.x, b.y, '#FF5722', 12);
+                        b.vx = -8; b.vy = (Math.random()-0.5)*10;
+                        this.obstacles[i].hitCooldown = 10;
+                        var otype = this.obstacles[i].type;
+                        if (this.factCooldown <= 0) {
+                            this.showFactCard('obstacle', otype);
+                            this.factCooldown = 300;
+                        }
+                    }
+                }
+                for (var j = 0; j < this.foods.length; j++) {
+                    var f = this.foods[j];
+                    if (Math.hypot(b.x-f.x, b.y-f.y) < 45) {
+                        this.energy = Math.min(cfg.energy, this.energy+15);
+                        this.score += 50;
+                        this.createParticles(f.x, f.y, '#FFD700', 10);
+                        if (this.factCooldown <= 0) {
+                            this.showFactCard('food', f.type);
+                            this.factCooldown = 240;
+                        }
+                        this.foods.splice(j,1); j--;
+                    }
+                }
+                this.updateUI();
+            },
+
+            spawnObstacle:function() {
+                var types=['turbine','building','hunter','net'];
+                var weights=[0.3,0.3,0.2,0.2];
+                var r=Math.random(), cum=0, type=types[0];
+                for(var i=0;i<types.length;i++){ cum+=weights[i]; if(r<cum){type=types[i];break;} }
+                var mg=80;
+                var obs = {x:this.canvas.width+60, y:mg+Math.random()*(this.canvas.height-mg*2), type:type, hitCooldown:0};
+                if (type==='turbine')     obs={x:obs.x, y:100+Math.random()*(this.canvas.height-250), width:80, height:200, windPhase:Math.random()*Math.PI*2, type:type, hitCooldown:0};
+                else if(type==='building') obs={x:obs.x, y:this.canvas.height-80-Math.random()*120, width:55+Math.random()*35, height:80+Math.random()*120, type:type, hitCooldown:0};
+                else if(type==='hunter')   obs={x:obs.x, y:mg+Math.random()*(this.canvas.height-mg*2), width:40, height:40, type:type, hitCooldown:0};
+                else                       obs={x:obs.x, y:100+Math.random()*(this.canvas.height-250), width:90, height:70, swayPhase:Math.random()*Math.PI*2, type:type, hitCooldown:0};
+                this.obstacles.push(obs);
+            },
+
+            spawnFood:function() {
+                var types=['fish','berry','seed'];
+                this.foods.push({x:this.canvas.width+30, y:60+Math.random()*(this.canvas.height-120), type:types[Math.floor(Math.random()*3)], phase:Math.random()*Math.PI*2});
+            },
+
+            checkCollision:function(b, obs) {
+                if (obs.hitCooldown > 0) return false;
+                var br=18;
+                if (obs.type==='turbine') {
+                    for(var i=0;i<3;i++){
+                        var a=obs.windPhase+i*Math.PI*2/3;
+                        if(this.ptLineDist(b.x,b.y,obs.x,obs.y,obs.x+Math.cos(a)*70,obs.y+Math.sin(a)*70)<br+4) return true;
+                    }
+                    return Math.hypot(b.x-obs.x,b.y-obs.y)<br+25;
+                }
+                if (obs.type==='hunter') return Math.hypot(b.x-obs.x-20,b.y-obs.y-20)<br+18;
+                if (obs.type==='net') {
+                    var sw=Math.sin(obs.swayPhase)*8;
+                    var cx=Math.max(obs.x+sw,Math.min(b.x,obs.x+obs.width+sw));
+                    var cy=Math.max(obs.y,Math.min(b.y,obs.y+obs.height));
+                    return Math.hypot(b.x-cx,b.y-cy)<br;
+                }
+                var cx=Math.max(obs.x,Math.min(b.x,obs.x+obs.width));
+                var cy=Math.max(obs.y,Math.min(b.y,obs.y+obs.height));
+                return Math.hypot(b.x-cx,b.y-cy)<br;
+            },
+
+            ptLineDist:function(px,py,x1,y1,x2,y2){
+                var A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
+                var dot=A*C+B*D,ls=C*C+D*D;
+                var pr=ls!==0?dot/ls:-1;
+                var xx,yy;
+                if(pr<0){xx=x1;yy=y1;}else if(pr>1){xx=x2;yy=y2;}else{xx=x1+pr*C;yy=y1+pr*D;}
+                return Math.hypot(px-xx,py-yy);
+            },
+
+            createParticles:function(x,y,color,count){
+                for(var i=0;i<count;i++) this.particles.push({x:x,y:y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,color:color});
+            },
+
+            updateUI:function() {
+                var cfg=this.currentBird;
+                var epct=Math.min(100,(this.energy/cfg.energy)*100);
+                var fill=document.getElementById('mgEnergyFill');
+                fill.style.width=epct+'%';
+                fill.style.background=epct<25?'#F44336':epct<50?'#FF9800':'#FFCA28';
+                document.getElementById('mgEnergyPct').textContent=Math.round(epct)+'%';
+                var spct=Math.min(100,(this.score/this.targetScore)*100);
+                document.getElementById('mgDistanceFill').style.width=spct+'%';
+                document.getElementById('mgProgressPct').textContent=this.score;
+                var zones=['荒原','荒漠','农田','城市边缘','河流','湿地'];
+                document.getElementById('mgZone').textContent=zones[Math.min(Math.floor(spct/100*(zones.length-1)), zones.length-1)];
+            },
+
+            win:function() {
+                this.isRunning=false;
+                if(this.animationId){ cancelAnimationFrame(this.animationId); this.animationId=null; }
+                this.score+=Math.floor(this.energy*5);
+                document.getElementById('mgWinScore').textContent=this.score;
+                document.getElementById('mgWinBirdName').textContent=this.currentBird.name+'成功抵达终点！';
+                document.getElementById('mgWinEnergy').textContent=Math.floor(this.energy);
+                document.getElementById('mgHud').classList.remove('show');
+                document.getElementById('winOverlay').style.display='';
+                this.updateUserScore();
+            },
+
+            gameOver:function(reason) {
+                this.isRunning=false;
+                if(this.animationId){ cancelAnimationFrame(this.animationId); this.animationId=null; }
+                document.getElementById('mgFinalDistance').textContent=this.score+' 分';
+                document.getElementById('mgFailReason').textContent=reason||'体力耗尽或撞到障碍物';
+                document.getElementById('mgFinalScore').textContent=this.score;
+                document.getElementById('mgHud').classList.remove('show');
+                document.getElementById('gameOverOverlay').style.display='';
+            },
+
+            updateUserScore:function() {
+                var token=localStorage.getItem('yb_token');
+                if(!token) return;
+                var self=this;
+                $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){
+                    var ns=(d.score||0)+self.score;
+                    $.ajax({url:'/api/profiles/me/',method:'PATCH',headers:{'Authorization':'Token '+token},contentType:'application/json',data:JSON.stringify({score:ns})});
+                }});
+            },
+
+            draw:function() {
+                var ctx=this.ctx,w=this.canvas.width,h=this.canvas.height;
+                ctx.clearRect(0,0,w,h);
+                var progress=Math.min(1,this.score/this.targetScore);
+                var sg=ctx.createLinearGradient(0,0,0,h);
+                sg.addColorStop(0,this.lerpColor('#0D1B2A','#37474F',progress));
+                sg.addColorStop(0.25,this.lerpColor('#1B263B','#455A64',progress));
+                sg.addColorStop(0.5,this.lerpColor('#415A77','#607D8B',progress));
+                sg.addColorStop(0.75,this.lerpColor('#778DA9','#87CEEB',progress));
+                sg.addColorStop(1,this.lerpColor('#E0E1DD','#2E7D32',progress));
+                ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+                this.drawClouds(ctx,w,h,progress);
+                this.drawTerrain(ctx,w,h,progress);
+                var self=this;
+                this.obstacles.forEach(function(o){ self.drawObstacle(ctx,o); });
+                this.foods.forEach(function(f){ self.drawFood(ctx,f); });
+                this.particles=this.particles.filter(function(p){
+                    p.x+=p.vx; p.y+=p.vy; p.vx*=0.95; p.vy*=0.95; p.life-=0.04;
+                    if(p.life>0){ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;}
+                    return p.life>0;
+                });
+                if(this.bird) this.drawBird(ctx);
+            },
+
+            drawStaticScene:function(){ this.draw(); },
+
+            lerpColor:function(c1,c2,t){
+                var a=this.hexToRgb(c1),b=this.hexToRgb(c2);
+                return'rgb('+Math.round(a.r+(b.r-a.r)*t)+','+Math.round(a.g+(b.g-a.g)*t)+','+Math.round(a.b+(b.b-a.b)*t)+')';
+            },
+
+            hexToRgb:function(h){
+                var r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
+                return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:0,g:0,b:0};
+            },
+
+            drawClouds:function(ctx,w,h,progress){
+                var cloudAlpha = 0.12 + progress * 0.18;
+                ctx.fillStyle='rgba(255,255,255,'+cloudAlpha+')';
+                for(var i=0;i<6;i++){
+                    var x=((this.frameCount*0.5+i*180)%(w+200))-100;
+                    var y=40+i*25+progress*20;
+                    ctx.beginPath(); ctx.arc(x,y,22,0,Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x+28,y-8,28,0,Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x+56,y,22,0,Math.PI*2); ctx.fill();
+                }
+            },
+
+            drawTerrain:function(ctx,w,h,progress){
+                var gcs=['#0D1B2A','#3E2723','#5D4037','#6D4C41','#4E342E','#33691E'];
+                var gc=gcs[Math.min(Math.floor(progress*gcs.length),gcs.length-1)];
+                ctx.fillStyle=gc; ctx.beginPath(); ctx.moveTo(0,h);
+                for(var x=0;x<=w;x+=40) ctx.lineTo(x,h-60+progress*30+Math.sin(x*0.015+this.frameCount*0.01)*15);
+                ctx.lineTo(w,h); ctx.closePath(); ctx.fill();
+                if(progress>0.3){
+                    ctx.fillStyle='rgba(30,144,255,0.18)'; ctx.beginPath(); ctx.moveTo(0,h);
+                    for(var x2=0;x2<=w;x2+=40) ctx.lineTo(x2,h-30+Math.sin(x2*0.02+this.frameCount*0.015)*8);
+                    ctx.lineTo(w,h); ctx.closePath(); ctx.fill();
+                }
+                // Migration route indicator line
+                ctx.strokeStyle='rgba(255,202,40,0.15)'; ctx.setLineDash([12,12]); ctx.lineWidth=1.5;
+                ctx.beginPath(); ctx.moveTo(60,h*0.5); ctx.lineTo(w-60,h*0.5); ctx.stroke(); ctx.setLineDash([]);
+            },
+
+            drawObstacle:function(ctx,obs){
+                if(obs.type==='turbine'){
+                    ctx.fillStyle='#CFD8DC'; ctx.fillRect(obs.x-4,obs.y,8,180);
+                    for(var i=0;i<3;i++){
+                        var a=obs.windPhase+i*Math.PI*2/3;
+                        var tx=obs.x+Math.cos(a)*65, ty=obs.y+Math.sin(a)*65;
+                        ctx.strokeStyle='#B0BEC5'; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(obs.x,obs.y); ctx.lineTo(tx,ty); ctx.stroke();
+                    }
+                    ctx.fillStyle='#78909C'; ctx.beginPath(); ctx.arc(obs.x,obs.y,7,0,Math.PI*2); ctx.fill();
+                } else if(obs.type==='building'){
+                    ctx.fillStyle='#455A64'; ctx.fillRect(obs.x,obs.y,obs.width,obs.height);
+                    ctx.fillStyle='#FFC107';
+                    for(var i2=0;i2<obs.width;i2+=12) for(var j=0;j<obs.height;j+=15) if(Math.sin(i2+j+this.frameCount*0.1)>0) ctx.fillRect(obs.x+i2+2,obs.y+j+2,6,9);
+                } else if(obs.type==='hunter'){
+                    ctx.fillStyle='#5D4037'; ctx.fillRect(obs.x,obs.y+15,25,18);
+                    ctx.fillStyle='#FFCCBC'; ctx.beginPath(); ctx.arc(obs.x+12,obs.y+8,8,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='#37474F'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(obs.x+20,obs.y+18); ctx.lineTo(obs.x+40,obs.y+15); ctx.stroke();
+                } else if(obs.type==='net'){
+                    var sw=Math.sin(obs.swayPhase)*6;
+                    ctx.strokeStyle='#546E7A'; ctx.lineWidth=1;
+                    for(var i3=0;i3<obs.width;i3+=12){ctx.beginPath();ctx.moveTo(obs.x+i3+sw,obs.y);ctx.lineTo(obs.x+i3-sw,obs.y+obs.height);ctx.stroke();}
+                    for(var j2=0;j2<obs.height;j2+=12){ctx.beginPath();ctx.moveTo(obs.x+sw,obs.y+j2);ctx.lineTo(obs.x+obs.width-sw,obs.y+j2);ctx.stroke();}
+                    ctx.strokeStyle='#37474F'; ctx.lineWidth=3; ctx.strokeRect(obs.x,obs.y,obs.width,obs.height);
+                }
+            },
+
+            drawFood:function(ctx,f){
+                var bob=Math.sin(this.frameCount*0.08+f.phase)*3;
+                if(f.type==='fish'){
+                    ctx.fillStyle='#1E88E5'; ctx.beginPath(); ctx.ellipse(f.x,f.y+bob,14,7,0,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#FFC107'; ctx.beginPath(); ctx.moveTo(f.x+11,f.y+bob); ctx.lineTo(f.x+18,f.y-3+bob); ctx.lineTo(f.x+18,f.y+3+bob); ctx.closePath(); ctx.fill();
+                } else if(f.type==='berry'){
+                    ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(f.x,f.y+bob,7,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#43A047'; ctx.beginPath(); ctx.ellipse(f.x,f.y-10+bob,4,5,0,0,Math.PI*2); ctx.fill();
+                } else {
+                    ctx.fillStyle='#FDD835'; ctx.beginPath(); ctx.ellipse(f.x,f.y+bob,6,4,0,0,Math.PI*2); ctx.fill();
+                }
+            },
+
+            drawBird:function(ctx){
+                var b=this.bird, cfg=this.currentBird;
+                b.trail.forEach(function(t){ctx.fillStyle='rgba(255,202,40,'+(t.alpha*0.35)+')';ctx.beginPath();ctx.arc(t.x,t.y,t.size,0,Math.PI*2);ctx.fill();});
+                ctx.save();
+                ctx.translate(b.x,b.y);
+                ctx.rotate(Math.min(0.35,Math.max(-0.35,b.vx*0.05)));
+                var wy=Math.sin(b.wingPhase)*10;
+
+                if (cfg.id === 'swan') {
+                    // Swan - white, curved neck, orange beak
+                    var bc = cfg.color==='#FFFFFF'?'#F5F5F5':cfg.color;
+                    ctx.fillStyle=bc;
+                    ctx.strokeStyle='rgba(0,0,0,0.12)';
+                    ctx.lineWidth=1;
+                    // Body
+                    ctx.beginPath(); ctx.ellipse(-2,2,18,12,-0.05,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Neck (curved S-shape)
+                    ctx.beginPath(); ctx.moveTo(12, -2);
+                    ctx.bezierCurveTo(18,-12,24,-28,18,-38);
+                    ctx.lineWidth=9; ctx.strokeStyle=bc; ctx.stroke();
+                    ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.stroke();
+                    // Head
+                    ctx.fillStyle=bc;
+                    ctx.beginPath(); ctx.ellipse(16,-40,8,6,0.2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Beak
+                    ctx.fillStyle='#FF7043';
+                    ctx.beginPath(); ctx.moveTo(24,-40); ctx.lineTo(34,-38); ctx.lineTo(24,-37); ctx.closePath(); ctx.fill();
+                    // Eye
+                    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(20,-41,2.5,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(20.5,-41.5,1,0,Math.PI*2); ctx.fill();
+                    // Wing
+                    ctx.fillStyle='#E8E8E8';
+                    ctx.beginPath(); ctx.ellipse(-8,0,12,8,-0.2,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=0.5;
+                    for(var wi=-18;wi<-2;wi+=4){ctx.beginPath();ctx.moveTo(wi,-4);ctx.lineTo(wi,-2);ctx.lineTo(wi-2,4);ctx.stroke();}
+                    // Tail
+                    ctx.fillStyle='#F0F0F0'; ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1;
+                    ctx.beginPath(); ctx.moveTo(-18,0); ctx.lineTo(-26,-4); ctx.lineTo(-24,6); ctx.lineTo(-18,8); ctx.closePath(); ctx.fill(); ctx.stroke();
+                    // Flapping wing overlay
+                    ctx.fillStyle=bc;
+                    ctx.beginPath(); ctx.ellipse(-6,wy*0.8,14,7,-0.3,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=0.5;
+                    for(var wi2=-18;wi2<-2;wi2+=4){ctx.beginPath();ctx.moveTo(wi2,-4);ctx.lineTo(wi2-2,4);ctx.stroke();}
+
+                } else if (cfg.id === 'crane') {
+                    // Red-crowned crane - white body, black neck, red crown, gray beak, long legs
+                    ctx.fillStyle='#F8F8F8';
+                    ctx.strokeStyle='rgba(0,0,0,0.12)';
+                    ctx.lineWidth=1;
+                    // Body
+                    ctx.beginPath(); ctx.ellipse(-2,0,18,11,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Neck (black)
+                    ctx.beginPath();
+                    ctx.moveTo(12,-2);
+                    ctx.bezierCurveTo(18,-10,20,-22,14,-34);
+                    ctx.lineWidth=8; ctx.strokeStyle='#1a1a1a'; ctx.stroke();
+                    ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke();
+                    // Head
+                    ctx.fillStyle='#F8F8F8';
+                    ctx.beginPath(); ctx.ellipse(14,-36,8,6,0.1,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Red crown
+                    ctx.fillStyle='#D32F2F';
+                    ctx.beginPath(); ctx.ellipse(14,-38,5,3,0,0,Math.PI*2); ctx.fill();
+                    // Beak - gray
+                    ctx.fillStyle='#607D8B';
+                    ctx.beginPath(); ctx.moveTo(22,-36); ctx.lineTo(30,-35); ctx.lineTo(22,-33); ctx.closePath(); ctx.fill();
+                    // Eye
+                    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(18,-36,2.2,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(18.4,-36.4,0.9,0,Math.PI*2); ctx.fill();
+                    // Black wing primaries
+                    ctx.fillStyle='#263238';
+                    ctx.beginPath(); ctx.ellipse(-14,0,10,6,-0.3,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=0.5;
+                    for(var wi3=-22;wi3<-6;wi3+=4){ctx.beginPath();ctx.moveTo(wi3,-4);ctx.lineTo(wi3+2,4);ctx.stroke();}
+                    // Long legs
+                    ctx.strokeStyle='#90A4AE'; ctx.lineWidth=1.5;
+                    ctx.beginPath(); ctx.moveTo(-4,10); ctx.lineTo(-6,30);
+                    ctx.moveTo(4,10); ctx.lineTo(6,30);
+                    ctx.stroke();
+                    // Feet
+                    ctx.lineWidth=1;
+                    ctx.beginPath();
+                    ctx.moveTo(-6,30); ctx.lineTo(-10,33); ctx.moveTo(-6,30); ctx.lineTo(-6,33); ctx.moveTo(-6,30); ctx.lineTo(-3,33);
+                    ctx.moveTo(6,30); ctx.lineTo(3,33); ctx.moveTo(6,30); ctx.lineTo(6,33); ctx.moveTo(6,30); ctx.lineTo(9,33);
+                    ctx.stroke();
+                    // Wing flap
+                    ctx.fillStyle='#F8F8F8';
+                    ctx.beginPath(); ctx.ellipse(-6,wy*0.8,14,7,-0.3,0,Math.PI*2); ctx.fill();
+
+                } else if (cfg.id === 'goose') {
+                    // Goose - brown body, orange beak, white cheek, typical profile
+                    var gc = cfg.color;
+                    ctx.fillStyle=gc;
+                    ctx.strokeStyle='rgba(0,0,0,0.12)';
+                    ctx.lineWidth=1;
+                    // Body
+                    ctx.beginPath(); ctx.ellipse(-2,2,20,13,-0.05,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Head
+                    ctx.beginPath(); ctx.arc(18,-4,9,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // White cheek patch
+                    ctx.fillStyle='#EFEBE9';
+                    ctx.beginPath(); ctx.ellipse(20,0,5,3,0.3,0,Math.PI*2); ctx.fill();
+                    // Orange beak
+                    ctx.fillStyle='#FF9800';
+                    ctx.beginPath(); ctx.moveTo(26,-4); ctx.lineTo(36,-2); ctx.lineTo(26,-1); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle='#E65100';
+                    ctx.beginPath(); ctx.ellipse(29,-2,2,1,0,0,Math.PI*2); ctx.fill();
+                    // Eye
+                    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(21,-5,2.2,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(21.4,-5.4,0.9,0,Math.PI*2); ctx.fill();
+                    // Wing coverts
+                    ctx.fillStyle='#6D4C41';
+                    ctx.beginPath(); ctx.ellipse(-8,-2,12,8,-0.15,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=0.5;
+                    for(var wi4=-20;wi4<-2;wi4+=4){ctx.beginPath();ctx.moveTo(wi4,-6);ctx.lineTo(wi4,-2);ctx.lineTo(wi4-2,4);ctx.stroke();}
+                    // Tail
+                    ctx.fillStyle=gc; ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1;
+                    ctx.beginPath(); ctx.moveTo(-22,0); ctx.lineTo(-30,-4); ctx.lineTo(-29,8); ctx.lineTo(-22,10); ctx.closePath(); ctx.fill(); ctx.stroke();
+                    // Wing flap
+                    ctx.fillStyle='#8D6E63';
+                    ctx.beginPath(); ctx.ellipse(-6,wy*0.8,16,9,-0.2,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.5;
+                    for(var wi5=-20;wi5<-2;wi5+=4){ctx.beginPath();ctx.moveTo(wi5,-6+wy*0.8);ctx.lineTo(wi5-2,6+wy*0.8);ctx.stroke();}
+
+                } else if (cfg.id === 'gull') {
+                    // Seagull - white body, gray wings, yellow beak with red spot
+                    ctx.fillStyle='#FAFAFA';
+                    ctx.strokeStyle='rgba(0,0,0,0.12)';
+                    ctx.lineWidth=1;
+                    // Body
+                    ctx.beginPath(); ctx.ellipse(0,2,18,11,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Gray wing top
+                    ctx.fillStyle='#90A4AE';
+                    ctx.beginPath(); ctx.ellipse(-4,-2,13,8,-0.15,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle='rgba(0,0,0,0.1)';
+                    ctx.lineWidth=0.5;
+                    for(var fi2=-16;fi2<6;fi2+=4){ctx.beginPath();ctx.moveTo(fi2,-6);ctx.lineTo(fi2+1,6);ctx.stroke();}
+                    // White head
+                    ctx.fillStyle='#FAFAFA';
+                    ctx.beginPath(); ctx.arc(18,-2,10,0,Math.PI*2); ctx.fill(); ctx.stroke();
+                    // Gray hood
+                    ctx.fillStyle='#78909C';
+                    ctx.beginPath(); ctx.ellipse(17,-6,6,5,0,0,Math.PI*2); ctx.fill();
+                    // Yellow beak with red spot
+                    ctx.fillStyle='#FDD835';
+                    ctx.beginPath(); ctx.moveTo(27,-2); ctx.lineTo(38,0); ctx.lineTo(27,3); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle='#E53935';
+                    ctx.beginPath(); ctx.ellipse(31,0,2.5,1.5,0,0,Math.PI*2); ctx.fill();
+                    // Eye
+                    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(23,-2,2,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(23.3,-2.3,0.8,0,Math.PI*2); ctx.fill();
+                    // Wing flap
+                    ctx.fillStyle='#FAFAFA';
+                    ctx.beginPath(); ctx.ellipse(-4,wy*0.8,14,8,-0.2,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#90A4AE';
+                    ctx.beginPath(); ctx.ellipse(-6,wy*0.8-2,11,6,-0.15,0,Math.PI*2); ctx.fill();
+                    // Tail
+                    ctx.fillStyle='#FAFAFA'; ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1;
+                    ctx.beginPath(); ctx.moveTo(-16,0); ctx.lineTo(-24,-3); ctx.lineTo(-23,7); ctx.lineTo(-16,8); ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+
+                // Boost exhaust
+                if(this.boosting&&this.energy>0){
+                    ctx.fillStyle='rgba(255,152,0,0.5)';
+                    ctx.beginPath();
+                    ctx.moveTo(-20,0);
+                    ctx.lineTo(-38-Math.random()*12,-4);
+                    ctx.lineTo(-38-Math.random()*12,4);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
+            },
+
+            showFactCard:function(category, itemId) {
+                var data = null;
+                if (category === 'obstacle') data = MIGRATION_FACTS.obstacles[itemId];
+                else if (category === 'food') data = MIGRATION_FACTS.foods[itemId];
+                if (!data) return;
+                var existing = document.getElementById('mgFactCard');
+                if (existing) existing.remove();
+                var card = document.createElement('div');
+                card.id = 'mgFactCard';
+                card.className = 'mg-fact-card';
+                card.innerHTML =
+                    '<div class="mg-fact-header">' +
+                    '<div class="mg-fact-icon" style="background:rgba(255,87,34,0.2); color:#FF5722">' +
+                    '<i class="fas fa-exclamation-triangle"></i></div>' +
+                    '<div class="mg-fact-title">' + data.title + '</div>' +
+                    '<div class="mg-fact-badge">危险警示</div>' +
+                    '</div>' +
+                    '<div class="mg-fact-content">' + data.content + '</div>' +
+                    '<div class="mg-fact-footer">' +
+                    '<span class="mg-fact-hint"><i class="fas fa-info-circle"></i> 了解风险，保护候鸟</span>' +
+                    '<button class="mg-fact-close" onclick="document.getElementById(\'mgFactCard\').classList.add(\'fade-out\')">' +
+                    '<i class="fas fa-times"></i> 关闭</button>' +
+                    '</div>';
+                document.body.appendChild(card);
+                var self = this;
+                setTimeout(function() {
+                    var el = document.getElementById('mgFactCard');
+                    if (el) el.classList.add('fade-out');
+                    setTimeout(function() { var e2 = document.getElementById('mgFactCard'); if (e2) e2.remove(); }, 300);
+                }, 5000);
+            },
+
+            showZoneFact:function(zoneName) {
+                var fact = MIGRATION_FACTS.zones[zoneName];
+                if (!fact) return;
+                var existing = document.getElementById('mgZoneFact');
+                if (existing) existing.remove();
+                var el = document.createElement('div');
+                el.id = 'mgZoneFact';
+                el.className = 'mg-zone-fact';
+                el.innerHTML =
+                    '<div class="mg-zone-fact-title"><i class="fas fa-map-marked-alt" style="margin-right:5px"></i>进入 ' + zoneName + ' 区域</div>' +
+                    '<div class="mg-zone-fact-content">' + fact + '</div>';
+                document.body.appendChild(el);
+                var self = this;
+                setTimeout(function() {
+                    var e = document.getElementById('mgZoneFact');
+                    if (e) e.classList.add('fade-out');
+                    setTimeout(function() { var e2 = document.getElementById('mgZoneFact'); if (e2) e2.remove(); }, 300);
+                }, 5000);
+            },
+
+            showBirdFactCard:function() {
+                if (!this.currentBird) return;
+                var birdId = this.currentBird.id;
+                var fact = MIGRATION_FACTS.birdTypes[birdId];
+                if (!fact) return;
+                var existing = document.getElementById('mgFactCard');
+                if (existing) existing.remove();
+                var card = document.createElement('div');
+                card.id = 'mgFactCard';
+                card.className = 'mg-fact-card';
+                card.innerHTML =
+                    '<div class="mg-fact-header">' +
+                    '<div class="mg-fact-icon" style="background:rgba(255,202,40,0.2); color:#FFCA28">' +
+                    '<i class="fas ' + fact.icon + '"></i></div>' +
+                    '<div class="mg-fact-title">' + fact.title + '</div>' +
+                    '<div class="mg-fact-badge">' + fact.badge + '</div>' +
+                    '</div>' +
+                    '<div class="mg-fact-content">' + fact.content + '</div>' +
+                    '<div class="mg-fact-footer">' +
+                    '<span class="mg-fact-hint"><i class="fas fa-feather"></i> 每一次飞行都是生命的壮举</span>' +
+                    '<button class="mg-fact-close" onclick="document.getElementById(\'mgFactCard\').classList.add(\'fade-out\')">' +
+                    '<i class="fas fa-times"></i> 关闭</button>' +
+                    '</div>';
+                document.body.appendChild(card);
+                var self = this;
+                setTimeout(function() {
+                    var el = document.getElementById('mgFactCard');
+                    if (el) el.classList.add('fade-out');
+                    setTimeout(function() { var e2 = document.getElementById('mgFactCard'); if (e2) e2.remove(); }, 6000);
+                }, 8000);
+            }
+        };
+
+        $(function(){ migrationGame.init(); });
     </script>
 </body>
 </html>

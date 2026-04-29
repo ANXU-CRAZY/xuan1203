@@ -76,12 +76,13 @@ class SpeciesInfoSerializer(serializers.ModelSerializer):
     cover_image_url = serializers.SerializerMethodField()
     gallery_images = SpeciesImageSerializer(source='images', many=True, read_only=True)
     gallery_count = serializers.SerializerMethodField()
+    description = serializers.CharField(source='distribution_habit', read_only=True)
 
     class Meta:
         model = SpeciesInfo
         fields = [
             'id', 'name_cn', 'name_latin', 'order', 'family',
-            'protection_level', 'distribution_habit', 'cover_image',
+            'protection_level', 'distribution_habit', 'description', 'cover_image',
             'cover_image_url', 'gallery_images', 'gallery_count',
             'observation_count', 'last_observed', 'iucn_status', 'article_count'
         ]

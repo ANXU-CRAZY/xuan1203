@@ -1,833 +1,1050 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生态浮岛 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="../static/app_monitor/css/games.css">
+    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <style>
-        .toolbar {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
+        :root {
+            --g-primary: #00695C;
+            --g-primary-light: #00897B;
+            --g-primary-dark: #004D40;
+            --g-accent: #FFA726;
+            --g-accent-warm: #FB8C00;
+            --g-btn-gradient: linear-gradient(135deg, #00695C 0%, #00897B 100%);
         }
-        .tool-btn {
-            width: 50px;
-            height: 50px;
+
+        /* === 水面波纹主题背景 === */
+        .fi-bg {
+            position: absolute; inset: 0; z-index: 0;
+            background: linear-gradient(160deg, #e0f7fa 0%, #80deea 40%, #4dd0e1 100%);
+            overflow: hidden;
+        }
+        .fi-bg::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 50%; z-index: 1;
+            background: linear-gradient(180deg, transparent, rgba(0,105,92,0.15));
+        }
+
+        /* === 开始界面 === */
+        .fi-start {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20; padding: 20px;
+        }
+        .fi-title { font-size: 22px; font-weight: 700; color: #004D40; margin-bottom: 4px; }
+        .fi-sub { font-size: 12px; color: #00695C; margin-bottom: 10px; }
+
+        /* === 浮岛预览卡片 === */
+        .fi-island-card {
+            background: rgba(255,255,255,0.92);
+            border: 2px solid rgba(0,105,92,0.2);
+            border-radius: 16px;
+            padding: 10px 14px;
+            width: 100%; max-width: 340px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(0,105,92,0.12);
+        }
+        .fi-island-preview {
+            position: relative; height: 70px; margin-bottom: 10px;
+        }
+        .fi-preview-water {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 35px;
+            background: linear-gradient(180deg, rgba(0,180,216,0.4), rgba(0,105,92,0.3));
             border-radius: 8px;
-            border: 2px solid transparent;
-            background: rgba(255,255,255,0.9);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.2s;
         }
-        .tool-btn:hover {
-            transform: scale(1.05);
+        .fi-preview-island {
+            position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+            width: 110px; height: 44px;
+            background: radial-gradient(ellipse at 50% 30%, #a5d6a7, #66bb6a 40%, #388e3c);
+            border-radius: 50% 50% 40% 40%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: fi-float 3s ease-in-out infinite;
         }
-        .tool-btn.selected {
-            border-color: #FFD700;
-            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        @keyframes fi-float {
+            0%,100% { transform: translateX(-50%) translateY(0); }
+            50%      { transform: translateX(-50%) translateY(-5px); }
         }
-        .tool-btn span {
-            font-size: 9px;
-            margin-top: 2px;
-            color: #333;
+        .fi-preview-plant {
+            position: absolute; bottom: 48px;
+            width: 8px; height: 22px; background: #4CAF50; border-radius: 4px;
         }
-        .stats-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 12px 18px;
-            border-radius: 10px;
-            font-size: 13px;
-            z-index: 10;
+        .fi-preview-plant::after {
+            content: ''; position: absolute; top: -8px; left: -4px;
+            width: 16px; height: 14px; background: #66BB6A; border-radius: 50% 50% 0 50%;
         }
-        .stats-panel .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0;
+        .fi-stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
         }
-        .balance-indicator {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 30px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 15px;
-            overflow: hidden;
-            z-index: 10;
+        .fi-stat-item {
+            text-align: center; padding: 8px 6px;
+            background: rgba(0,105,92,0.06); border-radius: 10px;
         }
-        .balance-ball {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            border-radius: 50%;
-            top: 5px;
-            left: 90px;
-            transition: left 0.3s;
-            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        .fi-stat-item .fi-stat-val {
+            font-size: 17px; font-weight: 700; color: #00695C;
         }
-        .balance-needle {
-            position: absolute;
-            width: 4px;
-            height: 100%;
-            left: 50%;
-            background: #FF5722;
+        .fi-stat-item .fi-stat-label {
+            font-size: 11px; color: #6b7c6b;
         }
-        .inventory {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: flex;
-            gap: 15px;
-            z-index: 10;
+        .fi-stat-bar-row {
+            display: flex; align-items: center; gap: 6px; margin-top: 8px;
         }
-        .inv-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 5px 10px;
-            border-radius: 8px;
-            color: white;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .fi-stat-bar-row span { font-size: 11px; color: #6b7c6b; min-width: 40px; }
+        .fi-stat-bar-row input[type=range] {
+            flex: 1; height: 4px; accent-color: #00695C;
         }
-        .inv-item:hover {
-            background: rgba(255,255,255,0.1);
+
+        /* === 控制提示 === */
+        .fi-rules { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; width: 100%; max-width: 360px; }
+        .fi-rule-item {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.7); padding: 8px 14px;
+            border-radius: 12px; font-size: 13px; color: #00695C;
         }
-        .inv-item.selected {
-            background: var(--c-aqua);
+        .fi-rule-item i { color: var(--g-accent); min-width: 18px; font-size: 14px; }
+
+        /* === 游戏内 HUD === */
+        .fi-hud {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 14px 18px;
+            display: none; justify-content: space-between; align-items: flex-start;
+            z-index: 10; pointer-events: none;
         }
-        .inv-item .count {
-            font-weight: bold;
-            font-size: 14px;
+        .fi-hud.show { display: flex; }
+        .fi-hud-panel {
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            color: white; padding: 12px 16px; border-radius: 14px; font-size: 13.5px; pointer-events: auto;
         }
-        .diversity-bar {
-            width: 120px;
-            height: 8px;
-            background: #333;
-            border-radius: 4px;
-            overflow: hidden;
+        .fi-hud-panel h4 { margin: 0 0 10px; font-size: 13px; color: var(--g-accent); border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px; }
+        .fi-hud-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; }
+        .fi-hud-bar { width: 90px; height: 9px; background: rgba(255,255,255,0.15); border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+        .fi-hud-fill { height: 100%; border-radius: 5px; transition: width 0.3s; }
+
+        /* === 物品栏 === */
+        .fi-inventory {
+            position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border-radius: 25px; z-index: 10;
+            display: none; overflow: visible;
         }
-        .diversity-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            transition: width 0.3s;
+        .fi-inventory.show { display: block; }
+        .fi-inv-scroll {
+            display: flex; gap: 5px; align-items: center; padding: 8px 14px;
+            max-width: 95vw; overflow-x: auto; white-space: nowrap;
         }
-        .wave-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            overflow: hidden;
-            z-index: 5;
+        .fi-inv-category {
+            display: flex; gap: 5px; align-items: center;
+            border-right: 1px solid rgba(255,255,255,0.15); padding-right: 8px; margin-right: 3px;
         }
+        .fi-inv-category:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+        .fi-inv-cat-label {
+            font-size: 9px; color: rgba(255,255,255,0.5); writing-mode: vertical-rl;
+            text-orientation: mixed; letter-spacing: 1px; padding: 0 2px;
+        }
+        .fi-inv-btn {
+            width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+            transition: all 0.2s; position: relative; flex-shrink: 0;
+        }
+        .fi-inv-btn:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.4); }
+        .fi-inv-btn.selected { border-color: var(--g-accent); background: rgba(255,167,38,0.2); box-shadow: 0 0 0 3px rgba(255,167,38,0.3); }
+        .fi-inv-btn .inv-tooltip {
+            position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: white; font-size: 11px; padding: 6px 10px;
+            border-radius: 6px; white-space: normal; width: 160px; text-align: left; pointer-events: none; display: none;
+            border: 1px solid rgba(255,255,255,0.15); line-height: 1.4; z-index: 50;
+        }
+        .fi-inv-btn .inv-tooltip strong { display: block; margin-bottom: 3px; color: #FFCA28; }
+        .fi-inv-btn:hover .inv-tooltip { display: block; }
+
+        @media (max-width: 480px) {
+            .fi-island-card { max-width: 280px; }
+            .fi-stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* === 科普知识卡片 === */
+        .fi-fact-card {
+            position: fixed;
+            top: 80px; right: 16px;
+            z-index: 200;
+            width: 280px;
+            background: rgba(224, 247, 250, 0.97);
+            border: 2px solid rgba(0, 105, 92, 0.3);
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0,105,92,0.2);
+            animation: fiFactSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+        }
+        @keyframes fiFactSlideIn {
+            from { opacity: 0; transform: translateX(30px) scale(0.9); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .fi-fact-card.fade-out {
+            animation: fiFactSlideOut 0.3s ease forwards;
+        }
+        @keyframes fiFactSlideOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to   { opacity: 0; transform: translateX(30px) scale(0.9); }
+        }
+        .fi-fact-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+        }
+        .fi-fact-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .fi-fact-title {
+            font-size: 13px; font-weight: 700; color: #004D40; flex: 1;
+        }
+        .fi-fact-badge {
+            font-size: 10px; padding: 2px 7px; border-radius: 8px;
+            background: rgba(0,105,92,0.12); color: #00695C; font-weight: 600;
+        }
+        .fi-fact-content {
+            font-size: 12px; color: #00695C; line-height: 1.6;
+            max-height: 120px; overflow-y: auto;
+        }
+        .fi-fact-footer {
+            margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,105,92,0.15);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .fi-fact-close {
+            background: none; border: none; cursor: pointer; color: #6b7c6b;
+            font-size: 11px; padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
+        }
+        .fi-fact-close:hover { background: rgba(0,105,92,0.1); color: #00695C; }
+        .fi-fact-hint {
+            font-size: 10px; color: #9e9e9e; display: flex; align-items: center; gap: 4px;
+        }
+        /* === 科普气泡 === */
+        .fi-fact-bubble {
+            position: fixed; z-index: 200; pointer-events: none;
+            background: rgba(224,247,250,0.97);
+            border: 1px solid rgba(0,105,92,0.3);
+            border-radius: 10px; padding: 6px 10px; font-size: 11px; color: #00695C;
+            max-width: 180px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,105,92,0.15);
+            animation: fiBubblePop 2.5s ease forwards;
+        }
+        @keyframes fiBubblePop {
+            0%   { opacity: 0; transform: translateY(8px) scale(0.8); }
+            15%  { opacity: 1; transform: translateY(0) scale(1); }
+            75%  { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-8px) scale(0.9); }
+        }
+        /* === 生态知识条 === */
+        .fi-ecology-bar {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 30; pointer-events: none;
+            background: rgba(224,247,250,0.95);
+            border: 1.5px solid rgba(0,105,92,0.25);
+            border-radius: 12px;
+            padding: 8px 18px;
+            font-size: 12px; color: #00695C;
+            text-align: center;
+            min-width: 200px;
+            animation: fiFactSlideIn 0.35s ease;
+            box-shadow: 0 4px 16px rgba(0,105,92,0.15);
+        }
+        .fi-ecology-bar.fade-out {
+            animation: fiFactSlideOut 0.3s ease forwards;
+        }
+        .fi-ecology-bar-icon { margin-bottom: 3px; }
+        /* === 科普按钮 === */
+        .fi-fact-btn {
+            position: absolute; top: 0; right: 16px; z-index: 16;
+            background: rgba(0,105,92,0.85); color: white;
+            border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: none; align-items: center; gap: 6px;
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            transition: all 0.2s; pointer-events: auto;
+        }
+        .fi-fact-btn.show { display: flex; }
+        .fi-fact-btn:hover { background: rgba(0,105,92,1); transform: scale(1.05); }
+        #gameOverOverlay { justify-content: center; }
+        #gameOverOverlay > div { margin: auto; }
+        #startOverlay h2 { font-size: 28px; margin-bottom: 6px; }
+        #startOverlay .g-subtitle { font-size: 14px; margin-bottom: 18px; }
+        .fi-island-card { margin-bottom: 18px; }
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
-        <div class="game-header">
-            <div class="game-title">
-                <i class="fas fa-water"></i>
-                生态浮岛
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="/" style="color: var(--c-dark); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-arrow-left"></i> 返回
-                </a>
-            </div>
-        </div>
+    <header class="gh">
+        <a href="/" class="gh-logo">
+            <div class="gh-icon"><i class="fas fa-water"></i></div>
+            <span class="gh-title">生态浮岛</span>
+        </a>
+        <nav class="gh-nav">
+            <a href="/"><i class="fas fa-home"></i> 返回首页</a>
+        </nav>
+    </header>
 
-        <div class="canvas-container" id="canvasContainer">
-            <canvas id="gameCanvas" class="game-canvas"></canvas>
+    <main class="gw">
+        <div class="g-canvas-wrap">
+            <div class="fi-bg"></div>
 
-            <div class="toolbar">
-                <button class="tool-btn selected" data-tool="platform" title="浮动框架">
-                    <i class="fas fa-square"></i>
-                    <span>框架</span>
-                </button>
-                <button class="tool-btn" data-tool="plant" title="水生植物">
-                    <i class="fas fa-seedling"></i>
-                    <span>植物</span>
-                </button>
-                <button class="tool-btn" data-tool="animal" title="动物">
-                    <i class="fas fa-fish"></i>
-                    <span>动物</span>
-                </button>
-                <button class="tool-btn" data-tool="remove" title="移除">
-                    <i class="fas fa-trash"></i>
-                    <span>移除</span>
-                </button>
-            </div>
-
-            <div class="stats-panel">
-                <div class="stat-row">
-                    <span><i class="fas fa-balance-left" style="color: #FFD700;"></i> 平衡度</span>
-                    <span id="balanceVal">100%</span>
-                </div>
-                <div class="stat-row">
-                    <span><i class="fas fa-paw" style="color: #4CAF50;"></i> 生物多样性</span>
-                    <div class="diversity-bar">
-                        <div class="diversity-fill" id="diversityBar" style="width: 0%;"></div>
+            <!-- 游戏 HUD -->
+            <div class="fi-hud" id="fiHud">
+                <div class="fi-hud-panel">
+                    <h4><i class="fas fa-trophy"></i> 积分</h4>
+                    <div class="fi-hud-row">
+                        <span>得分</span>
+                        <strong id="fiScoreDisplay" style="color:var(--g-accent)">0</strong>
+                    </div>
+                    <div class="fi-hud-row">
+                        <span>平衡度</span>
+                        <div class="fi-hud-bar"><div class="fi-hud-fill" id="fiBalanceFill" style="width:100%;background:#4CAF50"></div></div>
                     </div>
                 </div>
-                <div class="stat-row">
-                    <span><i class="fas fa-star" style="color: #FFD700;"></i> 得分</span>
-                    <span id="scoreDisplay">0</span>
+                <div class="fi-hud-panel">
+                    <h4><i class="fas fa-leaf"></i> 生态指数</h4>
+                    <div class="fi-hud-row">
+                        <span>多样性</span>
+                        <div class="fi-hud-bar"><div class="fi-hud-fill" id="fiDiversityFill" style="width:0%;background:#29B6F6"></div></div>
+                    </div>
+                    <div class="fi-hud-row">
+                        <span>稳定性</span>
+                        <div class="fi-hud-bar"><div class="fi-hud-fill" id="fiStabilityFill" style="width:0%;background:#AB47BC"></div></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="balance-indicator">
-                <div class="balance-needle"></div>
-                <div class="balance-ball" id="balanceBall"></div>
-            </div>
+            <!-- 科普按钮 -->
+            <button class="fi-fact-btn" id="fiFactBtn" onclick="floatingGame.showEcologyTip()">
+                <i class="fas fa-graduation-cap"></i> 科普
+            </button>
 
-            <div class="inventory" id="inventory">
-                <!-- 由JS生成 -->
-            </div>
+            <!-- 物品栏 -->
+            <div class="fi-inventory" id="fiInventory"></div>
 
-            <div class="game-overlay" id="startOverlay">
-                <h2><i class="fas fa-water"></i> 生态浮岛搭建</h2>
-                <p style="color: #666;">拖拽组件搭建稳定的生态系统</p>
-                
-                <div style="margin: 15px 0; text-align: left; padding: 0 20px; font-size: 13px; color: #555;">
-                    <p><i class="fas fa-mouse" style="color: var(--c-aqua);"></i> 点击放置组件，拖拽调整位置</p>
-                    <p><i class="fas fa-balance-scale" style="color: #FFD700;"></i> 保持浮岛平衡，太偏会倾覆</p>
-                    <p><i class="fas fa-leaf" style="color: #4CAF50;"></i> 合理搭配植物和动物提高多样性</p>
-                    <p><i class="fas fa-trophy" style="color: #FF5722;"></i> 达到100%多样性获得高评分</p>
+            <canvas id="gameCanvas" class="g-canvas"></canvas>
+
+            <!-- 开始界面 -->
+            <div class="g-overlay" id="startOverlay" style="background:rgba(224,247,250,0.92);">
+                <h2><i class="fas fa-water" style="color:#00695C"></i> 生态浮岛</h2>
+                <p class="g-subtitle">在黄河湿地搭建生态浮岛，平衡动植物多样性</p>
+
+                <div class="fi-island-card">
+                    <div class="fi-island-preview">
+                        <div class="fi-preview-water"></div>
+                        <div class="fi-preview-island" id="fiPreviewIsland"></div>
+                    </div>
+                    <div class="fi-stats-grid">
+                        <div class="fi-stat-item">
+                            <div class="fi-stat-val">30</div>
+                            <div class="fi-stat-label">岛屿容量</div>
+                        </div>
+                        <div class="fi-stat-item">
+                            <div class="fi-stat-val">5</div>
+                            <div class="fi-stat-label">岛屿数量</div>
+                        </div>
+                        <div class="fi-stat-item">
+                            <div class="fi-stat-val">3分钟</div>
+                            <div class="fi-stat-label">挑战时长</div>
+                        </div>
+                    </div>
+                    <div class="fi-stat-bar-row">
+                        <span>岛屿数量</span>
+                        <input type="range" id="fiIslandCountSlider" min="2" max="8" value="3">
+                        <span id="fiIslandCountLabel">3座</span>
+                    </div>
                 </div>
-                <button class="start-btn" style="margin-top: 15px;" onclick="floatingIsland.start()">
+
+                <div class="fi-rules">
+                    <div class="fi-rule-item"><i class="fas fa-mouse"></i> 点击岛屿放置材料，可重复放置</div>
+                    <div class="fi-rule-item"><i class="fas fa-balance-scale"></i> 两侧重量不均会导致岛屿倾斜</div>
+                    <div class="fi-rule-item"><i class="fas fa-leaf"></i> 放置种类越多，多样性指数越高</div>
+                    <div class="fi-rule-item"><i class="fas fa-exclamation-triangle"></i> 倾斜超过35°或严重超载会沉没！</div>
+                </div>
+
+                <button class="g-btn" style="background:linear-gradient(135deg,#00695C,#00897B)" onclick="floatingGame.start()">
                     <i class="fas fa-play"></i> 开始搭建
                 </button>
             </div>
 
-            <div class="game-overlay" id="winOverlay" style="display: none;">
-                <div style="text-align: center;">
-                    <h2 style="color: #4CAF50;"><i class="fas fa-trophy"></i> 生态系统完成!</h2>
-                    <p style="font-size: 36px; margin: 15px 0;">
-                        <i class="fas fa-star" style="color: #FFD700;"></i>
-                        <span id="winScore">0</span>
-                        <i class="fas fa-star" style="color: #FFD700;"></i>
-                    </p>
-                    <p id="ecosystemStatus">完美的湿地生态系统!</p>
-                    <p style="font-size: 13px; color: #888;">
-                        生物多样性: <span id="finalDiversity">0%</span>
-                    </p>
-                    <button class="start-btn" style="margin-top: 20px;" onclick="floatingIsland.restart()">
+            <!-- 胜利 -->
+            <div class="g-overlay" id="winOverlay" style="display:none; background:rgba(224,247,250,0.92);">
+                <div style="text-align:center;">
+                    <h2 style="color:#00695C;"><i class="fas fa-trophy"></i> 生态浮岛建成！</h2>
+                    <div style="font-size:44px;font-weight:800;color:var(--g-accent);margin:10px 0;" id="fiFinalScore">0</div>
+                    <p style="color:#00695C;font-size:14px;">恭喜你成功搭建生态浮岛！</p>
+                    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;">
+                        <div style="background:rgba(0,105,92,0.1);padding:7px 12px;border-radius:10px;">
+                            <div style="font-size:18px;font-weight:700;color:#00695C;" id="fiFinalDiversity">0</div>
+                            <div style="font-size:11px;color:#6b7c6b;">多样性</div>
+                        </div>
+                        <div style="background:rgba(0,105,92,0.1);padding:7px 12px;border-radius:10px;">
+                            <div style="font-size:18px;font-weight:700;color:#AB47BC;" id="fiFinalStability">0</div>
+                            <div style="font-size:11px;color:#6b7c6b;">稳定性</div>
+                        </div>
+                    </div>
+                    <button class="g-btn" style="margin-top:14px;background:linear-gradient(135deg,#00695C,#00897B)" onclick="floatingGame.restart()">
                         <i class="fas fa-redo"></i> 再建一座
+                    </button>
+                </div>
+            </div>
+
+            <!-- 游戏结束（替代 alert()） -->
+            <div class="g-overlay" id="gameOverOverlay" style="display:none; background:rgba(224,247,250,0.92);">
+                <div style="text-align:center;">
+                    <h2 style="color:#c0392b;"><i class="fas fa-water"></i> <span id="fiGameOverTitle">浮岛沉没了！</span></h2>
+                    <p style="font-size:13px;color:#6b7c6b;margin:8px 0;" id="fiGameOverReason"></p>
+                    <div style="font-size:32px;font-weight:700;color:var(--g-accent);margin:10px 0;" id="fiGameOverScore">0</div>
+                    <p style="font-size:13px;color:#6b7c6b;">获得 <strong id="fiGameOverEarned" style="color:#00695C">0</strong> 积分</p>
+                    <button class="g-btn" style="margin-top:14px;background:linear-gradient(135deg,#00695C,#00897B)" onclick="floatingGame.restart()">
+                        <i class="fas fa-redo"></i> 重新挑战
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="glass-panel" style="margin-top: 15px; text-align: center;">
-            <h4 style="color: var(--c-dark); margin-bottom: 10px;">
-                <i class="fas fa-lightbulb" style="color: #FFD700;"></i> 生态小贴士
-            </h4>
-            <p style="color: #666; font-size: 13px; line-height: 1.8;">
-                浮岛中央放置重物（如框架、石头），四周放置轻物（如植物）<br>
-                不同生物会形成共生关系：荷花吸引蜻蜓，蜻蜓吸引青蛙，青蛙吸引蛇...
-            </p>
+        <div class="g-info-panel">
+            <h4><i class="fas fa-graduation-cap" style="color:#FFA726"></i> 生态浮岛知识</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;text-align:left;">
+                <div style="background:rgba(0,105,92,0.06);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#00695C;margin-bottom:3px;"><i class="fas fa-balance-scale" style="margin-right:4px"></i>生态平衡</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">物种越多，生态越稳定。生物与环境和谐共处才能可持续发展。</div>
+                </div>
+                <div style="background:rgba(0,105,92,0.06);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#00695C;margin-bottom:3px;"><i class="fas fa-sync" style="margin-right:4px"></i>生态演替</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">从裸露基质→先锋物种定居→多样化→稳定群落，模拟真实湿地生态。</div>
+                </div>
+                <div style="background:rgba(0,105,92,0.06);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#00695C;margin-bottom:3px;"><i class="fas fa-hands-helping" style="margin-right:4px"></i>互利共生</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">青蛙→捕食昆虫；鸟类→传播种子；昆虫→为植物授粉。生物间互帮互助。</div>
+                </div>
+                <div style="background:rgba(0,105,92,0.06);padding:8px 10px;border-radius:10px;font-size:12px;">
+                    <div style="font-weight:700;color:#00695C;margin-bottom:3px;"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i>失衡警示</div>
+                    <div style="color:#6b7c6b;line-height:1.4;">过重或两侧不均都会打破平衡，自然界同样遵循此规律。</div>
+                </div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script>
-        const inventoryItems = {
-            platform: [
-                { id: 'wood', name: '木框架', icon: 'fa-square', color: '#8B4513', weight: 30, size: 80 },
-                { id: 'plastic', name: '塑料浮筒', icon: 'fa-circle', color: '#4169E1', weight: 15, size: 60 },
-                { id: 'bamboo', name: '竹筏', icon: 'fa-grip-lines', color: '#DEB887', weight: 25, size: 70 }
-            ],
-            plant: [
-                { id: 'lotus', name: '荷花', icon: 'fa-circle', color: '#FF69B4', weight: 5, size: 40, diversity: 10 },
-                { id: 'reed', name: '芦苇', icon: 'fa-long-arrow-alt-up', color: '#556B2F', weight: 3, size: 50, diversity: 15 },
-                { id: 'watergrass', name: '水草', icon: 'fa-leaf', color: '#228B22', weight: 2, size: 30, diversity: 8 },
-                { id: 'cattail', name: '香蒲', icon: 'fa-fire', color: '#8B4513', weight: 4, size: 45, diversity: 12 }
-            ],
-            animal: [
-                { id: 'fish', name: '小鱼', icon: 'fa-fish', color: '#1E90FF', weight: 3, size: 25, diversity: 20 },
-                { id: 'frog', name: '青蛙', icon: 'fa-frog', color: '#32CD32', weight: 4, size: 30, diversity: 18 },
-                { id: 'dragonfly', name: '蜻蜓', icon: 'fa-feather', color: '#00CED1', weight: 1, size: 20, diversity: 10 },
-                { id: 'bird', name: '候鸟', icon: 'fa-dove', color: '#DDA0DD', weight: 5, size: 35, diversity: 25 }
-            ]
+        /* ============================================================
+           科普知识数据
+        ============================================================ */
+        var FLOATING_ISLAND_FACTS = {
+            items: {
+                reed:     '芦苇：根系可净化水体，每平方米每年可截留约50克泥沙，是湿地的天然"清道夫"。',
+                flower:   '湿地花卉：为传粉昆虫提供食物，增加生态系统多样性，花粉和花蜜是蝴蝶的主要能量来源。',
+                grass:    '苔草：耐水淹，能在季节性积水区生长，根系固定土壤防止水土流失，是湿地先锋植物。',
+                bush:     '灌木丛：为小型鸟类提供筑巢场所，浆果是秋季候鸟的重要食物，灌木根系还能稳定岸坡。',
+                tree:     '湿地乔木（如柳树）：树洞为啄木鸟、猫头鹰提供住所，落叶分解后增加水体营养，形成微型生态系统。',
+                moss:     '苔藓：能吸收自身体重20倍的水分，是湿地含水量的天然调节器，还能监测空气污染程度。',
+                stone:    '卵石：白天吸热夜晚放热，调节近岸水温，为水生昆虫提供附着基质，是许多小型动物的家。',
+                boulder:  '巨石：形成微生境，为蜥蜴、青蛙提供晒太阳和隐蔽的场所，也是昆虫和微生物的栖息地。',
+                shell:    '贝壳：含钙物质缓慢释放，可调节水体酸碱度，贝壳碎片也是某些鸟类（如黑嘴鸥）的筑巢材料。',
+                driftwood:'漂流木：为水獭提供休息平台，也是甲虫和真菌的栖息基质，被称为河流生态系统的"诺亚方舟"。',
+                bird:     '湿地鸟类：帮助传播种子、控制昆虫数量，鸟粪还是天然肥料，形成良性生态循环。',
+                fish:     '鱼类：湿地生态系统能量流动的核心，连接浮游生物和大型捕食者，是食物链的关键环节。',
+                frog:     '青蛙：湿地健康的指示物种，其皮肤对环境污染极为敏感，是生态系统的天然"预警器"。',
+                dragonfly:'蜻蜓：稚虫捕食蚊子幼虫，成虫是空中"猎手"，一天可捕食上百只蚊虫，是天然灭蚊剂。',
+                snail:    '螺类：清理水体中的藻类和腐殖质，是湿地"清洁工"，也是鱼类的优质食物。'
+            },
+            ecology: {
+                diversity:  '物种多样性越高，生态系统越稳定。丰富的物种构成可以互相补充、抵御病虫害和气候变化。',
+                balance:    '浮岛的平衡体现了自然界的基本规律：生物与环境必须和谐共处，过重或失衡都会导致系统崩溃。',
+                succession: '生态浮岛的演替过程与真实湿地相似：从裸露基质→先锋物种定居→多样化→稳定顶极群落。',
+                symbiosis:  '浮岛上不同生物之间存在互利共生关系：青蛙捕食昆虫，鸟类传播植物种子，昆虫为植物授粉。'
+            }
         };
 
-        const floatingIsland = {
-            canvas: null,
-            ctx: null,
-            isRunning: false,
-            score: 0,
-            balance: 100,
-            diversity: 0,
-            currentTool: 'platform',
-            selectedItem: 0,
-            components: [],
-            draggedComponent: null,
-            dragOffset: { x: 0, y: 0 },
-            frameCount: 0,
-            animationId: null,
-            targetDiversity: 100,
+        var floatingGame = {
+            canvas:null, ctx:null, isRunning:false, score:0,
+            frameCount:0, animationId:null,
+            islandCount:3, selectedItem:'reed',
+            islands:[], timeLeft:180,
+            diversity:0, stability:100,
+            factCooldown:0, seenItems:new Set(),
+            itemTypes:[
+                {id:'reed',     name:'芦苇',       category:'plant',  icon:'fa-water',        weight:0.3, stability:0.05,  diversity:1,  color:'#2e7d32'},
+                {id:'flower',   name:'野花',       category:'plant',  icon:'fa-spa',          weight:0.2, stability:0.02,  diversity:2,  color:'#e91e63'},
+                {id:'grass',    name:'草坪',       category:'plant',  icon:'fa-leaf',         weight:0.4, stability:0.08,  diversity:1,  color:'#66bb6a'},
+                {id:'bush',     name:'灌木',       category:'plant',  icon:'fa-tree',         weight:1.0, stability:0.15,  diversity:1,  color:'#388e3c'},
+                {id:'tree',     name:'乔木',       category:'plant',  icon:'fa-pine',         weight:1.8, stability:0.1,   diversity:1,  color:'#2e7d32'},
+                {id:'moss',     name:'苔藓',       category:'plant',  icon:'fa-circle',       weight:0.2, stability:0.12,  diversity:0,  color:'#558b2f'},
+                {id:'stone',    name:'卵石',       category:'mineral',icon:'fa-circle-notch', weight:2.5, stability:0.25,  diversity:0,  color:'#9e9e9e'},
+                {id:'boulder',  name:'巨石',       category:'mineral',icon:'fa-mountain',     weight:4.0, stability:0.3,   diversity:0,  color:'#757575'},
+                {id:'shell',    name:'贝壳',       category:'mineral',icon:'fa-ring',         weight:0.5, stability:0.08,  diversity:2,  color:'#f48fb1'},
+                {id:'driftwood',name:'浮木',       category:'mineral',icon:'fa-utensils',     weight:1.5, stability:0.18,  diversity:0,  color:'#8d6e63'},
+                {id:'bird',     name:'水鸟',       category:'animal',icon:'fa-feather',      weight:0.6, stability:-0.05, diversity:3,  color:'#cfd8dc'},
+                {id:'fish',     name:'小鱼',       category:'animal',icon:'fa-fish',         weight:0.3, stability:0.02,  diversity:2,  color:'#29b6f6'},
+                {id:'frog',     name:'青蛙',       category:'animal',icon:'fa-frog',         weight:0.4, stability:0.03,  diversity:2,  color:'#43a047'},
+                {id:'dragonfly',name:'蜻蜓',       category:'animal',icon:'fa-bug',          weight:0.1, stability:-0.02, diversity:2,  color:'#26c6da'},
+                {id:'snail',    name:'蜗牛',       category:'animal',icon:'fa-seedling',     weight:0.2, stability:0.06,  diversity:1,  color:'#a1887f'},
+            ],
 
-            init: function() {
+            init:function() {
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
+                window.addEventListener('resize', function(){ floatingGame.resizeCanvas(); });
 
-                // 工具栏点击
-                $('.tool-btn').click((e) => {
-                    const tool = $(e.currentTarget).data('tool');
-                    this.selectTool(tool);
+                $('#fiIslandCountSlider').on('input', function(){
+                    var v = $(this).val();
+                    $('#fiIslandCountLabel').text(v+'座');
+                    floatingGame.islandCount = parseInt(v);
                 });
 
-                // 画布点击
-                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                var self = this;
+                this.canvas.addEventListener('click', function(e){
+                    if (!self.isRunning) return;
+                    var rect = self.canvas.getBoundingClientRect();
+                    var x = e.clientX - rect.left;
+                    var y = e.clientY - rect.top;
+                    self.handlePlace(x, y);
+                });
 
-                this.renderInventory();
+                this.renderInventoryUI();
                 this.drawStaticScene();
             },
 
-            resizeCanvas: function() {
-                const container = document.getElementById('canvasContainer');
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-            },
-
-            selectTool: function(tool) {
-                this.currentTool = tool;
-                this.selectedItem = 0;
-                $('.tool-btn').removeClass('selected');
-                $(`.tool-btn[data-tool="${tool}"]`).addClass('selected');
-                this.renderInventory();
-            },
-
-            renderInventory: function() {
-                const container = $('#inventory');
-                container.empty();
-
-                const items = inventoryItems[this.currentTool] || [];
-                items.forEach((item, i) => {
-                    const cls = i === this.selectedItem ? 'selected' : '';
-                    container.append(`
-                        <div class="inv-item ${cls}" onclick="floatingIsland.selectItem(${i})">
-                            <i class="fas ${item.icon}" style="color: ${item.color}; font-size: 20px;"></i>
-                            <span>${item.name}</span>
-                        </div>
-                    `);
+            renderInventoryUI:function() {
+                var container = document.getElementById('fiInventory');
+                container.innerHTML = '';
+                var self = this;
+                var categories = [
+                    {id:'plant',   label:'植物'},
+                    {id:'mineral', label:'矿物'},
+                    {id:'animal',  label:'动物'},
+                ];
+                var scroll = document.createElement('div');
+                scroll.className = 'fi-inv-scroll';
+                categories.forEach(function(cat) {
+                    var items = self.itemTypes.filter(function(it){ return it.category === cat.id; });
+                    if (!items.length) return;
+                    var catDiv = document.createElement('div');
+                    catDiv.className = 'fi-inv-category';
+                    var label = document.createElement('span');
+                    label.className = 'fi-inv-cat-label';
+                    label.textContent = cat.label;
+                    catDiv.appendChild(label);
+                    items.forEach(function(it) {
+                        var btn = document.createElement('div');
+                        btn.className = 'fi-inv-btn' + (it.id === self.selectedItem ? ' selected' : '');
+                        btn.id = 'fiInv' + it.id;
+                        var fact = FLOATING_ISLAND_FACTS.items[it.id] || '';
+                        var shortFact = fact.split('，')[0] + '。';
+                        btn.innerHTML = '<i class="fas ' + it.icon + '" style="color:' + it.color + '"></i><span class="inv-tooltip"><strong>' + it.name + '</strong><br>' + shortFact + '</span>';
+                        btn.addEventListener('click', function(id){ return function(){ self.selectItem(id); }; }(it.id));
+                        catDiv.appendChild(btn);
+                    });
+                    scroll.appendChild(catDiv);
                 });
+                container.appendChild(scroll);
             },
 
-            selectItem: function(index) {
-                this.selectedItem = index;
-                this.renderInventory();
+            resizeCanvas:function() {
+                var c = document.getElementById('startOverlay').parentElement;
+                this.canvas.width  = c.clientWidth;
+                this.canvas.height = c.clientHeight;
             },
 
-            start: function() {
-                $('#startOverlay').hide();
-                $('#winOverlay').hide();
+            selectItem:function(itemId) {
+                this.selectedItem = itemId;
+                $('.fi-inv-btn').removeClass('selected');
+                $('#fiInv'+itemId).addClass('selected');
+            },
+
+            handlePlace:function(x, y) {
+                for (var i = 0; i < this.islands.length; i++) {
+                    var isl = this.islands[i];
+                    if (x >= isl.x && x <= isl.x+isl.w && y >= isl.y && y <= isl.y+isl.h) {
+                        var margin = 18;
+                        if (x < isl.x+margin || x > isl.x+isl.w-margin || y < isl.y+margin || y > isl.y+isl.h-margin) continue;
+                        for (var it of isl.items) {
+                            if (Math.hypot(it.x-x, it.y-y) < 22) return;
+                        }
+                        isl.items.push({type:this.selectedItem, x:x, y:y});
+                        this.recalculateIsland(isl);
+                        this.updateStats();
+                        this.score += 3;
+                        this.checkWin();
+                        // Show item fact
+                        if (this.factCooldown <= 0) {
+                            this.showItemFact(this.selectedItem, x, y);
+                            this.factCooldown = 180;
+                        }
+                        return;
+                    }
+                }
+            },
+
+            recalculateIsland:function(isl) {
+                var weight = 0, leftW = 0, rightW = 0;
+                var centerX = isl.x + isl.w/2;
+                for (var it of isl.items) {
+                    var cfg = this.itemTypes.find(function(t){ return t.id === it.type; });
+                    if (!cfg) continue;
+                    weight += cfg.weight;
+                    if (it.x < centerX) leftW += cfg.weight;
+                    else rightW += cfg.weight;
+                }
+                isl.balance = (leftW - rightW) / (weight || 1);
+                isl.tilt = isl.balance * 18;
+                isl.sinkLevel = Math.max(0, (weight - isl.maxWeight) * 0.3);
+                if (Math.abs(isl.tilt) > 35) this.gameOver('岛屿严重倾斜，沉入水中！');
+                else if (weight > isl.maxWeight * 2) this.gameOver('岛屿超载沉没！');
+            },
+
+            updateStats:function() {
+                var allTypes = {};
+                var totalStab = 0;
+                for (var isl of this.islands) {
+                    for (var it of isl.items) {
+                        allTypes[it.type] = true;
+                        var cfg = this.itemTypes.find(function(t){ return t.id === it.type; });
+                        if (cfg) totalStab += cfg.stability;
+                    }
+                }
+                var typeCount = Object.keys(allTypes).length;
+                this.diversity = Math.round((typeCount / this.itemTypes.length) * 100);
+                this.stability = Math.max(0, Math.min(100, Math.round(60 + totalStab * 50)));
+                var totalItems = 0;
+                for (var isl of this.islands) totalItems += isl.items.length;
+                this.score = Math.max(this.score, Math.round(totalItems * 3 + this.diversity * 2 + this.stability * 0.5));
+                this.updateHUD();
+            },
+
+            updateHUD:function() {
+                document.getElementById('fiScoreDisplay').textContent = this.score;
+                document.getElementById('fiDiversityFill').style.width = this.diversity + '%';
+                document.getElementById('fiStabilityFill').style.width = this.stability + '%';
+                var bal = 100;
+                for (var isl of this.islands) bal = Math.min(bal, Math.max(0, 100 - Math.abs(isl.balance)*50));
+                document.getElementById('fiBalanceFill').style.width = bal + '%';
+                document.getElementById('fiBalanceFill').style.background = bal < 30 ? '#F44336' : bal < 60 ? '#FF9800' : '#4CAF50';
+            },
+
+            start:function() {
+                if (this.isRunning) return;
+                if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+                document.getElementById('startOverlay').style.display = 'none';
+                document.getElementById('winOverlay').style.display = 'none';
+                document.getElementById('gameOverOverlay').style.display = 'none';
+                document.getElementById('fiHud').classList.add('show');
+                document.getElementById('fiInventory').classList.add('show');
+                $('#fiFactBtn').addClass('show');
 
                 this.isRunning = true;
-                this.score = 0;
-                this.balance = 100;
-                this.diversity = 0;
-                this.components = [];
-                this.draggedComponent = null;
-                this.frameCount = 0;
+                this.score = 0; this.diversity = 0; this.stability = 60;
+                this.frameCount = 0; this.timeLeft = 180;
+                this.selectedItem = 'reed';
+                this.factCooldown = 0; this.seenItems = new Set();
 
-                this.updateUI();
+                this.islands = [];
+                var w = this.canvas.width, h = this.canvas.height;
+                var cols = this.islandCount <= 4 ? 2 : 3;
+                var rows = Math.ceil(this.islandCount / cols);
+                var cellW = w / cols, cellH = (h - 100) / rows;
+                var idx = 0;
+                for (var r = 0; r < rows && idx < this.islandCount; r++) {
+                    for (var c = 0; c < cols && idx < this.islandCount; c++) {
+                        var iw = cellW * 0.7, ih = cellH * 0.65;
+                        var ix = c * cellW + (cellW - iw)/2;
+                        var iy = r * cellH + 40 + (cellH - ih)/2;
+                        var maxW = Math.floor(iw * ih / 350);
+                        this.islands.push({x:ix, y:iy, w:iw, h:ih, items:[], balance:0, tilt:0, sinkLevel:0, maxWeight:maxW});
+                        idx++;
+                    }
+                }
+                this.renderInventoryUI();
+                this.updateHUD();
                 this.gameLoop();
             },
 
-            restart: function() {
-                this.start();
+            restart:function() {
+                this.isRunning = false;
+                if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+                document.getElementById('fiHud').classList.remove('show');
+                document.getElementById('fiInventory').classList.remove('show');
+                $('#fiFactBtn').removeClass('show');
+                document.getElementById('winOverlay').style.display = 'none';
+                document.getElementById('gameOverOverlay').style.display = 'none';
+                document.getElementById('startOverlay').style.display = '';
             },
 
-            gameLoop: function() {
-                if (!this.isRunning) return;
-
-                this.update();
-                this.draw();
-                this.animationId = requestAnimationFrame(() => this.gameLoop());
+            gameLoop:function() {
+                if (!this.isRunning) { this.animationId = null; return; }
+                this.update(); this.draw();
+                this.animationId = requestAnimationFrame(function(){ floatingGame.gameLoop(); });
                 this.frameCount++;
             },
 
-            update: function() {
-                // 计算平衡度（基于所有组件的位置重心）
-                if (this.components.length > 0) {
-                    const centerX = this.canvas.width / 2;
-                    const centerY = this.canvas.height / 2;
-                    
-                    let totalWeight = 0;
-                    let weightedOffset = 0;
+            update:function() {
+                if (this.frameCount % 60 === 0) {
+                    this.timeLeft--;
+                    if (this.timeLeft <= 0) this.checkWin();
+                }
+                var self = this;
+                this.islands.forEach(function(isl) {
+                    isl.tilt *= 0.97;
+                    isl.sinkLevel *= 0.98;
+                });
+                this.updateHUD();
+            },
 
-                    this.components.forEach(comp => {
-                        totalWeight += comp.weight;
-                        const offset = Math.abs(comp.x - centerX);
-                        weightedOffset += offset * comp.weight;
+            checkWin:function() {
+                var totalItems = 0;
+                for (var isl of this.islands) totalItems += isl.items.length;
+                if (this.timeLeft <= 0 && totalItems > 0) this.win();
+                else if (this.timeLeft <= 0 && totalItems === 0) this.gameOver('未放置任何物品，时间耗尽！');
+            },
+
+            win:function() {
+                this.isRunning = false; cancelAnimationFrame(this.animationId);
+                var bonus = Math.round(this.diversity * 1.5 + this.stability * 0.5);
+                this.score += bonus;
+                document.getElementById('fiFinalScore').textContent = this.score;
+                document.getElementById('fiFinalDiversity').textContent = this.diversity + '%';
+                document.getElementById('fiFinalStability').textContent = this.stability + '%';
+                document.getElementById('fiHud').classList.remove('show');
+                document.getElementById('fiInventory').classList.remove('show');
+                document.getElementById('winOverlay').style.display = '';
+                this.updateUserScore();
+            },
+
+            gameOver:function(reason) {
+                this.isRunning = false; cancelAnimationFrame(this.animationId);
+                document.getElementById('fiGameOverTitle').textContent = '浮岛沉没！';
+                document.getElementById('fiGameOverReason').textContent = reason || '岛屿失去平衡，沉入水中';
+                document.getElementById('fiGameOverScore').textContent = this.score;
+                document.getElementById('fiGameOverEarned').textContent = this.score;
+                document.getElementById('fiHud').classList.remove('show');
+                document.getElementById('fiInventory').classList.remove('show');
+                document.getElementById('gameOverOverlay').style.display = '';
+            },
+
+            updateUserScore:function() {
+                var token = localStorage.getItem('yb_token');
+                if (!token) return;
+                var self = this;
+                $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){
+                    var ns = (d.score||0) + self.score;
+                    $.ajax({url:'/api/profiles/me/',method:'PATCH',headers:{'Authorization':'Token '+token},contentType:'application/json',data:JSON.stringify({score:ns})});
+                }});
+            },
+
+            draw:function() {
+                var ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
+                ctx.clearRect(0,0,w,h);
+                var sg = ctx.createLinearGradient(0,0,0,h);
+                sg.addColorStop(0,'#e0f7fa'); sg.addColorStop(0.5,'#80deea'); sg.addColorStop(1,'#4dd0e1');
+                ctx.fillStyle = sg; ctx.fillRect(0,0,w,h);
+                this.drawWaves(ctx,w,h);
+                var self = this;
+                this.islands.forEach(function(isl){ self.drawIsland(ctx,isl); });
+                this.drawFish(ctx,w,h);
+            },
+
+            drawStaticScene:function() {
+                this.islands = [];
+                var w = this.canvas.width, h = this.canvas.height;
+                for (var i = 0; i < 3; i++) {
+                    this.islands.push({
+                        x:w*0.15+i*w*0.35, y:h*0.35, w:100, h:60,
+                        items:[], balance:0, tilt:0, sinkLevel:0, maxWeight:15
                     });
-
-                    const avgOffset = totalWeight > 0 ? weightedOffset / totalWeight : 0;
-                    this.balance = Math.max(0, Math.min(100, 100 - avgOffset * 0.5));
                 }
-
-                // 计算生物多样性
-                let totalDiversity = 0;
-                let plantCount = 0;
-                let animalCount = 0;
-
-                this.components.forEach(comp => {
-                    if (comp.diversity) {
-                        if (inventoryItems.plant.find(p => p.id === comp.type)) plantCount++;
-                        if (inventoryItems.animal.find(a => a.id === comp.type)) animalCount++;
-                        totalDiversity += comp.diversity;
-                    }
-                });
-
-                // 共生加成
-                if (plantCount > 0 && animalCount > 0) {
-                    totalDiversity += Math.min(plantCount, animalCount) * 10;
-                }
-
-                this.diversity = Math.min(100, totalDiversity);
-                this.score = Math.floor(this.diversity * 10 + this.balance * 5);
-
-                // 平衡度过低游戏结束
-                if (this.balance < 10) {
-                    this.gameOver();
-                }
-
-                // 达到目标多样性获胜
-                if (this.diversity >= this.targetDiversity && this.balance > 50) {
-                    this.win();
-                }
-
-                this.updateUI();
+                this.draw();
             },
 
-            handleMouseDown: function(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // 检查是否点击了组件
-                for (let i = this.components.length - 1; i >= 0; i--) {
-                    const comp = this.components[i];
-                    if (this.isPointInComponent(x, y, comp)) {
-                        if (this.currentTool === 'remove') {
-                            this.components.splice(i, 1);
-                            return;
-                        }
-                        this.draggedComponent = comp;
-                        this.dragOffset = { x: x - comp.x, y: y - comp.y };
-                        return;
-                    }
-                }
-            },
-
-            handleMouseMove: function(e) {
-                if (this.draggedComponent) {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.draggedComponent.x = e.clientX - rect.left - this.dragOffset.x;
-                    this.draggedComponent.y = e.clientY - rect.top - this.dragOffset.y;
-                }
-            },
-
-            handleMouseUp: function(e) {
-                this.draggedComponent = null;
-            },
-
-            handleClick: function(e) {
-                if (this.draggedComponent) return;
-
-                const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // 检查是否点击了组件
-                for (let comp of this.components) {
-                    if (this.isPointInComponent(x, y, comp)) {
-                        return;
-                    }
-                }
-
-                // 放置新组件
-                if (this.currentTool !== 'remove') {
-                    const items = inventoryItems[this.currentTool];
-                    if (items && items[this.selectedItem]) {
-                        const item = items[this.selectedItem];
-                        this.components.push({
-                            x: x,
-                            y: y,
-                            type: item.id,
-                            icon: item.icon,
-                            color: item.color,
-                            weight: item.weight,
-                            size: item.size,
-                            diversity: item.diversity || 0,
-                            rotation: 0
-                        });
-                        this.updateUI();
-                    }
-                }
-            },
-
-            isPointInComponent: function(x, y, comp) {
-                const halfSize = comp.size / 2;
-                return x >= comp.x - halfSize && x <= comp.x + halfSize &&
-                       y >= comp.y - halfSize && y <= comp.y + halfSize;
-            },
-
-            updateUI: function() {
-                $('#scoreDisplay').text(this.score);
-                $('#balanceVal').text(Math.floor(this.balance) + '%');
-                $('#diversityBar').css('width', this.diversity + '%');
-
-                // 平衡球
-                const ballPos = 90 + (50 - this.balance) * 1.5;
-                $('#balanceBall').css('left', ballPos + 'px');
-            },
-
-            gameOver: function() {
-                this.isRunning = false;
-                cancelAnimationFrame(this.animationId);
-                alert('浮岛倾覆了！平衡度过低。得分: ' + this.score);
-                this.start();
-            },
-
-            win: function() {
-                this.isRunning = false;
-                cancelAnimationFrame(this.animationId);
-                this.score += 500;
-                $('#winScore').text(this.score);
-                $('#finalDiversity').text(this.diversity + '%');
-                $('#ecosystemStatus').text('完美的湿地生态系统!');
-                $('#winOverlay').show();
-            },
-
-            draw: function() {
-                const ctx = this.ctx;
-                const w = this.canvas.width;
-                const h = this.canvas.height;
-
-                ctx.clearRect(0, 0, w, h);
-
-                // 天空
-                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-                skyGrad.addColorStop(0, '#87CEEB');
-                skyGrad.addColorStop(1, '#B0E0E6');
-                ctx.fillStyle = skyGrad;
-                ctx.fillRect(0, 0, w, h);
-
-                // 水下背景
-                const waterGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
-                waterGrad.addColorStop(0, 'rgba(30,144,255,0.3)');
-                waterGrad.addColorStop(1, 'rgba(0,100,200,0.6)');
-                ctx.fillStyle = waterGrad;
-                ctx.fillRect(0, h * 0.3, w, h * 0.7);
-
-                // 水波
-                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < 5; i++) {
-                    const y = h * 0.35 + i * 40;
+            drawWaves:function(ctx,w,h) {
+                ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2;
+                for(var i=0;i<6;i++){
+                    var y=h*0.5+i*40;
+                    var off=Math.sin(this.frameCount*0.03+i*0.5)*8;
                     ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    for (let x = 0; x <= w; x += 20) {
-                        ctx.lineTo(x, y + Math.sin(x * 0.02 + this.frameCount * 0.03 + i) * 8);
-                    }
+                    for(var x=0;x<=w;x+=20) ctx.lineTo(x, y+Math.sin(x*0.015+this.frameCount*0.02+i)*8+off);
                     ctx.stroke();
                 }
-
-                // 水下气泡
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                for (let i = 0; i < 10; i++) {
-                    const x = (i * 120 + this.frameCount * 0.5) % w;
-                    const y = h * 0.5 + Math.sin(this.frameCount * 0.02 + i) * 30;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 4 + Math.sin(i) * 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // 水下植物
-                ctx.fillStyle = 'rgba(34,139,34,0.4)';
-                for (let i = 0; i < w; i += 60) {
-                    const sway = Math.sin(this.frameCount * 0.05 + i * 0.1) * 10;
-                    ctx.beginPath();
-                    ctx.moveTo(i, h);
-                    ctx.quadraticCurveTo(i + sway, h * 0.6, i + sway * 2, h * 0.4);
-                    ctx.lineTo(i + 5 + sway * 2, h * 0.4);
-                    ctx.quadraticCurveTo(i + 5 + sway, h * 0.6, i + 5, h);
-                    ctx.fill();
-                }
-
-                // 绘制组件
-                this.components.forEach(comp => {
-                    this.drawComponent(ctx, comp);
-                });
-
-                // 中心标记
-                ctx.strokeStyle = 'rgba(255,215,0,0.3)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.arc(w / 2, h / 2, 80, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = 'rgba(255,215,0,0.2)';
-                ctx.beginPath();
-                ctx.arc(w / 2, h / 2, 30, 0, Math.PI * 2);
-                ctx.fill();
             },
 
-            drawComponent: function(ctx, comp) {
+            drawIsland:function(ctx,isl) {
                 ctx.save();
-                ctx.translate(comp.x, comp.y);
+                var cx = isl.x + isl.w/2;
+                var cy = isl.y + isl.h + isl.sinkLevel * 0.5;
+                ctx.translate(cx, cy);
+                ctx.rotate(isl.tilt * Math.PI/180);
+                ctx.translate(-cx, -cy);
 
-                // 阴影
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.fillStyle='rgba(0,105,92,0.2)';
                 ctx.beginPath();
-                ctx.ellipse(5, 5, comp.size / 2, comp.size / 4, 0, 0, Math.PI * 2);
+                ctx.ellipse(cx, isl.y+isl.h+8, isl.w/2+5, 12, 0, 0, Math.PI*2);
                 ctx.fill();
 
-                // 根据类型绘制
-                if (comp.id === 'platform' || comp.type === 'wood') {
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(-comp.size / 2, -comp.size / 2, comp.size, comp.size);
-                    ctx.strokeStyle = '#654321';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(-comp.size / 2, -comp.size / 2, comp.size, comp.size);
-                    
-                    // 木纹
-                    ctx.strokeStyle = '#654321';
-                    ctx.lineWidth = 1;
-                    for (let i = -comp.size / 2 + 10; i < comp.size / 2; i += 15) {
-                        ctx.beginPath();
-                        ctx.moveTo(i, -comp.size / 2);
-                        ctx.lineTo(i, comp.size / 2);
-                        ctx.stroke();
-                    }
-                } else if (comp.type === 'plastic') {
-                    ctx.fillStyle = '#4169E1';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, comp.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#1E40AF';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                } else if (comp.type === 'bamboo') {
-                    ctx.strokeStyle = '#DEB887';
-                    ctx.lineWidth = 8;
-                    ctx.beginPath();
-                    ctx.moveTo(-comp.size / 2, 0);
-                    ctx.lineTo(comp.size / 2, 0);
-                    ctx.stroke();
-                    
-                    ctx.lineWidth = 2;
-                    for (let i = -comp.size / 2; i < comp.size / 2; i += 12) {
-                        ctx.beginPath();
-                        ctx.moveTo(i, -4);
-                        ctx.lineTo(i, 4);
-                        ctx.stroke();
-                    }
-                } else if (comp.type === 'lotus') {
-                    // 荷叶
-                    ctx.fillStyle = '#228B22';
-                    ctx.beginPath();
-                    ctx.ellipse(0, 5, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // 花
-                    ctx.fillStyle = '#FF69B4';
-                    for (let i = 0; i < 6; i++) {
-                        const angle = (i / 6) * Math.PI * 2;
-                        ctx.beginPath();
-                        ctx.ellipse(
-                            Math.cos(angle) * 10,
-                            Math.sin(angle) * 6 - 5,
-                            8, 5, angle, 0, Math.PI * 2
-                        );
-                        ctx.fill();
-                    }
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath();
-                    ctx.arc(0, -5, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (comp.type === 'reed') {
-                    const sway = Math.sin(this.frameCount * 0.05) * 5;
-                    ctx.strokeStyle = '#556B2F';
-                    ctx.lineWidth = 4;
-                    ctx.beginPath();
-                    ctx.moveTo(0, comp.size / 2);
-                    ctx.quadraticCurveTo(sway, 0, sway * 2, -comp.size / 2);
-                    ctx.stroke();
-                    
-                    ctx.fillStyle = '#8B7355';
-                    ctx.beginPath();
-                    ctx.ellipse(sway * 2, -comp.size / 2, 4, 10, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (comp.type === 'watergrass') {
-                    const sway = Math.sin(this.frameCount * 0.08) * 3;
-                    ctx.strokeStyle = '#228B22';
-                    ctx.lineWidth = 3;
-                    for (let i = -1; i <= 1; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(i * 8, comp.size / 2);
-                        ctx.quadraticCurveTo(i * 8 + sway, 0, i * 8 + sway * 2, -comp.size / 2);
-                        ctx.stroke();
-                    }
-                } else if (comp.type === 'cattail') {
-                    ctx.strokeStyle = '#556B2F';
-                    ctx.lineWidth = 4;
-                    ctx.beginPath();
-                    ctx.moveTo(0, comp.size / 2);
-                    ctx.lineTo(0, -comp.size / 3);
-                    ctx.stroke();
-                    
-                    ctx.fillStyle = '#8B4513';
-                    ctx.beginPath();
-                    ctx.ellipse(0, -comp.size / 2, 5, 15, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (comp.type === 'fish') {
-                    const swim = Math.sin(this.frameCount * 0.15) * 10;
-                    ctx.save();
-                    ctx.translate(swim, 0);
-                    
-                    ctx.fillStyle = '#1E90FF';
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#1E90FF';
-                    ctx.beginPath();
-                    ctx.moveTo(comp.size / 3, 0);
-                    ctx.lineTo(comp.size / 2 + 8, -5);
-                    ctx.lineTo(comp.size / 2 + 8, 5);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#333';
-                    ctx.beginPath();
-                    ctx.arc(-comp.size / 4, -2, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.restore();
-                } else if (comp.type === 'frog') {
-                    ctx.fillStyle = '#32CD32';
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // 眼睛
-                    ctx.fillStyle = '#228B22';
-                    ctx.beginPath();
-                    ctx.arc(-8, -5, 5, 0, Math.PI * 2);
-                    ctx.arc(8, -5, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#333';
-                    ctx.beginPath();
-                    ctx.arc(-8, -6, 2, 0, Math.PI * 2);
-                    ctx.arc(8, -6, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (comp.type === 'dragonfly') {
-                    const wingFlap = Math.sin(this.frameCount * 0.5) * 0.5;
-                    
-                    ctx.strokeStyle = '#87CEEB';
-                    ctx.lineWidth = 1;
-                    ctx.save();
-                    ctx.rotate(wingFlap);
-                    ctx.beginPath();
-                    ctx.ellipse(-15, 0, 15, 4, 0, 0, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.restore();
-                    ctx.save();
-                    ctx.rotate(-wingFlap);
-                    ctx.beginPath();
-                    ctx.ellipse(15, 0, 15, 4, 0, 0, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.restore();
-                    
-                    ctx.fillStyle = '#00CED1';
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, 12, 5, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (comp.type === 'bird') {
-                    const hop = Math.sin(this.frameCount * 0.1) * 3;
-                    ctx.save();
-                    ctx.translate(0, hop);
-                    
-                    ctx.fillStyle = '#DDA0DD';
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, comp.size / 2, comp.size / 3, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#DDA0DD';
-                    ctx.beginPath();
-                    ctx.arc(comp.size / 3, -3, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FF69B4';
-                    ctx.beginPath();
-                    ctx.moveTo(comp.size / 2 + 2, -3);
-                    ctx.lineTo(comp.size / 2 + 10, -2);
-                    ctx.lineTo(comp.size / 2 + 2, 0);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#333';
-                    ctx.beginPath();
-                    ctx.arc(comp.size / 3 + 2, -5, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.restore();
-                } else {
-                    // 默认绘制
-                    ctx.fillStyle = comp.color;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, comp.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
+                var ig = ctx.createRadialGradient(cx, isl.y+isl.h*0.3, 0, cx, isl.y+isl.h*0.5, isl.w/2);
+                ig.addColorStop(0,'#a5d6a7'); ig.addColorStop(0.5,'#66bb6a'); ig.addColorStop(1,'#388e3c');
+                ctx.fillStyle=ig;
+                ctx.beginPath();
+                ctx.ellipse(cx, isl.y+isl.h/2, isl.w/2, isl.h/2+5, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.fillStyle='#43a047';
+                ctx.beginPath();
+                ctx.ellipse(cx, isl.y+isl.h*0.3, isl.w/2-5, isl.h/3, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                var self = this;
+                isl.items.forEach(function(it){ self.drawItem(ctx, it); });
+
+                if (Math.abs(isl.tilt) > 5) {
+                    ctx.fillStyle='rgba(244,67,54,'+(Math.min(1,Math.abs(isl.tilt)/35*0.8))+')';
+                    ctx.beginPath(); ctx.arc(cx, isl.y-15, 8, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle='white'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+                    ctx.fillText(Math.abs(isl.tilt).toFixed(0)+'°', cx, isl.y-11);
                 }
 
                 ctx.restore();
             },
 
-            drawStaticScene: function() {
-                this.draw();
+            drawItem:function(ctx, it) {
+                var cfg = this.itemTypes.find(function(t){ return t.id === it.type; });
+                if (!cfg) return;
+                var c = cfg.color;
+                switch(it.type) {
+                    case 'reed':
+                        for(var j=0;j<3;j++){
+                            var angle=(j-1)*0.3+Math.sin(this.frameCount*0.04+it.x)*0.1;
+                            ctx.save(); ctx.translate(it.x+j*5-5, it.y); ctx.rotate(angle);
+                            ctx.fillStyle='#388e3c'; ctx.fillRect(-1,-22,2.5,22);
+                            ctx.fillStyle='#2e7d32';
+                            ctx.beginPath(); ctx.ellipse(0,-24,3,6,0,0,Math.PI*2); ctx.fill();
+                            ctx.restore();
+                        }
+                        break;
+                    case 'flower':
+                        ctx.fillStyle='#4caf50'; ctx.fillRect(it.x-1,it.y-10,2,10);
+                        ctx.fillStyle=c;
+                        for(var p=0;p<5;p++){
+                            var pa=p*Math.PI*2/5;
+                            ctx.beginPath(); ctx.ellipse(it.x+Math.cos(pa)*4,it.y-14+Math.sin(pa)*4,3,3,0,0,Math.PI*2); ctx.fill();
+                        }
+                        ctx.fillStyle='#ffeb3b';
+                        ctx.beginPath(); ctx.arc(it.x,it.y-14,2.5,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'grass':
+                        ctx.fillStyle='#388e3c';
+                        for(var g=0;g<5;g++){
+                            ctx.beginPath(); ctx.moveTo(it.x-8+g*4,it.y);
+                            ctx.quadraticCurveTo(it.x-8+g*4-2,it.y-8, it.x-8+g*4+1,it.y-14);
+                            ctx.quadraticCurveTo(it.x-8+g*4+4,it.y-8, it.x-8+g*4+4,it.y);
+                            ctx.fill();
+                        }
+                        break;
+                    case 'bush':
+                        ctx.fillStyle='#2e7d32';
+                        ctx.beginPath(); ctx.arc(it.x,it.y-5,10,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x-7,it.y-2,7,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x+7,it.y-2,7,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#388e3c';
+                        ctx.beginPath(); ctx.arc(it.x,it.y-10,6,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'tree':
+                        ctx.fillStyle='#5d4037'; ctx.fillRect(it.x-3,it.y-5,6,15);
+                        ctx.fillStyle='#2e7d32';
+                        ctx.beginPath(); ctx.arc(it.x,it.y-12,12,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x-6,it.y-8,8,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x+6,it.y-8,8,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'moss':
+                        ctx.fillStyle=c;
+                        for(var m=0;m<4;m++){
+                            ctx.beginPath(); ctx.ellipse(it.x-8+m*6,it.y,m*2+3,4,0,0,Math.PI*2); ctx.fill();
+                        }
+                        break;
+                    case 'stone':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y,9,6,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#bdbdbd';
+                        ctx.beginPath(); ctx.ellipse(it.x-2,it.y-2,4,3,0,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'boulder':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y,15,11,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#9e9e9e';
+                        ctx.beginPath(); ctx.ellipse(it.x-3,it.y-4,7,5,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#616161';
+                        ctx.beginPath(); ctx.ellipse(it.x+4,it.y+2,4,3,0,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'shell':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y,7,5,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#f8bbd0';
+                        ctx.beginPath();
+                        for(var s=0;s<4;s++){
+                            ctx.moveTo(it.x-5,it.y);
+                            ctx.lineTo(it.x+5,it.y);
+                            ctx.lineTo(it.x, it.y-(s%2===0?3:1));
+                            ctx.closePath(); ctx.fill();
+                        }
+                        break;
+                    case 'driftwood':
+                        ctx.fillStyle=c;
+                        ctx.save(); ctx.translate(it.x,it.y); ctx.rotate(0.3);
+                        ctx.fillRect(-12,-3,24,6);
+                        ctx.fillStyle='#6d4c41';
+                        ctx.fillRect(-10,-1,4,2);
+                        ctx.fillRect(4,-1,4,2);
+                        ctx.restore();
+                        break;
+                    case 'bird':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x-3,it.y,10,7,0,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x+5,it.y-4,6,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#ff5722';
+                        ctx.beginPath(); ctx.moveTo(it.x+10,it.y-4); ctx.lineTo(it.x+16,it.y-5); ctx.lineTo(it.x+10,it.y-2); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle='#263238';
+                        ctx.beginPath(); ctx.arc(it.x+8,it.y-5,1.5,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x-10,it.y+5,8,4,-0.3,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'fish':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y,8,5,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='rgba(255,255,255,0.5)';
+                        ctx.beginPath(); ctx.moveTo(it.x+6,it.y); ctx.lineTo(it.x+13,it.y-3); ctx.lineTo(it.x+13,it.y+3); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle='#263238';
+                        ctx.beginPath(); ctx.arc(it.x+3,it.y-1,1.5,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'frog':
+                        ctx.fillStyle='#43a047';
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y+1,9,6,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#2e7d32';
+                        ctx.beginPath(); ctx.arc(it.x-4,it.y-4,4,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x+4,it.y-4,4,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#263238';
+                        ctx.beginPath(); ctx.arc(it.x-4,it.y-5,1.5,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x+4,it.y-5,1.5,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#66bb6a';
+                        ctx.beginPath(); ctx.ellipse(it.x-8,it.y+5,4,2,-0.4,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(it.x+8,it.y+5,4,2,0.4,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'dragonfly':
+                        ctx.fillStyle='#29b6f6';
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y,2,7,0,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(it.x,it.y-7,4,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='rgba(41,182,246,0.4)';
+                        ctx.beginPath(); ctx.ellipse(it.x-8,it.y-3,7,2,0.3,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(it.x+8,it.y-3,7,2,-0.3,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(it.x-8,it.y+1,7,2,0.2,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(it.x+8,it.y+1,7,2,-0.2,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#0288d1';
+                        ctx.beginPath(); ctx.arc(it.x,it.y-7,1.5,0,Math.PI*2); ctx.fill();
+                        break;
+                    case 'snail':
+                        ctx.fillStyle=c;
+                        ctx.beginPath(); ctx.ellipse(it.x,it.y+2,7,4,0,0,Math.PI*2); ctx.fill();
+                        ctx.fillStyle='#795548';
+                        ctx.beginPath(); ctx.arc(it.x+2,it.y-1,5,0,Math.PI*2); ctx.fill();
+                        ctx.strokeStyle='#5d4037'; ctx.lineWidth=1.5;
+                        ctx.beginPath(); ctx.arc(it.x+2,it.y-1,3,0,Math.PI*1.5); ctx.stroke();
+                        ctx.fillStyle='#6d4c41';
+                        ctx.beginPath(); ctx.ellipse(it.x-5,it.y+2,3,2,0,0,Math.PI*2); ctx.fill();
+                        break;
+                }
+                ctx.fillStyle='rgba(255,255,255,0.85)';
+                ctx.font='9px "Noto Sans SC",sans-serif';
+                ctx.textAlign='center';
+                ctx.fillText(cfg.name, it.x, it.y + 18);
+            },
+
+            drawFish:function(ctx,w,h) {
+                ctx.fillStyle='rgba(30,144,255,0.25)';
+                for(var i=0;i<5;i++){
+                    var x=(this.frameCount*0.8+i*200)%(w+80)-40;
+                    var y=50+i*30+Math.sin(this.frameCount*0.05+i)*10;
+                    ctx.beginPath(); ctx.ellipse(x,y,15,7,0,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.4)';
+                    ctx.beginPath(); ctx.moveTo(x+12,y); ctx.lineTo(x+20,y-4); ctx.lineTo(x+20,y+4); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle='rgba(30,144,255,0.25)';
+                }
+            },
+
+            showItemFact:function(itemId, screenX, screenY) {
+                var fact = FLOATING_ISLAND_FACTS.items[itemId];
+                if (!fact) return;
+                // Show brief bubble near placement
+                var bubble = document.createElement('div');
+                bubble.className = 'fi-fact-bubble';
+                var parts = fact.split('：');
+                bubble.textContent = parts.length > 1 ? parts[0] + '：' + parts[1].substring(0, 30) + '...' : fact.substring(0, 40) + '...';
+                var rect = this.canvas.getBoundingClientRect();
+                bubble.style.left = (rect.left + screenX - 80) + 'px';
+                bubble.style.top = (rect.top + screenY - 60) + 'px';
+                document.body.appendChild(bubble);
+                setTimeout(function() { bubble.remove(); }, 2500);
+                // Also show full card
+                var self = this;
+                setTimeout(function() {
+                    if (self.isRunning) self.showFactCard(itemId);
+                }, 800);
+            },
+
+            showFactCard:function(itemId) {
+                var fact = FLOATING_ISLAND_FACTS.items[itemId];
+                if (!fact) return;
+                var cfg = this.itemTypes.find(function(t){ return t.id === itemId; });
+                var existing = document.getElementById('fiFactCard');
+                if (existing) existing.remove();
+                var card = document.createElement('div');
+                card.id = 'fiFactCard';
+                card.className = 'fi-fact-card';
+                card.innerHTML =
+                    '<div class="fi-fact-header">' +
+                    '<div class="fi-fact-icon" style="background:' + (cfg ? cfg.color + '20' : 'rgba(0,105,92,0.2)') + '; color:' + (cfg ? cfg.color : '#00695C') + '">' +
+                    '<i class="fas ' + (cfg ? cfg.icon : 'fa-leaf') + '"></i></div>' +
+                    '<div class="fi-fact-title">' + (cfg ? cfg.name : itemId) + '</div>' +
+                    '<div class="fi-fact-badge">生态知识</div>' +
+                    '</div>' +
+                    '<div class="fi-fact-content">' + fact + '</div>' +
+                    '<div class="fi-fact-footer">' +
+                    '<span class="fi-fact-hint"><i class="fas fa-lightbulb" style="color:#FFA726"></i> 每种生物都有独特价值</span>' +
+                    '<button class="fi-fact-close" onclick="document.getElementById(\'fiFactCard\').classList.add(\'fade-out\')">' +
+                    '<i class="fas fa-times"></i> 关闭</button>' +
+                    '</div>';
+                document.body.appendChild(card);
+                var self = this;
+                setTimeout(function() {
+                    var el = document.getElementById('fiFactCard');
+                    if (el) el.classList.add('fade-out');
+                    setTimeout(function() { var e2 = document.getElementById('fiFactCard'); if (e2) e2.remove(); }, 300);
+                }, 6000);
+            },
+
+            showEcologyTip:function() {
+                var tips = Object.values(FLOATING_ISLAND_FACTS.ecology);
+                if (!tips.length) return;
+                var tip = tips[Math.floor(Math.random() * tips.length)];
+                var existing = document.getElementById('fiEcologyBar');
+                if (existing) return;
+                var el = document.createElement('div');
+                el.id = 'fiEcologyBar';
+                el.className = 'fi-ecology-bar';
+                el.innerHTML = '<div class="fi-ecology-bar-icon"><i class="fas fa-leaf" style="color:#4CAF50"></i></div>' + tip;
+                document.querySelector('.g-canvas-wrap').appendChild(el);
+                var self = this;
+                setTimeout(function() {
+                    var e = document.getElementById('fiEcologyBar');
+                    if (e) e.classList.add('fade-out');
+                    setTimeout(function() { var e2 = document.getElementById('fiEcologyBar'); if (e2) e2.remove(); }, 300);
+                }, 5000);
             }
         };
 
-        $(function() {
-            floatingIsland.init();
-        });
+        $(function(){ floatingGame.init(); });
     </script>
 </body>
 </html>

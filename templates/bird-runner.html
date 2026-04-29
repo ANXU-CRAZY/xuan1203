@@ -1,392 +1,410 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小鸟闯关 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="../static/app_monitor/css/games.css">
+    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <style>
-        .score-display {
+        :root {
+            --g-primary: #3d6b4f;
+            --g-primary-light: #52a36e;
+            --g-primary-dark: #264d35;
+            --g-accent: #e9c46a;
+            --g-btn-gradient: linear-gradient(135deg, #3d6b4f 0%, #52a36e 100%);
+        }
+
+        /* === 丛林飞行主题背景 === */
+        .br-sky {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            z-index: 10;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 50%, #7CB342 100%);
+            overflow: hidden;
         }
-        .score-display span {
-            color: #FFD700;
-        }
-        .high-score {
+        .br-sky .cloud {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 10;
+            background: rgba(255,255,255,0.85);
+            border-radius: 50px;
+            animation: br-cloud-drift linear infinite;
         }
-        .high-score span {
-            color: #FF6B6B;
-        }
-        .game-over-content {
-            text-align: center;
-        }
-        .game-over-content h2 {
-            color: #FF6B6B;
-            margin-bottom: 10px;
-        }
-        .game-over-content .final-score {
-            font-size: 48px;
-            font-weight: 800;
-            color: #FFD700;
-            margin: 15px 0;
-        }
-        .new-record {
-            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 12px;
-            display: inline-block;
-            margin-bottom: 10px;
-            animation: bounce 0.5s ease infinite;
-        }
-        .touch-area {
+        .br-sky .cloud::before,
+        .br-sky .cloud::after {
+            content: '';
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.2);
-            padding: 10px 30px;
-            border-radius: 25px;
-            color: white;
-            font-size: 14px;
-            pointer-events: none;
+            background: inherit;
+            border-radius: 50%;
         }
-        .bird-skin-btn {
+        @keyframes br-cloud-drift {
+            from { transform: translateX(-120px); }
+            to   { transform: translateX(calc(100vw + 120px)); }
+        }
+        .br-sky .cloud-a { width: 80px; height: 28px; top: 15%; animation-duration: 18s; }
+        .br-sky .cloud-a::before { width: 40px; height: 40px; top: -18px; left: 12px; }
+        .br-sky .cloud-a::after  { width: 32px; height: 32px; top: -12px; left: 38px; }
+        .br-sky .cloud-b { width: 60px; height: 22px; top: 30%; animation-duration: 24s; animation-delay: -8s; }
+        .br-sky .cloud-b::before { width: 30px; height: 30px; top: -14px; left: 8px; }
+        .br-sky .cloud-b::after  { width: 24px; height: 24px; top: -10px; left: 28px; }
+        .br-sky .cloud-c { width: 100px; height: 32px; top: 8%; animation-duration: 30s; animation-delay: -15s; }
+        .br-sky .cloud-c::before { width: 50px; height: 50px; top: -22px; left: 16px; }
+        .br-sky .cloud-c::after  { width: 40px; height: 40px; top: -16px; left: 50px; }
+
+        /* === 开始界面 === */
+        .br-start-panel {
+            position: absolute;
+            inset: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            padding: 8px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
+            justify-content: center;
+            z-index: 20;
+            padding: 24px;
+        }
+        .br-start-title {
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--g-primary-dark);
+            margin-bottom: 6px;
+            text-shadow: 0 2px 8px rgba(255,255,255,0.6);
+        }
+        .br-start-sub {
+            font-size: 15px;
+            color: var(--g-text-muted, #5a7a5a);
+            margin-bottom: 20px;
+        }
+
+        /* === 鸟皮肤网格 === */
+        .br-skin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 16px;
+        }
+        .br-skin-card {
             background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(61,107,79,0.15);
+            border-radius: 14px;
+            padding: 12px 10px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
         }
-        .bird-skin-btn:hover {
-            border-color: var(--c-aqua);
-            transform: scale(1.05);
+        .br-skin-card:hover {
+            border-color: var(--g-primary-light);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(61,107,79,0.25);
         }
-        .bird-skin-btn.selected {
-            border-color: var(--c-aqua);
-            background: rgba(0, 200, 200, 0.1);
-            box-shadow: 0 0 10px rgba(0, 200, 200, 0.3);
+        .br-skin-card.selected {
+            border-color: var(--g-accent);
+            background: rgba(233,196,106,0.15);
+            box-shadow: 0 0 0 3px rgba(233,196,106,0.4), 0 6px 16px rgba(61,107,79,0.2);
         }
-        .skin-preview {
+        .br-skin-card canvas {
             display: block;
+            margin: 0 auto 8px;
+            border-radius: 8px;
+        }
+        .br-skin-card .skin-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--g-primary-dark);
+            margin-bottom: 2px;
+        }
+        .br-skin-card .skin-desc {
+            font-size: 11px;
+            color: var(--g-text-muted, #7a9a7a);
+        }
+
+        /* === 控制提示 === */
+        .br-controls-hint {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .br-hint-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.8);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #3d6b4f;
+        }
+
+        /* === 游戏内 HUD === */
+        .br-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: none;
+            z-index: 10;
+            padding: 14px 18px;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+        .br-hud.show { display: flex; }
+        .br-hud-panel {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .br-hud-panel .br-score-num { color: var(--g-accent); font-weight: 700; font-size: 22px; }
+        .br-hud-panel .br-hi-num { color: #ff8a80; font-weight: 600; }
+
+        /* === 碰触提示 === */
+        .br-touch-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.4);
+            padding: 7px 18px;
+            border-radius: 20px;
+            color: rgba(255,255,255,0.85);
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .br-touch-hint.show { display: flex; }
+
+        /* === 新纪录徽章 === */
+        .br-new-record {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            animation: br-bounce 0.6s ease infinite alternate;
+        }
+        @keyframes br-bounce {
+            from { transform: scale(1); }
+            to   { transform: scale(1.06); }
+        }
+
+        /* === 遮罩内按钮间距 === */
+        .br-overlay-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+        @media (max-width: 480px) {
+            .br-skin-grid { grid-template-columns: repeat(2, 1fr); max-width: 260px; }
+            .br-start-title { font-size: 22px; }
         }
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
-        <!-- 顶部导航 -->
-        <div class="game-header">
-            <div class="game-title">
-                <i class="fas fa-dove"></i>
-                小鸟闯关
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="/" style="color: var(--c-dark); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-arrow-left"></i> 返回
-                </a>
-            </div>
-        </div>
+    <!-- HEADER -->
+    <header class="gh">
+        <a href="/" class="gh-logo">
+            <div class="gh-icon"><i class="fas fa-feather"></i></div>
+            <span class="gh-title">小鸟闯关</span>
+        </a>
+        <nav class="gh-nav">
+            <a href="/"><i class="fas fa-home"></i> 返回首页</a>
+        </nav>
+    </header>
 
-        <!-- 游戏区域 -->
-        <div class="canvas-container" id="canvasContainer">
-            <canvas id="gameCanvas" class="game-canvas"></canvas>
-            <div class="score-display">得分: <span id="currentScore">0</span></div>
-            <div class="high-score">最高: <span id="highScore">0</span></div>
+    <!-- MAIN -->
+    <main class="gw">
+        <div class="g-canvas-wrap">
+            <!-- 主题背景 -->
+            <div class="br-sky" id="brSky">
+                <div class="cloud cloud-a"></div>
+                <div class="cloud cloud-b"></div>
+                <div class="cloud cloud-c"></div>
+            </div>
+
+            <!-- 游戏 HUD -->
+            <div class="br-hud" id="brHud">
+                <div class="br-hud-panel">
+                    <i class="fas fa-star" style="color:var(--g-accent)"></i>
+                    得分 <span class="br-score-num" id="brCurrentScore">0</span>
+                </div>
+                <div class="br-hud-panel">
+                    <i class="fas fa-crown" style="color:#ff8a80"></i>
+                    最高 <span class="br-hi-num" id="brHighScore">0</span>
+                </div>
+            </div>
+
+            <!-- 碰触提示 -->
+            <div class="br-touch-hint" id="brTouchHint">
+                <i class="fas fa-hand-pointer"></i> 按压时间短=小跳，长=大跳
+            </div>
+
+            <canvas id="gameCanvas" class="g-canvas"></canvas>
 
             <!-- 开始界面 -->
-            <div class="game-overlay" id="startOverlay">
-                <h2>小鸟闯关</h2>
-                <p>控制小鸟飞跃湿地躲避障碍</p>
-                
-                <!-- 小鸟皮肤选择 -->
-                <div style="margin: 15px 0;">
-                    <p style="font-size: 13px; color: #666; margin-bottom: 8px;">选择小鸟皮肤：</p>
-                    <div id="birdSelector" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <!-- 皮肤选项由JS生成 -->
-                    </div>
+            <div class="g-overlay" id="startOverlay" style="background:rgba(255,255,255,0.88);">
+                <h2><i class="fas fa-feather-alt"></i> 小鸟闯关</h2>
+                <p class="g-subtitle">控制小鸟飞跃湿地躲避障碍，存活越久分数越高！</p>
+
+                <div class="br-skin-grid" id="brSkinGrid"></div>
+
+                <div class="br-controls-hint">
+                    <div class="br-hint-chip"><i class="fas fa-keyboard"></i> 空格=短按小跳/长按大跳</div>
+                    <div class="br-hint-chip"><i class="fas fa-mouse"></i> 点击屏幕同理</div>
                 </div>
-                
-                <p style="margin-top: 10px; opacity: 0.7; font-size: 14px;">
-                    <i class="fas fa-keyboard"></i> 按压空格键：短按=小跳，长按=大跳
-                </p>
-                <p style="margin-top: 5px; opacity: 0.7; font-size: 14px;">
-                    <i class="fas fa-mouse"></i> 点击屏幕同样适用
-                </p>
-                <button class="start-btn" style="margin-top: 15px;" onclick="runnerGame.start()">
-                    <i class="fas fa-play"></i> 开始游戏
+
+                <button class="g-btn" onclick="runnerGame.start()">
+                    <i class="fas fa-play"></i> 起飞挑战
                 </button>
             </div>
 
-            <!-- 游戏结束界面 -->
-            <div class="game-overlay" id="gameOverOverlay" style="display: none;">
-                <div class="game-over-content">
-                    <div id="newRecordBadge" class="new-record" style="display: none;">新纪录!</div>
-                    <h2>游戏结束</h2>
-                    <div class="final-score" id="finalScore">0</div>
-                    <p>恭喜你获得了 <span id="earnedScore">0</span> 积分!</p>
-                    <button class="start-btn" style="margin-top: 15px;" onclick="runnerGame.restart()">
+            <!-- 游戏结束 -->
+            <div class="g-overlay" id="gameOverOverlay" style="display:none; background:rgba(255,255,255,0.92);">
+                <div class="br-overlay-actions">
+                    <div id="brNewRecordBadge" class="br-new-record" style="display:none;">
+                        <i class="fas fa-fire"></i> 新纪录！
+                    </div>
+                    <h2><i class="fas fa-feather-alt" style="color:#c0392b"></i> 游戏结束</h2>
+                    <div style="font-size:52px;font-weight:800;color:var(--g-accent);line-height:1.1;" id="brFinalScore">0</div>
+                    <p style="font-size:13px;color:#6b7c6b;">获得 <strong id="brEarnedScore" style="color:var(--g-primary)">0</strong> 积分</p>
+                    <button class="g-btn" onclick="runnerGame.restart()">
                         <i class="fas fa-redo"></i> 再来一局
                     </button>
+                    <a href="/" class="g-btn g-btn-ghost"><i class="fas fa-home"></i> 返回首页</a>
                 </div>
             </div>
-
-            <div class="touch-area" id="touchHint">
-                <i class="fas fa-hand-pointer"></i> 按压时间短=小跳，长=大跳
-            </div>
         </div>
 
-        <!-- 游戏说明 -->
-        <div class="glass-panel" style="margin-top: 15px; text-align: center;">
-            <h4 style="color: var(--c-dark); margin-bottom: 10px;">
-                <i class="fas fa-info-circle" style="color: var(--c-aqua);"></i> 游戏规则
-            </h4>
-            <p style="color: #666; font-size: 13px; line-height: 1.8;">
-                控制可爱的小鸟飞跃黄河湿地，躲避树枝、渔网等障碍物。<br>
-                存活越久分数越高！吃到金色小鱼获得额外加分。
-            </p>
+        <!-- 说明 -->
+        <div class="g-info-panel">
+            <h4><i class="fas fa-info-circle" style="color:var(--g-primary-light)"></i> 游戏规则</h4>
+            <p>控制小鸟飞跃黄河湿地，躲避树枝、渔网等障碍物。吃到金色小鱼获得额外加分！</p>
         </div>
-    </div>
+    </main>
 
     <script>
-        // 小鸟皮肤配置
+        /* ============================================================
+           鸟皮肤配置
+           ============================================================ */
         const birdSkins = [
-            {
-                id: 'crane',
-                name: '丹顶鹤',
-                desc: '黄河湿地明星',
-                body: '#F5F5F5',    // 白色身体
-                head: '#FFFFFF',
-                accent: '#E74C3C',   // 红色额头
-                wing: '#E0E0E0',
-                leg: '#FFA500'
-            },
-            {
-                id: 'swan',
-                name: '白天鹅',
-                desc: '优雅高贵',
-                body: '#FFFFFF',
-                head: '#FFFFFF',
-                accent: '#FFB6C1',   // 粉色嘴巴
-                wing: '#F8F8F8',
-                leg: '#333333'
-            },
-            {
-                id: 'duck',
-                name: '野鸭子',
-                desc: '灵活敏捷',
-                body: '#8B7355',
-                head: '#6B5344',
-                accent: '#FFD700',   // 绿色头部
-                wing: '#A08060',
-                leg: '#FF8C00'
-            },
-            {
-                id: 'heron',
-                name: '苍鹭',
-                desc: '修长优雅',
-                body: '#A0A0A0',
-                head: '#404040',
-                accent: '#E74C3C',   // 黄色嘴巴
-                wing: '#909090',
-                leg: '#404040'
-            },
-            {
-                id: 'kingfisher',
-                name: '翠鸟',
-                desc: '蓝色闪电',
-                body: '#1E90FF',
-                head: '#4169E1',
-                accent: '#FFD700',   // 橙色嘴巴
-                wing: '#1C86EE',
-                leg: '#FF6600'
-            },
-            {
-                id: 'gull',
-                name: '海鸥',
-                desc: '海天翱翔',
-                body: '#FFFFFF',
-                head: '#FFFFFF',
-                accent: '#E74C3C',   // 红色嘴巴
-                wing: '#E8E8E8',
-                leg: '#FF8C00'
-            }
+            { id:'crane',     name:'丹顶鹤',   desc:'黄河湿地明星', body:'#F5F5F5', head:'#FFFFFF', accent:'#E74C3C', wing:'#E0E0E0', leg:'#FFA500' },
+            { id:'swan',      name:'白天鹅',   desc:'优雅高贵',    body:'#FFFFFF', head:'#FFFFFF', accent:'#FFB6C1', wing:'#F8F8F8', leg:'#333333' },
+            { id:'duck',      name:'野鸭子',   desc:'灵活敏捷',    body:'#8B7355', head:'#6B5344', accent:'#FFD700', wing:'#A08060', leg:'#FF8C00' },
+            { id:'heron',     name:'苍鹭',     desc:'修长优雅',    body:'#A0A0A0', head:'#404040', accent:'#E74C3C', wing:'#909090', leg:'#404040' },
+            { id:'kingfisher',name:'翠鸟',     desc:'蓝色闪电',    body:'#1E90FF', head:'#4169E1', accent:'#FFD700', wing:'#1C86EE', leg:'#FF6600' },
+            { id:'gull',      name:'海鸥',     desc:'海天翱翔',    body:'#FFFFFF', head:'#FFFFFF', accent:'#E74C3C', wing:'#E8E8E8', leg:'#FF8C00' },
         ];
 
+        /* ============================================================
+           游戏引擎
+           ============================================================ */
         const runnerGame = {
-            canvas: null,
-            ctx: null,
-            isRunning: false,
-            score: 0,
-            highScore: 0,
-            gameSpeed: 3,
-            gravity: 0.6,
-            jumpForce: -10,        // 小跳力度
-            bigJumpForce: -16,     // 大跳力度
-            jumpStartTime: 0,      // 跳跃开始时间
-            isJumping: false,
-            frameCount: 0,
-            bird: null,
-            currentSkin: null,
-            obstacles: [],
-            coins: [],
-            groundY: 0,
-            animationId: null,
+            canvas: null, ctx: null,
+            isRunning: false, score: 0, highScore: 0,
+            gameSpeed: 3, gravity: 0.6,
+            jumpForce: -10, bigJumpForce: -16,
+            jumpStartTime: 0, isJumping: false,
+            frameCount: 0, bird: null,
+            currentSkin: null, obstacles: [], coins: [],
+            groundY: 0, animationId: null,
 
-            init: function() {
+            init() {
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
 
-                // 从本地存储读取最高分和选中的皮肤
                 this.highScore = parseInt(localStorage.getItem('birdRunnerHighScore') || '0');
                 const savedSkinId = localStorage.getItem('birdRunnerSkin') || 'crane';
                 this.currentSkin = birdSkins.find(s => s.id === savedSkinId) || birdSkins[0];
-                $('#highScore').text(this.highScore);
+                $('#brHighScore').text(this.highScore);
 
-                // 渲染皮肤选择器
-                this.renderSkinSelector();
-
-                // 监听键盘按压
-                document.addEventListener('keydown', (e) => {
-                    if (e.code === 'Space' && !e.repeat) {
-                        e.preventDefault();
-                        this.startJump();
-                    }
-                });
-
-                document.addEventListener('keyup', (e) => {
-                    if (e.code === 'Space') {
-                        e.preventDefault();
-                        this.endJump();
-                    }
-                });
-
-                // 监听鼠标按压
-                this.canvas.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    this.startJump();
-                });
-
-                this.canvas.addEventListener('mouseup', (e) => {
-                    e.preventDefault();
-                    this.endJump();
-                });
-
-                // 监听触摸
-                this.canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.startJump();
-                });
-
-                this.canvas.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.endJump();
-                });
-
-                // 绘制初始画面
+                this.renderSkinGrid();
+                this.bindControls();
                 this.drawStaticScene();
             },
 
-            renderSkinSelector: function() {
-                const container = $('#birdSelector');
-                container.empty();
-                
+            renderSkinGrid() {
+                const grid = $('#brSkinGrid');
+                grid.empty();
                 birdSkins.forEach(skin => {
-                    const isSelected = this.currentSkin.id === skin.id;
-                    const skinHtml = `
-                        <div class="bird-skin-btn ${isSelected ? 'selected' : ''}" 
-                             data-skin="${skin.id}"
-                             onclick="runnerGame.selectSkin('${skin.id}')"
-                             title="${skin.desc}">
-                            <canvas class="skin-preview" width="40" height="30" data-skin="${skin.id}"></canvas>
-                            <span style="font-size: 10px; color: #666;">${skin.name}</span>
+                    const sel = this.currentSkin.id === skin.id;
+                    const card = $(`
+                        <div class="br-skin-card ${sel ? 'selected' : ''}" data-id="${skin.id}">
+                            <canvas width="52" height="36" data-skin="${skin.id}"></canvas>
+                            <div class="skin-name">${skin.name}</div>
+                            <div class="skin-desc">${skin.desc}</div>
                         </div>
-                    `;
-                    container.append(skinHtml);
+                    `);
+                    card.on('click', () => this.selectSkin(skin.id));
+                    grid.append(card);
                 });
-
-                // 绘制每个皮肤的预览图
                 setTimeout(() => {
                     birdSkins.forEach(skin => {
-                        const canvas = document.querySelector(`.skin-preview[data-skin="${skin.id}"]`);
-                        if (canvas) {
-                            this.drawSkinPreview(canvas, skin);
-                        }
+                        const c = document.querySelector(`canvas[data-skin="${skin.id}"]`);
+                        if (c) this.drawSkinPreview(c, skin);
                     });
-                }, 50);
+                }, 30);
             },
 
-            drawSkinPreview: function(canvas, skin) {
+            drawSkinPreview(canvas, skin) {
                 const ctx = canvas.getContext('2d');
-                const scale = 0.6;
-                
-                // 身体
+                const s = 0.65;
                 ctx.fillStyle = skin.body;
-                ctx.beginPath();
-                ctx.ellipse(20, 16, 12 * scale, 9 * scale, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 头部
+                ctx.beginPath(); ctx.ellipse(22, 18, 12*s, 9*s, 0, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = skin.head;
-                ctx.beginPath();
-                ctx.arc(30, 12, 6 * scale, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 装饰
+                ctx.beginPath(); ctx.arc(30, 14, 7*s, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = skin.accent;
-                ctx.beginPath();
-                ctx.arc(32, 8, 3 * scale, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 眼睛
+                ctx.beginPath(); ctx.arc(33, 9, 3*s, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(32, 11, 1.5 * scale, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(32, 13, 1.5*s, 0, Math.PI*2); ctx.fill();
             },
 
-            selectSkin: function(skinId) {
-                this.currentSkin = birdSkins.find(s => s.id === skinId);
-                localStorage.setItem('birdRunnerSkin', skinId);
-                this.renderSkinSelector();
+            selectSkin(id) {
+                this.currentSkin = birdSkins.find(s => s.id === id);
+                localStorage.setItem('birdRunnerSkin', id);
+                this.renderSkinGrid();
             },
 
-            resizeCanvas: function() {
-                const container = document.getElementById('canvasContainer');
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
+            resizeCanvas() {
+                const wrap = document.getElementById('startOverlay').parentElement;
+                this.canvas.width  = wrap.clientWidth;
+                this.canvas.height = wrap.clientHeight;
                 this.groundY = this.canvas.height - 60;
             },
 
-            startJump: function() {
+            bindControls() {
+                document.addEventListener('keydown', e => {
+                    if (e.code === 'Space' && !e.repeat) { e.preventDefault(); this.startJump(); }
+                });
+                document.addEventListener('keyup', e => {
+                    if (e.code === 'Space') { e.preventDefault(); this.endJump(); }
+                });
+                const cvs = this.canvas;
+                cvs.addEventListener('mousedown',  e => { e.preventDefault(); this.startJump(); });
+                cvs.addEventListener('mouseup',    e => { e.preventDefault(); this.endJump(); });
+                cvs.addEventListener('touchstart', e => { e.preventDefault(); this.startJump(); }, {passive:false});
+                cvs.addEventListener('touchend',   e => { e.preventDefault(); this.endJump(); },   {passive:false});
+            },
+
+            startJump() {
                 if (!this.isRunning) return;
                 if (this.bird && this.bird.y >= this.groundY - this.bird.height - 5) {
                     this.jumpStartTime = Date.now();
@@ -394,526 +412,250 @@
                 }
             },
 
-            endJump: function() {
+            endJump() {
                 if (!this.isRunning || !this.isJumping) return;
-                
-                const holdTime = Date.now() - this.jumpStartTime;
-                
-                if (this.bird) {
-                    // 按压时间 < 150ms 为小跳，>= 150ms 为大跳
-                    if (holdTime < 150) {
-                        this.bird.vy = this.jumpForce;  // 小跳
-                    } else {
-                        this.bird.vy = this.bigJumpForce;  // 大跳
-                    }
-                }
-                
+                const hold = Date.now() - this.jumpStartTime;
+                if (this.bird) this.bird.vy = hold < 150 ? this.jumpForce : this.bigJumpForce;
                 this.isJumping = false;
             },
 
-            start: function() {
-                $('#startOverlay').hide();
-                $('#gameOverOverlay').hide();
-                $('#touchHint').hide();
-
+            start() {
+                if (this.isRunning) return;
+                if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+                $('#startOverlay, #gameOverOverlay').hide();
+                $('#brHud, #brTouchHint').addClass('show');
                 this.isRunning = true;
                 this.score = 0;
                 this.gameSpeed = 3;
                 this.frameCount = 0;
                 this.obstacles = [];
                 this.coins = [];
-
-                // 初始化小鸟
-                this.bird = {
-                    x: 80,
-                    y: this.groundY - 40,
-                    width: 50,
-                    height: 40,
-                    vy: 0,
-                    frame: 0
-                };
-
-                this.updateScore();
+                this.bird = { x:80, y:this.groundY - 40, width:50, height:40, vy:0, frame:0 };
+                this.updateHud();
                 this.gameLoop();
             },
 
-            restart: function() {
-                this.start();
+            restart() {
+                $('#gameOverOverlay').hide();
+                $('#brHud, #brTouchHint').removeClass('show');
+                $('#startOverlay').fadeIn(200);
             },
 
-            gameLoop: function() {
+            gameLoop() {
                 if (!this.isRunning) return;
-
-                this.update();
-                this.draw();
+                this.update(); this.draw();
                 this.animationId = requestAnimationFrame(() => this.gameLoop());
-
                 this.frameCount++;
             },
 
-            update: function() {
-                // 更新小鸟
+            update() {
                 if (this.bird) {
                     this.bird.vy += this.gravity;
-                    this.bird.y += this.bird.vy;
-
-                    // 限制在地面
+                    this.bird.y  += this.bird.vy;
                     if (this.bird.y > this.groundY - this.bird.height) {
                         this.bird.y = this.groundY - this.bird.height;
                         this.bird.vy = 0;
                     }
-
-                    // 翅膀动画
                     this.bird.frame = Math.floor(this.frameCount / 5) % 3;
                 }
+                const minI = Math.max(80, 140 - this.gameSpeed * 5);
+                if (this.frameCount % Math.floor(minI + Math.random() * 40) === 0) this.generateObstacle();
+                if (this.frameCount % 150 === 0) this.generateCoin();
 
-                // 生成障碍物 - 根据速度动态调整间隔
-                const minInterval = Math.max(80, 140 - this.gameSpeed * 5);
-                if (this.frameCount % Math.floor(minInterval + Math.random() * 40) === 0) {
-                    this.generateObstacle();
-                }
-
-                // 生成金币
-                if (this.frameCount % 150 === 0) {
-                    this.generateCoin();
-                }
-
-                // 更新障碍物
                 this.obstacles = this.obstacles.filter(obs => {
                     obs.x -= this.gameSpeed;
-
-                    // 碰撞检测
-                    if (this.checkCollision(this.bird, obs)) {
-                        this.gameOver();
-                        return false;
-                    }
-
+                    if (this.checkCollision(this.bird, obs)) { this.gameOver(); return false; }
                     return obs.x > -obs.width;
                 });
-
-                // 更新金币
                 this.coins = this.coins.filter(coin => {
                     coin.x -= this.gameSpeed;
-                    coin.y += Math.sin(this.frameCount * 0.1) * 0.5; // 上下浮动
-
-                    // 吃金币
-                    if (this.checkCoinCollision(this.bird, coin)) {
-                        this.score += 50;
-                        this.updateScore();
-                        return false;
-                    }
-
+                    coin.y += Math.sin(this.frameCount * 0.1) * 0.5;
+                    if (this.checkCoinCollision(this.bird, coin)) { this.score += 50; this.updateHud(); return false; }
                     return coin.x > -coin.width;
                 });
-
-                // 增加难度
-                if (this.frameCount % 300 === 0) {
-                    this.gameSpeed = Math.min(8, this.gameSpeed + 0.3);
-                }
-
-                // 增加分数
-                if (this.frameCount % 10 === 0) {
-                    this.score += 1;
-                    this.updateScore();
-                }
+                if (this.frameCount % 300 === 0) this.gameSpeed = Math.min(8, this.gameSpeed + 0.3);
+                if (this.frameCount % 10 === 0) { this.score++; this.updateHud(); }
             },
 
-            generateObstacle: function() {
-                const types = ['branch', 'net', 'rock'];
+            generateObstacle() {
+                const types = ['branch','net','rock'];
                 const type = types[Math.floor(Math.random() * types.length)];
-                
-                // 随机高度：低矮障碍需要小跳，高处障碍需要大跳
-                const heightLevel = Math.random();
-                let obstacle = {};
-
+                const hl = Math.random();
+                let obs = { x: this.canvas.width + 50, type };
                 if (type === 'branch') {
-                    // 树枝 - 可以从地面长出来或悬空
-                    obstacle.width = 50 + Math.random() * 20;
-                    obstacle.height = 8;
-                    if (heightLevel < 0.5) {
-                        // 低矮树枝 - 小跳可过
-                        obstacle.y = this.groundY - 50 - Math.random() * 30;
-                    } else {
-                        // 高处树枝 - 大跳可过
-                        obstacle.y = this.groundY - 100 - Math.random() * 60;
-                    }
+                    obs.width = 50 + Math.random()*20; obs.height = 8;
+                    obs.y = hl < 0.5 ? this.groundY - 50 - Math.random()*30 : this.groundY - 100 - Math.random()*60;
+                    obs.needBigJump = hl >= 0.5;
                 } else if (type === 'net') {
-                    // 渔网 - 从地面竖起，需要大跳或穿越空隙
-                    obstacle.width = 25 + Math.random() * 10;
-                    obstacle.height = 70 + Math.random() * 30;
-                    obstacle.y = this.groundY - obstacle.height;
+                    obs.width = 25 + Math.random()*10; obs.height = 70 + Math.random()*30;
+                    obs.y = this.groundY - obs.height;
+                    obs.needBigJump = true;
                 } else {
-                    // 石头 - 放在地上
-                    obstacle.width = 30 + Math.random() * 20;
-                    obstacle.height = 25 + Math.random() * 15;
-                    obstacle.y = this.groundY - obstacle.height;
+                    obs.width = 30 + Math.random()*20; obs.height = 25 + Math.random()*15;
+                    obs.y = this.groundY - obs.height;
                 }
-
-                obstacle.x = this.canvas.width + 50;
-                obstacle.type = type;
-                obstacle.needBigJump = heightLevel >= 0.5;
-
-                this.obstacles.push(obstacle);
+                this.obstacles.push(obs);
             },
 
-            generateCoin: function() {
+            generateCoin() {
                 this.coins.push({
                     x: this.canvas.width + 50,
-                    y: this.groundY - 80 - Math.random() * 80,
-                    width: 25,
-                    height: 25,
-                    collected: false
+                    y: this.groundY - 80 - Math.random()*80,
+                    width: 25, height: 25
                 });
             },
 
-            checkCollision: function(bird, obs) {
-                const bx = bird.x + 10;
-                const by = bird.y + 5;
-                const bw = bird.width - 20;
-                const bh = bird.height - 10;
-
-                return bx < obs.x + obs.width &&
-                       bx + bw > obs.x &&
-                       by < obs.y + obs.height &&
-                       by + bh > obs.y;
+            checkCollision(b, o) {
+                const bx=b.x+10, by=b.y+5, bw=b.width-20, bh=b.height-10;
+                return bx < o.x+o.width && bx+bw > o.x && by < o.y+o.height && by+bh > o.y;
+            },
+            checkCoinCollision(b, c) {
+                return Math.hypot(b.x+b.width/2-c.x-c.width/2, b.y+b.height/2-c.y-c.height/2) < 30;
             },
 
-            checkCoinCollision: function(bird, coin) {
-                const bx = bird.x + bird.width / 2;
-                const by = bird.y + bird.height / 2;
-                const cx = coin.x + coin.width / 2;
-                const cy = coin.y + coin.height / 2;
-                const dist = Math.sqrt((bx - cx) ** 2 + (by - cy) ** 2);
-                return dist < 30;
-            },
-
-            gameOver: function() {
+            gameOver() {
                 this.isRunning = false;
                 cancelAnimationFrame(this.animationId);
-
-                $('#finalScore').text(this.score);
-                $('#earnedScore').text(this.score);
-
-                // 检查新纪录
+                $('#brFinalScore').text(this.score);
+                $('#brEarnedScore').text(this.score);
                 if (this.score > this.highScore) {
                     this.highScore = this.score;
                     localStorage.setItem('birdRunnerHighScore', this.highScore);
-                    $('#highScore').text(this.highScore);
-                    $('#newRecordBadge').show();
-                } else {
-                    $('#newRecordBadge').hide();
-                }
-
-                $('#gameOverOverlay').show();
-                $('#touchHint').hide();
-
-                // 更新用户积分
-                this.updateScore();
+                    $('#brHighScore').text(this.highScore);
+                    $('#brNewRecordBadge').show();
+                } else { $('#brNewRecordBadge').hide(); }
+                $('#brHud, #brTouchHint').removeClass('show');
+                $('#gameOverOverlay').fadeIn(200);
+                this.updateUserScore();
             },
 
-            updateScore: function() {
-                $('#currentScore').text(this.score);
-            },
+            updateHud() { $('#brCurrentScore').text(this.score); },
 
-            updateUserScore: function() {
+            updateUserScore() {
                 const token = localStorage.getItem('yb_token');
                 if (!token) return;
-
-                const earned = runnerGame.score;
-                if (earned <= 0) return;
-
                 $.ajax({
-                    url: '/api/profiles/me/',
-                    method: 'GET',
+                    url: '/api/profiles/me/', method: 'GET',
                     headers: { 'Authorization': 'Token ' + token },
-                    success: function(data) {
-                        const newScore = (data.score || 0) + earned;
+                    success: data => {
+                        const newScore = (data.score||0) + this.score;
                         $.ajax({
-                            url: '/api/profiles/me/score/',
-                            method: 'PATCH',
-                            headers: { 'Authorization': 'Token ' + token, 'Content-Type': 'application/json' },
+                            url: '/api/profiles/me/', method: 'PATCH',
+                            headers: { 'Authorization': 'Token ' + token },
+                            contentType: 'application/json',
                             data: JSON.stringify({ score: newScore })
                         });
                     }
                 });
             },
 
-            draw: function() {
-                const ctx = this.ctx;
-                const w = this.canvas.width;
-                const h = this.canvas.height;
-
-                // 清空画布
-                ctx.clearRect(0, 0, w, h);
-
-                // 绘制天空渐变
-                const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-                skyGrad.addColorStop(0, '#87CEEB');
-                skyGrad.addColorStop(0.6, '#98D8C8');
-                skyGrad.addColorStop(1, '#7CB342');
-                ctx.fillStyle = skyGrad;
-                ctx.fillRect(0, 0, w, h);
-
-                // 绘制云朵
-                this.drawClouds();
-
-                // 绘制远山
-                this.drawMountains();
-
-                // 绘制地面
-                this.drawGround();
-
-                // 绘制障碍物
-                this.obstacles.forEach(obs => this.drawObstacle(obs));
-
-                // 绘制金币
-                this.coins.forEach(coin => this.drawCoin(coin));
-
-                // 绘制小鸟
-                this.drawBird();
+            /* ========== 绘制 ========== */
+            draw() {
+                const ctx = this.ctx, w=this.canvas.width, h=this.canvas.height;
+                ctx.clearRect(0,0,w,h);
+                const skyGrad = ctx.createLinearGradient(0,0,0,h);
+                skyGrad.addColorStop(0,'#87CEEB'); skyGrad.addColorStop(0.6,'#98D8C8'); skyGrad.addColorStop(1,'#7CB342');
+                ctx.fillStyle = skyGrad; ctx.fillRect(0,0,w,h);
+                this.drawClouds(ctx,w,h);
+                this.drawMountains(ctx,w,h);
+                this.drawGround(ctx,w,h);
+                this.obstacles.forEach(o => this.drawObstacle(ctx,o));
+                this.coins.forEach(c => this.drawCoin(ctx,c));
+                if (this.bird) this.drawBird(ctx);
             },
 
-            drawStaticScene: function() {
-                this.draw();
-            },
+            drawStaticScene() { this.draw(); },
 
-            drawClouds: function() {
-                const ctx = this.ctx;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-
-                // 静态云朵位置
-                const clouds = [
-                    { x: 50, y: 40, size: 1 },
-                    { x: 200, y: 60, size: 0.8 },
-                    { x: 350, y: 30, size: 1.2 },
-                    { x: 500, y: 50, size: 0.9 }
-                ];
-
-                clouds.forEach(cloud => {
-                    const offsetX = (this.frameCount * 0.5) % (this.canvas.width + 100) - 50;
-                    const cx = (cloud.x + offsetX) % (this.canvas.width + 100);
-
-                    ctx.beginPath();
-                    ctx.arc(cx, cloud.y, 20 * cloud.size, 0, Math.PI * 2);
-                    ctx.arc(cx + 25 * cloud.size, cloud.y - 10, 25 * cloud.size, 0, Math.PI * 2);
-                    ctx.arc(cx + 50 * cloud.size, cloud.y, 20 * cloud.size, 0, Math.PI * 2);
-                    ctx.fill();
+            drawClouds(ctx,w,h) {
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                [[50,40,1],[200,60,0.8],[350,30,1.2],[500,50,0.9]].forEach(([cx,cy,cs]) => {
+                    const ox = (this.frameCount*0.5) % (w+100) - 50;
+                    const dx = (cx+ox) % (w+100);
+                    ctx.beginPath(); ctx.arc(dx,cy,20*cs,0,Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(dx+25*cs,cy-10,25*cs,0,Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(dx+50*cs,cy,20*cs,0,Math.PI*2); ctx.fill();
                 });
             },
 
-            drawMountains: function() {
-                const ctx = this.ctx;
+            drawMountains(ctx,w,h) {
                 ctx.fillStyle = '#6B8E6B';
-
-                // 远山
                 ctx.beginPath();
-                ctx.moveTo(0, this.groundY);
-                ctx.lineTo(100, this.groundY - 80);
-                ctx.lineTo(200, this.groundY - 40);
-                ctx.lineTo(300, this.groundY - 100);
-                ctx.lineTo(400, this.groundY - 50);
-                ctx.lineTo(500, this.groundY - 90);
-                ctx.lineTo(600, this.groundY - 30);
-                ctx.lineTo(this.canvas.width, this.groundY - 60);
-                ctx.lineTo(this.canvas.width, this.groundY);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(0,this.groundY);
+                [100,80,40,300,100,400,90,500,50,600,30,w,this.groundY].forEach((v,i) => {
+                    const pts=[0,100,200,300,400,500,600,700,800,900,w];
+                    ctx.lineTo(pts[i]||w, this.groundY - v);
+                });
+                ctx.lineTo(w,this.groundY); ctx.closePath(); ctx.fill();
             },
 
-            drawGround: function() {
-                const ctx = this.ctx;
-
-                // 草地
-                ctx.fillStyle = '#7CB342';
-                ctx.fillRect(0, this.groundY, this.canvas.width, 60);
-
-                // 地面纹理
+            drawGround(ctx,w,h) {
+                ctx.fillStyle = '#7CB342'; ctx.fillRect(0,this.groundY,w,60);
                 ctx.fillStyle = '#689F38';
-                for (let i = 0; i < this.canvas.width; i += 30) {
-                    const offset = (this.frameCount * this.gameSpeed) % 30;
-                    ctx.fillRect(i - offset, this.groundY, 15, 5);
+                for (let i=0; i<w; i+=30) {
+                    const off = (this.frameCount*this.gameSpeed)%30;
+                    ctx.fillRect(i-off, this.groundY, 15, 5);
                 }
             },
 
-            drawBird: function() {
-                const ctx = this.ctx;
-                const b = this.bird;
-                const skin = this.currentSkin;
-
-                // 身体
-                ctx.fillStyle = skin.body;
-                ctx.beginPath();
-                ctx.ellipse(b.x + b.width / 2, b.y + b.height / 2, b.width / 2, b.height / 2.5, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 头部
-                ctx.fillStyle = skin.head;
-                ctx.beginPath();
-                ctx.arc(b.x + b.width - 10, b.y + 10, 12, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 装饰特征（额头/冠羽等）
-                ctx.fillStyle = skin.accent;
-                if (skin.id === 'crane') {
-                    // 丹顶鹤红色额头
-                    ctx.beginPath();
-                    ctx.arc(b.x + b.width - 5, b.y + 2, 6, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (skin.id === 'duck') {
-                    // 野鸭绿色头部
-                    ctx.beginPath();
-                    ctx.arc(b.x + b.width - 8, b.y + 5, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (skin.id === 'kingfisher') {
-                    // 翠鸟大嘴巴
-                    ctx.beginPath();
-                    ctx.moveTo(b.x + b.width - 2, b.y + 8);
-                    ctx.lineTo(b.x + b.width + 12, b.y + 10);
-                    ctx.lineTo(b.x + b.width - 2, b.y + 12);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (skin.id === 'heron') {
-                    // 苍鹭长嘴巴
-                    ctx.beginPath();
-                    ctx.moveTo(b.x + b.width, b.y + 8);
-                    ctx.lineTo(b.x + b.width + 15, b.y + 10);
-                    ctx.lineTo(b.x + b.width, b.y + 12);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (skin.id === 'gull') {
-                    // 海鸥红嘴
-                    ctx.beginPath();
-                    ctx.moveTo(b.x + b.width - 2, b.y + 8);
-                    ctx.lineTo(b.x + b.width + 8, b.y + 10);
-                    ctx.lineTo(b.x + b.width - 2, b.y + 12);
-                    ctx.closePath();
-                    ctx.fill();
+            drawBird(ctx) {
+                const b=this.bird, s=this.currentSkin;
+                ctx.fillStyle = s.body;
+                ctx.beginPath(); ctx.ellipse(b.x+b.width/2,b.y+b.height/2,b.width/2,b.height/2.5,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle = s.head;
+                ctx.beginPath(); ctx.arc(b.x+b.width-10,b.y+10,12,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle = s.accent;
+                if (s.id==='crane')     { ctx.beginPath(); ctx.arc(b.x+b.width-5,b.y+2,6,0,Math.PI*2); ctx.fill(); }
+                else if (s.id==='duck') { ctx.beginPath(); ctx.arc(b.x+b.width-8,b.y+5,8,0,Math.PI*2); ctx.fill(); }
+                else if (s.id==='kingfisher') {
+                    ctx.beginPath(); ctx.moveTo(b.x+b.width-2,b.y+8); ctx.lineTo(b.x+b.width+12,b.y+10); ctx.lineTo(b.x+b.width-2,b.y+12); ctx.closePath(); ctx.fill();
+                } else if (s.id==='heron') {
+                    ctx.beginPath(); ctx.moveTo(b.x+b.width,b.y+8); ctx.lineTo(b.x+b.width+15,b.y+10); ctx.lineTo(b.x+b.width,b.y+12); ctx.closePath(); ctx.fill();
+                } else if (s.id==='gull') {
+                    ctx.beginPath(); ctx.moveTo(b.x+b.width-2,b.y+8); ctx.lineTo(b.x+b.width+8,b.y+10); ctx.lineTo(b.x+b.width-2,b.y+12); ctx.closePath(); ctx.fill();
                 } else {
-                    // 白天鹅粉色嘴巴
-                    ctx.beginPath();
-                    ctx.arc(b.x + b.width - 5, b.y + 2, 5, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(b.x+b.width-5,b.y+2,5,0,Math.PI*2); ctx.fill();
                 }
-
-                // 眼睛
-                ctx.fillStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(b.x + b.width - 5, b.y + 8, 3, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 眼睛高光
-                ctx.fillStyle = '#FFF';
-                ctx.beginPath();
-                ctx.arc(b.x + b.width - 4, b.y + 7, 1, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 翅膀（动画）
-                ctx.fillStyle = skin.wing;
-                const wingY = b.y + 15 + (b.frame % 2) * 8;
-                ctx.beginPath();
-                ctx.ellipse(b.x + 15, wingY, 15, 8, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 腿
-                ctx.strokeStyle = skin.leg;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(b.x + 20, b.y + b.height - 5);
-                ctx.lineTo(b.x + 15, b.y + b.height + 10);
-                ctx.moveTo(b.x + 30, b.y + b.height - 5);
-                ctx.lineTo(b.x + 35, b.y + b.height + 10);
-                ctx.stroke();
+                ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(b.x+b.width-5,b.y+8,3,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#FFF'; ctx.beginPath(); ctx.arc(b.x+b.width-4,b.y+7,1,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle=s.wing;
+                const wy=b.y+15+(b.frame%2)*8;
+                ctx.beginPath(); ctx.ellipse(b.x+15,wy,15,8,-0.3,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle=s.leg; ctx.lineWidth=2;
+                ctx.beginPath(); ctx.moveTo(b.x+20,b.y+b.height-5); ctx.lineTo(b.x+15,b.y+b.height+10); ctx.moveTo(b.x+30,b.y+b.height-5); ctx.lineTo(b.x+35,b.y+b.height+10); ctx.stroke();
             },
 
-            drawObstacle: function(obs) {
-                const ctx = this.ctx;
-
-                if (obs.type === 'branch') {
-                    // 树枝
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(obs.x, obs.y, obs.width, 8);
-                    ctx.fillRect(obs.x + 10, obs.y - 15, 4, 20);
-                    ctx.fillRect(obs.x + 30, obs.y + 5, 4, 15);
-                    
-                    // 树叶装饰
-                    ctx.fillStyle = '#228B22';
-                    ctx.beginPath();
-                    ctx.arc(obs.x + 12, obs.y - 15, 6, 0, Math.PI * 2);
-                    ctx.arc(obs.x + 32, obs.y - 10, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (obs.type === 'net') {
-                    // 渔网
-                    ctx.strokeStyle = '#4A4A4A';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i < obs.width; i += 8) {
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x + i, obs.y);
-                        ctx.lineTo(obs.x + i, obs.y + obs.height);
-                        ctx.stroke();
-                    }
-                    for (let j = 0; j < obs.height; j += 8) {
-                        ctx.beginPath();
-                        ctx.moveTo(obs.x, obs.y + j);
-                        ctx.lineTo(obs.x + obs.width, obs.y + j);
-                        ctx.stroke();
-                    }
-                    ctx.strokeStyle = '#333';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            drawObstacle(ctx, obs) {
+                if (obs.type==='branch') {
+                    ctx.fillStyle='#8B4513'; ctx.fillRect(obs.x,obs.y,obs.width,8);
+                    ctx.fillRect(obs.x+10,obs.y-15,4,20); ctx.fillRect(obs.x+30,obs.y+5,4,15);
+                    ctx.fillStyle='#228B22'; ctx.beginPath(); ctx.arc(obs.x+12,obs.y-15,6,0,Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(obs.x+32,obs.y-10,5,0,Math.PI*2); ctx.fill();
+                } else if (obs.type==='net') {
+                    ctx.strokeStyle='#4A4A4A'; ctx.lineWidth=1;
+                    for(let i=0;i<obs.width;i+=8) { ctx.beginPath(); ctx.moveTo(obs.x+i,obs.y); ctx.lineTo(obs.x+i,obs.y+obs.height); ctx.stroke(); }
+                    for(let j=0;j<obs.height;j+=8) { ctx.beginPath(); ctx.moveTo(obs.x,obs.y+j); ctx.lineTo(obs.x+obs.width,obs.y+j); ctx.stroke(); }
+                    ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.strokeRect(obs.x,obs.y,obs.width,obs.height);
                 } else {
-                    // 石头
-                    ctx.fillStyle = '#808080';
-                    ctx.beginPath();
-                    ctx.moveTo(obs.x, obs.y + obs.height);
-                    ctx.lineTo(obs.x + obs.width * 0.2, obs.y);
-                    ctx.lineTo(obs.x + obs.width * 0.8, obs.y + 5);
-                    ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
-                    ctx.closePath();
-                    ctx.fill();
-
-                    ctx.fillStyle = '#696969';
-                    ctx.beginPath();
-                    ctx.moveTo(obs.x + 5, obs.y + obs.height);
-                    ctx.lineTo(obs.x + obs.width * 0.3, obs.y + 15);
-                    ctx.lineTo(obs.x + obs.width * 0.5, obs.y + obs.height);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    // 石头上加苔藓
-                    ctx.fillStyle = '#556B2F';
-                    ctx.beginPath();
-                    ctx.arc(obs.x + obs.width * 0.3, obs.y + 8, 4, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillStyle='#808080';
+                    ctx.beginPath(); ctx.moveTo(obs.x,obs.y+obs.height); ctx.lineTo(obs.x+obs.width*0.2,obs.y);
+                    ctx.lineTo(obs.x+obs.width*0.8,obs.y+5); ctx.lineTo(obs.x+obs.width,obs.y+obs.height); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle='#696969';
+                    ctx.beginPath(); ctx.moveTo(obs.x+5,obs.y+obs.height); ctx.lineTo(obs.x+obs.width*0.3,obs.y+15); ctx.lineTo(obs.x+obs.width*0.5,obs.y+obs.height); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle='#556B2F'; ctx.beginPath(); ctx.arc(obs.x+obs.width*0.3,obs.y+8,4,0,Math.PI*2); ctx.fill();
                 }
             },
 
-            drawCoin: function(coin) {
-                const ctx = this.ctx;
-
-                // 金币光晕
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.beginPath();
-                ctx.arc(coin.x + coin.width / 2, coin.y + coin.height / 2, coin.width, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 金币主体
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.arc(coin.x + coin.width / 2, coin.y + coin.height / 2, coin.width / 2, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 金币高光
-                ctx.fillStyle = '#FFF8DC';
-                ctx.beginPath();
-                ctx.arc(coin.x + coin.width / 2 - 3, coin.y + coin.height / 2 - 3, 4, 0, Math.PI * 2);
-                ctx.fill();
+            drawCoin(ctx, coin) {
+                ctx.fillStyle='rgba(255,215,0,0.3)';
+                ctx.beginPath(); ctx.arc(coin.x+coin.width/2,coin.y+coin.height/2,coin.width,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#FFD700';
+                ctx.beginPath(); ctx.arc(coin.x+coin.width/2,coin.y+coin.height/2,coin.width/2,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#FFF8DC';
+                ctx.beginPath(); ctx.arc(coin.x+coin.width/2-3,coin.y+coin.height/2-3,4,0,Math.PI*2); ctx.fill();
             }
         };
 
-        // 页面加载完成后初始化
-        $(function() {
-            runnerGame.init();
-        });
+        $(() => runnerGame.init());
     </script>
 </body>
 </html>

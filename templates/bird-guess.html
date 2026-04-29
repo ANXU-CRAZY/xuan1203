@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -583,6 +584,173 @@
         .result-stat.wrong .val { color: var(--wrong); }
         .result-stat.combo .val { color: var(--accent-warm); }
 
+        /* ============================================================
+           DIFFICULTY SELECTION MODAL
+           ============================================================ */
+        .mode-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(27, 46, 27, 0.88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(6px);
+        }
+        .mode-modal-box {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 40px 36px;
+            width: 90%;
+            max-width: 520px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .mode-modal-box h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+        }
+        .mode-modal-box .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .mode-card {
+            background: var(--bg-wetland);
+            border: 2px solid rgba(45,106,79,0.15);
+            border-radius: var(--radius-md);
+            padding: 20px 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+        }
+        .mode-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(45,106,79,0.18);
+        }
+        .mode-card .mode-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+        .mode-card .mode-name { font-size: 15px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px; }
+        .mode-card .mode-desc { font-size: 11px; color: var(--text-muted); display: block; line-height: 1.4; }
+        .mode-card .mode-score { font-size: 11px; color: var(--primary); font-weight: 600; margin-top: 6px; display: block; }
+        .mode-card.easy { border-color: rgba(45,106,79,0.25); }
+        .mode-card.normal { border-color: rgba(233,196,106,0.5); }
+        .mode-card.hard { border-color: rgba(244,162,97,0.5); }
+
+        /* ============================================================
+           SCIENCE CARD (SLIDE-UP SHEET)
+           ============================================================ */
+        .science-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 500;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .science-overlay.show { display: block; opacity: 1; }
+        .science-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: min(680px, 100%);
+            max-height: 72vh;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            z-index: 501;
+            transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .science-sheet.show { transform: translateX(-50%) translateY(0); }
+        .science-handle {
+            width: 40px;
+            height: 4px;
+            background: #d0d0d0;
+            border-radius: 2px;
+            margin: 10px auto 0;
+            flex-shrink: 0;
+        }
+        .science-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px 6px;
+            flex-shrink: 0;
+        }
+        .science-header .science-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .science-close {
+            width: 28px; height: 28px;
+            border-radius: 50%; border: none;
+            background: var(--bg-wetland);
+            color: var(--text-muted);
+            font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .science-close:hover { background: #d8e8d8; }
+        .science-img-wrap { width: 100%; height: 220px; flex-shrink: 0; background: #e8f0e8; overflow: hidden; }
+        .science-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .science-body { padding: 16px 20px 28px; overflow-y: auto; flex: 1; }
+        .science-body::-webkit-scrollbar { width: 4px; }
+        .science-body::-webkit-scrollbar-thumb { background: rgba(45,106,79,0.2); border-radius: 2px; }
+        .science-name { font-size: 20px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+        .science-latin { font-size: 12px; color: var(--text-muted); font-style: italic; margin-bottom: 12px; }
+        .science-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .sci-badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .sci-badge.level { background: rgba(45,106,79,0.1); color: var(--primary); }
+        .sci-badge.iucn { background: rgba(45,106,79,0.08); color: var(--primary-light); }
+        .sci-section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .sci-text { font-size: 13.5px; color: var(--text-dark); line-height: 1.7; margin-bottom: 16px; }
+
+        /* ============================================================
+           NEXT / FINISH BUTTONS
+           ============================================================ */
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 8px 24px 20px;
+            display: none;
+        }
+        .action-bar.show { display: flex; }
+        .btn-next {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(45,106,79,0.3);
+            font-family: inherit;
+        }
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(45,106,79,0.4);
+        }
+
+        /* ============================================================
+           REVIEW & RESULT ACTIONS (restored)
+           ============================================================ */
         .review-section {
             margin-bottom: 28px;
             text-align: left;
@@ -638,7 +806,6 @@
         .review-info .name { font-size: 13px; font-weight: 500; }
         .review-info .your-choice { font-size: 11px; color: var(--text-muted); }
         .review-info .your-choice.wrong { color: var(--wrong); }
-
         .result-actions {
             display: flex;
             flex-direction: column;
@@ -647,7 +814,7 @@
         }
 
         /* ============================================================
-           FEEDBACK TOAST
+           FEEDBACK TOAST (restored)
            ============================================================ */
         .feedback-toast {
             position: fixed;
@@ -683,6 +850,81 @@
             .score-item .value { font-size: 18px; }
             .start-stats { gap: 16px; padding: 16px; }
             .result-stats-grid { gap: 0; }
+            .mode-cards { grid-template-columns: 1fr; }
+            .science-sheet { max-height: 85vh; }
+            .science-img-wrap { height: 180px; }
+        }
+
+        /* ============================================================
+           FULL IMAGE PREVIEW
+           ============================================================ */
+        .img-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+            animation: fadeIn 0.2s ease;
+        }
+        .img-fullscreen.show { display: flex; }
+        .img-fullscreen img {
+            max-width: 92vw;
+            max-height: 88vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        }
+        .img-fullscreen .zoom-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+        .bird-image-wrap {
+            cursor: zoom-in;
+        }
+        .bird-image-wrap .zoom-icon {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .bird-image-wrap:hover .zoom-icon { opacity: 1; }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 480px) {
+            .game-wrapper { padding: 20px 12px 32px; }
+            .start-card { padding: 36px 24px; }
+            .options-grid { gap: 8px; padding: 8px 16px 20px; }
+            .option-btn { padding: 12px 10px; font-size: 13px; }
+            .score-bar { gap: 12px; }
+            .score-item .value { font-size: 18px; }
+            .start-stats { gap: 16px; padding: 16px; }
+            .result-stats-grid { gap: 0; }
+            .mode-cards { grid-template-columns: 1fr; }
+            .science-sheet { max-height: 85vh; }
+            .science-img-wrap { height: 180px; }
+            .img-fullscreen img { max-width: 98vw; max-height: 92vh; }
+            .bird-image-wrap .zoom-icon { opacity: 0.7; }
         }
     </style>
 </head>
@@ -699,6 +941,64 @@
         <p id="loadingText">正在加载鸟类图库...</p>
     </div>
 
+    <!-- Difficulty mode selection -->
+    <div class="mode-modal" id="modeModal" style="display:none">
+        <div class="mode-modal-box">
+            <h2>请选择识别难度</h2>
+            <p class="subtitle">系统将从图库中随机抽取 10 张鸟类图片，<br>不同难度出题范围与分值不同</p>
+            <div class="mode-cards">
+                <div class="mode-card easy" onclick="game.start('easy')">
+                    <span class="mode-icon">🐣</span>
+                    <span class="mode-name">新手</span>
+                    <span class="mode-desc">常见大型水鸟<br>体型大、易辨认</span>
+                    <span class="mode-score">每题 10 分 · 满分 100</span>
+                </div>
+                <div class="mode-card normal" onclick="game.start('normal')">
+                    <span class="mode-icon">🏠</span>
+                    <span class="mode-name">普通</span>
+                    <span class="mode-desc">中等常见鸟类<br>有一定辨识难度</span>
+                    <span class="mode-score">每题 15 分 · 满分 150</span>
+                </div>
+                <div class="mode-card hard" onclick="game.start('hard')">
+                    <span class="mode-icon">🏆</span>
+                    <span class="mode-name">专家</span>
+                    <span class="mode-desc">珍稀小型鸟类<br>外观相似难区分</span>
+                    <span class="mode-score">每题 20 分 · 满分 200</span>
+                </div>
+            </div>
+            <button class="btn-secondary" onclick="$('#modeModal').fadeOut(200)">返回</button>
+        </div>
+    </div>
+
+    <!-- Science slide-up sheet -->
+    <div class="science-overlay" id="scienceOverlay"></div>
+    <div class="science-sheet" id="scienceSheet">
+        <div class="science-handle"></div>
+        <div class="science-header">
+            <span class="science-title">科普卡片</span>
+            <button class="science-close" onclick="closeScienceCard()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="science-img-wrap">
+            <img id="scienceImg" src="" alt="">
+        </div>
+        <div class="science-body">
+            <div class="science-name" id="scienceName"></div>
+            <div class="science-latin" id="scienceLatin"></div>
+            <div class="science-badges">
+                <span class="sci-badge level" id="scienceLevel"></span>
+                <span class="sci-badge iucn" id="scienceIucn"></span>
+            </div>
+            <div class="sci-section-title">分布与习性</div>
+            <div class="sci-text" id="scienceHab"></div>
+        </div>
+    </div>
+
+    <!-- Fullscreen image preview -->
+    <div class="img-fullscreen" id="imgFullscreen">
+        <img id="fullscreenImg" src="" alt="">
+        <div class="zoom-hint"><i class="fas fa-search-minus"></i> 点击任意处关闭</div>
+    </div>
+
     <!-- Feedback toast -->
     <div class="feedback-toast" id="feedbackToast"></div>
 
@@ -711,6 +1011,10 @@
             <span class="logo-text">看图识鸟</span>
         </a>
         <div class="score-bar" id="scoreBar" style="display:none">
+            <div class="score-item">
+                <div class="label">进度</div>
+                <div class="value" id="progress">0/10</div>
+            </div>
             <div class="score-item">
                 <div class="label">得分</div>
                 <div class="value" id="score">0</div>
@@ -734,8 +1038,8 @@
                 <h1 class="start-title">看图识鸟</h1>
                 <p class="start-subtitle">
                     黄河湿地水鸟知识大挑战！<br>
-                    从精美图库中随机抽取10张图片，考验你的鸟类识别能力<br>
-                    <strong>答对 +10 分</strong>，<strong>3 连击 +5 分</strong>
+                    选择难度后，系统将从图库随机抽取 <strong>10 张图片</strong><br>
+                    <strong>答对加分</strong>，<strong>3 连击额外奖励</strong>，答题后弹出科普卡片
                 </p>
                 <div class="start-stats">
                     <div class="start-stat">
@@ -747,7 +1051,7 @@
                         <span class="desc">精选图片</span>
                     </div>
                 </div>
-                <button class="btn-primary" onclick="game.start()">
+                <button class="btn-primary" onclick="$('#modeModal').fadeIn(200)">
                     <i class="fas fa-play"></i>
                     开始挑战
                 </button>
@@ -777,16 +1081,27 @@
                         <i class="fas fa-feather icon"></i>
                         <span class="text">正在加载图片...</span>
                     </div>
-                    <img id="birdImage" src="" alt="" style="display:none" onload="onImageLoaded()" onerror="onImageError()">
+                    <img id="birdImage" src="" alt="" style="display:none">
+                    <div class="zoom-icon" id="zoomIcon"><i class="fas fa-search-plus"></i></div>
                     <div class="question-badge" id="questionBadge">第 1 / 10 题</div>
                 </div>
 
                 <div class="game-prompt">
                     这是什么鸟类？
-                    <div class="hint" id="latinHint"></div>
                 </div>
 
                 <div class="options-grid" id="optionsGrid"></div>
+
+                <div class="action-bar" id="actionBar">
+                    <button class="btn-next" id="nextBtn" onclick="game.nextQuestion()">
+                        <i class="fas fa-arrow-right"></i>
+                        下一题
+                    </button>
+                    <button class="btn-next" id="finishBtn" onclick="game.showResult()" style="display:none">
+                        <i class="fas fa-trophy"></i>
+                        查看成绩
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -796,7 +1111,7 @@
                 <div class="result-grade" id="resultGrade"></div>
                 <div class="result-grade-label" id="resultGradeLabel"></div>
                 <div class="result-score" id="finalScore">0</div>
-                <div class="result-score-label">本轮得分</div>
+                <div class="result-score-label" id="resultScoreLabel">本轮得分</div>
 
                 <div class="result-stats-grid">
                     <div class="result-stat correct">
@@ -819,7 +1134,7 @@
                 </div>
 
                 <div class="result-actions">
-                    <button class="btn-primary" onclick="game.restart()">
+                    <button class="btn-primary" onclick="$('#modeModal').fadeIn(200)">
                         <i class="fas fa-redo"></i>
                         再来一局
                     </button>
@@ -833,6 +1148,7 @@
     </main>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <script>
     (function() {
         'use strict';
@@ -925,81 +1241,137 @@
         };
 
         /* ============================================================
-           LOAD DATA
+           DIFFICULTY MAP — 按常见度划分
+           easy  = 大型常见水鸟，体型大颜色特征明显
+           normal = 中等常见，有一定辨识难度
+           hard   = 小型/珍稀/近缘种，外观相似难区分
            ============================================================ */
+        const DIFFICULTY_MAP = {
+            // --- easy: 大型常见涉禽/游禽 ---
+            '苍鹭': 'easy', '白鹭': 'easy', '大白鹭': 'easy', '中白鹭': 'easy',
+            '夜鹭': 'easy', '牛背鹭': 'easy', '池鹭': 'easy', '草鹭': 'easy',
+            '绿头鸭': 'easy', '斑嘴鸭': 'easy', '赤膀鸭': 'easy', '赤颈鸭': 'easy',
+            '绿翅鸭': 'easy', '罗纹鸭': 'easy', '白秋沙鸭': 'easy', '普通秋沙鸭': 'easy',
+            '鸿雁': 'easy', '豆雁': 'easy', '灰雁': 'easy', '白额雁': 'easy',
+            '小天鹅': 'easy', '大天鹅': 'easy', '翘鼻麻鸭': 'easy',
+            '黑水鸡': 'easy', '白骨顶': 'easy', '黑翅长脚鹬': 'easy', '反嘴鹬': 'easy',
+            '凤头麦鸡': 'easy', '金眶鸻': 'easy', '环颈鸻': 'easy', '白腰杓鹬': 'easy',
+            '泽鹬': 'easy', '青脚鹬': 'easy', '红脚鹬': 'easy', '白腰草鹬': 'easy',
+            '黑腹滨鹬': 'easy', '红颈滨鹬': 'easy', '大滨鹬': 'easy',
+            '红嘴鸥': 'easy', '普通燕鸥': 'easy', '白翅浮鸥': 'easy', '须浮鸥': 'easy',
+            '普通翠鸟': 'easy', '斑鱼狗': 'easy', '戴胜': 'easy',
+            '白鹡鸰': 'easy', '灰鹡鸰': 'easy', '黄头鹡鸰': 'easy',
+            '黑鹳': 'easy', '东方白鹳': 'easy', '白琵鹭': 'easy', '黑脸琵鹭': 'easy',
+            '灰鹤': 'easy', '白鹤': 'easy', '丹顶鹤': 'easy', '白枕鹤': 'easy', '沙丘鹤': 'easy',
+            '普通鸬鹚': 'easy', '小鸊鷉': 'easy', '凤头鸊鷉': 'easy', '黑颈鸊鷉': 'easy',
+            '大杜鹃': 'easy', '四声杜鹃': 'easy', '噪鹃': 'easy',
+            '大嘴乌鸦': 'easy', '小嘴乌鸦': 'easy', '达乌里寒鸦': 'easy',
+            '喜鹊': 'easy', '灰喜鹊': 'easy', '松鸦': 'easy',
+            '八哥': 'easy', '丝光椋鸟': 'easy', '黑领椋鸟': 'easy', '灰椋鸟': 'easy',
+            '树麻雀': 'easy', '家麻雀': 'easy', '山麻雀': 'easy',
+            '黑卷尾': 'easy', '灰卷尾': 'easy', '发冠卷尾': 'easy',
+            '黑枕黄鹂': 'easy', '大斑啄木鸟': 'easy', '星头啄木鸟': 'easy', '灰头绿啄木鸟': 'easy',
+            '红隼': 'easy', '游隼': 'easy', '燕隼': 'easy', '灰背隼': 'easy',
+            // --- normal: 中等体型或有一定辨识难度的鸟 ---
+            '白头鹞': 'normal', '白尾鹞': 'normal', '鹊鹞': 'normal', '黑翅鸢': 'normal',
+            '雀鹰': 'normal', '苍鹰': 'normal', '日本松雀鹰': 'normal', '普通鵟': 'normal',
+            '大鵟': 'normal', '毛脚鵟': 'normal', '靴隼鵟': 'normal',
+            '纵纹腹小鸮': 'normal', '斑头鸺鹠': 'normal', '领鸺鹠': 'normal',
+            '长耳鸮': 'normal', '短耳鸮': 'normal', '草鸮': 'normal',
+            '北红尾鸲': 'normal', '红尾水鸲': 'normal', '红喉歌鸲': 'normal',
+            '蓝喉歌鸲': 'normal', '红胁蓝尾鸲': 'normal',
+            '黑眉苇莺': 'normal', '东方大苇莺': 'normal', '大苇莺': 'normal',
+            '纯色山鹪莺': 'normal', '褐头鹪莺': 'normal',
+            '黄眉鹀': 'normal', '黄喉鹀': 'normal', '三道眉草鹀': 'normal',
+            '小鸊': 'normal', '白眉鹀': 'normal', '栗耳鹀': 'normal', '田鹀': 'normal',
+            '金翅雀': 'normal', '黄雀': 'normal', '燕雀': 'normal', '锡嘴雀': 'normal',
+            '黑尾蜡嘴雀': 'normal', '黑头蜡嘴雀': 'normal',
+            '白眉姬鹟': 'normal', '鸲姬鹟': 'normal', '红喉姬鹟': 'normal',
+            '北灰鹟': 'normal', '乌鹟': 'normal', '灰纹鹟': 'normal',
+            '白鹡鸰': 'normal', '山麻雀': 'normal',
+            '中华秋沙鸭': 'normal', '扇尾沙锥': 'normal', '针尾沙锥': 'normal',
+            '黑尾塍鹬': 'normal', '鹤鹬': 'normal', '矸鹬': 'normal', '弯嘴滨鹬': 'normal',
+            '遗鸥': 'normal', '海鸥': 'normal', '西伯利亚银鸥': 'normal', '渔鸥': 'normal',
+            '小鸦鹃': 'normal', '大鸦鹃': 'normal',
+            '小鹀': 'normal', '苇鹀': 'normal',
+            '家燕': 'normal', '金腰燕': 'normal', '毛脚燕': 'normal',
+            '鹌鹑': 'normal', '环颈雉': 'normal',
+            // --- hard: 小型/珍稀/近缘种/外观相似 ---
+            '黄腰柳莺': 'hard', '黄眉柳莺': 'hard', '极北柳莺': 'hard',
+            '柳莺': 'hard', '淡脚柳莺': 'hard', '冕柳莺': 'hard',
+            '东方灰 Phylloscopus': 'hard', '西南灰 Phylloscopus': 'hard',
+            '黑眉拟啄木鸟': 'hard', '大拟啄木鸟': 'hard', '蓝喉拟啄木鸟': 'hard',
+            '强脚树莺': 'hard', '日本淡脚鹟': 'hard', '山鹪莺': 'hard',
+            '淡色沙燕': 'hard', '崖海鸦': 'hard',
+            '勺嘴鹬': 'hard', '小青脚鹬': 'hard', '阔嘴鹬': 'hard',
+            '半蹼鹬': 'hard', '黑翅燕鸻': 'hard',
+            '白头鹤': 'hard', '蓑羽鹤': 'hard', '蓝鹤': 'hard',
+            '黑翅侏儒鸟': 'hard',
+            '寿带鸟': 'hard', '紫寿带鸟': 'hard',
+            '红颈瓣蹼鹬': 'hard', '灰瓣蹼鹬': 'hard',
+        };
+
+        function getDifficulty(name) {
+            return DIFFICULTY_MAP[name] || 'normal';
+        }
+
+        /* ============================================================
+           SCORE CONFIG PER DIFFICULTY
+           ============================================================ */
+        const SCORE_CONFIG = {
+            easy:   { correct: 10, combo: 5 },
+            normal: { correct: 15, combo: 5 },
+            hard:   { correct: 20, combo: 5 },
+        };
         async function loadGameData() {
             try {
-                speciesImageMap = {};
-                totalImages = 0;
-
-                // 1. Load species list — each species includes gallery_images
                 const speciesRes = await fetch(`${API}/species/`);
                 if (!speciesRes.ok) throw new Error('Species API error');
                 const speciesData = await speciesRes.json();
                 const speciesList = speciesData.results || speciesData;
 
-                // 2. Build BIRD_DATA and the speciesId -> images map
                 BIRD_DATA = speciesList.map(s => {
-                    // Build image array for this species from its embedded gallery_images
                     const imgs = (s.gallery_images || []).filter(g => g.url);
                     imgs.forEach(img => {
-                        // Register in global map keyed by species id
-                        if (!speciesImageMap[img.species]) {
-                            speciesImageMap[img.species] = [];
-                        }
-                        // Avoid duplicate URLs
+                        if (!speciesImageMap[img.species]) speciesImageMap[img.species] = [];
                         if (!speciesImageMap[img.species].some(existing => existing.url === img.url)) {
                             speciesImageMap[img.species].push(img);
                         }
                     });
-
                     totalImages += imgs.length;
-
                     return {
                         id: s.id,
                         name: s.name_cn,
                         latin: s.name_latin || '',
                         protection: s.protection_level || '',
+                        distribution: s.distribution_habit || '',
                         galleryCount: imgs.length,
+                        rawData: s,
                     };
                 });
 
-                // 3. Also load the separate species-images endpoint for any images
-                // not embedded in species (belt-and-suspenders approach)
                 try {
-                    const imagesRes = await fetch(`${API}/species-images/`);
+                    const imageController = new AbortController();
+                    const imageTimer = setTimeout(() => imageController.abort(), 2500);
+                    const imagesRes = await fetch(`${API}/species-images/`, { signal: imageController.signal });
+                    clearTimeout(imageTimer);
                     if (imagesRes.ok) {
                         const imagesData = await imagesRes.json();
                         const imgList = imagesData.results || imagesData;
                         imgList.forEach(img => {
-                            const speciesKey = img.species || img.species_id;
-                            const imageUrl = img.url || img.full_url;
-                            if (!imageUrl || !speciesKey) return;
-                            if (!speciesImageMap[speciesKey]) {
-                                speciesImageMap[speciesKey] = [];
-                            }
-                            if (!speciesImageMap[speciesKey].some(existing => existing.url === imageUrl)) {
-                                speciesImageMap[speciesKey].push({
-                                    ...img,
-                                    species: speciesKey,
-                                    url: imageUrl,
-                                });
-                                totalImages++;
+                            if (!img.url || !img.species) return;
+                            if (!speciesImageMap[img.species]) speciesImageMap[img.species] = [];
+                            if (!speciesImageMap[img.species].some(existing => existing.url === img.url)) {
+                                speciesImageMap[img.species].push(img);
                             }
                         });
                     }
-                } catch (_) { /* non-critical */ }
+                } catch (_) {
+                    console.warn('图片补充数据加载较慢，先使用物种接口自带图片进入游戏。');
+                }
 
-                BIRD_DATA = BIRD_DATA.filter(b => {
-                    const imgs = speciesImageMap[b.id];
-                    return (imgs && imgs.length > 0) || FALLBACK_IMAGES[b.name];
-                });
-
-                // 4. Update start screen stats
                 $('#totalSpecies').text(BIRD_DATA.length);
                 $('#totalImages').text(totalImages);
-
-                // 5. Hide loading
                 $('#loadingOverlay').fadeOut(300);
 
             } catch (e) {
@@ -1049,14 +1421,34 @@
         buildBackgroundReeds();
 
         /* ============================================================
-           IMAGE LOAD HANDLERS
+           FULL IMAGE PREVIEW
+           ============================================================ */
+        function openFullscreen(src) {
+            if (!src) return;
+            $('#fullscreenImg').attr('src', src);
+            $('#imgFullscreen').addClass('show');
+            $('body').css('overflow', 'hidden');
+        }
+
+        function closeFullscreen() {
+            $('#imgFullscreen').removeClass('show');
+            $('body').css('overflow', '');
+        }
+
+        $('#birdImageContainer').on('click', '#birdImage', function() {
+            openFullscreen($(this).attr('src'));
+        });
+
+        $('#imgFullscreen').on('click', closeFullscreen);
+
+        /* ============================================================
+           IMAGE LOAD HANDLERS (exposed to window for <img> onload/onerror)
            ============================================================ */
         function onImageLoaded() {
             $('#birdPlaceholder').hide();
             $('#birdImage').show();
         }
         function onImageError() {
-            // Fallback already handled by getSpeciesImage; if we get here, use placeholder
             $('#birdPlaceholder').show();
             $('#birdImage').hide();
         }
@@ -1074,6 +1466,40 @@
         }
 
         /* ============================================================
+           SCIENCE CARD
+           ============================================================ */
+        function openScienceCard(bird) {
+            const img = getSpeciesImage(bird);
+            const raw = bird.rawData || {};
+            const iucn = raw.iucn_status || null;
+
+            $('#scienceImg').attr('src', img || '').css('display', img ? 'block' : 'none');
+            $('#scienceName').text(bird.name);
+            $('#scienceLatin').text(bird.latin || '');
+            $('#scienceLevel').text(bird.protection || '无保护级别');
+
+            if (iucn && iucn.label) {
+                $('#scienceIucn').text(iucn.code + ' ' + iucn.label).show();
+            } else {
+                $('#scienceIucn').hide();
+            }
+
+            $('#scienceHab').text(bird.distribution || '暂无详细分布与习性数据');
+
+            $('#scienceOverlay').addClass('show');
+            setTimeout(() => $('#scienceSheet').addClass('show'), 10);
+            $('body').css('overflow', 'hidden');
+        }
+
+        function closeScienceCard() {
+            $('#scienceSheet').removeClass('show');
+            $('#scienceOverlay').removeClass('show');
+            $('body').css('overflow', '');
+        }
+
+        $('#scienceOverlay').on('click', closeScienceCard);
+
+        /* ============================================================
            GAME ENGINE
            ============================================================ */
         const game = {
@@ -1087,6 +1513,7 @@
             correct: 0,
             wrong: 0,
             answered: false,
+            mode: 'normal',   // 'easy' | 'normal' | 'hard'
 
             shuffle(arr) {
                 for (let i = arr.length - 1; i > 0; i--) {
@@ -1096,13 +1523,27 @@
                 return arr;
             },
 
-            start() {
+            start(mode) {
                 if (BIRD_DATA.length === 0) {
                     showFeedback('数据加载中，请稍候...', 'wrong');
                     return;
                 }
 
-                this.questions = this.shuffle([...BIRD_DATA]).slice(0, this.TOTAL);
+                this.mode = mode || 'normal';
+                const cfg = SCORE_CONFIG[this.mode] || SCORE_CONFIG.normal;
+
+                // Select pool based on difficulty
+                let pool;
+                if (this.mode === 'easy') {
+                    pool = BIRD_DATA.filter(b => getDifficulty(b.name) === 'easy');
+                } else if (this.mode === 'hard') {
+                    pool = BIRD_DATA.filter(b => getDifficulty(b.name) === 'hard');
+                } else {
+                    pool = BIRD_DATA;
+                }
+                if (pool.length < this.TOTAL) pool = BIRD_DATA;
+
+                this.questions = this.shuffle([...pool]).slice(0, this.TOTAL);
                 this.current = 0;
                 this.score = 0;
                 this.combo = 0;
@@ -1112,6 +1553,7 @@
                 this.answers = [];
                 this.answered = false;
 
+                $('#modeModal').fadeOut(200);
                 $('#scoreBar').show();
                 $('#startScreen').hide();
                 $('#resultScreen').hide();
@@ -1120,12 +1562,9 @@
                 this.showQuestion();
             },
 
-            restart() {
-                this.start();
-            },
-
             showQuestion() {
                 const q = this.questions[this.current];
+                const cfg = SCORE_CONFIG[this.mode];
                 const progress = (this.current / this.TOTAL) * 100;
                 const accuracy = this.current > 0
                     ? Math.round((this.correct / this.current) * 100) + '%'
@@ -1136,33 +1575,29 @@
                 $('#accuracyHint').text('正确率 ' + accuracy);
                 $('#score').text(this.score);
                 $('#combo').text(this.combo);
+                $('#progress').text((this.current + 1) + '/' + this.TOTAL);
                 $('#questionBadge').text('第 ' + (this.current + 1) + ' / ' + this.TOTAL + ' 题');
-                $('#latinHint').text(q.latin ? q.latin : '');
 
-                // Load image
                 const imgUrl = getSpeciesImage(q);
                 const container = $('#birdImageContainer');
                 container.removeClass('correct wrong');
 
-                if (imgUrl) {
-                    $('#birdPlaceholder').show();
-                    $('#birdImage').hide();
-                    $('#birdImage').attr('src', imgUrl);
-                } else {
-                    $('#birdPlaceholder').show();
-                    $('#birdImage').hide();
-                    $('#birdImage').attr('src', '');
-                }
+                // Load image using jQuery event binding (no global scope needed)
+                const $birdImg = $('#birdImage');
+                $birdImg.off('load error');
+                $birdImg.on('load', onImageLoaded).on('error', onImageError);
+                $birdImg.attr('src', imgUrl || '');
 
-                // Build options
                 const options = this.buildOptions(q);
-                const html = options.map((b, i) =>
+                const html = options.map(b =>
                     `<button class="option-btn" data-name="${this.esc(b.name)}" onclick="game.selectAnswer('${this.esc(b.name)}', this)">
                         <span>${b.name}</span>
-                        ${b.latin ? `<span class="latin">${b.latin}</span>` : ''}
                     </button>`
                 ).join('');
                 $('#optionsGrid').html(html);
+                $('#actionBar').removeClass('show');
+                $('#nextBtn').hide();
+                $('#finishBtn').hide();
 
                 this.answered = false;
             },
@@ -1185,36 +1620,32 @@
                 const q = this.questions[this.current];
                 const isCorrect = selectedName === q.name;
                 const container = $('#birdImageContainer');
+                const cfg = SCORE_CONFIG[this.mode];
 
-                // Disable all buttons and highlight correct
                 $('.option-btn').attr('disabled', true);
                 $('.option-btn').each(function() {
-                    if ($(this).data('name') === q.name) {
-                        $(this).addClass('correct');
-                    }
+                    if ($(this).data('name') === q.name) $(this).addClass('correct');
                 });
 
                 if (isCorrect) {
                     container.addClass('correct');
-                    this.score += 10;
+                    this.score += cfg.correct;
                     this.correct++;
                     this.combo++;
                     if (this.combo > this.maxCombo) this.maxCombo = this.combo;
-                    showFeedback(this.combo >= 3 ? '连击！+' + this.combo : '正确！', 'correct');
-                    if (this.combo >= 3) this.showComboEffect();
+                    showFeedback(this.combo >= 3 ? '连击！+' + cfg.combo + '分' : '正确！+' + cfg.correct + '分', 'correct');
+                    if (this.combo >= 3) {
+                        this.score += cfg.combo;
+                        this.showComboEffect();
+                    }
                 } else {
                     container.addClass('wrong');
                     $(btnEl).addClass('wrong');
                     this.wrong++;
                     this.combo = 0;
-                    const correctOption = $('.option-btn').filter(function() {
-                        return $(this).data('name') === q.name;
-                    });
-                    correctOption.addClass('correct');
                     showFeedback('正确：' + q.name, 'wrong');
                 }
 
-                // Record
                 this.answers.push({
                     bird: q,
                     selected: selectedName,
@@ -1225,14 +1656,28 @@
                 $('#score').text(this.score);
                 $('#combo').text(this.combo);
 
+                // Open science card after a short delay, then show action buttons
                 setTimeout(() => {
-                    this.current++;
-                    if (this.current >= this.TOTAL) {
-                        this.showResult();
+                    openScienceCard(q);
+                    $('#actionBar').addClass('show');
+                    if (this.current < this.TOTAL - 1) {
+                        $('#nextBtn').show();
+                        $('#finishBtn').hide();
                     } else {
-                        this.showQuestion();
+                        $('#nextBtn').hide();
+                        $('#finishBtn').show();
                     }
-                }, 1600);
+                }, 500);
+            },
+
+            nextQuestion() {
+                closeScienceCard();
+                this.current++;
+                if (this.current >= this.TOTAL) {
+                    this.showResult();
+                } else {
+                    setTimeout(() => this.showQuestion(), 300);
+                }
             },
 
             showComboEffect() {
@@ -1244,6 +1689,7 @@
             },
 
             showResult() {
+                closeScienceCard();
                 $('#gameScreen').hide();
                 $('#scoreBar').hide();
                 $('#resultScreen').fadeIn(300);
@@ -1256,33 +1702,27 @@
                 else if (pct >= 40)   { grade = 'C'; gradeLabel = '继续加油！'; }
                 else                  { grade = 'D'; gradeLabel = '多看看图库吧'; }
 
+                const modeLabel = {easy:'新手', normal:'普通', hard:'专家'}[this.mode] || '普通';
                 $('#resultGrade').text(grade);
                 $('#resultGradeLabel').text(gradeLabel);
                 $('#finalScore').text(this.score);
+                $('#resultScoreLabel').text(modeLabel + '模式 · 本轮得分');
                 $('#correctCount').text(this.correct);
                 $('#wrongCount').text(this.wrong);
                 $('#maxCombo').text(this.maxCombo);
 
-                // Review
                 const reviewHtml = this.answers.map(a => {
-                    const icon = a.correct
-                        ? '<i class="fas fa-check"></i>'
-                        : '<i class="fas fa-times"></i>';
+                    const icon = a.correct ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
                     const wrongClass = a.correct ? '' : 'wrong';
-                    const img = a.imageUrl
-                        ? `<img src="${a.imageUrl}" alt="${a.bird.name}" onerror="this.style.display='none'">`
-                        : '';
-                    return `
-                        <div class="review-item">
-                            ${img}
-                            <div class="review-icon ${a.correct ? 'correct' : 'wrong'}">${icon}</div>
-                            <div class="review-info">
-                                <div class="name">${a.bird.name}</div>
-                                <div class="your-choice ${wrongClass}">
-                                    ${a.correct ? '正确' : '你的选择：' + a.selected}
-                                </div>
-                            </div>
-                        </div>`;
+                    const img = a.imageUrl ? `<img src="${a.imageUrl}" alt="${a.bird.name}" onerror="this.style.display='none'">` : '';
+                    return `<div class="review-item">
+                        ${img}
+                        <div class="review-icon ${a.correct ? 'correct' : 'wrong'}">${icon}</div>
+                        <div class="review-info">
+                            <div class="name">${a.bird.name}</div>
+                            <div class="your-choice ${wrongClass}">${a.correct ? '正确' : '你的选择：' + a.selected}</div>
+                        </div>
+                    </div>`;
                 }).join('');
                 $('#reviewList').html(reviewHtml);
 
@@ -1310,10 +1750,9 @@
             }
         };
 
-        // Expose globally
         window.game = game;
+        window.closeScienceCard = closeScienceCard;
 
-        // Kick off
         loadGameData();
 
     })();
