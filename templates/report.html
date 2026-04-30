@@ -33,6 +33,7 @@
             position: sticky; top: 0; z-index: 100;
         }
         .brand { font-size: 18px; font-weight: 800; color: var(--c-dark); display: flex; align-items: center; gap: 10px; }
+        .brand-page-logo { width: 36px; height: 36px; display: block; border-radius: 50%; object-fit: cover; object-position: center; background: #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.10); flex: 0 0 auto; }
         .nav-links { display: flex; gap: 12px; align-items: center; }
         .nav-btn {
             padding: 7px 16px; border-radius: 20px; text-decoration: none;
@@ -223,7 +224,7 @@
 <body>
 
 <div class="top-bar">
-    <div class="brand"><i class="fas fa-dragon" style="color:var(--c-aqua)"></i> 黄河生态方舟</div>
+    <div class="brand"><img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-page-logo"> 黄河生态方舟</div>
     <div class="nav-links">
         <a href="/" class="nav-btn nav-btn-outline"><i class="fas fa-home"></i> 首页</a>
         <a href="/profile/" class="nav-btn nav-btn-outline"><i class="fas fa-user"></i> 个人中心</a>

@@ -46,9 +46,21 @@
             font-size: 24px;
             font-weight: 700;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+        }
+
+        .login-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: block;
+            object-fit: cover;
+            object-position: center;
+            background: #fff;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.18);
         }
 
         .login-header p {
@@ -212,10 +224,7 @@
         <div class="login-box">
             <div class="login-header">
                 <h1>
-                    <svg width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                    </svg>
+                    <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="login-logo">
                     黄河生态方舟
                 </h1>
                 <p>水鸟监测 · 生态保护 · 数据共享</p>

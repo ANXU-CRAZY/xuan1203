@@ -61,10 +61,14 @@
             font-family: 'Noto Serif SC', serif;
         }
         .navbar-brand .logo {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--amber), #D4A853);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px;
+            display: block;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center;
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            flex: 0 0 auto;
         }
         .navbar-links { display: flex; gap: 2px; align-items: center; }
         .nav-btn {
@@ -533,7 +537,7 @@
 
 <nav class="navbar">
     <a href="/" class="navbar-brand">
-        <div class="logo"><i class="fas fa-feather-alt" style="color:white;font-size:14px"></i></div>
+        <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="logo">
         黄河生态方舟
     </a>
     <div class="navbar-links">
