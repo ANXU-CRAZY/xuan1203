@@ -728,12 +728,29 @@
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [34.85, 113.55], zoom: 10, layers: [vec, labelLayer, this.layers.station, this.layers.line, this.layers.record], zoomControl: false, attributionControl:false });
-            L.control.layers(
+            this.map = L.map('map', { center: [34.85, 113.55], zoom: 10, layers: [vec, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img },
                 { "图层注记": labelLayer, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
+            setTimeout(() => {
+                layerControl.expand();
+                const controlEl = layerControl.getContainer();
+                const toggleEl = controlEl ? controlEl.querySelector('.leaflet-control-layers-toggle') : null;
+                if (toggleEl) {
+                    toggleEl.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        event.stopPropagation();
+                        if (controlEl.classList.contains('leaflet-control-layers-expanded')) {
+                            layerControl.collapse();
+                        } else {
+                            layerControl.expand();
+                        }
+                    }, true);
+                }
+            }, 0);
             this.map.on('baselayerchange', (e) => {
                 const nextLabel = e.name === '卫星影像' ? imgLabel : vecLabel;
                 if (nextLabel === currentLabel) return;
@@ -977,8 +994,7 @@
         initDates: function() {
             const d = new Date();
             document.getElementById('d-end').valueAsDate = d;
-            d.setDate(d.getDate() - 30);
-            document.getElementById('d-start').valueAsDate = d;
+            document.getElementById('d-start').value = '2021-01-18';
         },
 
         loadStatic: function() {
