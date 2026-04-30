@@ -584,8 +584,20 @@ let searchKeyword = '';
 let lightboxImages = [];
 let lightboxIndex = 0;
 
+function normalizeSpeciesText(text) {
+    return (text || '')
+        .toString()
+        .toLowerCase()
+        .replace(/黒/g, '黑')
+        .replace(/䳭/g, '鹛')
+        .replace(/[（）()\[\]【】\s·,，、\/\\-]/g, '');
+}
+
 function getFallbackImage(nameCn) {
-    return FALLBACK_IMAGES[nameCn] || null;
+    if (FALLBACK_IMAGES[nameCn]) return FALLBACK_IMAGES[nameCn];
+    const normalized = normalizeSpeciesText(nameCn);
+    const alias = Object.keys(FALLBACK_IMAGES).find(key => normalizeSpeciesText(key) === normalized);
+    return alias ? FALLBACK_IMAGES[alias] : null;
 }
 
 function getGalleryImages(s) {
@@ -997,7 +1009,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function filterGallery() {
-    searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    searchKeyword = normalizeSpeciesText(document.getElementById('searchInput').value);
     applyFilters();
 }
 
@@ -1015,12 +1027,16 @@ function applyFilters() {
     else if (currentFilter === '三有动物') list = list.filter(s => normalizeProtection(s.protection_level) === 'lv3');
     else if (currentFilter === '暂无等级') list = list.filter(s => normalizeProtection(s.protection_level) === 'unknown');
 
-    if (searchKeyword) list = list.filter(s =>
-        (s.name_cn && s.name_cn.toLowerCase().includes(searchKeyword)) ||
-        (s.name_latin && s.name_latin.toLowerCase().includes(searchKeyword)) ||
-        (s.order && s.order.toLowerCase().includes(searchKeyword)) ||
-        (s.family && s.family.toLowerCase().includes(searchKeyword))
-    );
+    if (searchKeyword) list = list.filter(s => {
+        const haystack = [
+            s.name_cn,
+            s.name_latin,
+            s.order,
+            s.family,
+            s.protection_level,
+        ].map(normalizeSpeciesText).join(' ');
+        return haystack.includes(searchKeyword);
+    });
     renderGallery(list);
 }
 

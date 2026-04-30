@@ -260,6 +260,18 @@
             transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .sp-card:hover .sp-card-img img { transform: scale(1.08); }
+        /* 图片加载失败时：降级为渐变占位 */
+        .sp-card-img.img-load-fail {
+            background: linear-gradient(135deg, #2D5A3E, #1B3A2D);
+        }
+        .sp-card-img.img-load-fail::after {
+            content: '🐦';
+            position: absolute;
+            bottom: 8px; right: 12px;
+            font-size: 48px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            opacity: 0.3;
+        }
 
         /* 真实图片 + 渐变叠加层 */
         .sp-card-img .img-gradient {
@@ -290,6 +302,7 @@
             position: absolute; bottom: 8px; right: 12px;
             font-size: 48px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
         }
+        .sp-card-img .img-placeholder .sp-emoji.hidden { display: none; }
 
         /* 卡片顶层信息 */
         .sp-card-top {
@@ -736,6 +749,7 @@
 <script>
 const API = '/api';
 let allSpecies = [];
+let speciesAliasIdMap = {};
 let currentFilter = '全部';
 let searchKeyword = '';
 
@@ -879,12 +893,94 @@ const SPECIES_IMG = {
 };
 
 function getSpeciesImage(nameCn) {
-    return SPECIES_IMG[nameCn] || null;
+    // 优先使用原始 Wikimedia URL（更快），其次返回 null
+    if (SPECIES_IMG[nameCn]) return SPECIES_IMG[nameCn];
+    const normalized = normalizeSpeciesText(nameCn);
+    const alias = Object.keys(SPECIES_IMG).find(key => normalizeSpeciesText(key) === normalized);
+    return alias ? SPECIES_IMG[alias] : null;
+}
+
+function normalizeSpeciesText(text) {
+    return (text || '')
+        .toString()
+        .toLowerCase()
+        .replace(/䳭/g, '鹛')
+        .replace(/[（）()\[\]【】\s·,，/\\-]/g, '');
+}
+
+// Wikimedia 缩略图 URL 转为原始大图 URL（国内访问更快）
+function toOriginalUrl(thumbUrl) {
+    if (!thumbUrl || thumbUrl.indexOf('wikimedia.org') === -1) return thumbUrl;
+    // thumb/xxx/800px-xxx.jpg → /xxx/xxx.jpg
+    if (thumbUrl.indexOf('/thumb/') !== -1) {
+        return thumbUrl.replace('/thumb/', '/').replace(/\/\d+px-[^/]+$/, '');
+    }
+    return thumbUrl;
+}
+
+// 图片加载失败时，获取下一个可用图片 URL（用于 onerror 兜底）
+function resolveCoverUrlFallback(s, speciesId) {
+    // 先从 allSpecies 中找到该物种的最新数据
+    var sp = allSpecies.find(function(x) { return x.id === speciesId; });
+    if (!sp) return null;
+
+    var tried = new Set();
+    tried.add(toOriginalUrl(s.cover_image_url || ''));
+
+    var imgs = sp.gallery_images || [];
+    for (var i = 0; i < imgs.length; i++) {
+        var url = toOriginalUrl(imgs[i].url || '');
+        if (url && !tried.has(url)) {
+            tried.add(url);
+            return url;
+        }
+    }
+    // 最后尝试备用图
+    var fallback = getSpeciesImage(sp.name_cn);
+    if (fallback && !tried.has(fallback)) {
+        return fallback;
+    }
+    return null;
+}
+
+// 优先度：数据库封面 > 数据库图库第一张 > 备用原始图
+function resolveCoverUrl(s) {
+    // 1. 数据库封面图（cover_image_url 可能是 Wikimedia 缩略图，需转换）
+    if (s.cover_image_url) {
+        return { url: toOriginalUrl(s.cover_image_url), from: 'db-cover' };
+    }
+    // 2. 数据库图库第一张
+    var imgs = s.gallery_images;
+    if (imgs && imgs.length > 0 && imgs[0].url) {
+        return { url: toOriginalUrl(imgs[0].url), from: 'db-gallery' };
+    }
+    // 3. 备用 Wikimedia 图
+    var fallback = getSpeciesImage(s.name_cn);
+    if (fallback) {
+        return { url: fallback, from: 'fallback' };
+    }
+    return null;
 }
 
 async function prefetchImages(species) {
     // 图片已通过 SPECIES_IMG 直接映射，无需预取
 }
+
+const EMOJIS = {
+    '\u9e70': '\ud83e\udd85',
+    '\u96d5': '\ud83e\udd85',
+    '\u96bc': '\ud83e\udd85',
+    '\u9e64': '\ud83e\udebf',
+    '\u96c1': '\ud83e\udd86',
+    '\u9e2d': '\ud83e\udd86',
+    '\u9e25': '\ud83d\udd4a\ufe0f',
+    '\u9e6d': '\ud83e\udeb6',
+    '\u9e6c': '\ud83e\udeb6',
+    '\u9e73': '\ud83e\udeb6',
+    '\u96c0': '\ud83d\udc26',
+    '\u71d5': '\ud83d\udc26',
+    'default': '\ud83d\udc26'
+};
 
 function getEmoji(name) {
     if (!name) return EMOJIS['default'];
@@ -930,6 +1026,83 @@ function cardGradient(name) {
     return palette[Math.abs(hash) % palette.length];
 }
 
+function speciesGroupKey(s) {
+    const latin = (s.name_latin || '').trim().toLowerCase();
+    return latin || normalizeSpeciesText(s.name_cn);
+}
+
+function speciesQualityScore(s) {
+    const name = (s.name_cn || '').trim();
+    let score = 0;
+    if (name === (s.name_cn || '')) score += 4;
+    if (!/[()]/.test(name)) score += 3;
+    if (!/\s/.test(name)) score += 2;
+    if (s.cover_image_url) score += 5;
+    if (s.gallery_images && s.gallery_images.length) score += 4;
+    if (s.distribution_habit) score += 2;
+    if (s.protection_level) score += 1;
+    score += Math.min(Number(s.article_count) || 0, 20) * 0.1;
+    score += Math.min(Number(s.observation_count) || 0, 50) * 0.05;
+    score -= name.length * 0.01;
+    return score;
+}
+
+function latestObservedValue(values) {
+    return values.filter(Boolean).sort().slice(-1)[0] || '';
+}
+
+function mergeSpeciesGroup(items) {
+    const canonical = items.slice().sort((a, b) => speciesQualityScore(b) - speciesQualityScore(a))[0];
+    const merged = { ...canonical };
+    merged.name_cn = (canonical.name_cn || '').trim();
+    merged._alias_names = Array.from(new Set(items.map(x => (x.name_cn || '').trim()).filter(Boolean)));
+    merged._alias_ids = items.map(x => x.id);
+    merged._merged_count = items.length;
+    merged.observation_count = items.reduce((sum, x) => sum + (Number(x.observation_count) || 0), 0);
+    merged.article_count = Math.max(...items.map(x => Number(x.article_count) || 0), 0);
+    merged.last_observed = latestObservedValue(items.map(x => x.last_observed || ''));
+    merged.distribution_habit = items.map(x => x.distribution_habit || '').sort((a, b) => b.length - a.length)[0] || canonical.distribution_habit;
+
+    const galleryMap = new Map();
+    items.forEach(x => {
+        (x.gallery_images || []).forEach(img => {
+            const key = img && img.url ? img.url : '';
+            if (key && !galleryMap.has(key)) galleryMap.set(key, img);
+        });
+    });
+    merged.gallery_images = Array.from(galleryMap.values());
+    merged.gallery_count = merged.gallery_images.length;
+
+    if (!merged.cover_image_url) {
+        const withCover = items.find(x => x.cover_image_url);
+        if (withCover) merged.cover_image_url = withCover.cover_image_url;
+        else if (merged.gallery_images[0] && merged.gallery_images[0].url) merged.cover_image_url = merged.gallery_images[0].url;
+    }
+    return merged;
+}
+
+function dedupeSpeciesList(species) {
+    const groups = new Map();
+    speciesAliasIdMap = {};
+
+    species.forEach(s => {
+        const key = speciesGroupKey(s);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(s);
+    });
+
+    const deduped = [];
+    groups.forEach(items => {
+        const merged = mergeSpeciesGroup(items);
+        deduped.push(merged);
+        items.forEach(item => {
+            speciesAliasIdMap[item.id] = merged.id;
+        });
+    });
+
+    return deduped;
+}
+
 function renderCards(species) {
     const grid = document.getElementById('speciesGrid');
     const empty = document.getElementById('emptyState');
@@ -941,27 +1114,30 @@ function renderCards(species) {
     }
     empty.style.display = 'none';
     count.textContent = species.length;
+    window.__speciesCardFallback = {};
 
     grid.innerHTML = species.map(s => {
         const obs = s.observation_count || 0;
         const bg = cardGradient(s.name_cn);
-        const speciesImg = getSpeciesImage(s.name_cn);
-        const hasCover = !!s.cover_image;
-        const hasSpeciesImg = !!speciesImg;
+        const cover = resolveCoverUrl(s);
         const protectionText = getLevelLabel(s.protection_level);
+        window.__speciesCardFallback[s.id] = {
+            cover_image_url: s.cover_image_url || '',
+            cover_image: s.cover_image || ''
+        };
+
+        const cardImg = cover
+            ? `<img src="${cover.url}" alt="${s.name_cn}" loading="lazy"
+               onerror="var p=this.parentElement,f=resolveCoverUrlFallback(window.__speciesCardFallback[${s.id}],${s.id});if(f){this.src=f;}else{p.classList.add('img-load-fail');this.remove();}">
+               <div class="img-gradient"></div>`
+            : `<div class="img-placeholder">
+                 <div class="nature-bg" style="background:${bg}"></div>
+                 <div class="sp-emoji">&#x1F426;</div>
+               </div>`;
 
         return `<div class="sp-card" data-sid="${s.id}" onclick="showDetail(${s.id})">
-            <div class="sp-card-img">
-                ${hasCover
-                    ? `<img src="${s.cover_image}" alt="${s.name_cn}" loading="lazy">
-                       <div class="img-gradient"></div>`
-                    : hasSpeciesImg
-                    ? `<img src="${speciesImg}" alt="${s.name_cn}" loading="lazy">
-                       <div class="img-gradient"></div>`
-                    : `<div class="img-placeholder">
-                         <div class="nature-bg" style="background:${bg}"></div>
-                       </div>`
-                }
+            <div class="sp-card-img${cover ? ' has-real-img' : ''}">
+                ${cardImg}
                 <div class="sp-card-top">
                     <span class="sp-protection-badge ${getLevelClass(s.protection_level)}">${protectionText}</span>
                     ${s.iucn_status ? `<span class="sp-iucn-badge" style="background:${s.iucn_status.color}">${s.iucn_status.code}</span>` : ''}
@@ -990,7 +1166,7 @@ function renderCards(species) {
 }
 
 function filterSpecies() {
-    searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    searchKeyword = normalizeSpeciesText(document.getElementById('searchInput').value);
     applyFilters();
 }
 
@@ -1008,12 +1184,17 @@ function applyFilters() {
     else if (currentFilter === '三有动物') list = list.filter(s => s.protection_level && s.protection_level.includes('三有'));
     else if (currentFilter === '无保护') list = list.filter(s => !s.protection_level || s.protection_level === '无' || s.protection_level === '');
 
-    if (searchKeyword) list = list.filter(s =>
-        (s.name_cn && s.name_cn.toLowerCase().includes(searchKeyword)) ||
-        (s.name_latin && s.name_latin.toLowerCase().includes(searchKeyword)) ||
-        (s.order && s.order.toLowerCase().includes(searchKeyword)) ||
-        (s.family && s.family.toLowerCase().includes(searchKeyword))
-    );
+    if (searchKeyword) list = list.filter(s => {
+        const haystack = [
+            s.name_cn,
+            ...(s._alias_names || []),
+            s.name_latin,
+            s.order,
+            s.family,
+            s.protection_level,
+        ].map(normalizeSpeciesText).join(' ');
+        return haystack.includes(searchKeyword);
+    });
     renderCards(list);
 }
 
@@ -1037,21 +1218,23 @@ function renderFeaturedStrip(species) {
 }
 
 function showDetail(id) {
+    id = speciesAliasIdMap[id] || id;
     const s = allSpecies.find(x => x.id === id);
     if (!s) return;
 
-    // Hero 区域
+    // Hero 区域：优先 DB 封面 > DB 图库 > 备用原图
     const heroPlaceholder = document.getElementById('modalHeroPlaceholder');
     const heroImg = document.getElementById('modalHeroImg');
-    const speciesImg = getSpeciesImage(s.name_cn);
-    if (s.cover_image) {
-        heroImg.src = s.cover_image;
+    const heroCover = resolveCoverUrl(s);
+    if (heroCover) {
+        heroImg.src = heroCover.url;
         heroImg.style.display = 'block';
         heroPlaceholder.style.display = 'none';
-    } else if (speciesImg) {
-        heroImg.src = speciesImg;
-        heroImg.style.display = 'block';
-        heroPlaceholder.style.display = 'none';
+        heroImg.onerror = function() {
+            this.style.display = 'none';
+            heroPlaceholder.style.display = 'block';
+            document.getElementById('modalHeroBg').style.background = cardGradient(s.name_cn);
+        };
     } else {
         heroImg.style.display = 'none';
         heroPlaceholder.style.display = 'block';
@@ -1100,10 +1283,11 @@ function showDetail(id) {
     const related = allSpecies.filter(x => x.family === s.family && x.id !== s.id).slice(0, 4);
     if (related.length) {
         document.getElementById('relatedGrid').innerHTML = related.map(r => {
-            const rImg = getSpeciesImage(r.name_cn);
+            const rCover = resolveCoverUrl(r);
             return `<div class="related-species-card" onclick="showDetail(${r.id})">
-                ${rImg
-                    ? `<img src="${rImg}" alt="${r.name_cn}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;">`
+                ${rCover
+                    ? `<img src="${rCover.url}" alt="${r.name_cn}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                       <span class="rs-emoji" style="display:none">${getEmoji(r.name_cn)}</span>`
                     : `<span class="rs-emoji">${getEmoji(r.name_cn)}</span>`
                 }
                 <div>
@@ -1149,7 +1333,8 @@ async function loadSpecies() {
     try {
         const res = await fetch(`${API}/species/`);
         const data = await res.json();
-        allSpecies = data.results || data;
+        const rawSpecies = data.results || data;
+        allSpecies = dedupeSpeciesList(rawSpecies);
 
         const total = allSpecies.length;
         const protected_ = allSpecies.filter(s => s.protection_level && s.protection_level !== '无' && s.protection_level !== '').length;

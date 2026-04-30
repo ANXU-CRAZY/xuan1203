@@ -1,4 +1,6 @@
 from pathlib import Path
+import re
+import unicodedata
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -8,6 +10,11 @@ from app_monitor.models import SpeciesImage, SpeciesInfo
 
 class Command(BaseCommand):
     help = 'Create SpeciesImage records from files in media/species/gallery.'
+
+    NAME_TRANSLATION = str.maketrans({
+        '黒': '黑',
+        '䳭': '鹛',
+    })
 
     def handle(self, *args, **options):
         gallery_dir = Path(settings.MEDIA_ROOT) / 'species' / 'gallery'
@@ -24,11 +31,11 @@ class Command(BaseCommand):
             if not path.is_file() or path.suffix.lower() not in image_exts:
                 continue
 
-            species_name = path.stem
-            if '_' in species_name:
-                species_name = species_name.rsplit('_', 1)[0]
+            species_name = self._base_species_name(path.stem)
 
             species = SpeciesInfo.objects.filter(name_cn=species_name).first()
+            if not species:
+                species = self._find_species_by_normalized_name(species_name)
             if not species:
                 missing_species.add(species_name)
                 skipped += 1
@@ -55,3 +62,17 @@ class Command(BaseCommand):
         if missing_species:
             preview = ', '.join(sorted(missing_species)[:20])
             self.stdout.write(self.style.WARNING(f'Species not found for {len(missing_species)} file group(s): {preview}'))
+
+    def _base_species_name(self, stem):
+        return re.sub(r'_[0-9]+$', '', stem).strip()
+
+    def _normalize_name(self, value):
+        text = unicodedata.normalize('NFKC', value or '').strip().translate(self.NAME_TRANSLATION)
+        return re.sub(r'[\s（）()\[\]【】·,，、/\\-]+', '', text)
+
+    def _find_species_by_normalized_name(self, species_name):
+        normalized = self._normalize_name(species_name)
+        for species in SpeciesInfo.objects.all():
+            if self._normalize_name(species.name_cn) == normalized:
+                return species
+        return None
