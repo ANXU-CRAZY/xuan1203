@@ -155,7 +155,7 @@
 
         /* === 面板初始位置 === */
         /* 注意：拖动后这些 bottom/right 属性会被 JS 覆盖为 top/left */
-        #rank-panel { position: absolute; bottom: 20px; left: 20px; width: 320px; height: 400px; z-index: 1000; }
+        #rank-panel { position: absolute; bottom: 48px; left: 20px; width: 320px; height: 400px; z-index: 1000; }
         #detail-panel { position: absolute; bottom: 20px; right: 20px; width: 360px; height: 500px; z-index: 1000; }
 
         /* === 左侧：实时日志流样式 === */
@@ -265,6 +265,33 @@
         .bottom-stat .b-num.orange { color: var(--c-orange); }
         .bottom-stat .b-num.green { color: var(--c-green); }
         .bottom-stat .b-label { font-size: 10px; color: #999; white-space: nowrap; }
+        .site-record-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            z-index: 1001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 0;
+            background: rgba(255,255,255,0.34);
+            color: rgba(44,62,80,0.7);
+            font-size: 11px;
+            line-height: 1.4;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            box-shadow: none;
+        }
+        .site-record-footer a {
+            color: #007a80;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .site-record-footer a:hover { color: var(--c-aqua); text-decoration: underline; }
 
         /* 实时数据流脉冲点 */
         .live-dot {
@@ -557,7 +584,7 @@
             #detail-panel { display: none; }
 
             .bottom-stats-bar {
-                left: 12px; right: 12px; bottom: 10px; transform: none;
+                left: 12px; right: 12px; bottom: 38px; transform: none;
                 justify-content: space-between; gap: 0; padding: 8px 6px;
                 border-radius: 20px; background: rgba(255,255,255,0.94);
                 box-shadow: 0 12px 34px rgba(25,60,70,0.16);
@@ -565,6 +592,15 @@
             .bottom-stat { flex: 1; padding: 0 4px; }
             .bottom-stat .b-num { font-size: 17px; }
             .bottom-stat .b-label { font-size: 9px; }
+            .site-record-footer {
+                left: 50%;
+                bottom: 6px;
+                transform: translateX(-50%);
+                font-size: 10px;
+                padding: 5px 10px;
+                border-radius: 8px;
+                background: rgba(255,255,255,0.92);
+            }
 
             #detail-modal-overlay { align-items: flex-end; }
             #detail-modal {
@@ -588,6 +624,33 @@
             .panel-head { font-size: 12px; }
             .bottom-stat .b-num { font-size: 16px; }
             .bottom-stat .b-label { font-size: 8px; }
+        }
+
+        @media (min-width: 769px) {
+            #rank-panel { bottom: 44px !important; }
+            .bottom-stats-bar { bottom: 30px !important; }
+            .site-record-footer {
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                transform: none !important;
+                background: rgba(255,255,255,0.34) !important;
+                border: 0;
+                box-shadow: none;
+                backdrop-filter: blur(4px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .site-record-footer {
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                transform: none !important;
+                background: rgba(255,255,255,0.38) !important;
+            }
         }
 </style>
 </head>
@@ -814,6 +877,11 @@
         <div class="b-num orange" id="s-approved">0</div>
         <div class="b-label">已核验</div>
     </div>
+</div>
+
+<div class="site-record-footer">
+    <span>@黄河生态方舟2026</span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备15026986号-4</a>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
