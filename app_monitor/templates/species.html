@@ -845,6 +845,8 @@ const SPECIES_IMG = {
     '红尾水鸲': 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Rhyacornis_fuliginosus.jpg',
     '白顶溪鸲': 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Chaimarrornis_leucocephalus_1_-_Doi_Inthanon.jpg',
     '北红尾鸲': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Phoenicurus_auroreus.jpg',
+    '东亚石䳭': 'https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg',
+    '黑喉石䳭（东亚）': 'https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg',
     '红喉姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Ficedula_parva.jpg',
     '白眉姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/3/34/Ficedula_zanthopygia_1.jpg',
     '鸲姬鹟': 'https://upload.wikimedia.org/wikipedia/commons/1/16/Ficedula_mugimaki_-_Khao_Yai.jpg',
@@ -908,7 +910,6 @@ function normalizeSpeciesText(text) {
     return (text || '')
         .toString()
         .toLowerCase()
-        .replace(/䳭/g, '鹛')
         .replace(/[（）()\[\]【】\s·,，/\\-]/g, '');
 }
 

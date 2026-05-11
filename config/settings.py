@@ -156,6 +156,7 @@ SIMPLEUI_ANALYSIS = False
 SIMPLEUI_LOGO = 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png'
 SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 
+SIMPLEUI_INDEX = '/'
 SIMPLEUI_HOME_TITLE = '黄河生态监测平台'
 SIMPLEUI_SITE_TITLE = '黄河生态监测平台'
 SIMPLEUI_INDEX_TITLE = '监测系统后台'

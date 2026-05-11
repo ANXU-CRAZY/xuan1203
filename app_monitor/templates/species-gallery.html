@@ -562,6 +562,8 @@ const FALLBACK_IMAGES = {
     '喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/3/33/Pica_pica.jpg',
     '松鸦': 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Garrulus_glandarius.jpg',
     '北红尾鸲': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Phoenicurus_auroreus.jpg',
+    '东亚石䳭': 'https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg',
+    '黑喉石䳭（东亚）': 'https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg',
     '红喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/f/f7/Luscinia_calliope.jpg',
     '蓝喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/5/54/Luscinia_svecica.jpg',
     '黑枕黄鹂': 'https://upload.wikimedia.org/wikipedia/commons/7/78/Oriolus_chinensis.jpg',
@@ -593,7 +595,6 @@ function normalizeSpeciesText(text) {
         .toString()
         .toLowerCase()
         .replace(/黒/g, '黑')
-        .replace(/䳭/g, '鹛')
         .replace(/[（）()\[\]【】\s·,，、\/\\-]/g, '');
 }
 

@@ -158,7 +158,7 @@ class ObservationViewSet(viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=400)
 
     # === GIS 功能: MVT 矢量瓦片 ===
-    @action(detail=False, methods=['get'], url_path='tiles/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)')
+    @action(detail=False, methods=['get'], url_path=r'tiles/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)')
     def tiles(self, request, z, x, y):
         # SQL 查询：只返回 status='approved' 的点位
         sql = """
@@ -227,24 +227,50 @@ class ProductViewSet(viewsets.ModelViewSet):
 _SPECIES_IMG_CACHE = None
 
 
+def _normalize_species_key(value):
+    return re.sub(r"[（）()\[\]【】\s·,，、/\\-]", "", (value or "").strip().lower().replace("黒", "黑"))
+
+
+def _lookup_species_image(image_map, name_cn):
+    if not name_cn:
+        return None
+    if name_cn in image_map:
+        return image_map[name_cn]
+
+    normalized = _normalize_species_key(name_cn)
+    for key, url in image_map.items():
+        if _normalize_species_key(key) == normalized:
+            return url
+    return None
+
+
 def _load_species_image_map():
     """
-    复用协作者前端图库中的 Wikimedia Commons 直链映射。
-    这样图库页和 API 返回的数据会保持同一套图片来源。
+    复用前端物种百科和图库中的 Wikimedia Commons 直链映射。
+    这样图库页、物种百科和科普文章会保持同一套图片来源。
     """
     global _SPECIES_IMG_CACHE
     if _SPECIES_IMG_CACHE is not None:
         return _SPECIES_IMG_CACHE
 
-    template_path = Path(settings.BASE_DIR) / 'app_monitor' / 'templates' / 'species-gallery.html'
     image_map = {}
-    try:
-        text = template_path.read_text(encoding='utf-8')
-        match = re.search(r"const\s+SPECIES_IMG\s*=\s*\{(.*?)\n\s*\};", text, re.S)
-        if match:
-            image_map = dict(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
-    except OSError:
-        image_map = {}
+    template_dir = Path(settings.BASE_DIR) / 'app_monitor' / 'templates'
+    for template_name in ('species.html', 'species-gallery.html'):
+        template_path = template_dir / template_name
+        try:
+            text = template_path.read_text(encoding='utf-8')
+        except OSError:
+            continue
+
+        for const_name in ('SPECIES_IMG', 'FALLBACK_IMAGES'):
+            pattern = rf"const\s+{const_name}\s*=\s*\{{(.*?)^\s*\}};"
+            for match in re.finditer(pattern, text, re.S | re.M):
+                image_map.update(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
+
+    stonechat_url = "https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg"
+    image_map.setdefault('东亚石䳭', stonechat_url)
+    image_map.setdefault('黑喉石䳭（东亚）', stonechat_url)
+    image_map.setdefault('黑喉石䳭(东亚)', stonechat_url)
 
     _SPECIES_IMG_CACHE = image_map
     return image_map
@@ -332,6 +358,9 @@ def _species_articles(request):
         wiki_url = _wikipedia_search_url(name, latin)
         commons_url = _commons_search_url(name, latin)
         count = _species_observation_count(species)
+        species_cover = _lookup_species_image(image_map, name)
+        if not species_cover:
+            species_cover = SpeciesInfoSerializer(species, context={'request': request}).data.get('cover_image_url')
 
         content = (
             f'<p><strong>{escape(name)}</strong>{f"（{escape(latin)}）" if latin else ""}'
@@ -353,7 +382,7 @@ def _species_articles(request):
             'category': 'species',
             'summary': summary_source[:120],
             'content': content,
-            'cover_image': image_map.get(name),
+            'cover_image': species_cover,
             'author_name': '维基百科 / 黄河生态方舟',
             'views': max(18, count * 9 + 80 - index),
             'is_published': True,
@@ -372,7 +401,7 @@ def _species_image_items(request):
     items = []
     for index, species in enumerate(SpeciesInfo.objects.all().order_by('name_cn')):
         name = species.name_cn or '未知物种'
-        image_url = image_map.get(name)
+        image_url = _lookup_species_image(image_map, name)
         if not image_url:
             continue
         latin = species.name_latin or ''
