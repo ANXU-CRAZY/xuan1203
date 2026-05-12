@@ -1,13 +1,18 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.conf import settings
 from django.utils import timezone
 from django.utils.html import escape
+from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
-from django.db.models import Sum, Q  # 引入 Q 用于复杂查询
+from django.db.models import Sum, Q, Count  # 引入 Q 用于复杂查询
 from pathlib import Path
 from urllib.parse import quote
+from urllib import request as urlrequest
+from urllib.error import HTTPError, URLError
+import json
+import os
 import re
 
 # DRF 相关引用
@@ -551,7 +556,331 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 # ==========================================
-# 6. 普通页面视图 (热点推荐)
+# 6. DeepSeek 网页智能体接口 /api/ai/chat/
+# ==========================================
+AI_SYSTEM_PROMPT = (
+    "你是“黄河生态方舟”平台的生态监测智能助手。"
+    "你必须基于平台提供的数据库摘要和当前网页上下文回答问题。"
+    "如果数据不足，请明确说明“当前平台数据不足以判断”，不要编造不存在的数据。"
+    "回答面向普通用户，语言清晰、简洁、专业。"
+    "涉及生态治理建议时，只提供辅助性建议，不替代专家结论。"
+)
+
+
+def _safe_sum(value):
+    return int(value or 0)
+
+
+def _clean_ai_text(value, max_length=1200):
+    text = str(value or '').strip()
+    text = re.sub(r'\s+', ' ', text)
+    return text[:max_length]
+
+
+def _limited_context_dict(value, max_items=20):
+    if not isinstance(value, dict):
+        return {}
+    cleaned = {}
+    for index, (key, item) in enumerate(value.items()):
+        if index >= max_items:
+            break
+        if isinstance(item, (dict, list, tuple)):
+            cleaned[str(key)[:40]] = item
+        else:
+            cleaned[str(key)[:40]] = _clean_ai_text(item, 300)
+    return cleaned
+
+
+def _date_from_context(page_context, key):
+    raw = (page_context or {}).get(key)
+    if not raw:
+        return None
+    try:
+        return timezone.datetime.fromisoformat(str(raw).replace('/', '-')).date()
+    except ValueError:
+        return None
+
+
+def _detect_zone_from_message(message):
+    message = message or ''
+    if not message:
+        return None
+    zones = WetlandZone.objects.only('id', 'name').order_by('-name')
+    for zone in zones:
+        name = zone.name or ''
+        if name and name in message:
+            return zone
+    return None
+
+
+def _detect_species_from_message(message):
+    message = message or ''
+    if not message:
+        return None
+    species_qs = SpeciesInfo.objects.only(
+        'id', 'name_cn', 'name_latin', 'order', 'family', 'protection_level', 'distribution_habit'
+    ).order_by('-name_cn')
+    for species in species_qs:
+        name_cn = species.name_cn or ''
+        latin = species.name_latin or ''
+        if (name_cn and name_cn in message) or (latin and latin.lower() in message.lower()):
+            return species
+    return None
+
+
+def _top_species_rows(queryset, limit=10):
+    rows = queryset.values(
+        'species__name_cn',
+        'species__name_latin',
+        'species__protection_level',
+    ).annotate(
+        total=Sum('count'),
+        records=Count('id'),
+    ).order_by('-total')[:limit]
+    return [
+        {
+            'name': row['species__name_cn'] or '未知物种',
+            'latin': row['species__name_latin'] or '',
+            'protection_level': row['species__protection_level'] or '未标注',
+            'count': _safe_sum(row['total']),
+            'records': row['records'],
+        }
+        for row in rows
+    ]
+
+
+def _top_zone_rows(queryset, limit=10):
+    rows = queryset.values('zone__name').annotate(
+        total=Sum('count'),
+        records=Count('id'),
+    ).order_by('-total')[:limit]
+    return [
+        {
+            'zone': row['zone__name'] or '未知区域',
+            'count': _safe_sum(row['total']),
+            'records': row['records'],
+        }
+        for row in rows
+    ]
+
+
+def _protection_rows(queryset):
+    rows = queryset.values('species__protection_level').annotate(
+        total=Sum('count'),
+        records=Count('id'),
+    ).order_by('-total')
+    return [
+        {
+            'level': row['species__protection_level'] or '无保护/未标注',
+            'count': _safe_sum(row['total']),
+            'records': row['records'],
+        }
+        for row in rows[:8]
+    ]
+
+
+def _build_ai_data_context(message, page_context):
+    page_context = _limited_context_dict(page_context)
+    queryset = ObservationRecord.objects.filter(status='approved').select_related('species', 'zone')
+
+    start_date = _date_from_context(page_context, 'start_date')
+    end_date = _date_from_context(page_context, 'end_date')
+    if start_date:
+        queryset = queryset.filter(observation_time__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(observation_time__lte=end_date)
+
+    detected_zone = _detect_zone_from_message(message)
+    detected_species = _detect_species_from_message(message)
+
+    if detected_zone:
+        queryset = queryset.filter(zone=detected_zone)
+    if detected_species:
+        queryset = queryset.filter(species=detected_species)
+
+    total_records = queryset.count()
+    total_birds = _safe_sum(queryset.aggregate(total=Sum('count'))['total'])
+    species_count = queryset.values('species').distinct().count()
+    zone_count = queryset.values('zone').distinct().count()
+
+    species_detail = None
+    if detected_species:
+        species_detail = {
+            'name_cn': detected_species.name_cn,
+            'name_latin': detected_species.name_latin,
+            'order': detected_species.order,
+            'family': detected_species.family,
+            'protection_level': detected_species.protection_level or '未标注',
+            'distribution_habit': _clean_ai_text(detected_species.distribution_habit, 500),
+        }
+
+    return {
+        'question': _clean_ai_text(message, 500),
+        'page_context': page_context,
+        'filters': {
+            'start_date': start_date.isoformat() if start_date else None,
+            'end_date': end_date.isoformat() if end_date else None,
+            'zone': detected_zone.name if detected_zone else None,
+            'species': detected_species.name_cn if detected_species else None,
+        },
+        'summary': {
+            'record_count': total_records,
+            'bird_count': total_birds,
+            'species_count': species_count,
+            'zone_count': zone_count,
+        },
+        'top_species': _top_species_rows(queryset),
+        'top_zones': _top_zone_rows(queryset),
+        'protection_distribution': _protection_rows(queryset),
+        'species_detail': species_detail,
+    }
+
+
+def _local_ai_answer(data_context):
+    summary = data_context.get('summary', {})
+    top_species = data_context.get('top_species') or []
+    top_zones = data_context.get('top_zones') or []
+    filters = data_context.get('filters', {})
+
+    scope = []
+    if filters.get('zone'):
+        scope.append(filters['zone'])
+    if filters.get('species'):
+        scope.append(filters['species'])
+    if filters.get('start_date') or filters.get('end_date'):
+        scope.append(f"{filters.get('start_date') or '起始'} 至 {filters.get('end_date') or '当前'}")
+    scope_text = '、'.join(scope) if scope else '当前平台筛选范围'
+
+    lines = [
+        f"基于平台数据库，{scope_text}内共有 {summary.get('record_count', 0)} 条观测记录，累计记录鸟类数量 {summary.get('bird_count', 0)} 只，涉及 {summary.get('species_count', 0)} 个物种、{summary.get('zone_count', 0)} 个区域。",
+    ]
+    if top_species:
+        lines.append("数量较高的物种包括：" + "、".join(f"{item['name']}（{item['count']}只）" for item in top_species[:5]) + "。")
+    if top_zones:
+        lines.append("记录较集中的区域包括：" + "、".join(f"{item['zone']}（{item['count']}只）" for item in top_zones[:5]) + "。")
+    lines.append("当前为本地数据摘要回答；配置 DeepSeek API 后可生成更自然的生态解释和研判建议。")
+    return "\n".join(lines)
+
+
+def _load_deepseek_local_env():
+    local_env = {}
+    env_file = Path(settings.BASE_DIR) / '.env.local'
+    if env_file.exists():
+        try:
+            for line in env_file.read_text(encoding='utf-8').splitlines():
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                key = key.strip().lstrip('\ufeff')
+                local_env[key] = value.strip().strip('"').strip("'")
+        except OSError:
+            local_env = {}
+    return local_env
+
+
+def _get_deepseek_model(local_env=None):
+    local_env = local_env or _load_deepseek_local_env()
+    return (
+        os.environ.get('DEEPSEEK_MODEL')
+        or local_env.get('DEEPSEEK_MODEL')
+        or getattr(settings, 'DEEPSEEK_MODEL', 'deepseek-v4-flash')
+    )
+
+
+def _call_deepseek(message, data_context):
+    local_env = _load_deepseek_local_env()
+
+    api_key = (
+        os.environ.get('DEEPSEEK_API_KEY')
+        or local_env.get('DEEPSEEK_API_KEY')
+        or getattr(settings, 'DEEPSEEK_API_KEY', '')
+    )
+    if not api_key:
+        return None, 'DEEPSEEK_API_KEY 未配置'
+
+    base_url = (
+        os.environ.get('DEEPSEEK_BASE_URL')
+        or local_env.get('DEEPSEEK_BASE_URL')
+        or getattr(settings, 'DEEPSEEK_BASE_URL', 'https://api.deepseek.com')
+    )
+    model = _get_deepseek_model(local_env)
+    endpoint = base_url.rstrip('/')
+    if not endpoint.endswith('/chat/completions'):
+        endpoint = f'{endpoint}/chat/completions'
+
+    payload = {
+        'model': model,
+        'messages': [
+            {'role': 'system', 'content': AI_SYSTEM_PROMPT},
+            {
+                'role': 'user',
+                'content': (
+                    f"用户问题：{message}\n\n"
+                    f"平台真实数据摘要：\n{json.dumps(data_context, ensure_ascii=False, indent=2)}\n\n"
+                    "请基于以上数据回答，避免编造。回答控制在 400 字以内。"
+                )
+            },
+        ],
+        'temperature': 0.3,
+        'max_tokens': 900,
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+    req = urlrequest.Request(
+        endpoint,
+        data=body,
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {api_key}',
+        },
+        method='POST',
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=20) as response:
+            result = json.loads(response.read().decode('utf-8'))
+    except HTTPError as exc:
+        return None, f'DeepSeek HTTP {exc.code}'
+    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        return None, f'DeepSeek 调用失败：{exc}'
+
+    try:
+        return result['choices'][0]['message']['content'].strip(), None
+    except (KeyError, IndexError, TypeError):
+        return None, 'DeepSeek 返回格式异常'
+
+
+@csrf_exempt
+def ai_chat(request):
+    if request.method != 'POST':
+        return JsonResponse({'detail': 'Only POST is allowed'}, status=405)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'detail': '请求体不是有效 JSON'}, status=400)
+
+    message = _clean_ai_text(payload.get('message'), 800)
+    page_context = payload.get('page_context') or {}
+    if not message:
+        return JsonResponse({'detail': '请输入问题'}, status=400)
+
+    data_context = _build_ai_data_context(message, page_context)
+    answer, error = _call_deepseek(message, data_context)
+    model = _get_deepseek_model()
+    if not answer:
+        answer = _local_ai_answer(data_context)
+        model = 'local-data-summary'
+
+    return JsonResponse({
+        'answer': answer,
+        'model': model,
+        'deepseek_error': error,
+        'data_used': data_context,
+    }, json_dumps_params={'ensure_ascii': False})
+
+
+# ==========================================
+# 7. 普通页面视图 (热点推荐)
 # ==========================================
 def index_view(request):
     return render(request, 'index.html')

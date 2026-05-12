@@ -652,6 +652,251 @@
                 background: rgba(255,255,255,0.38) !important;
             }
         }
+
+        /* === DeepSeek 智能巡护助手 === */
+        .ai-agent-widget {
+            position: fixed;
+            right: 28px;
+            bottom: 92px;
+            z-index: 2200;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            font-family: inherit;
+            touch-action: none;
+        }
+        .ai-agent-fab {
+            width: 66px;
+            height: 66px;
+            border: 0;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #eefdfa, #ffffff);
+            box-shadow: 0 16px 38px rgba(18, 64, 75, 0.22);
+            cursor: grab;
+            position: relative;
+            display: grid;
+            place-items: center;
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .ai-agent-fab:active { cursor: grabbing; transform: scale(.98); }
+        .ai-agent-fab:hover { box-shadow: 0 18px 42px rgba(0, 173, 181, 0.28); }
+        .ai-agent-person {
+            width: 42px;
+            height: 46px;
+            position: relative;
+            display: block;
+        }
+        .ai-agent-head {
+            position: absolute;
+            left: 10px;
+            top: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #00ADB5;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,.08);
+        }
+        .ai-agent-head::before,
+        .ai-agent-head::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #fff;
+        }
+        .ai-agent-head::before { left: 6px; }
+        .ai-agent-head::after { right: 6px; }
+        .ai-agent-body {
+            position: absolute;
+            left: 5px;
+            bottom: 2px;
+            width: 32px;
+            height: 24px;
+            border-radius: 16px 16px 12px 12px;
+            background: linear-gradient(135deg, #174b55, #2e7d73);
+        }
+        .ai-agent-body::after {
+            content: "";
+            position: absolute;
+            left: 9px;
+            top: 7px;
+            width: 14px;
+            height: 8px;
+            border-radius: 999px 999px 0 0;
+            border: 2px solid rgba(255,255,255,.9);
+            border-bottom: 0;
+        }
+        .ai-agent-status {
+            position: absolute;
+            right: 4px;
+            top: 5px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #55d17b;
+            border: 2px solid #fff;
+        }
+        .ai-agent-tip {
+            position: absolute;
+            right: 76px;
+            bottom: 12px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.92);
+            color: #174b55;
+            box-shadow: 0 10px 26px rgba(18,64,75,.14);
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+        .ai-agent-widget:not(.ai-agent-closed) .ai-agent-tip { opacity: 0; transform: translateY(8px); }
+        .ai-agent-panel {
+            position: fixed;
+            right: 24px;
+            bottom: 172px;
+            width: min(360px, calc(100vw - 28px));
+            max-height: min(620px, calc(100vh - 180px));
+            border-radius: 22px;
+            background: rgba(255,255,255,.96);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 24px 58px rgba(16, 44, 52, .24);
+            border: 1px solid rgba(0,173,181,.14);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform-origin: bottom right;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+        .ai-agent-widget.ai-agent-closed .ai-agent-panel {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(18px) scale(.96);
+        }
+        .ai-agent-panel-head {
+            padding: 16px 17px;
+            background: linear-gradient(135deg, #eafaf8, #f8fffd);
+            border-bottom: 1px solid rgba(0,173,181,.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: grab;
+            user-select: none;
+        }
+        .ai-agent-panel-head:active { cursor: grabbing; }
+        .ai-agent-title {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            color: #173846;
+            font-weight: 900;
+        }
+        .ai-agent-title small {
+            color: #6e858c;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .ai-agent-close {
+            border: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(23,56,70,.08);
+            color: #173846;
+            cursor: pointer;
+        }
+        .ai-agent-quick {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            padding: 12px 14px 0;
+        }
+        .ai-agent-quick button {
+            border: 1px solid rgba(0,173,181,.16);
+            background: #f8fcfb;
+            color: #24505a;
+            border-radius: 12px;
+            padding: 9px 8px;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: left;
+        }
+        .ai-agent-quick button:hover { background: #eaf8f6; color: #007e86; }
+        .ai-agent-messages {
+            padding: 14px;
+            overflow-y: auto;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ai-msg {
+            max-width: 88%;
+            padding: 10px 12px;
+            border-radius: 15px;
+            line-height: 1.55;
+            font-size: 14px;
+            color: #253b44;
+            word-break: break-word;
+        }
+        .ai-msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #00ADB5, #2cb9a6);
+            color: #fff;
+            border-bottom-right-radius: 5px;
+        }
+        .ai-msg.assistant {
+            align-self: flex-start;
+            background: #f2f6f6;
+            border-bottom-left-radius: 5px;
+        }
+        .ai-msg.loading {
+            color: #6f858b;
+            font-style: italic;
+        }
+        .ai-agent-input {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px 14px;
+            border-top: 1px solid rgba(23,56,70,.08);
+        }
+        .ai-agent-input input {
+            flex: 1;
+            border: 1px solid rgba(23,56,70,.14);
+            border-radius: 13px;
+            padding: 11px 12px;
+            outline: none;
+            font-size: 14px;
+        }
+        .ai-agent-input input:focus { border-color: #00ADB5; box-shadow: 0 0 0 3px rgba(0,173,181,.12); }
+        .ai-agent-input button {
+            width: 44px;
+            border: 0;
+            border-radius: 13px;
+            background: #00ADB5;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        @media (max-width: 768px) {
+            .ai-agent-widget {
+                right: 14px;
+                bottom: 68px;
+            }
+            .ai-agent-fab { width: 58px; height: 58px; }
+            .ai-agent-tip { display: none; }
+            .ai-agent-panel {
+                right: 12px;
+                bottom: 136px;
+                width: calc(100vw - 24px);
+                max-height: calc(100vh - 150px);
+            }
+            .ai-agent-quick { grid-template-columns: 1fr 1fr; }
+        }
 </style>
 </head>
 <body>
@@ -886,6 +1131,39 @@
     <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备15026986号-4</a>
 </div>
 
+<div id="ai-agent" class="ai-agent-widget ai-agent-closed">
+    <button type="button" id="ai-agent-fab" class="ai-agent-fab" title="智能巡护助手">
+        <span class="ai-agent-person" aria-hidden="true">
+            <span class="ai-agent-head"></span>
+            <span class="ai-agent-body"></span>
+        </span>
+        <span class="ai-agent-status" aria-hidden="true"></span>
+    </button>
+    <div class="ai-agent-tip">问问当前地图</div>
+    <section id="ai-agent-panel" class="ai-agent-panel" aria-label="智能巡护助手">
+        <div class="ai-agent-panel-head">
+            <div class="ai-agent-title">
+                <span><i class="fas fa-robot"></i> 小舟智能体</span>
+                <small>读取当前图层、日期和观测统计</small>
+            </div>
+            <button type="button" class="ai-agent-close" id="ai-agent-close" title="收起"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ai-agent-quick">
+            <button type="button" data-ai-prompt="请解释当前地图上的观鸟记录概况，并指出最值得关注的区域。"><i class="fas fa-map-marker-alt"></i> 地图解读</button>
+            <button type="button" data-ai-prompt="请基于当前筛选范围生成一段适合汇报使用的监测摘要。"><i class="fas fa-file-alt"></i> 生成摘要</button>
+            <button type="button" data-ai-prompt="请分析当前记录中的保护等级结构，有哪些重点保护物种需要关注？"><i class="fas fa-shield-alt"></i> 保护分析</button>
+            <button type="button" data-ai-prompt="请给普通巡护人员提出下一步巡护建议，语言简洁可执行。"><i class="fas fa-route"></i> 巡护建议</button>
+        </div>
+        <div id="ai-agent-messages" class="ai-agent-messages">
+            <div class="ai-msg assistant">你好，我是小舟。你可以问我当前地图里的物种、区域热点、保护等级，或者让我生成一段汇报摘要。</div>
+        </div>
+        <div class="ai-agent-input">
+            <input id="ai-agent-input" type="text" placeholder="例如：当前哪些区域观测最集中？">
+            <button type="button" id="ai-agent-send" title="发送"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </section>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -917,6 +1195,7 @@
             this.loadStatic();
             this.loadData();
             this.initAuth();
+            this.initAIAssistant();
 
             // 启用拖拽
             this.makeDraggable('rank-panel');
@@ -1756,6 +2035,329 @@
 
             // 显示弹窗
             $('#detail-modal-overlay').addClass('active');
+        },
+
+        // === DeepSeek 智能巡护助手 ===
+        initAIAssistant: function() {
+            const widget = document.getElementById('ai-agent');
+            const fab = document.getElementById('ai-agent-fab');
+            const closeBtn = document.getElementById('ai-agent-close');
+            const sendBtn = document.getElementById('ai-agent-send');
+            const input = document.getElementById('ai-agent-input');
+            if (!widget || !fab || !sendBtn || !input) return;
+
+            localStorage.removeItem('yb_ai_agent_pos');
+            localStorage.removeItem('yb_ai_panel_pos');
+
+            fab.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this._aiDragMoved) {
+                    this._aiDragMoved = false;
+                    return;
+                }
+                this.openAIAssistant();
+            });
+            if (closeBtn) closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAIAssistant();
+            });
+            sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.askAI(input.value);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.askAI(input.value);
+                }
+            });
+            document.getElementById('ai-agent-panel')?.addEventListener('click', (e) => e.stopPropagation());
+            document.querySelectorAll('[data-ai-prompt]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.askAI(btn.dataset.aiPrompt || btn.textContent.trim());
+                });
+            });
+            this.makeAIAssistantDraggable();
+            this.makeAIPanelDraggable();
+            window.addEventListener('resize', () => {
+                if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel();
+            });
+        },
+
+        openAIAssistant: function() {
+            const widget = document.getElementById('ai-agent');
+            if (!widget) return;
+            widget.classList.remove('ai-agent-closed');
+            widget.dataset.open = 'true';
+            this.positionAIPanel();
+            setTimeout(() => {
+                const input = document.getElementById('ai-agent-input');
+                if (input) input.focus();
+            }, 120);
+        },
+
+        closeAIAssistant: function() {
+            const widget = document.getElementById('ai-agent');
+            if (!widget) return;
+            widget.classList.add('ai-agent-closed');
+            widget.dataset.open = 'false';
+        },
+
+        toggleAIAssistant: function(forceOpen) {
+            const widget = document.getElementById('ai-agent');
+            if (!widget) return;
+            const open = forceOpen === undefined ? widget.classList.contains('ai-agent-closed') : forceOpen;
+            if (open) {
+                this.openAIAssistant();
+            } else {
+                this.closeAIAssistant();
+            }
+        },
+
+        positionAIPanel: function(force = false) {
+            const widget = document.getElementById('ai-agent');
+            const panel = document.getElementById('ai-agent-panel');
+            if (!widget || !panel) return;
+
+            const saved = localStorage.getItem('yb_ai_panel_pos');
+            if (saved && !force) {
+                try {
+                    const pos = JSON.parse(saved);
+                    if (Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+                        const left = Math.max(10, Math.min(pos.left, window.innerWidth - panel.offsetWidth - 10));
+                        const top = Math.max(10, Math.min(pos.top, window.innerHeight - panel.offsetHeight - 10));
+                        panel.style.left = `${left}px`;
+                        panel.style.top = `${top}px`;
+                        panel.style.right = 'auto';
+                        panel.style.bottom = 'auto';
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            panel.style.left = 'auto';
+            panel.style.top = 'auto';
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+            const widgetRect = widget.getBoundingClientRect();
+            const panelWidth = panel.offsetWidth || 360;
+            const panelHeight = panel.offsetHeight || 420;
+            const gap = 14;
+            let left = widgetRect.right - panelWidth;
+            let top = widgetRect.top - panelHeight - gap;
+
+            if (top < 10) top = widgetRect.bottom + gap;
+            left = Math.max(10, Math.min(left, window.innerWidth - panelWidth - 10));
+            top = Math.max(10, Math.min(top, window.innerHeight - panelHeight - 10));
+
+            panel.style.left = `${left}px`;
+            panel.style.top = `${top}px`;
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+        },
+
+        makeAIAssistantDraggable: function() {
+            const widget = document.getElementById('ai-agent');
+            const handle = document.getElementById('ai-agent-fab');
+            if (!widget || !handle) return;
+            let dragging = false;
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+            handle.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                dragging = true;
+                this._aiDragMoved = false;
+                const rect = widget.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                widget.style.left = `${rect.left}px`;
+                widget.style.top = `${rect.top}px`;
+                widget.style.right = 'auto';
+                widget.style.bottom = 'auto';
+                handle.setPointerCapture(e.pointerId);
+            });
+
+            handle.addEventListener('pointermove', (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                if (Math.abs(dx) + Math.abs(dy) > 6) this._aiDragMoved = true;
+                const rect = widget.getBoundingClientRect();
+                const maxLeft = window.innerWidth - rect.width - 8;
+                const maxTop = window.innerHeight - rect.height - 8;
+                const left = clamp(startLeft + dx, 8, Math.max(8, maxLeft));
+                const top = clamp(startTop + dy, 8, Math.max(8, maxTop));
+                widget.style.left = `${left}px`;
+                widget.style.top = `${top}px`;
+                if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel(true);
+            });
+
+            handle.addEventListener('pointerup', (e) => {
+                if (!dragging) return;
+                dragging = false;
+                try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+                const rect = widget.getBoundingClientRect();
+                localStorage.setItem('yb_ai_agent_pos', JSON.stringify({ left: rect.left, top: rect.top }));
+                setTimeout(() => { this._aiDragMoved = false; }, 80);
+            });
+        },
+
+        makeAIPanelDraggable: function() {
+            const panel = document.getElementById('ai-agent-panel');
+            const handle = panel ? panel.querySelector('.ai-agent-panel-head') : null;
+            if (!panel || !handle) return;
+
+            let dragging = false;
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+
+            handle.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('.ai-agent-close')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                dragging = true;
+                const rect = panel.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                panel.style.left = `${rect.left}px`;
+                panel.style.top = `${rect.top}px`;
+                panel.style.right = 'auto';
+                panel.style.bottom = 'auto';
+                handle.setPointerCapture(e.pointerId);
+            });
+
+            handle.addEventListener('pointermove', (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const maxLeft = window.innerWidth - panel.offsetWidth - 10;
+                const maxTop = window.innerHeight - panel.offsetHeight - 10;
+                const left = clamp(startLeft + dx, 10, Math.max(10, maxLeft));
+                const top = clamp(startTop + dy, 10, Math.max(10, maxTop));
+                panel.style.left = `${left}px`;
+                panel.style.top = `${top}px`;
+            });
+
+            handle.addEventListener('pointerup', (e) => {
+                if (!dragging) return;
+                dragging = false;
+                try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+                const rect = panel.getBoundingClientRect();
+                localStorage.setItem('yb_ai_panel_pos', JSON.stringify({ left: rect.left, top: rect.top }));
+            });
+        },
+
+        escapeAIText: function(text) {
+            return String(text || '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch])).replace(/\n/g, '<br>');
+        },
+
+        addAIMessage: function(role, text, extraClass) {
+            const box = document.getElementById('ai-agent-messages');
+            if (!box) return null;
+            const msg = document.createElement('div');
+            msg.className = `ai-msg ${role}${extraClass ? ' ' + extraClass : ''}`;
+            msg.innerHTML = this.escapeAIText(text);
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+            return msg;
+        },
+
+        askAI: async function(rawMessage) {
+            const input = document.getElementById('ai-agent-input');
+            const message = String(rawMessage || '').trim();
+            if (!message) return;
+            this.toggleAIAssistant(true);
+            if (input) input.value = '';
+            this.addAIMessage('user', message);
+            const loading = this.addAIMessage('assistant', '正在读取当前地图数据并生成回答...', 'loading');
+
+            try {
+                const response = await fetch(`${this.api}/ai/chat/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        page_context: this.getAIPageContext()
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || '智能体接口暂时不可用');
+                if (loading) loading.remove();
+                this.addAIMessage('assistant', data.answer || '我拿到了数据，但没有生成有效回答。');
+            } catch (err) {
+                if (loading) loading.remove();
+                this.addAIMessage('assistant', `智能体暂时没能完成回答：${err.message || err}。如果连续出现，请刷新页面后再试。`);
+            }
+        },
+
+        getActiveLayerNames: function() {
+            const names = [];
+            document.querySelectorAll('.layer-panel input[type="checkbox"], .layer-control input[type="checkbox"], input[type="checkbox"]').forEach(input => {
+                if (!input.checked) return;
+                const label = input.closest('label') || input.parentElement;
+                const text = label ? label.textContent.replace(/\s+/g, ' ').trim() : input.id;
+                if (text && !names.includes(text)) names.push(text);
+            });
+            return names;
+        },
+
+        getAITopSpecies: function(limit = 6) {
+            const rows = {};
+            const records = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
+            (records || []).forEach(record => {
+                const enriched = this.enrichObservation ? this.enrichObservation(record) : record;
+                const species = enriched.species_info || enriched.species || {};
+                const name = species.name_cn || species.name_zh || record.species_name || record.species || '未知物种';
+                const count = Number(record.count || 1) || 1;
+                const rawLevel = species.protection_level || record.species_protection || '';
+                if (!rows[name]) rows[name] = {
+                    name,
+                    count: 0,
+                    protection: this.getProtectionLabel ? this.getProtectionLabel(rawLevel) : String(rawLevel || '')
+                };
+                rows[name].count += count;
+            });
+            return Object.values(rows).sort((a, b) => b.count - a.count).slice(0, limit);
+        },
+
+        getAITopZones: function(limit = 6) {
+            const rows = {};
+            const records = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
+            (records || []).forEach(record => {
+                const zone = record.zone_name || record.zone || '未知区域';
+                const count = Number(record.count || 1) || 1;
+                rows[zone] = (rows[zone] || 0) + count;
+            });
+            return Object.keys(rows).map(name => ({ name, count: rows[name] }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, limit);
+        },
+
+        getAIPageContext: function() {
+            const center = this.map ? this.map.getCenter() : null;
+            return {
+                page: 'home_map',
+                start_date: document.getElementById('d-start')?.value || '',
+                end_date: document.getElementById('d-end')?.value || '',
+                active_layers: this.getActiveLayerNames(),
+                map_center: center ? { lat: center.lat, lng: center.lng, zoom: this.map.getZoom() } : null,
+                stats: this._statsData || {},
+                top_species: this.getAITopSpecies(6),
+                top_zones: this.getAITopZones(6),
+                heatmap_active: !!(this.heatmap && this.heatmap.active)
+            };
         },
 
         closeDetailModal: function() {
