@@ -44,6 +44,25 @@
             color: var(--c-dark);
             font-weight: 600;
         }
+        .region-tooltip {
+            border: none;
+            border-radius: 999px;
+            background: rgba(31,111,120,0.9);
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.16);
+        }
+        .region-popup {
+            min-width: 140px;
+            color: var(--c-dark);
+            line-height: 1.65;
+        }
+        .region-popup strong {
+            display: block;
+            color: #1f6f78;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
 
         /* 玻璃面板通用 */
         .glass-panel {
@@ -121,7 +140,30 @@
         /* 筛选条 */
         #filter-bar {
             position: absolute; top: 80px; right: 20px; padding: 8px 12px; z-index: 1000;
-            display: flex; gap: 8px; align-items: center;
+            display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+            flex-wrap: wrap; max-width: calc(100vw - 340px);
+        }
+        .protection-filter {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px; border-radius: 8px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(24,65,59,0.08);
+        }
+        .topic-btn {
+            border: none; border-radius: 7px; padding: 5px 8px;
+            background: transparent; color: #566; cursor: pointer;
+            font-size: 12px; font-weight: 700; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 5px;
+            white-space: nowrap;
+        }
+        .topic-btn::before {
+            content: ''; width: 8px; height: 8px; border-radius: 50%;
+            background: var(--topic-color, #58C96D);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.85);
+        }
+        .topic-btn.active {
+            background: rgba(22,65,59,0.92); color: #fff;
+            box-shadow: 0 6px 16px rgba(21,54,51,0.16);
         }
         .date-inp { border: 1px solid #ddd; padding: 5px; border-radius: 4px; font-size: 12px; width: 110px; background: #f8f9fa; }
         .btn-go { background: var(--c-aqua); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition:0.2s; }
@@ -152,6 +194,7 @@
             background: linear-gradient(90deg, rgba(0,173,181,0.1), #00adb5, #f39c12, #e74c3c);
         }
         .heat-selecting #map { cursor: crosshair; }
+        .leaflet-interactive:focus { outline: none; }
 
         /* === 面板初始位置 === */
         /* 注意：拖动后这些 bottom/right 属性会被 JS 覆盖为 top/left */
@@ -542,6 +585,13 @@
                 gap: 8px; z-index: 1002;
             }
             #filter-bar > span { display: none; }
+            .protection-filter {
+                grid-column: 1 / 5;
+                overflow-x: auto; justify-content: flex-start;
+                border-radius: 14px; scrollbar-width: none;
+            }
+            .protection-filter::-webkit-scrollbar { display: none; }
+            .topic-btn { height: 32px; padding: 0 9px; font-size: 11px; flex: 0 0 auto; }
             .date-inp {
                 width: 100%; min-width: 0; height: 38px; box-sizing: border-box;
                 border: 1px solid rgba(24,65,59,0.09); border-radius: 13px;
@@ -942,6 +992,13 @@
 </div>
 
 <div id="filter-bar" class="glass-panel" style="flex-direction:row">
+    <div class="protection-filter" aria-label="保护等级筛选">
+        <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
+        <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
+        <button type="button" class="topic-btn" data-protection-filter="国家二级" onclick="app.setProtectionFilter('国家二级')" style="--topic-color:#F39C12">国家二级</button>
+        <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有动物</button>
+        <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危/其他</button>
+    </div>
     <input type="date" id="d-start" class="date-inp">
     <span style="color:#999">-</span>
     <input type="date" id="d-end" class="date-inp">
@@ -1009,9 +1066,9 @@
             </div>
         </div>
 
-        <!-- 图表行2：月度趋势 -->
+        <!-- 图表行2：年度趋势 -->
         <div class="chart-card">
-            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 月度观测趋势（近6个月）</div>
+            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 年度观测趋势（近6年）</div>
             <canvas id="chart-trend" style="max-height:70px;"></canvas>
         </div>
 
@@ -1171,13 +1228,17 @@
     const app = {
         api: '/api',
         map: null,
-        layers: { station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
+        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         speciesData: [],
         speciesById: {},
         speciesByName: {},
         recordMarkers: {},
+        recordRenderer: null,
+        selectedRegionLayer: null,
+        _hasInitialView: false,
+        protectionFilter: 'all',
         _statsData: { total: 0, species: 0, protected: 0 },
         heatmap: {
             active: false,
@@ -1185,11 +1246,16 @@
             draftRect: null,
             boundsRect: null,
             layer: null,
+            autoLayer: null,
+            regionBounds: null,
+            autoDismissed: false,
+            autoDismissZoom: null,
             bounds: null
         },
 
         init: function() {
             this.initMap();
+            this.loadRegionBoundaries();
             this.initHeatmapTools();
             this.initDates();
             this.loadStatic();
@@ -1300,10 +1366,13 @@
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [34.85, 113.55], zoom: 10, layers: [vec, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            this.recordRenderer = L.canvas({ padding: 0.45 });
+            this.map.createPane('regionPane');
+            this.map.getPane('regionPane').style.zIndex = 360;
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img },
-                { "图层注记": labelLayer, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { "图层注记": labelLayer, "行政区界": this.layers.region, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
             setTimeout(() => {
@@ -1335,6 +1404,120 @@
                 }
             });
             L.control.zoom({ position: 'topleft' }).addTo(this.map);
+            this.map.on('zoomend', () => this.updateAutoHeatmapByZoom());
+        },
+
+        escapeHtml: function(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char]);
+        },
+
+        loadRegionBoundaries: async function() {
+            const regionStyle = {
+                pane: 'regionPane',
+                color: '#1f6f78',
+                weight: 1.8,
+                opacity: 0.75,
+                fillColor: '#4bb7bd',
+                fillOpacity: 0.06,
+                dashArray: '6,4'
+            };
+            const regionHoverStyle = {
+                weight: 2.4,
+                color: '#16a0a8',
+                opacity: 0.95,
+                fillOpacity: 0.16,
+                dashArray: '6,4'
+            };
+
+            try {
+                const response = await fetch('/static/app_monitor/geo/region_boundary.geojson');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                this.layers.region.clearLayers();
+                const regionLayer = L.geoJSON(data, {
+                    pane: 'regionPane',
+                    style: regionStyle,
+                    onEachFeature: (feature, layer) => {
+                        const props = feature.properties || {};
+                        const cityName = this.escapeHtml(props.city_name || '行政区');
+                        const cityCode = this.escapeHtml(props.city_code || '-');
+                        const provinceName = this.escapeHtml(props.province_name || '-');
+
+                        layer.bindTooltip(cityName, {
+                            sticky: true,
+                            direction: 'top',
+                            className: 'region-tooltip'
+                        });
+                        layer.bindPopup(`
+                            <div class="region-popup">
+                                <strong>${cityName}</strong>
+                                <div>行政区代码：${cityCode}</div>
+                                <div>所属省份：${provinceName}</div>
+                            </div>
+                        `);
+                        layer.on({
+                            mouseover: (event) => event.target.setStyle(regionHoverStyle),
+                            mouseout: (event) => {
+                                if (event.target !== this.selectedRegionLayer) {
+                                    event.target.setStyle(regionStyle);
+                                }
+                            },
+                            click: (event) => {
+                                if (this.selectedRegionLayer && this.selectedRegionLayer !== event.target) {
+                                    this.selectedRegionLayer.setStyle(regionStyle);
+                                }
+                                this.selectedRegionLayer = event.target;
+                                event.target.setStyle(regionHoverStyle);
+                                if (event.originalEvent) event.originalEvent.target.blur?.();
+                            }
+                        });
+                    }
+                }).addTo(this.layers.region);
+
+                const regionBounds = regionLayer.getBounds();
+                if (regionBounds.isValid() && !this._hasInitialView) {
+                    this.heatmap.regionBounds = regionBounds;
+                    this.fitDefaultRegionView(regionBounds);
+                    this._hasInitialView = true;
+                }
+                this.updateAutoHeatmapByZoom();
+            } catch (error) {
+                console.warn('行政区界加载失败：', error);
+            }
+        },
+
+        fitDefaultRegionView: function(regionBounds) {
+            if (!regionBounds || !regionBounds.isValid()) return;
+            const zhengzhouLng = 113.625;
+            const shiftCenterDown = () => {
+                const size = this.map.getSize();
+                const shiftedCenter = this.map.containerPointToLatLng([size.x / 2, size.y * 0.45]);
+                this.map.setView([shiftedCenter.lat, zhengzhouLng], this.map.getZoom(), { animate: false });
+            };
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+                this.map.fitBounds(regionBounds.pad(0.01), { animate: false, maxZoom: 10.75 });
+                this.map.setZoom(Math.min(this.map.getZoom() + 1, 10.75), { animate: false });
+                shiftCenterDown();
+                this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
+                return;
+            }
+            this.map.fitBounds(regionBounds.pad(0.002), {
+                animate: false,
+                maxZoom: 10.75,
+                paddingTopLeft: [390, 96],
+                paddingBottomRight: [520, 108]
+            });
+            this.map.setZoom(Math.min(this.map.getZoom() + 1, 10.75), { animate: false });
+            shiftCenterDown();
+            this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
         },
 
         initHeatmapTools: function() {
@@ -1393,6 +1576,10 @@
                 this.map.removeLayer(this.heatmap.layer);
                 this.heatmap.layer = null;
             }
+            if (this.heatmap.autoLayer) {
+                this.map.removeLayer(this.heatmap.autoLayer);
+                this.heatmap.autoLayer = null;
+            }
             if (this.heatmap.draftRect) {
                 this.map.removeLayer(this.heatmap.draftRect);
                 this.heatmap.draftRect = null;
@@ -1402,8 +1589,10 @@
                 this.heatmap.boundsRect = null;
             }
             this.heatmap.bounds = null;
+            this.heatmap.autoDismissed = true;
             this.toggleHeatSelection(false);
             $('#heat-info').hide();
+            this.syncRecordMarkerVisibility();
         },
 
         getObservationPosition: function(item) {
@@ -1427,16 +1616,42 @@
         },
 
         getProtectionGroup: function(level) {
-            const text = (level || '').trim();
-            if (!text || text === '无') return '无危/其他';
-            if (text === 'Ⅰ' || text === 'I' || text.includes('一级')) return '国家一级';
-            if (text === 'Ⅱ' || text === 'II' || text.includes('二级')) return '国家二级';
-            if (text.includes('三有')) return '三有动物';
+            const text = String(level || '').trim();
+            const compact = text.replace(/\s+/g, '');
+            const upper = compact.toUpperCase();
+            if (!compact || ['-', '--', '—', '无', '无保护', '暂无', '暂无等级', '未标注', 'NAN', 'NONE', 'NULL'].includes(upper)) return '无危/其他';
+            if (upper === 'Ⅱ' || upper === 'II' || upper === '2' || compact.includes('二级')) return '国家二级';
+            if (upper === 'Ⅰ' || upper === 'I' || upper === '1' || compact.includes('一级')) return '国家一级';
+            if (compact.includes('三有')) return '三有动物';
             return '无危/其他';
         },
 
         getProtectionLabel: function(level) {
             return this.getProtectionGroup(level);
+        },
+
+        getProtectionColor: function(group) {
+            return {
+                '国家一级': '#E84B43',
+                '国家二级': '#F39C12',
+                '三有动物': '#4A9BE0',
+                '无危/其他': '#58C96D'
+            }[group] || '#58C96D';
+        },
+
+        matchesProtectionFilter: function(record) {
+            if (!this.protectionFilter || this.protectionFilter === 'all') return true;
+            const species = this.getSpeciesForRecord(record);
+            const rawLevel = (species && species.protection_level) || record.species_protection || '';
+            return this.getProtectionGroup(rawLevel) === this.protectionFilter;
+        },
+
+        setProtectionFilter: function(filter) {
+            this.protectionFilter = filter || 'all';
+            document.querySelectorAll('[data-protection-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.protectionFilter === this.protectionFilter);
+            });
+            this.refresh();
         },
 
         enrichObservation: function(record) {
@@ -1454,11 +1669,12 @@
             end.setHours(23, 59, 59);
             return this.data.filter(item => {
                 const time = new Date(item.observation_time);
-                return time >= start && time <= end;
+                return time >= start && time <= end && this.matchesProtectionFilter(item);
             });
         },
 
         buildHeatmapForBounds: function(bounds) {
+            this.clearAutoHeatmap();
             const points = [];
             let totalBirds = 0;
             const speciesSet = new Set();
@@ -1496,6 +1712,67 @@
                 `外接矩形内共有 <strong>${points.length}</strong> 条记录，鸟类数量合计 <strong>${totalBirds}</strong> 只，涉及 <strong>${speciesSet.size}</strong> 个物种。`
             );
             this.map.fitBounds(bounds.pad(0.08));
+        },
+
+        clearAutoHeatmap: function() {
+            if (this.heatmap.autoLayer) {
+                this.map.removeLayer(this.heatmap.autoLayer);
+                this.heatmap.autoLayer = null;
+            }
+        },
+
+        buildAutoHeatmap: function() {
+            const points = [];
+            const latLngs = [];
+            this.getDateFilteredObservations().forEach(item => {
+                const pos = this.getObservationPosition(item);
+                if (!pos) return;
+                const weight = Math.max(1, parseInt(item.count || 1, 10));
+                points.push({ lat: pos.lat, lng: pos.lng, weight });
+                latLngs.push([pos.lat, pos.lng]);
+            });
+
+            this.clearAutoHeatmap();
+            if (!points.length) return;
+            const bounds = (this.heatmap.regionBounds && this.heatmap.regionBounds.isValid())
+                ? this.heatmap.regionBounds
+                : L.latLngBounds(latLngs);
+            this.heatmap.autoLayer = this.createCanvasHeatLayer(points, bounds).addTo(this.map);
+        },
+
+        syncRecordMarkerVisibility: function() {
+            const zoom = this.map ? this.map.getZoom() : 10;
+            const lowZoom = zoom <= 7;
+            const midZoom = zoom > 7 && zoom <= 9;
+            this.layers.record.eachLayer(layer => {
+                if (!layer.setStyle) return;
+                const group = layer.options.protectionGroup || '无危/其他';
+                const color = this.getProtectionColor(group);
+                layer.setStyle({
+                    fillColor: color,
+                    color: lowZoom ? 'rgba(255,255,255,0.45)' : '#fff',
+                    opacity: lowZoom ? 0.35 : 1,
+                    fillOpacity: lowZoom ? 0.18 : (midZoom ? Math.min(layer.options.baseFillOpacity || 0.8, 0.56) : (layer.options.baseFillOpacity || 0.8))
+                });
+            });
+        },
+
+        updateAutoHeatmapByZoom: function() {
+            if (!this.map || !this.data.length || this.heatmap.bounds) {
+                this.syncRecordMarkerVisibility();
+                return;
+            }
+            const zoom = this.map.getZoom();
+            const autoDismissZoom = this.heatmap.autoDismissZoom || 9;
+            if (zoom <= autoDismissZoom && !this.heatmap.autoDismissed) {
+                this.buildAutoHeatmap();
+            } else {
+                if (zoom > autoDismissZoom && this.heatmap.autoLayer) {
+                    this.heatmap.autoDismissed = true;
+                }
+                this.clearAutoHeatmap();
+            }
+            this.syncRecordMarkerVisibility();
         },
 
         createCanvasHeatLayer: function(points, bounds) {
@@ -1612,24 +1889,21 @@
         },
 
         refresh: function() {
-            const start = new Date(document.getElementById('d-start').value);
-            const end = new Date(document.getElementById('d-end').value); end.setHours(23,59,59);
             this.layers.record.clearLayers();
             this.recordMarkers = {};
 
             const stats = {};
             let count = 0, pCount = 0;
-            const bounds = [];
             const filteredLogs = [];
+            const filteredRecords = this.getDateFilteredObservations();
 
-            this.data.forEach(item => {
+            filteredRecords.forEach(item => {
                 const p = item;
-                const time = new Date(p.observation_time);
                 const pos = this.getObservationPosition(p);
                 const lat = pos ? pos.lat : null;
                 const lng = pos ? pos.lng : null;
 
-                if (lat && lng && time >= start && time <= end) {
+                if (lat && lng) {
                     count++;
                     filteredLogs.push(p);
 
@@ -1647,32 +1921,46 @@
                     if (levelGroup === '国家一级') badgeClass = 'bg-red';
                     else if (levelGroup === '国家二级') badgeClass = 'bg-orange';
 
-                    const color = (p.status === 'approved') ? '#2ECC71' : (p.status === 'pending' ? '#F39C12' : '#E74C3C');
-                    const marker = L.circleMarker([lat, lng], { radius: 6, fillColor: color, color: '#fff', weight: 1, fillOpacity: 0.8 })
+                    const color = this.getProtectionColor(levelGroup);
+                    const isApproved = p.status === 'approved' || p.status === '已核验' || p.status === 1;
+                    const isPending = p.status === 'pending' || p.status === '待审核';
+                    const fillOpacity = isApproved ? 0.82 : (isPending ? 0.48 : 0.22);
+                    const marker = L.circleMarker([lat, lng], {
+                        renderer: this.recordRenderer,
+                        radius: levelGroup === '国家一级' ? 7 : 6,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: levelGroup === '国家一级' ? 2 : 1,
+                        opacity: isApproved ? 1 : 0.75,
+                        fillOpacity: fillOpacity,
+                        dashArray: isApproved ? null : '4,3',
+                        protectionGroup: levelGroup,
+                        baseFillOpacity: fillOpacity
+                    })
                      .on('click', () => this.openDetailModal(p, stats))
                      .addTo(this.layers.record);
                     if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
-
-                    bounds.push([lat, lng]);
                 }
             });
-
-            if(bounds.length) this.map.fitBounds(bounds);
 
             $('#s-records').text(count);
             $('#s-species').text(Object.keys(stats).length);
             $('#s-protected').text(pCount);
             $('#s-approved').text(filteredLogs.filter(l => l.status === 'approved').length);
 
-            // 更新面板顶部统计
-            const totalAll = this.data.filter(d => d.status === 'approved').length;
-            const speciesAll = new Set(this.data.filter(d => d.status === 'approved').map(d => d.species_name)).size;
-            const protectedAll = this.data.filter(d => {
+            // 更新面板顶部统计：跟随当前日期和保护等级专题筛选
+            const approvedLogs = filteredLogs.filter(d => d.status === 'approved' || d.status === '已核验' || d.status === 1);
+            const totalAll = approvedLogs.length;
+            const speciesAll = new Set(approvedLogs.map(d => {
+                const species = this.getSpeciesForRecord(d);
+                return (species && species.name_cn) || d.species_name || '未知物种';
+            })).size;
+            const protectedAll = approvedLogs.filter(d => {
                 const species = this.getSpeciesForRecord(d);
                 const group = this.getProtectionGroup((species && species.protection_level) || d.species_protection || '');
-                return d.status === 'approved' && (group === '国家一级' || group === '国家二级');
+                return group === '国家一级' || group === '国家二级';
             }).length;
-            app._statsData = { total: totalAll, species: speciesAll, protected: protectedAll };
+            app._statsData = { total: totalAll, species: speciesAll, protected: protectedAll, protection_filter: this.protectionFilter };
 
             $('#stat-total').text(totalAll);
             $('#stat-species').text(speciesAll);
@@ -1682,6 +1970,8 @@
             this.renderRealTimeLogs(filteredLogs);
             if (this.heatmap.bounds) {
                 this.buildHeatmapForBounds(this.heatmap.bounds);
+            } else {
+                this.updateAutoHeatmapByZoom();
             }
         },
 
@@ -1808,26 +2098,27 @@
                 }
             });
 
-            // === 3. 月度趋势图 ===
-            const months = [];
-            const monthCounts = {};
+            // === 3. 年度趋势图 ===
+            const years = [];
+            const yearCounts = {};
+            const currentYear = new Date().getFullYear();
             for (let i = 5; i >= 0; i--) {
-                const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
-                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                months.push(`${d.getMonth()+1}月`);
-                monthCounts[key] = 0;
+                const year = String(currentYear - i);
+                years.push(year);
+                yearCounts[year] = 0;
             }
-            this.data.forEach(item => {
-                const key = item.observation_time ? item.observation_time.slice(0, 7) : '';
-                if (key && monthCounts[key] !== undefined) monthCounts[key]++;
+            const trendSource = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
+            trendSource.forEach(item => {
+                const key = item.observation_time ? String(item.observation_time).slice(0, 4) : '';
+                if (key && yearCounts[key] !== undefined) yearCounts[key]++;
             });
             if(this.charts.trend) this.charts.trend.destroy();
             this.charts.trend = new Chart(document.getElementById('chart-trend'), {
                 type: 'line',
                 data: {
-                    labels: months,
+                    labels: years,
                     datasets: [{
-                        data: Object.values(monthCounts),
+                        data: years.map(year => yearCounts[year]),
                         borderColor: '#00ADB5',
                         backgroundColor: 'rgba(0,173,181,0.1)',
                         fill: true,
@@ -2351,6 +2642,7 @@
                 page: 'home_map',
                 start_date: document.getElementById('d-start')?.value || '',
                 end_date: document.getElementById('d-end')?.value || '',
+                protection_filter: this.protectionFilter || 'all',
                 active_layers: this.getActiveLayerNames(),
                 map_center: center ? { lat: center.lat, lng: center.lng, zoom: this.map.getZoom() } : null,
                 stats: this._statsData || {},

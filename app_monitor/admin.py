@@ -7,6 +7,7 @@ from import_export.widgets import ForeignKeyWidget
 # 👇 引入所有用到的模型 (记得加 Product)
 from .models import SpeciesInfo, WetlandZone, MonitoringRoute, UserProfile, ObservationRecord, AIDetectionResult, \
     Product, SpeciesImage
+from .protection import normalize_protection_level
 from datetime import datetime
 
 # ====================
@@ -148,10 +149,8 @@ class ObservationRecordResource(resources.ModelResource):
                 'name_latin': str(row.get('latin_name', '')).strip(),
                 'order': str(row.get('order_name', '')).strip(),
                 'family': str(row.get('family_name', '')).strip(),
-                'protection_level': str(row.get('protection_level', '')).strip(),
+                'protection_level': normalize_protection_level(row.get('protection_level', '')),
             }
-            if species_defaults['protection_level'] in ['nan', 'NaN', 'None']:
-                species_defaults['protection_level'] = ''
 
             SpeciesInfo.objects.update_or_create(
                 name_cn=name_cn,

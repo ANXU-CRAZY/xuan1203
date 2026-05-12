@@ -1,6 +1,7 @@
 from rest_framework import serializers
 # 引入所有需要的模型
 from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
+from .protection import get_protection_group, normalize_protection_level
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 
@@ -69,6 +70,7 @@ class SpeciesImageSerializer(serializers.ModelSerializer):
 
 
 class SpeciesInfoSerializer(serializers.ModelSerializer):
+    protection_level = serializers.SerializerMethodField()
     observation_count = serializers.SerializerMethodField()
     last_observed = serializers.SerializerMethodField()
     iucn_status = serializers.SerializerMethodField()
@@ -99,15 +101,18 @@ class SpeciesInfoSerializer(serializers.ModelSerializer):
             return latest.observation_time.strftime('%Y-%m-%d')
         return None
 
+    def get_protection_level(self, obj):
+        return normalize_protection_level(obj.protection_level)
+
     def get_iucn_status(self, obj):
-        level = obj.protection_level or ''
-        if '一级' in level or 'Ⅰ' in level:
-            return {'code': 'EN', 'label': '濒危', 'color': '#e74c3c', 'desc': '野外濒危物种，数量极为稀少'}
-        if '二级' in level or 'Ⅱ' in level:
-            return {'code': 'VU', 'label': '易危', 'color': '#f39c12', 'desc': '易受威胁，需保护关注'}
-        if '三有' in level:
-            return {'code': 'NT', 'label': '近危', 'color': '#3498db', 'desc': '数量下降，需监控'}
-        return {'code': 'LC', 'label': '无危', 'color': '#27ae60', 'desc': '种群稳定，无灭绝风险'}
+        group = get_protection_group(obj.protection_level)
+        if group == '国家一级':
+            return {'code': 'EN', 'label': '濒危', 'color': '#e74c3c', 'desc': '国家一级重点保护，需重点关注'}
+        if group == '国家二级':
+            return {'code': 'VU', 'label': '易危', 'color': '#f39c12', 'desc': '国家二级重点保护，需持续监测'}
+        if group == '三有动物':
+            return {'code': 'NT', 'label': '近危', 'color': '#3498db', 'desc': '国家三有保护动物，需规范记录'}
+        return {'code': 'LC', 'label': '无危', 'color': '#27ae60', 'desc': '暂无重点保护等级'}
 
     def get_article_count(self, obj):
         return 1
@@ -207,7 +212,7 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
     uploader_name = serializers.ReadOnlyField(source='uploader.username')
     species_name = serializers.ReadOnlyField(source='species.name_cn')
     species_id = serializers.ReadOnlyField(source='species.id')
-    species_protection = serializers.ReadOnlyField(source='species.protection_level')
+    species_protection = serializers.SerializerMethodField()
     zone_name = serializers.ReadOnlyField(source='zone.name')
     transect_name = serializers.SerializerMethodField()
 
@@ -284,6 +289,11 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
             if zone_name and zone_name in route_name:
                 return route_name
         return None
+
+    def get_species_protection(self, obj):
+        if obj.species:
+            return normalize_protection_level(obj.species.protection_level)
+        return ''
 
     def get_reporter_name(self, obj):
         # 逻辑：这行代码同时兼容了新数据(uploader)和旧数据(reporter)

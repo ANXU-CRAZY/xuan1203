@@ -633,11 +633,13 @@ function toOriginalUrl(thumbUrl) {
 }
 
 function normalizeProtection(level) {
-    const text = (level || '').trim();
-    if (!text || text === '无') return 'unknown';
-    if (text.includes('一级') || text.includes('Ⅰ') || text.includes('I')) return 'lv1';
-    if (text.includes('二级') || text.includes('Ⅱ') || text.includes('II')) return 'lv2';
-    if (text.includes('三有')) return 'lv3';
+    const text = String(level || '').trim();
+    const compact = text.replace(/\s+/g, '');
+    const upper = compact.toUpperCase();
+    if (!compact || ['-', '--', '—', '无', '无保护', '暂无', '暂无等级', '未标注', 'NAN', 'NONE', 'NULL'].includes(upper)) return 'unknown';
+    if (upper === 'Ⅱ' || upper === 'II' || upper === '2' || compact.includes('二级')) return 'lv2';
+    if (upper === 'Ⅰ' || upper === 'I' || upper === '1' || compact.includes('一级')) return 'lv1';
+    if (compact.includes('三有')) return 'lv3';
     return 'unknown';
 }
 

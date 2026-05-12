@@ -32,6 +32,7 @@ except ImportError:
 # === 引入模型 ===
 # 确保包含 Product, UserProfile
 from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
+from .protection import normalize_protection_level
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -358,7 +359,7 @@ def _species_articles(request):
         latin = species.name_latin or ''
         order = species.order or '未记录'
         family = species.family or '未记录'
-        protection = species.protection_level or '暂无保护级别'
+        protection = normalize_protection_level(species.protection_level) or '暂无保护级别'
         distribution = species.distribution_habit or ''
         wiki_url = _wikipedia_search_url(name, latin)
         commons_url = _commons_search_url(name, latin)
@@ -641,7 +642,7 @@ def _top_species_rows(queryset, limit=10):
         {
             'name': row['species__name_cn'] or '未知物种',
             'latin': row['species__name_latin'] or '',
-            'protection_level': row['species__protection_level'] or '未标注',
+            'protection_level': normalize_protection_level(row['species__protection_level']) or '未标注',
             'count': _safe_sum(row['total']),
             'records': row['records'],
         }
@@ -669,14 +670,14 @@ def _protection_rows(queryset):
         total=Sum('count'),
         records=Count('id'),
     ).order_by('-total')
-    return [
-        {
-            'level': row['species__protection_level'] or '无保护/未标注',
-            'count': _safe_sum(row['total']),
-            'records': row['records'],
-        }
-        for row in rows[:8]
-    ]
+    buckets = {}
+    for row in rows:
+        level = normalize_protection_level(row['species__protection_level']) or '无保护/未标注'
+        if level not in buckets:
+            buckets[level] = {'level': level, 'count': 0, 'records': 0}
+        buckets[level]['count'] += _safe_sum(row['total'])
+        buckets[level]['records'] += row['records']
+    return sorted(buckets.values(), key=lambda item: item['count'], reverse=True)[:8]
 
 
 def _build_ai_data_context(message, page_context):
@@ -710,7 +711,7 @@ def _build_ai_data_context(message, page_context):
             'name_latin': detected_species.name_latin,
             'order': detected_species.order,
             'family': detected_species.family,
-            'protection_level': detected_species.protection_level or '未标注',
+            'protection_level': normalize_protection_level(detected_species.protection_level) or '未标注',
             'distribution_habit': _clean_ai_text(detected_species.distribution_habit, 500),
         }
 

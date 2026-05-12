@@ -304,17 +304,31 @@ function resolveDetailCoverFallback(s) {
     return null;
 }
 
+function normalizeProtection(level) {
+    const text = String(level || '').trim();
+    const compact = text.replace(/\s+/g, '');
+    const upper = compact.toUpperCase();
+    if (!compact || ['-', '--', '—', '无', '无保护', '暂无', '暂无等级', '未标注', 'NAN', 'NONE', 'NULL'].includes(upper)) return 'unknown';
+    if (upper === 'Ⅱ' || upper === 'II' || upper === '2' || compact.includes('二级')) return 'lv2';
+    if (upper === 'Ⅰ' || upper === 'I' || upper === '1' || compact.includes('一级')) return 'lv1';
+    if (compact.includes('三有')) return 'lv3';
+    return 'unknown';
+}
+
 function getLevelBg(level) {
-    if (!level) return 'rgba(255,255,255,0.4)';
-    if (level.includes('一级')) return '#e74c3c';
-    if (level.includes('二级')) return '#f39c12';
-    if (level.includes('三有')) return '#27ae60';
+    const code = normalizeProtection(level);
+    if (code === 'lv1') return '#e74c3c';
+    if (code === 'lv2') return '#f39c12';
+    if (code === 'lv3') return '#27ae60';
     return 'rgba(255,255,255,0.4)';
 }
 
 function getLevelLabel(level) {
-    if (!level || level === '无') return '无保护';
-    return level;
+    const code = normalizeProtection(level);
+    if (code === 'lv1') return '国家一级重点保护野生动物';
+    if (code === 'lv2') return '国家二级重点保护野生动物';
+    if (code === 'lv3') return '国家三有保护动物';
+    return '无保护';
 }
 
 function cardGradient(name) {

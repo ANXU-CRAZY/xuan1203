@@ -4,6 +4,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 
 from app_monitor.models import SpeciesInfo
+from app_monitor.protection import normalize_protection_level
 
 
 class Command(BaseCommand):
@@ -64,11 +65,4 @@ class Command(BaseCommand):
             ))
 
     def _normalize_legacy_level(self, level):
-        text = (level or '').strip()
-        if text in ('Ⅰ', 'I', '国家一级', '一级'):
-            return '国家一级重点保护野生动物'
-        if text in ('Ⅱ', 'II', '国家二级', '二级'):
-            return '国家二级重点保护野生动物'
-        if text in ('三有', '三有动物'):
-            return '国家三有保护动物'
-        return text
+        return normalize_protection_level(level)

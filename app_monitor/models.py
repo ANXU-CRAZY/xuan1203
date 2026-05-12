@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .protection import normalize_protection_level
 
 
 # ====================
@@ -33,6 +34,10 @@ class SpeciesInfo(models.Model):
 
     def __str__(self):
         return self.name_cn
+
+    def save(self, *args, **kwargs):
+        self.protection_level = normalize_protection_level(self.protection_level)
+        super().save(*args, **kwargs)
 
 
 # ====================

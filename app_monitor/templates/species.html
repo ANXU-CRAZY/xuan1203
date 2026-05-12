@@ -995,24 +995,35 @@ function getEmoji(name) {
     return EMOJIS['default'];
 }
 
+function normalizeProtection(level) {
+    const text = String(level || '').trim();
+    const compact = text.replace(/\s+/g, '');
+    const upper = compact.toUpperCase();
+    if (!compact || ['-', '--', '—', '无', '无保护', '暂无', '暂无等级', '未标注', 'NAN', 'NONE', 'NULL'].includes(upper)) return 'unknown';
+    if (upper === 'Ⅱ' || upper === 'II' || upper === '2' || compact.includes('二级')) return 'lv2';
+    if (upper === 'Ⅰ' || upper === 'I' || upper === '1' || compact.includes('一级')) return 'lv1';
+    if (compact.includes('三有')) return 'lv3';
+    return 'unknown';
+}
+
 function getLevelClass(level) {
-    if (!level) return 'none';
-    if (level.includes('一级')) return 'lv1';
-    if (level.includes('二级')) return 'lv2';
-    if (level.includes('三有')) return 'lv3';
-    return 'none';
+    const code = normalizeProtection(level);
+    return code === 'unknown' ? 'none' : code;
 }
 
 function getLevelLabel(level) {
-    if (!level || level === '无') return '无保护';
-    return level;
+    const code = normalizeProtection(level);
+    if (code === 'lv1') return '国家一级重点保护野生动物';
+    if (code === 'lv2') return '国家二级重点保护野生动物';
+    if (code === 'lv3') return '国家三有保护动物';
+    return '无保护';
 }
 
 function getLevelBg(level) {
-    if (!level) return 'rgba(255,255,255,0.4)';
-    if (level.includes('一级')) return 'rgba(180,50,50,0.92)';
-    if (level.includes('二级')) return 'rgba(180,120,20,0.92)';
-    if (level.includes('三有')) return 'rgba(40,130,80,0.92)';
+    const code = normalizeProtection(level);
+    if (code === 'lv1') return 'rgba(180,50,50,0.92)';
+    if (code === 'lv2') return 'rgba(180,120,20,0.92)';
+    if (code === 'lv3') return 'rgba(40,130,80,0.92)';
     return 'rgba(255,255,255,0.4)';
 }
 
@@ -1184,10 +1195,10 @@ function setFilter(el, level) {
 
 function applyFilters() {
     let list = allSpecies;
-    if (currentFilter === '国家一级') list = list.filter(s => s.protection_level && s.protection_level.includes('一级'));
-    else if (currentFilter === '国家二级') list = list.filter(s => s.protection_level && s.protection_level.includes('二级'));
-    else if (currentFilter === '三有动物') list = list.filter(s => s.protection_level && s.protection_level.includes('三有'));
-    else if (currentFilter === '无保护') list = list.filter(s => !s.protection_level || s.protection_level === '无' || s.protection_level === '');
+    if (currentFilter === '国家一级') list = list.filter(s => normalizeProtection(s.protection_level) === 'lv1');
+    else if (currentFilter === '国家二级') list = list.filter(s => normalizeProtection(s.protection_level) === 'lv2');
+    else if (currentFilter === '三有动物') list = list.filter(s => normalizeProtection(s.protection_level) === 'lv3');
+    else if (currentFilter === '无保护') list = list.filter(s => normalizeProtection(s.protection_level) === 'unknown');
 
     if (searchKeyword) list = list.filter(s => {
         const haystack = [
@@ -1342,7 +1353,7 @@ async function loadSpecies() {
         allSpecies = dedupeSpeciesList(rawSpecies);
 
         const total = allSpecies.length;
-        const protected_ = allSpecies.filter(s => s.protection_level && s.protection_level !== '无' && s.protection_level !== '').length;
+        const protected_ = allSpecies.filter(s => normalizeProtection(s.protection_level) !== 'unknown').length;
         const totalObs = allSpecies.reduce((sum, s) => sum + (s.observation_count || 0), 0);
         const totalArticles = allSpecies.reduce((sum, s) => sum + (s.article_count || 0), 0);
 
