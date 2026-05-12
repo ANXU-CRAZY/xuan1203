@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.contrib.gis.geos import Point
 from leaflet.admin import LeafletGeoAdmin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
@@ -55,12 +56,14 @@ class ObservationRecordResource(resources.ModelResource):
     )
     observation_time = fields.Field(attribute='observation_time', column_name='date')
     count = fields.Field(attribute='count', column_name='abundance')
+    longitude = fields.Field(attribute='longitude', column_name='x')
+    latitude = fields.Field(attribute='latitude', column_name='y')
 
     class Meta:
         model = ObservationRecord
-        # 使用这三个字段组合来判断唯一性，防止重复导入
-        import_id_fields = ('species', 'zone', 'observation_time')
-        fields = ('species', 'zone', 'observation_time', 'count')
+        # 使用物种、点位、日期、记录坐标组合来判断唯一性，保留同一区域内不同经纬度的观测点。
+        import_id_fields = ('species', 'zone', 'observation_time', 'longitude', 'latitude')
+        fields = ('species', 'zone', 'observation_time', 'count', 'longitude', 'latitude')
         exclude = ('id',)
 
     def before_import(self, dataset, **kwargs):
@@ -182,6 +185,8 @@ class ObservationRecordResource(resources.ModelResource):
     def before_save_instance(self, instance, row, **kwargs):
         # CSV 导入的是历史监测数据，默认直接标记为已通过。
         instance.status = 'approved'
+        if instance.longitude is not None and instance.latitude is not None:
+            instance.location = Point(instance.longitude, instance.latitude, srid=4326)
 
 
 # (2) 其他 Resource

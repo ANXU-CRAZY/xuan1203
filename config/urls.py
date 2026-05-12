@@ -11,7 +11,7 @@ from app_monitor.views import (
     index_view, UserProfileViewSet, bird_recognition_page,
     ProductViewSet, SpeciesViewSet, RegisterViewSet,
     ArticleViewSet, SpeciesImageViewSet,
-    ai_chat,
+    ai_chat, map_observations,
 )
 
 # === 1. 注册 API 路由 ===
@@ -52,6 +52,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # API 接口
+    path('api/map-observations/', map_observations, name='map_observations'),
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口

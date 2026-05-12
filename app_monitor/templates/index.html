@@ -1404,7 +1404,11 @@
                 }
             });
             L.control.zoom({ position: 'topleft' }).addTo(this.map);
-            this.map.on('zoomend', () => this.updateAutoHeatmapByZoom());
+            this.map.on('moveend', () => this.scheduleVisibleRecordMarkers());
+            this.map.on('zoomend', () => {
+                this.updateAutoHeatmapByZoom();
+                this.scheduleVisibleRecordMarkers();
+            });
         },
 
         escapeHtml: function(value) {
@@ -1843,7 +1847,7 @@
         initDates: function() {
             const d = new Date();
             document.getElementById('d-end').valueAsDate = d;
-            document.getElementById('d-start').value = '2021-01-18';
+            document.getElementById('d-start').value = '2014-01-01';
         },
 
         loadStatic: function() {
@@ -1868,7 +1872,7 @@
 
         loadData: function() {
             $.when(
-                $.get(`${this.api}/observations/`),
+                $.get(`${this.api}/map-observations/`),
                 $.get(`${this.api}/species/`)
             ).done((obsRes, speciesRes) => {
                 const obsPayload = obsRes[0];
@@ -1886,6 +1890,67 @@
                 this.data.sort((a, b) => new Date(b.observation_time) - new Date(a.observation_time));
                 this.refresh();
             }).fail(() => console.error("API Error"));
+        },
+
+        getMarkerViewportBounds: function() {
+            if (!this.map) return null;
+            return this.map.getBounds().pad(0.18);
+        },
+
+        buildRecordMarker: function(p, stats) {
+            const pos = this.getObservationPosition(p);
+            if (!pos) return null;
+
+            const species = this.getSpeciesForRecord(p);
+            const rawLevel = (species && species.protection_level) || p.species_protection || "";
+            const levelGroup = this.getProtectionGroup(rawLevel);
+            const color = this.getProtectionColor(levelGroup);
+            const isApproved = p.status === 'approved' || p.status === '已核验' || p.status === 1;
+            const isPending = p.status === 'pending' || p.status === '待审核';
+            const fillOpacity = isApproved ? 0.82 : (isPending ? 0.48 : 0.22);
+
+            return L.circleMarker([pos.lat, pos.lng], {
+                renderer: this.recordRenderer,
+                radius: levelGroup === '国家一级' ? 7 : 6,
+                fillColor: color,
+                color: '#fff',
+                weight: levelGroup === '国家一级' ? 2 : 1,
+                opacity: isApproved ? 1 : 0.75,
+                fillOpacity: fillOpacity,
+                dashArray: isApproved ? null : '4,3',
+                protectionGroup: levelGroup,
+                baseFillOpacity: fillOpacity
+            }).on('click', () => this.openDetailModal(p, stats || this.currentStats || {}));
+        },
+
+        renderVisibleRecordMarkers: function() {
+            if (!this.layers || !this.layers.record || !this.currentFilteredRecords) return;
+            const bounds = this.getMarkerViewportBounds();
+            if (!bounds) return;
+
+            this.layers.record.clearLayers();
+            this.recordMarkers = {};
+
+            const zoom = this.map ? this.map.getZoom() : 10;
+            const maxMarkers = zoom <= 8 ? 1800 : (zoom <= 10 ? 4200 : 9000);
+            let rendered = 0;
+
+            for (const p of this.currentFilteredRecords) {
+                const pos = this.getObservationPosition(p);
+                if (!pos || !bounds.contains([pos.lat, pos.lng])) continue;
+                const marker = this.buildRecordMarker(p, this.currentStats || {});
+                if (!marker) continue;
+                marker.addTo(this.layers.record);
+                if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
+                rendered++;
+                if (rendered >= maxMarkers) break;
+            }
+            this.syncRecordMarkerVisibility();
+        },
+
+        scheduleVisibleRecordMarkers: function() {
+            window.clearTimeout(this._recordRenderTimer);
+            this._recordRenderTimer = window.setTimeout(() => this.renderVisibleRecordMarkers(), 80);
         },
 
         refresh: function() {
@@ -1916,32 +1981,12 @@
                     if(!stats[name]) stats[name] = { count: 0, level: level };
                     stats[name].count++;
                     if(levelGroup === '国家一级' || levelGroup === '国家二级') pCount++;
-
-                    let badgeClass = 'bg-green';
-                    if (levelGroup === '国家一级') badgeClass = 'bg-red';
-                    else if (levelGroup === '国家二级') badgeClass = 'bg-orange';
-
-                    const color = this.getProtectionColor(levelGroup);
-                    const isApproved = p.status === 'approved' || p.status === '已核验' || p.status === 1;
-                    const isPending = p.status === 'pending' || p.status === '待审核';
-                    const fillOpacity = isApproved ? 0.82 : (isPending ? 0.48 : 0.22);
-                    const marker = L.circleMarker([lat, lng], {
-                        renderer: this.recordRenderer,
-                        radius: levelGroup === '国家一级' ? 7 : 6,
-                        fillColor: color,
-                        color: '#fff',
-                        weight: levelGroup === '国家一级' ? 2 : 1,
-                        opacity: isApproved ? 1 : 0.75,
-                        fillOpacity: fillOpacity,
-                        dashArray: isApproved ? null : '4,3',
-                        protectionGroup: levelGroup,
-                        baseFillOpacity: fillOpacity
-                    })
-                     .on('click', () => this.openDetailModal(p, stats))
-                     .addTo(this.layers.record);
-                    if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
                 }
             });
+
+            this.currentFilteredRecords = filteredRecords;
+            this.currentStats = stats;
+            this.renderVisibleRecordMarkers();
 
             $('#s-records').text(count);
             $('#s-species').text(Object.keys(stats).length);

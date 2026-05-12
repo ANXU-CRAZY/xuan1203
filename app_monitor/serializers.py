@@ -253,17 +253,21 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
     # ---------------------------------------------------
 
     def get_x(self, obj):
-        # 逻辑：优先取 GIS 坐标点的 X，没有则取关联区域的经度
-        if hasattr(obj, 'location') and obj.location:
+        # 优先取观测记录自身坐标；没有时再回退到关联点位坐标。
+        if obj.location:
             return obj.location.x
+        if obj.longitude is not None:
+            return obj.longitude
         if obj.zone:
             return obj.zone.longitude
         return None
 
     def get_y(self, obj):
-        # 逻辑：优先取 GIS 坐标点的 Y，没有则取关联区域的纬度
-        if hasattr(obj, 'location') and obj.location:
+        # 优先取观测记录自身坐标；没有时再回退到关联点位坐标。
+        if obj.location:
             return obj.location.y
+        if obj.latitude is not None:
+            return obj.latitude
         if obj.zone:
             return obj.zone.latitude
         return None

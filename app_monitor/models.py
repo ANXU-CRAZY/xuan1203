@@ -130,6 +130,15 @@ class ObservationRecord(models.Model):
     observation_time = models.DateField(verbose_name="观测日期")
     count = models.IntegerField(default=1, verbose_name="数量")
     image = models.ImageField(upload_to='observations/', blank=True, null=True, verbose_name="现场照片")
+    longitude = models.FloatField(verbose_name="观测经度(x)", blank=True, null=True)
+    latitude = models.FloatField(verbose_name="观测纬度(y)", blank=True, null=True)
+    location = models.PointField(
+        verbose_name="观测位置",
+        srid=4326,
+        blank=True,
+        null=True,
+        help_text="优先用于首页观鸟记录定位；为空时回退到监测点位坐标"
+    )
     description = models.TextField(blank=True, null=True, verbose_name="描述")
     # 审核状态 (统一使用字符串枚举)
     STATUS_CHOICES = (
@@ -167,10 +176,58 @@ class ObservationRecord(models.Model):
     def __str__(self):
         return f"{self.observation_time} - {self.species.name_cn}"
 
+    def save(self, *args, **kwargs):
+        if self.location:
+            self.longitude = self.location.x
+            self.latitude = self.location.y
+        elif self.longitude is not None and self.latitude is not None:
+            self.location = Point(self.longitude, self.latitude, srid=4326)
+        super().save(*args, **kwargs)
+
 
 # ====================
 # 5. AI 识别历史记录
 # ====================
+class MapObservationCache(models.Model):
+    record = models.OneToOneField(
+        ObservationRecord,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='map_cache',
+        verbose_name="观测记录",
+    )
+    observation_time = models.DateField(db_index=True, verbose_name="观测日期")
+    count = models.IntegerField(default=1, verbose_name="数量")
+    status = models.CharField(max_length=10, db_index=True, verbose_name="审核状态")
+
+    species_id_cached = models.IntegerField(db_index=True, verbose_name="物种ID")
+    species_name = models.CharField(max_length=100, db_index=True, verbose_name="物种中文名")
+    species_latin = models.CharField(max_length=100, blank=True, verbose_name="物种拉丁名")
+    species_protection = models.CharField(max_length=30, blank=True, db_index=True, verbose_name="保护等级")
+
+    zone_id_cached = models.IntegerField(db_index=True, verbose_name="点位ID")
+    zone_name = models.CharField(max_length=100, db_index=True, verbose_name="点位名称")
+    transect_name = models.CharField(max_length=100, blank=True, verbose_name="样线名称")
+
+    longitude = models.FloatField(db_index=True, verbose_name="经度")
+    latitude = models.FloatField(db_index=True, verbose_name="纬度")
+    image_url = models.CharField(max_length=500, blank=True, verbose_name="图片地址")
+    description = models.TextField(blank=True, verbose_name="描述")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "首页点位缓存"
+        verbose_name_plural = "首页点位缓存"
+        indexes = [
+            models.Index(fields=['status', 'observation_time'], name='map_cache_status_time_idx'),
+            models.Index(fields=['species_name', 'observation_time'], name='map_cache_species_time_idx'),
+            models.Index(fields=['zone_name', 'observation_time'], name='map_cache_zone_time_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.observation_time} - {self.species_name} - {self.zone_name}"
+
+
 class AIDetectionResult(models.Model):
     image = models.ImageField(upload_to='ai_records/%Y/%m/', verbose_name="识别图片")
     species_name = models.CharField(max_length=50, verbose_name="识别结果", default="未知")

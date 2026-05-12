@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from datetime import timedelta
 from django.db.models import Sum, Q, Count  # 引入 Q 用于复杂查询
 from pathlib import Path
@@ -31,7 +32,7 @@ except ImportError:
 
 # === 引入模型 ===
 # 确保包含 Product, UserProfile
-from .models import ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
+from .models import MapObservationCache, ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from .protection import normalize_protection_level
 from django.contrib.auth.models import User
 
@@ -190,6 +191,61 @@ class ObservationViewSet(viewsets.ModelViewSet):
 # ==========================================
 # 4. 商品/积分商城视图 /api/products/
 # ==========================================
+@require_GET
+def map_observations(request):
+    rows = (
+        MapObservationCache.objects
+        .filter(status='approved')
+        .order_by('-observation_time', '-record_id')
+        .values(
+            'record_id',
+            'observation_time',
+            'count',
+            'status',
+            'species_id_cached',
+            'species_name',
+            'species_latin',
+            'species_protection',
+            'zone_id_cached',
+            'zone_name',
+            'transect_name',
+            'longitude',
+            'latitude',
+            'image_url',
+            'description',
+        )
+    )
+
+    data = []
+    for row in rows.iterator(chunk_size=5000):
+        lng = row['longitude']
+        lat = row['latitude']
+        data.append({
+            'id': row['record_id'],
+            'observation_time': row['observation_time'].isoformat() if row['observation_time'] else None,
+            'count': row['count'],
+            'status': row['status'],
+            'species': row['species_id_cached'],
+            'species_id': row['species_id_cached'],
+            'species_name': row['species_name'],
+            'species_latin': row['species_latin'],
+            'species_protection': row['species_protection'],
+            'zone': row['zone_id_cached'],
+            'zone_id': row['zone_id_cached'],
+            'zone_name': row['zone_name'],
+            'transect_name': row['transect_name'],
+            'x': lng,
+            'y': lat,
+            'lng': lng,
+            'lat': lat,
+            'longitude': lng,
+            'latitude': lat,
+            'image': row['image_url'],
+            'description': row['description'],
+        })
+    return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
