@@ -141,7 +141,10 @@
         #filter-bar {
             position: absolute; top: 80px; right: 20px; padding: 8px 12px; z-index: 1000;
             display: flex; gap: 8px; align-items: center; justify-content: flex-end;
-            flex-wrap: wrap; max-width: calc(100vw - 340px);
+            flex-direction: row; flex-wrap: wrap; max-width: calc(100vw - 340px);
+        }
+        .filter-tools {
+            display: inline-flex; align-items: center; gap: 8px;
         }
         .protection-filter {
             display: inline-flex; align-items: center; gap: 5px;
@@ -579,44 +582,60 @@
             }
 
             #filter-bar {
-                top: auto; left: 12px; right: 12px; bottom: 212px;
-                padding: 10px; border-radius: 20px;
-                display: grid; grid-template-columns: 1fr 1fr 44px 44px;
-                gap: 8px; z-index: 1002;
+                top: auto; left: 12px; right: 12px; bottom: 260px;
+                padding: 9px; border-radius: 20px;
+                display: flex; flex-direction: column !important; align-items: stretch;
+                gap: 8px; z-index: 1002; max-width: none;
             }
-            #filter-bar > span { display: none; }
             .protection-filter {
-                grid-column: 1 / 5;
+                width: 100%; box-sizing: border-box;
                 overflow-x: auto; justify-content: flex-start;
                 border-radius: 14px; scrollbar-width: none;
             }
             .protection-filter::-webkit-scrollbar { display: none; }
+            .filter-tools {
+                width: 100%; box-sizing: border-box;
+                display: flex; align-items: center; gap: 8px;
+                overflow-x: auto; overflow-y: hidden;
+                padding-bottom: 1px; scrollbar-width: none;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x proximity;
+            }
+            .filter-tools::-webkit-scrollbar { display: none; }
+            .filter-tools > span {
+                display: inline-flex !important; align-items: center;
+                flex: 0 0 auto; color: rgba(22,53,58,0.42) !important;
+                font-weight: 700;
+            }
             .topic-btn { height: 32px; padding: 0 9px; font-size: 11px; flex: 0 0 auto; }
             .date-inp {
-                width: 100%; min-width: 0; height: 38px; box-sizing: border-box;
+                width: 136px; min-width: 136px; flex: 0 0 136px; height: 38px; box-sizing: border-box;
                 border: 1px solid rgba(24,65,59,0.09); border-radius: 13px;
                 background: rgba(248,251,249,0.96); color: #16353a;
                 font-size: 13px; padding: 6px 9px;
+                scroll-snap-align: start;
             }
             .btn-go, .btn-clear {
-                width: 44px; height: 38px; padding: 0; border-radius: 13px;
+                width: 44px; min-width: 44px; flex: 0 0 44px; height: 38px; padding: 0; border-radius: 13px;
                 display: inline-flex; align-items: center; justify-content: center;
+                scroll-snap-align: start;
             }
             .btn-go { background: #00ADB5; box-shadow: 0 8px 18px rgba(0,173,181,0.25); }
             .btn-clear { background: rgba(24,65,59,0.08); border: none; color: #31565a; }
             .btn-heat {
-                grid-column: 1 / 4; height: 40px; border-radius: 14px;
+                flex: 0 0 116px; min-width: 116px; height: 38px; border-radius: 14px;
                 justify-content: center; background: linear-gradient(135deg, #f05b45, #d84242);
                 box-shadow: 0 10px 22px rgba(231,76,60,0.22);
+                white-space: nowrap; scroll-snap-align: start;
             }
             #heat-info {
-                top: auto; left: 12px; right: 12px; bottom: 322px;
+                top: auto; left: 12px; right: 12px; bottom: 370px;
                 min-width: 0; border-radius: 18px; font-size: 12px;
             }
 
             #rank-panel {
-                left: 12px !important; right: 12px !important; bottom: 74px !important;
-                top: auto !important; width: auto; height: 118px;
+                left: 12px !important; right: 12px !important; bottom: 118px !important;
+                top: auto !important; width: auto; height: 126px;
                 border-radius: 22px; z-index: 1001; overflow: hidden;
             }
             #rank-panel .panel-head {
@@ -669,8 +688,9 @@
             .brand span { max-width: 58vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .nav-btn { height: 34px; padding: 0 10px !important; font-size: 11px; }
             .nav-btn span { display: inline; }
-            #filter-bar { bottom: 202px; }
-            #rank-panel { height: 108px; }
+            #filter-bar { bottom: 246px; }
+            #heat-info { bottom: 354px; }
+            #rank-panel { bottom: 112px !important; height: 116px; }
             .panel-head { font-size: 12px; }
             .bottom-stat .b-num { font-size: 16px; }
             .bottom-stat .b-label { font-size: 8px; }
@@ -991,7 +1011,7 @@
     </div>
 </div>
 
-<div id="filter-bar" class="glass-panel" style="flex-direction:row">
+<div id="filter-bar" class="glass-panel">
     <div class="protection-filter" aria-label="保护等级筛选">
         <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
         <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
@@ -999,12 +1019,14 @@
         <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有动物</button>
         <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危/其他</button>
     </div>
-    <input type="date" id="d-start" class="date-inp">
-    <span style="color:#999">-</span>
-    <input type="date" id="d-end" class="date-inp">
-    <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
-    <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
-    <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
+    <div class="filter-tools" aria-label="时间和热力图工具">
+        <input type="date" id="d-start" class="date-inp">
+        <span style="color:#999">-</span>
+        <input type="date" id="d-end" class="date-inp">
+        <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
+        <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
+        <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
+    </div>
 </div>
 
 <div id="heat-info" class="glass-panel">
