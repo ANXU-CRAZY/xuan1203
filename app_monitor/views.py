@@ -372,6 +372,7 @@ def map_observations(request):
     rows = (
         viewport_queryset
         .order_by('-observation_time', '-record_id')
+        [:10000]  # 限制最多返回 10000 条，避免数据过大
         .values(
             'record_id',
             'observation_time',
@@ -391,7 +392,7 @@ def map_observations(request):
         )
     )
 
-    data = [_cache_row_to_dict(row) for row in rows.iterator(chunk_size=5000)]
+    data = [_cache_row_to_dict(row) for row in data]
     
     response_data = {
         'results': data,
