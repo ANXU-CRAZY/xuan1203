@@ -320,88 +320,90 @@ def _map_cache_stats(queryset):
 
 @require_GET
 def map_observations(request):
-    # 构建缓存键，包含所有查询参数
-    cache_key_parts = [
-        'map_obs',
-        request.GET.get('start', ''),
-        request.GET.get('end', ''),
-        request.GET.get('start_date', ''),
-        request.GET.get('end_date', ''),
-        request.GET.get('protection', 'all'),
-        request.GET.get('protection_filter', 'all'),
-        request.GET.get('bbox', ''),
-        request.GET.get('west', ''),
-        request.GET.get('south', ''),
-        request.GET.get('east', ''),
-        request.GET.get('north', ''),
-        request.GET.get('stats', '1'),
-    ]
-    cache_key = ':'.join(str(p) for p in cache_key_parts)
+    # 先尝试获取全局缓存的完整数据
+    all_data_cache_key = 'map_obs_all_data_v1'
+    all_cached_data = cache.get(all_data_cache_key)
     
-    # 尝试从缓存获取
-    cached_response = cache.get(cache_key)
-    if cached_response is not None:
-        return JsonResponse(cached_response, json_dumps_params={'ensure_ascii': False})
+    # 如果没有缓存，从数据库加载并缓存
+    if all_cached_data is None:
+        base_queryset = MapObservationCache.objects.filter(status='approved')
+        rows = (
+            base_queryset
+            .order_by('-observation_time', '-record_id')
+            .values(
+                'record_id',
+                'observation_time',
+                'count',
+                'status',
+                'species_id_cached',
+                'species_name',
+                'species_latin',
+                'species_protection',
+                'zone_id_cached',
+                'zone_name',
+                'transect_name',
+                'longitude',
+                'latitude',
+                'image_url',
+                'description',
+            )
+        )
+        all_cached_data = [_cache_row_to_dict(row) for row in rows.iterator(chunk_size=5000)]
+        # 缓存 1 小时（3600秒）
+        cache.set(all_data_cache_key, all_cached_data, 3600)
     
-    base_queryset = MapObservationCache.objects.filter(status='approved')
-
+    # 从缓存数据中过滤
     start_date = parse_date(request.GET.get('start') or request.GET.get('start_date') or '')
     end_date = parse_date(request.GET.get('end') or request.GET.get('end_date') or '')
-    if start_date:
-        base_queryset = base_queryset.filter(observation_time__gte=start_date)
-    if end_date:
-        base_queryset = base_queryset.filter(observation_time__lte=end_date)
-
     protection_filter = request.GET.get('protection') or request.GET.get('protection_filter') or 'all'
-    base_queryset = _filter_cache_by_protection(base_queryset, protection_filter)
-
-    include_stats = request.GET.get('stats', '1') != '0'
-    stats = _map_cache_stats(base_queryset) if include_stats else None
-
-    viewport_queryset = base_queryset
     bbox = _get_bbox_params(request)
+    
+    # 在内存中过滤数据
+    filtered_data = all_cached_data
+    
+    # 时间过滤
+    if start_date:
+        filtered_data = [d for d in filtered_data if d.get('observation_time') and d['observation_time'] >= start_date.isoformat()]
+    if end_date:
+        filtered_data = [d for d in filtered_data if d.get('observation_time') and d['observation_time'] <= end_date.isoformat()]
+    
+    # bbox 过滤
     if bbox:
         west, south, east, north = bbox
-        viewport_queryset = viewport_queryset.filter(
-            longitude__gte=min(west, east),
-            longitude__lte=max(west, east),
-            latitude__gte=min(south, north),
-            latitude__lte=max(south, north),
-        )
-
-    rows = (
-        viewport_queryset
-        .order_by('-observation_time', '-record_id')
-        .values(
-            'record_id',
-            'observation_time',
-            'count',
-            'status',
-            'species_id_cached',
-            'species_name',
-            'species_latin',
-            'species_protection',
-            'zone_id_cached',
-            'zone_name',
-            'transect_name',
-            'longitude',
-            'latitude',
-            'image_url',
-            'description',
-        )
-    )
-
-    data = [_cache_row_to_dict(row) for row in rows.iterator(chunk_size=5000)]
+        filtered_data = [
+            d for d in filtered_data 
+            if d.get('lng') is not None and d.get('lat') is not None
+            and min(west, east) <= d['lng'] <= max(west, east)
+            and min(south, north) <= d['lat'] <= max(south, north)
+        ]
+    
+    # 保护等级过滤
+    if protection_filter and protection_filter != 'all':
+        filtered_data = [
+            d for d in filtered_data
+            if get_protection_group(d.get('species_protection', '')) == protection_filter
+        ]
+    
+    # 计算统计信息
+    include_stats = request.GET.get('stats', '1') != '0'
+    stats = None
+    if include_stats:
+        # 使用数据库查询统计（因为统计需要聚合）
+        base_queryset = MapObservationCache.objects.filter(status='approved')
+        if start_date:
+            base_queryset = base_queryset.filter(observation_time__gte=start_date)
+        if end_date:
+            base_queryset = base_queryset.filter(observation_time__lte=end_date)
+        if protection_filter and protection_filter != 'all':
+            base_queryset = _filter_cache_by_protection(base_queryset, protection_filter)
+        stats = _map_cache_stats(base_queryset)
     
     response_data = {
-        'results': data,
+        'results': filtered_data,
         'stats': stats,
         'bbox': bbox,
-        'count': len(data),
+        'count': len(filtered_data),
     }
-    
-    # 缓存结果 5 分钟（300秒）
-    cache.set(cache_key, response_data, 300)
     
     return JsonResponse(response_data, json_dumps_params={'ensure_ascii': False})
 
