@@ -1,0 +1,55 @@
+# Gunicorn Systemd Service 配置文件
+# 
+# 安装步骤:
+# 1. 复制此文件到 /etc/systemd/system/gunicorn.service
+# 2. 修改其中的路径和用户名
+# 3. 执行: sudo systemctl daemon-reload
+# 4. 执行: sudo systemctl enable gunicorn
+# 5. 执行: sudo systemctl start gunicorn
+# 6. 检查状态: sudo systemctl status gunicorn
+
+[Unit]
+Description=Gunicorn daemon for Yellow River Ecological Ark
+After=network.target
+
+[Service]
+Type=notify
+# 修改为你的用户名
+User=xuan1203
+Group=www-data
+
+# 修改为你的项目路径
+WorkingDirectory=/home/xuan1203
+
+# 修改为你的虚拟环境路径
+ExecStart=/home/xuan1203/venv/bin/gunicorn \
+    -c /home/xuan1203/gunicorn_config.py \
+    config.wsgi:application
+
+# 或者不使用配置文件，直接指定参数:
+# ExecStart=/home/xuan1203/venv/bin/gunicorn config.wsgi:application \
+#     --workers 5 \
+#     --threads 2 \
+#     --worker-class gthread \
+#     --timeout 60 \
+#     --graceful-timeout 30 \
+#     --max-requests 500 \
+#     --max-requests-jitter 50 \
+#     --bind unix:/run/gunicorn.sock \
+#     --access-logfile - \
+#     --error-logfile -
+
+# 自动重启
+Restart=on-failure
+RestartSec=5s
+
+# 环境变量
+Environment="DJANGO_SETTINGS_MODULE=config.settings"
+Environment="PYTHONUNBUFFERED=1"
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

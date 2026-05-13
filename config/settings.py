@@ -5,10 +5,10 @@ from pathlib import Path
 # 构建路径
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 安全密钥 (开发环境)
+# 安全密钥 (生产环境)
 SECRET_KEY = 'django-insecure-custom-key-for-xuan'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+DEBUG = False
+ALLOWED_HOSTS = ['3.1415926.love', '8.130.88.229', 'localhost', '127.0.0.1']
 
 # === 1. 应用注册 (SimpleUI 必须在最前) ===
 INSTALLED_APPS = [
@@ -74,6 +74,7 @@ DATABASES = {
         'PASSWORD': '111111',  # 【注意】确保你服务器上的数据库密码也是这个，否则需要修改
         'HOST': 'localhost',
         'PORT': '5432',
+        'CONN_MAX_AGE': 60,  # 连接持久化，避免每次请求新建连接
     }
 }
 
@@ -190,3 +191,22 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+# === 7. 缓存配置 (性能优化关键) ===
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'yellow-river-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# 注意：生产环境建议使用 Redis
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#     }
+# }

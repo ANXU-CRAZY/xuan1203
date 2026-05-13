@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 from datetime import timedelta
 from django.db.models import Sum, Q, Count  # 引入 Q 用于复杂查询
 from pathlib import Path
@@ -318,6 +320,29 @@ def _map_cache_stats(queryset):
 
 @require_GET
 def map_observations(request):
+    # 构建缓存键，包含所有查询参数
+    cache_key_parts = [
+        'map_obs',
+        request.GET.get('start', ''),
+        request.GET.get('end', ''),
+        request.GET.get('start_date', ''),
+        request.GET.get('end_date', ''),
+        request.GET.get('protection', 'all'),
+        request.GET.get('protection_filter', 'all'),
+        request.GET.get('bbox', ''),
+        request.GET.get('west', ''),
+        request.GET.get('south', ''),
+        request.GET.get('east', ''),
+        request.GET.get('north', ''),
+        request.GET.get('stats', '1'),
+    ]
+    cache_key = ':'.join(str(p) for p in cache_key_parts)
+    
+    # 尝试从缓存获取
+    cached_response = cache.get(cache_key)
+    if cached_response is not None:
+        return JsonResponse(cached_response, json_dumps_params={'ensure_ascii': False})
+    
     base_queryset = MapObservationCache.objects.filter(status='approved')
 
     start_date = parse_date(request.GET.get('start') or request.GET.get('start_date') or '')
@@ -367,12 +392,18 @@ def map_observations(request):
     )
 
     data = [_cache_row_to_dict(row) for row in rows.iterator(chunk_size=5000)]
-    return JsonResponse({
+    
+    response_data = {
         'results': data,
         'stats': stats,
         'bbox': bbox,
         'count': len(data),
-    }, json_dumps_params={'ensure_ascii': False})
+    }
+    
+    # 缓存结果 30 秒
+    cache.set(cache_key, response_data, 30)
+    
+    return JsonResponse(response_data, json_dumps_params={'ensure_ascii': False})
 
 
 class ProductViewSet(viewsets.ModelViewSet):
