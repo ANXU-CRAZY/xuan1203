@@ -191,7 +191,7 @@
         }
         .heat-gradient {
             flex: 1; height: 8px; border-radius: 999px;
-            background: linear-gradient(90deg, rgba(0,173,181,0.1), #00adb5, #f39c12, #e74c3c);
+            background: linear-gradient(90deg, #2563eb, #0ea5e9, #14b8a6, #84cc16, #facc15, #f97316, #dc2626);
         }
         .heat-selecting #map { cursor: crosshair; }
         .leaflet-interactive:focus { outline: none; }
@@ -1002,7 +1002,7 @@
     <input type="date" id="d-start" class="date-inp">
     <span style="color:#999">-</span>
     <input type="date" id="d-end" class="date-inp">
-    <button class="btn-go" onclick="app.refresh()"><i class="fas fa-search"></i></button>
+    <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
     <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
     <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
 </div>
@@ -1231,11 +1231,14 @@
         layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
+        serverStats: null,
+        _mapRequestSeq: 0,
         speciesData: [],
         speciesById: {},
         speciesByName: {},
         recordMarkers: {},
         recordRenderer: null,
+        _markerRenderSeq: 0,
         selectedRegionLayer: null,
         _hasInitialView: false,
         protectionFilter: 'all',
@@ -1367,9 +1370,13 @@
             let currentLabel = vecLabel;
 
             this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
-            this.recordRenderer = L.canvas({ padding: 0.45 });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
+            this.map.createPane('heatmapPane');
+            this.map.getPane('heatmapPane').style.zIndex = 620;
+            this.map.createPane('recordPane');
+            this.map.getPane('recordPane').style.zIndex = 430;
+            this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img },
                 { "图层注记": labelLayer, "行政区界": this.layers.region, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
@@ -1655,7 +1662,7 @@
             document.querySelectorAll('[data-protection-filter]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.protectionFilter === this.protectionFilter);
             });
-            this.refresh();
+            this.loadMapObservations();
         },
 
         enrichObservation: function(record) {
@@ -1787,7 +1794,7 @@
                     this._canvas.style.position = 'absolute';
                     this._canvas.style.pointerEvents = 'none';
                     this._canvas.style.opacity = '0.82';
-                    map.getPanes().overlayPane.appendChild(this._canvas);
+                    map.getPane('heatmapPane').appendChild(this._canvas);
                     map.on('move zoom resize', this._reset, this);
                     this._reset();
                 },
@@ -1814,25 +1821,110 @@
                     const clipH = Math.abs(se.y - nw.y);
                     if (clipW < 2 || clipH < 2) return;
 
-                    const maxWeight = Math.max(...points.map(p => p.weight), 1);
+                    const bucketSize = 8;
+                    const buckets = new Map();
+                    points.forEach(point => {
+                        const projected = this._map.latLngToContainerPoint([point.lat, point.lng]);
+                        if (
+                            projected.x < clipX - 120 || projected.x > clipX + clipW + 120 ||
+                            projected.y < clipY - 120 || projected.y > clipY + clipH + 120
+                        ) return;
+                        const key = `${Math.round(projected.x / bucketSize)}:${Math.round(projected.y / bucketSize)}`;
+                        const bucket = buckets.get(key) || { x: 0, y: 0, weight: 0, records: 0 };
+                        const weight = Math.max(1, Number(point.weight || 1));
+                        bucket.x += projected.x * weight;
+                        bucket.y += projected.y * weight;
+                        bucket.weight += weight;
+                        bucket.records += 1;
+                        buckets.set(key, bucket);
+                    });
+
+                    const bucketList = Array.from(buckets.values()).map(bucket => ({
+                        x: bucket.x / bucket.weight,
+                        y: bucket.y / bucket.weight,
+                        weight: bucket.weight,
+                        records: bucket.records
+                    }));
+                    if (!bucketList.length) return;
+
+                    const maxScaledWeight = Math.max(...bucketList.map(bucket => Math.log1p(bucket.weight)), 1);
+                    const intensityCanvas = document.createElement('canvas');
+                    intensityCanvas.width = this._canvas.width;
+                    intensityCanvas.height = this._canvas.height;
+                    const intensityCtx = intensityCanvas.getContext('2d');
+                    intensityCtx.clearRect(0, 0, intensityCanvas.width, intensityCanvas.height);
+                    intensityCtx.globalCompositeOperation = 'lighter';
+                    bucketList.forEach(bucket => {
+                        const scaledWeight = Math.log1p(bucket.weight);
+                        const strength = Math.min(1, scaledWeight / maxScaledWeight);
+                        const radius = 28 + 30 * strength + Math.min(24, Math.sqrt(bucket.records) * 1.8);
+                        const alpha = Math.min(0.82, 0.10 + 0.50 * strength);
+                        const gradient = intensityCtx.createRadialGradient(bucket.x, bucket.y, 0, bucket.x, bucket.y, radius);
+                        gradient.addColorStop(0, `rgba(0,0,0,${alpha})`);
+                        gradient.addColorStop(0.36, `rgba(0,0,0,${alpha * 0.58})`);
+                        gradient.addColorStop(0.72, `rgba(0,0,0,${alpha * 0.18})`);
+                        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                        intensityCtx.fillStyle = gradient;
+                        intensityCtx.fillRect(bucket.x - radius, bucket.y - radius, radius * 2, radius * 2);
+                    });
+
+                    const colorStops = [
+                        { stop: 0.00, color: [37, 99, 235] },
+                        { stop: 0.18, color: [14, 165, 233] },
+                        { stop: 0.34, color: [20, 184, 166] },
+                        { stop: 0.50, color: [132, 204, 22] },
+                        { stop: 0.66, color: [250, 204, 21] },
+                        { stop: 0.82, color: [249, 115, 22] },
+                        { stop: 1.00, color: [220, 38, 38] },
+                    ];
+                    const pickColor = (value) => {
+                        for (let i = 1; i < colorStops.length; i++) {
+                            const left = colorStops[i - 1];
+                            const right = colorStops[i];
+                            if (value <= right.stop) {
+                                const ratio = (value - left.stop) / Math.max(right.stop - left.stop, 0.0001);
+                                return [
+                                    Math.round(left.color[0] + (right.color[0] - left.color[0]) * ratio),
+                                    Math.round(left.color[1] + (right.color[1] - left.color[1]) * ratio),
+                                    Math.round(left.color[2] + (right.color[2] - left.color[2]) * ratio),
+                                ];
+                            }
+                        }
+                        return colorStops[colorStops.length - 1].color;
+                    };
+
+                    const image = intensityCtx.getImageData(0, 0, intensityCanvas.width, intensityCanvas.height);
+                    const data = image.data;
+                    const alphaValues = [];
+                    for (let i = 3; i < data.length; i += 4) {
+                        if (data[i] >= 4) alphaValues.push(data[i]);
+                    }
+                    alphaValues.sort((a, b) => a - b);
+                    const p75Index = Math.max(0, Math.floor(alphaValues.length * 0.75) - 1);
+                    const valueCeiling = Math.max(24, alphaValues[p75Index] || 255);
+                    for (let i = 0; i < data.length; i += 4) {
+                        const alpha = data[i + 3];
+                        if (alpha < 4) {
+                            data[i + 3] = 0;
+                            continue;
+                        }
+                        const value = Math.min(1, Math.pow(alpha / valueCeiling, 0.86));
+                        const color = pickColor(value);
+                        data[i] = color[0];
+                        data[i + 1] = color[1];
+                        data[i + 2] = color[2];
+                        data[i + 3] = Math.min(220, Math.round(38 + Math.min(alpha, valueCeiling) * 0.82));
+                    }
+
                     ctx.save();
                     ctx.beginPath();
                     ctx.rect(clipX, clipY, clipW, clipH);
                     ctx.clip();
-
-                    points.forEach(point => {
-                        const projected = this._map.latLngToContainerPoint([point.lat, point.lng]);
-                        const strength = Math.min(1, point.weight / maxWeight);
-                        const radius = 24 + 30 * strength;
-                        const gradient = ctx.createRadialGradient(projected.x, projected.y, 0, projected.x, projected.y, radius);
-                        gradient.addColorStop(0, `rgba(231, 76, 60, ${0.48 + 0.32 * strength})`);
-                        gradient.addColorStop(0.36, `rgba(243, 156, 18, ${0.32 + 0.26 * strength})`);
-                        gradient.addColorStop(0.68, `rgba(0, 173, 181, ${0.14 + 0.18 * strength})`);
-                        gradient.addColorStop(1, 'rgba(0, 173, 181, 0)');
-                        ctx.fillStyle = gradient;
-                        ctx.fillRect(projected.x - radius, projected.y - radius, radius * 2, radius * 2);
-                    });
-
+                    const outputCanvas = document.createElement('canvas');
+                    outputCanvas.width = intensityCanvas.width;
+                    outputCanvas.height = intensityCanvas.height;
+                    outputCanvas.getContext('2d').putImageData(image, 0, 0);
+                    ctx.drawImage(outputCanvas, 0, 0);
                     ctx.restore();
                     ctx.save();
                     ctx.strokeStyle = 'rgba(44, 62, 80, 0.24)';
@@ -1871,12 +1963,7 @@
         },
 
         loadData: function() {
-            $.when(
-                $.get(`${this.api}/map-observations/`),
-                $.get(`${this.api}/species/`)
-            ).done((obsRes, speciesRes) => {
-                const obsPayload = obsRes[0];
-                const speciesPayload = speciesRes[0];
+            $.get(`${this.api}/species/`).done(speciesPayload => {
                 this.speciesData = speciesPayload.results || speciesPayload || [];
                 this.speciesById = {};
                 this.speciesByName = {};
@@ -1884,12 +1971,36 @@
                     this.speciesById[String(s.id)] = s;
                     this.speciesByName[this.normalizeName(s.name_cn)] = s;
                 });
+                this.loadMapObservations();
+            }).fail(() => console.error("Species API Error"));
+        },
 
-                this.data = (obsPayload.results || obsPayload || []).map(item => this.enrichObservation(item));
-                // 时间倒序
+        getMapObservationParams: function(options = {}) {
+            const params = {
+                start: document.getElementById('d-start').value || '',
+                end: document.getElementById('d-end').value || '',
+                protection: this.protectionFilter || 'all',
+                stats: options.includeStats === false ? '0' : '1'
+            };
+            if (this.map) {
+                const bounds = this.map.getBounds().pad(0.16);
+                params.west = bounds.getWest();
+                params.south = bounds.getSouth();
+                params.east = bounds.getEast();
+                params.north = bounds.getNorth();
+            }
+            return params;
+        },
+
+        loadMapObservations: function(options = {}) {
+            const requestSeq = ++this._mapRequestSeq;
+            return $.get(`${this.api}/map-observations/`, this.getMapObservationParams(options)).done(payload => {
+                if (requestSeq !== this._mapRequestSeq) return;
+                if (payload.stats) this.serverStats = payload.stats;
+                this.data = (payload.results || payload || []).map(item => this.enrichObservation(item));
                 this.data.sort((a, b) => new Date(b.observation_time) - new Date(a.observation_time));
                 this.refresh();
-            }).fail(() => console.error("API Error"));
+            }).fail(() => console.error("Map observations API Error"));
         },
 
         getMarkerViewportBounds: function() {
@@ -1928,29 +2039,67 @@
             const bounds = this.getMarkerViewportBounds();
             if (!bounds) return;
 
+            const renderSeq = ++this._markerRenderSeq;
+            const records = this.currentFilteredRecords.slice();
+            let index = 0;
             this.layers.record.clearLayers();
             this.recordMarkers = {};
 
-            const zoom = this.map ? this.map.getZoom() : 10;
-            const maxMarkers = zoom <= 8 ? 1800 : (zoom <= 10 ? 4200 : 9000);
-            let rendered = 0;
-
-            for (const p of this.currentFilteredRecords) {
-                const pos = this.getObservationPosition(p);
-                if (!pos || !bounds.contains([pos.lat, pos.lng])) continue;
-                const marker = this.buildRecordMarker(p, this.currentStats || {});
-                if (!marker) continue;
-                marker.addTo(this.layers.record);
-                if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
-                rendered++;
-                if (rendered >= maxMarkers) break;
-            }
-            this.syncRecordMarkerVisibility();
+            const renderBatch = () => {
+                if (renderSeq !== this._markerRenderSeq) return;
+                let handled = 0;
+                while (index < records.length && handled < 900) {
+                    const p = records[index++];
+                    const pos = this.getObservationPosition(p);
+                    if (pos && bounds.contains([pos.lat, pos.lng])) {
+                        const marker = this.buildRecordMarker(p, this.currentStats || {});
+                        if (marker) {
+                            marker.addTo(this.layers.record);
+                            if (p.id !== undefined && p.id !== null) this.recordMarkers[p.id] = marker;
+                        }
+                    }
+                    handled++;
+                }
+                this.syncRecordMarkerVisibility();
+                if (index < records.length) {
+                    window.requestAnimationFrame(renderBatch);
+                }
+            };
+            window.requestAnimationFrame(renderBatch);
         },
 
         scheduleVisibleRecordMarkers: function() {
             window.clearTimeout(this._recordRenderTimer);
-            this._recordRenderTimer = window.setTimeout(() => this.renderVisibleRecordMarkers(), 80);
+            this._recordRenderTimer = window.setTimeout(() => this.loadMapObservations({ includeStats: false }), 160);
+        },
+
+        getStatsFromServer: function(localStats) {
+            if (!this.serverStats || !Array.isArray(this.serverStats.top_species)) return localStats;
+            const stats = {};
+            this.serverStats.top_species.forEach(item => {
+                stats[item.name || '未知物种'] = {
+                    count: Number(item.count || item.records || 0),
+                    level: item.level || '无危/其他'
+                };
+            });
+            return Object.keys(stats).length ? stats : localStats;
+        },
+
+        applyServerStats: function(localCount, localSpecies, localProtected, localApproved) {
+            const server = this.serverStats || {};
+            const total = Number.isFinite(Number(server.total_records)) ? Number(server.total_records) : localCount;
+            const species = Number.isFinite(Number(server.species_count)) ? Number(server.species_count) : localSpecies;
+            const protectedCount = Number.isFinite(Number(server.protected_count)) ? Number(server.protected_count) : localProtected;
+            const approved = Number.isFinite(Number(server.approved_count)) ? Number(server.approved_count) : localApproved;
+
+            $('#s-records').text(total);
+            $('#s-species').text(species);
+            $('#s-protected').text(protectedCount);
+            $('#s-approved').text(approved);
+            $('#stat-total').text(total);
+            $('#stat-species').text(species);
+            $('#stat-protected').text(protectedCount);
+            app._statsData = { total, species, protected: protectedCount, protection_filter: this.protectionFilter };
         },
 
         refresh: function() {
@@ -1988,11 +2137,6 @@
             this.currentStats = stats;
             this.renderVisibleRecordMarkers();
 
-            $('#s-records').text(count);
-            $('#s-species').text(Object.keys(stats).length);
-            $('#s-protected').text(pCount);
-            $('#s-approved').text(filteredLogs.filter(l => l.status === 'approved').length);
-
             // 更新面板顶部统计：跟随当前日期和保护等级专题筛选
             const approvedLogs = filteredLogs.filter(d => d.status === 'approved' || d.status === '已核验' || d.status === 1);
             const totalAll = approvedLogs.length;
@@ -2005,13 +2149,9 @@
                 const group = this.getProtectionGroup((species && species.protection_level) || d.species_protection || '');
                 return group === '国家一级' || group === '国家二级';
             }).length;
-            app._statsData = { total: totalAll, species: speciesAll, protected: protectedAll, protection_filter: this.protectionFilter };
+            this.applyServerStats(count, Object.keys(stats).length, pCount, filteredLogs.filter(l => l.status === 'approved').length);
 
-            $('#stat-total').text(totalAll);
-            $('#stat-species').text(speciesAll);
-            $('#stat-protected').text(protectedAll);
-
-            this.renderDashboard(stats);
+            this.renderDashboard(this.getStatsFromServer(stats));
             this.renderRealTimeLogs(filteredLogs);
             if (this.heatmap.bounds) {
                 this.buildHeatmapForBounds(this.heatmap.bounds);
@@ -2153,10 +2293,17 @@
                 yearCounts[year] = 0;
             }
             const trendSource = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
-            trendSource.forEach(item => {
-                const key = item.observation_time ? String(item.observation_time).slice(0, 4) : '';
-                if (key && yearCounts[key] !== undefined) yearCounts[key]++;
-            });
+            if (this.serverStats && Array.isArray(this.serverStats.yearly_trend)) {
+                this.serverStats.yearly_trend.forEach(item => {
+                    const key = String(item.year || '');
+                    if (key && yearCounts[key] !== undefined) yearCounts[key] = Number(item.count || 0);
+                });
+            } else {
+                trendSource.forEach(item => {
+                    const key = item.observation_time ? String(item.observation_time).slice(0, 4) : '';
+                    if (key && yearCounts[key] !== undefined) yearCounts[key]++;
+                });
+            }
             if(this.charts.trend) this.charts.trend.destroy();
             this.charts.trend = new Chart(document.getElementById('chart-trend'), {
                 type: 'line',

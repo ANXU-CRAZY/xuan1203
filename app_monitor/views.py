@@ -9,6 +9,8 @@ from django.views.decorators.http import require_GET
 from datetime import timedelta
 from django.db.models import Sum, Q, Count  # 引入 Q 用于复杂查询
 from pathlib import Path
+from django.utils.dateparse import parse_date
+from django.db.models.functions import ExtractYear
 from urllib.parse import quote
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
@@ -33,7 +35,7 @@ except ImportError:
 # === 引入模型 ===
 # 确保包含 Product, UserProfile
 from .models import MapObservationCache, ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
-from .protection import normalize_protection_level
+from .protection import normalize_protection_level, get_protection_group
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -191,11 +193,159 @@ class ObservationViewSet(viewsets.ModelViewSet):
 # ==========================================
 # 4. 商品/积分商城视图 /api/products/
 # ==========================================
+def _get_float_param(request, key):
+    value = request.GET.get(key)
+    if value in (None, ''):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _get_bbox_params(request):
+    bbox = request.GET.get('bbox')
+    if bbox:
+        try:
+            west, south, east, north = [float(part) for part in bbox.split(',')[:4]]
+            return west, south, east, north
+        except (TypeError, ValueError):
+            return None
+
+    west = _get_float_param(request, 'west')
+    south = _get_float_param(request, 'south')
+    east = _get_float_param(request, 'east')
+    north = _get_float_param(request, 'north')
+    if None in (west, south, east, north):
+        return None
+    return west, south, east, north
+
+
+def _filter_cache_by_protection(queryset, protection_filter):
+    if not protection_filter or protection_filter == 'all':
+        return queryset
+
+    matched_levels = []
+    for level in queryset.values_list('species_protection', flat=True).distinct():
+        if get_protection_group(level) == protection_filter:
+            matched_levels.append(level)
+
+    if not matched_levels:
+        return queryset.none()
+    return queryset.filter(species_protection__in=matched_levels)
+
+
+def _cache_row_to_dict(row):
+    lng = row['longitude']
+    lat = row['latitude']
+    return {
+        'id': row['record_id'],
+        'observation_time': row['observation_time'].isoformat() if row['observation_time'] else None,
+        'count': row['count'],
+        'status': row['status'],
+        'species': row['species_id_cached'],
+        'species_id': row['species_id_cached'],
+        'species_name': row['species_name'],
+        'species_latin': row['species_latin'],
+        'species_protection': row['species_protection'],
+        'zone': row['zone_id_cached'],
+        'zone_id': row['zone_id_cached'],
+        'zone_name': row['zone_name'],
+        'transect_name': row['transect_name'],
+        'x': lng,
+        'y': lat,
+        'lng': lng,
+        'lat': lat,
+        'longitude': lng,
+        'latitude': lat,
+        'image': row['image_url'],
+        'description': row['description'],
+    }
+
+
+def _map_cache_stats(queryset):
+    total_records = queryset.count()
+    species_count = queryset.values('species_id_cached').distinct().count()
+    approved_count = total_records
+
+    protected_levels = []
+    level_distribution = {
+        '国家一级': {'level': '国家一级', 'count': 0, 'records': 0},
+        '国家二级': {'level': '国家二级', 'count': 0, 'records': 0},
+        '三有动物': {'level': '三有动物', 'count': 0, 'records': 0},
+        '无危/其他': {'level': '无危/其他', 'count': 0, 'records': 0},
+    }
+    for item in queryset.values('species_protection').annotate(total=Sum('count'), records=Count('record_id')):
+        group = get_protection_group(item['species_protection'])
+        if group not in level_distribution:
+            group = '无危/其他'
+        level_distribution[group]['count'] += item['total'] or 0
+        level_distribution[group]['records'] += item['records'] or 0
+        if group in ('国家一级', '国家二级'):
+            protected_levels.append(item['species_protection'])
+
+    protected_count = queryset.filter(species_protection__in=protected_levels).count() if protected_levels else 0
+    top_species = [
+        {
+            'name': row['species_name'] or '未知物种',
+            'latin': row['species_latin'] or '',
+            'level': get_protection_group(row['species_protection']),
+            'count': row['total'] or 0,
+            'records': row['records'],
+        }
+        for row in queryset.values('species_id_cached', 'species_name', 'species_latin', 'species_protection')
+        .annotate(total=Sum('count'), records=Count('record_id'))
+        .order_by('-total')[:10]
+    ]
+    yearly_trend = [
+        {'year': row['year'], 'count': row['records'], 'bird_count': row['total'] or 0}
+        for row in queryset.annotate(year=ExtractYear('observation_time'))
+        .values('year')
+        .annotate(records=Count('record_id'), total=Sum('count'))
+        .order_by('year')
+    ]
+
+    return {
+        'total_records': total_records,
+        'species_count': species_count,
+        'protected_count': protected_count,
+        'approved_count': approved_count,
+        'top_species': top_species,
+        'protection_distribution': list(level_distribution.values()),
+        'yearly_trend': yearly_trend,
+    }
+
+
 @require_GET
 def map_observations(request):
+    base_queryset = MapObservationCache.objects.filter(status='approved')
+
+    start_date = parse_date(request.GET.get('start') or request.GET.get('start_date') or '')
+    end_date = parse_date(request.GET.get('end') or request.GET.get('end_date') or '')
+    if start_date:
+        base_queryset = base_queryset.filter(observation_time__gte=start_date)
+    if end_date:
+        base_queryset = base_queryset.filter(observation_time__lte=end_date)
+
+    protection_filter = request.GET.get('protection') or request.GET.get('protection_filter') or 'all'
+    base_queryset = _filter_cache_by_protection(base_queryset, protection_filter)
+
+    include_stats = request.GET.get('stats', '1') != '0'
+    stats = _map_cache_stats(base_queryset) if include_stats else None
+
+    viewport_queryset = base_queryset
+    bbox = _get_bbox_params(request)
+    if bbox:
+        west, south, east, north = bbox
+        viewport_queryset = viewport_queryset.filter(
+            longitude__gte=min(west, east),
+            longitude__lte=max(west, east),
+            latitude__gte=min(south, north),
+            latitude__lte=max(south, north),
+        )
+
     rows = (
-        MapObservationCache.objects
-        .filter(status='approved')
+        viewport_queryset
         .order_by('-observation_time', '-record_id')
         .values(
             'record_id',
@@ -216,34 +366,13 @@ def map_observations(request):
         )
     )
 
-    data = []
-    for row in rows.iterator(chunk_size=5000):
-        lng = row['longitude']
-        lat = row['latitude']
-        data.append({
-            'id': row['record_id'],
-            'observation_time': row['observation_time'].isoformat() if row['observation_time'] else None,
-            'count': row['count'],
-            'status': row['status'],
-            'species': row['species_id_cached'],
-            'species_id': row['species_id_cached'],
-            'species_name': row['species_name'],
-            'species_latin': row['species_latin'],
-            'species_protection': row['species_protection'],
-            'zone': row['zone_id_cached'],
-            'zone_id': row['zone_id_cached'],
-            'zone_name': row['zone_name'],
-            'transect_name': row['transect_name'],
-            'x': lng,
-            'y': lat,
-            'lng': lng,
-            'lat': lat,
-            'longitude': lng,
-            'latitude': lat,
-            'image': row['image_url'],
-            'description': row['description'],
-        })
-    return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
+    data = [_cache_row_to_dict(row) for row in rows.iterator(chunk_size=5000)]
+    return JsonResponse({
+        'results': data,
+        'stats': stats,
+        'bbox': bbox,
+        'count': len(data),
+    }, json_dumps_params={'ensure_ascii': False})
 
 
 class ProductViewSet(viewsets.ModelViewSet):
