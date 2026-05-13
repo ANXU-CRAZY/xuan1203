@@ -400,8 +400,8 @@ def map_observations(request):
         'count': len(data),
     }
     
-    # 缓存结果 30 秒
-    cache.set(cache_key, response_data, 30)
+    # 缓存结果 5 分钟（300秒）
+    cache.set(cache_key, response_data, 300)
     
     return JsonResponse(response_data, json_dumps_params={'ensure_ascii': False})
 
