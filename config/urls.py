@@ -66,8 +66,14 @@ urlpatterns = [
     path('bird-page/', bird_recognition_page, name='bird_recognition'),
 ]
 
-# === 3. 核心修复：强制让 Django 处理静态文件 ===
-urlpatterns += [
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-]
+# === 3. 开发环境静态文件服务 ===
+if settings.DEBUG:
+    # 开发模式下，Django会自动从STATICFILES_DIRS和各app的static目录加载
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # 生产环境由Nginx处理静态文件
+    urlpatterns += [
+        re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

@@ -392,7 +392,7 @@ def map_observations(request):
         )
     )
 
-    data = [_cache_row_to_dict(row) for row in data]
+    data = [_cache_row_to_dict(row) for row in rows]
     
     response_data = {
         'results': data,
