@@ -40,6 +40,14 @@ ASSETS = [
         'url': 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         'path': 'leaflet/images/marker-shadow.png',
     },
+    {
+        'url': 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
+        'path': 'leaflet/images/layers.png',
+    },
+    {
+        'url': 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
+        'path': 'leaflet/images/layers-2x.png',
+    },
     # Font Awesome CSS
     {
         'url': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
