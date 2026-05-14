@@ -478,24 +478,35 @@ def _load_species_image_map():
 
     image_map = {}
     template_dir = Path(settings.BASE_DIR) / 'app_monitor' / 'templates'
+    
+    # 尝试从两个模板文件加载图片映射
     for template_name in ('species.html', 'species-gallery.html'):
         template_path = template_dir / template_name
         try:
             text = template_path.read_text(encoding='utf-8')
-        except OSError:
+            
+            # 查找 SPECIES_IMG 和 FALLBACK_IMAGES 常量
+            for const_name in ('SPECIES_IMG', 'FALLBACK_IMAGES'):
+                # 修改正则表达式，更准确地匹配JavaScript对象
+                pattern = rf"const\s+{const_name}\s*=\s*\{{([^}}]+)\}};"
+                matches = re.findall(pattern, text, re.DOTALL)
+                for match in matches:
+                    # 提取键值对
+                    pairs = re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match)
+                    image_map.update(pairs)
+                    
+        except OSError as e:
+            print(f"警告：无法读取模板 {template_name}: {e}")
             continue
 
-        for const_name in ('SPECIES_IMG', 'FALLBACK_IMAGES'):
-            pattern = rf"const\s+{const_name}\s*=\s*\{{(.*?)^\s*\}};"
-            for match in re.finditer(pattern, text, re.S | re.M):
-                image_map.update(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
-
+    # 添加特殊物种的兜底图片
     stonechat_url = "https://commons.wikimedia.org/wiki/Special:FilePath/Stejneger%27s_Stonechat.jpg"
     image_map.setdefault('东亚石䳭', stonechat_url)
     image_map.setdefault('黑喉石䳭（东亚）', stonechat_url)
     image_map.setdefault('黑喉石䳭(东亚)', stonechat_url)
 
     _SPECIES_IMG_CACHE = image_map
+    print(f"✅ 加载了 {len(image_map)} 个物种图片映射")  # 调试信息
     return image_map
 
 
