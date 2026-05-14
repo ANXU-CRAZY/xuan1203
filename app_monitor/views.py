@@ -487,8 +487,8 @@ def _load_species_image_map():
             
             # 查找 SPECIES_IMG 和 FALLBACK_IMAGES 常量
             for const_name in ('SPECIES_IMG', 'FALLBACK_IMAGES'):
-                # 修改正则表达式，更准确地匹配JavaScript对象
-                pattern = rf"const\s+{const_name}\s*=\s*\{{([^}}]+)\}};"
+                # 使用更宽松的正则表达式匹配多行JavaScript对象
+                pattern = rf"const\s+{const_name}\s*=\s*\{{(.*?)\}};"
                 matches = re.findall(pattern, text, re.DOTALL)
                 for match in matches:
                     # 提取键值对
@@ -496,7 +496,6 @@ def _load_species_image_map():
                     image_map.update(pairs)
                     
         except OSError as e:
-            print(f"警告：无法读取模板 {template_name}: {e}")
             continue
 
     # 添加特殊物种的兜底图片
@@ -506,7 +505,6 @@ def _load_species_image_map():
     image_map.setdefault('黑喉石䳭(东亚)', stonechat_url)
 
     _SPECIES_IMG_CACHE = image_map
-    print(f"✅ 加载了 {len(image_map)} 个物种图片映射")  # 调试信息
     return image_map
 
 
