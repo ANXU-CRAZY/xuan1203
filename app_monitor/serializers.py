@@ -118,6 +118,7 @@ class SpeciesInfoSerializer(serializers.ModelSerializer):
         return 1
 
     def get_cover_image_url(self, obj):
+        # 1. 优先使用数据库中的 cover_image 字段
         if obj.cover_image and str(obj.cover_image) not in ('', 'False', 'None'):
             request = self.context.get('request')
             path = str(obj.cover_image).lstrip('/')
@@ -125,13 +126,29 @@ class SpeciesInfoSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri('/media/' + path)
             return '/media/' + path
 
+        # 2. 查找精选图片
         featured = obj.images.filter(is_featured=True).first()
         if featured:
             return self._resolve_image_url(featured)
 
+        # 3. 查找第一张图片
         first_image = obj.images.order_by('-views', '-created_at').first()
         if first_image:
             return self._resolve_image_url(first_image)
+
+        # 4. Fallback: 从前端模板的 SPECIES_IMG 映射中查找
+        from .views import _load_species_image_map, _lookup_species_image
+        image_map = _load_species_image_map()
+        fallback_url = _lookup_species_image(image_map, obj.name_cn)
+        if fallback_url:
+            return fallback_url
+
+        # 5. 最终兜底：用拉丁名生成 Wikimedia Commons Special:FilePath URL
+        # 这样即使没有任何图片，也能尝试从Wikimedia获取
+        if obj.name_latin:
+            from urllib.parse import quote
+            latin_clean = obj.name_latin.replace(' ', '_')
+            return f"https://commons.wikimedia.org/wiki/Special:FilePath/{quote(latin_clean)}.jpg"
 
         return None
 
