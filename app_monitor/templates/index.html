@@ -106,6 +106,13 @@
             flex: 0 0 auto;
             transform: translateY(2px);
         }
+        .brand-logo-fallback {
+            width: 36px; height: 36px; border-radius: 50%; display: none;
+            align-items: center; justify-content: center; background: #fff; color: #1f6f78;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08); font-size: 12px; font-weight: 900;
+            line-height: 1.05; text-align: center; flex: 0 0 auto; transform: translateY(2px);
+        }
+        .brand-logo-fallback.show { display: flex; }
         .nav-links { display: flex; align-items: center; gap: 10px; }
         .nav-btn {
             padding: 6px 14px; border-radius: 20px; text-decoration: none;
@@ -973,7 +980,8 @@
 
 <div class="top-beam">
     <div class="brand">
-        <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-logo">
+        <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-logo" onerror="this.style.display='none'; this.nextElementSibling.classList.add('show');">
+        <div class="brand-logo-fallback" aria-hidden="true">黄河</div>
         <span>黄河生态方舟</span>
     </div>
     <div class="nav-links" id="navArea">
@@ -1443,6 +1451,7 @@
                 this.updateAutoHeatmapByZoom();
                 this.scheduleVisibleRecordMarkers();
             });
+            this.map.on('click', (event) => this.handleSuperMapClick(event));
         },
 
         loadExternalScript: function(src) {
@@ -1487,6 +1496,27 @@
             } catch (error) {
                 console.warn('SuperMap layer unavailable:', error);
             }
+        },
+
+        handleSuperMapClick: function(event) {
+            if (!this.map || !this.layers.supermap || !this.map.hasLayer(this.layers.supermap)) return;
+            if (!event || !event.latlng) return;
+            const point = this.map.latLngToContainerPoint(event.latlng);
+            const nearby = this.map.containerPointToLatLng(L.point(point.x + 18, point.y + 18));
+            const radius = Math.max(
+                Math.abs(nearby.lng - event.latlng.lng),
+                Math.abs(nearby.lat - event.latlng.lat),
+                0.0006
+            );
+            const params = this.getMapObservationParams({ includeStats: false });
+            params.nearest_lng = event.latlng.lng;
+            params.nearest_lat = event.latlng.lat;
+            params.radius = radius;
+            params.stats = '0';
+            $.get(`${this.api}/map-observations/`, params).done(payload => {
+                const record = (payload.results || payload || [])[0];
+                if (record) this.openDetailModal(this.enrichObservation(record), this.currentStats || {});
+            }).fail(() => console.warn('Nearest SuperMap observation lookup failed'));
         },
 
         escapeHtml: function(value) {

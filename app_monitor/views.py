@@ -9,7 +9,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from datetime import timedelta
-from django.db.models import Sum, Q, Count  # 引入 Q 用于复杂查询
+from django.db.models import Sum, Q, Count, F, FloatField, ExpressionWrapper  # 引入 Q 用于复杂查询
 from pathlib import Path
 from django.utils.dateparse import parse_date
 from django.db.models.functions import ExtractYear
@@ -335,6 +335,9 @@ def map_observations(request):
         request.GET.get('south', ''),
         request.GET.get('east', ''),
         request.GET.get('north', ''),
+        request.GET.get('nearest_lng', ''),
+        request.GET.get('nearest_lat', ''),
+        request.GET.get('radius', ''),
         request.GET.get('stats', '1'),
     ]
     cache_key = ':'.join(str(p) for p in cache_key_parts)
@@ -370,10 +373,31 @@ def map_observations(request):
             latitude__lte=max(south, north),
         )
 
+    nearest_lng = _get_float_param(request, 'nearest_lng')
+    nearest_lat = _get_float_param(request, 'nearest_lat')
+    nearest_radius = _get_float_param(request, 'radius') or 0.01
+    nearest_radius = max(0.0005, min(nearest_radius, 0.2))
+    if nearest_lng is not None and nearest_lat is not None:
+        viewport_queryset = viewport_queryset.filter(
+            longitude__gte=nearest_lng - nearest_radius,
+            longitude__lte=nearest_lng + nearest_radius,
+            latitude__gte=nearest_lat - nearest_radius,
+            latitude__lte=nearest_lat + nearest_radius,
+        ).annotate(
+            _distance2=ExpressionWrapper(
+                (F('longitude') - nearest_lng) * (F('longitude') - nearest_lng)
+                + (F('latitude') - nearest_lat) * (F('latitude') - nearest_lat),
+                output_field=FloatField(),
+            )
+        ).order_by('_distance2', '-observation_time', '-record_id')
+        row_limit = 1
+    else:
+        viewport_queryset = viewport_queryset.order_by('-observation_time', '-record_id')
+        row_limit = 10000
+
     rows = (
         viewport_queryset
-        .order_by('-observation_time', '-record_id')
-        [:10000]  # 限制最多返回 10000 条，避免数据过大
+        [:row_limit]  # 限制最多返回 10000 条，避免数据过大；最近点查询只返回 1 条
         .values(
             'record_id',
             'observation_time',
