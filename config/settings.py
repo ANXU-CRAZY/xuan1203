@@ -219,3 +219,12 @@ CACHES = {
 #         'LOCATION': 'redis://127.0.0.1:6379/1',
 #     }
 # }
+
+# Local machine overrides are intentionally ignored by Git.
+try:
+    from .local_settings import LOCAL_CACHE_LOCATION, LOCAL_DATABASE_NAME
+except ImportError:
+    pass
+else:
+    DATABASES['default']['NAME'] = LOCAL_DATABASE_NAME
+    CACHES['default']['LOCATION'] = LOCAL_CACHE_LOCATION
