@@ -40,6 +40,9 @@ bird_recognition/yolo_model/
 .env
 .env.local
 
+# Locally generated SuperMap import layers
+data/supermap/
+
 # IDE and OS files
 .idea/
 .vscode/
