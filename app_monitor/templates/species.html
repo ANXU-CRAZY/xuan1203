@@ -1144,7 +1144,7 @@ function renderCards(species) {
 
         const cardImg = cover
             ? `<img src="${cover.url}" alt="${s.name_cn}" loading="lazy"
-               onerror="var p=this.parentElement,f=resolveCoverUrlFallback(window.__speciesCardFallback[${s.id}],${s.id});if(f){this.src=f;}else{p.classList.add('img-load-fail');this.remove();}">
+               onerror="var p=this.parentElement;var fallback=getSpeciesImage('${s.name_cn}');if(fallback && this.src!==fallback){this.src=fallback;}else{p.classList.add('img-load-fail');this.remove();}">
                <div class="img-gradient"></div>`
             : `<div class="img-placeholder">
                  <div class="nature-bg" style="background:${bg}"></div>

@@ -1,0 +1,32 @@
+# 服务器部署命令（逐条执行）
+
+# 1. SSH连接服务器
+ssh root@8.130.88.229
+
+# 2. 进入项目目录
+cd /home/xuan1203
+
+# 3. 拉取最新代码
+git pull
+
+# 4. 激活虚拟环境
+source venv/bin/activate
+
+# 5. 收集静态文件
+python manage.py collectstatic --noinput
+
+# 6. 重启Gunicorn服务
+sudo systemctl restart gunicorn
+
+# 7. 重启Nginx服务
+sudo systemctl restart nginx
+
+# 8. 检查服务状态
+sudo systemctl status gunicorn
+sudo systemctl status nginx
+
+# 9. 查看最近日志（可选）
+sudo journalctl -u gunicorn -n 50 --no-pager
+
+# 10. 测试API（可选）
+curl -I https://3.1415926.love/api/map-observations/?start=2024-01-01&end=2026-05-13&protection=all&stats=1

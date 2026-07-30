@@ -1,0 +1,37 @@
+========================================
+快速修复指令 - 在服务器上执行
+========================================
+
+你现在已经在服务器上以 root 身份登录了，直接执行以下命令：
+
+# 1. 切换到项目目录
+cd /home/xuan1203
+
+# 2. 拉取最新代码
+git pull origin master
+
+# 3. 激活虚拟环境
+source venv/bin/activate
+
+# 4. 重新收集静态文件（关键步骤！）
+python manage.py collectstatic --noinput --clear
+
+# 5. 验证文件已复制
+ls -lh static_root/vendor/
+
+# 6. 设置权限
+sudo chown -R www-data:www-data static_root/
+sudo chmod -R 755 static_root/
+
+# 7. 重启服务
+sudo systemctl restart gunicorn
+
+# 8. 测试静态文件
+curl -I https://3.1415926.love/static/vendor/leaflet/leaflet.css
+
+========================================
+预期结果：应该返回 HTTP/2 200
+========================================
+
+如果返回 200，说明修复成功！
+访问 https://3.1415926.love 测试网站。
