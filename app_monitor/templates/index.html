@@ -1258,7 +1258,7 @@
     const app = {
         api: '/api',
         map: null,
-        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup(), supermap: L.layerGroup() },
+        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup(), supermap: L.layerGroup(), supermapHit: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         serverStats: null,
@@ -1406,6 +1406,8 @@
             this.map.createPane('supermapPane');
             this.map.getPane('supermapPane').style.zIndex = 390;
             this.map.getPane('supermapPane').style.pointerEvents = 'none';
+            this.map.createPane('supermapHitPane');
+            this.map.getPane('supermapHitPane').style.zIndex = 510;
             this.map.createPane('heatmapPane');
             this.map.getPane('heatmapPane').style.zIndex = 620;
             this.map.createPane('recordPane');
@@ -1484,7 +1486,7 @@
                 const layer = L.supermap.tiledMapLayer(status.map_service_url, {
                     pane: 'supermapPane',
                     transparent: true,
-                    opacity: 0.68,
+                    opacity: 0.42,
                     noWrap: true,
                     cacheEnabled: true,
                     prjCoordSys: { epsgCode: 3857 },
@@ -1515,8 +1517,29 @@
             params.stats = '0';
             $.get(`${this.api}/map-observations/`, params).done(payload => {
                 const record = (payload.results || payload || [])[0];
-                if (record) this.openDetailModal(this.enrichObservation(record), this.currentStats || {});
+                if (!record) return;
+                const enrichedRecord = this.enrichObservation(record);
+                this.showSuperMapHit(enrichedRecord);
+                window.setTimeout(() => this.openDetailModal(enrichedRecord, this.currentStats || {}), 140);
             }).fail(() => console.warn('Nearest SuperMap observation lookup failed'));
+        },
+
+        showSuperMapHit: function(record) {
+            const pos = this.getObservationPosition(record);
+            if (!pos || !this.layers.supermapHit) return;
+            this.layers.supermapHit.clearLayers();
+            const hit = L.circleMarker([pos.lat, pos.lng], {
+                pane: 'supermapHitPane',
+                radius: 13,
+                color: '#ffffff',
+                weight: 3,
+                opacity: 1,
+                fillColor: '#00ADB5',
+                fillOpacity: 0.9
+            }).bindTooltip('iServer 命中观测点', { direction: 'top', offset: [0, -10], opacity: 0.92 });
+            hit.addTo(this.layers.supermapHit).openTooltip();
+            window.clearTimeout(this._superMapHitTimer);
+            this._superMapHitTimer = window.setTimeout(() => this.layers.supermapHit.clearLayers(), 2200);
         },
 
         escapeHtml: function(value) {
