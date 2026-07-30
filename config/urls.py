@@ -11,7 +11,7 @@ from app_monitor.views import (
     index_view, UserProfileViewSet, bird_recognition_page,
     ProductViewSet, SpeciesViewSet, RegisterViewSet,
     ArticleViewSet, SpeciesImageViewSet,
-    ai_chat, map_observations,
+    ai_chat, map_observations, supermap_status,
 )
 
 # === 1. 注册 API 路由 ===
@@ -30,6 +30,7 @@ router.register(r'species-images', SpeciesImageViewSet, basename='species-image'
 urlpatterns = [
     # 首页直接指向 index_view
     path('', index_view, name='home'),
+    path('supermap/', lambda r: render(r, 'supermap.html'), name='supermap'),
 
     # 协作者补充的前端页面
     path('report/', lambda r: render(r, 'report.html'), name='report'),
@@ -53,6 +54,7 @@ urlpatterns = [
 
     # API 接口
     path('api/map-observations/', map_observations, name='map_observations'),
+    path('api/supermap/status/', supermap_status, name='supermap_status'),
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口

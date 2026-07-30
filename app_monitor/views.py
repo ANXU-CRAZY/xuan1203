@@ -38,6 +38,7 @@ except ImportError:
 # 确保包含 Product, UserProfile
 from .models import MapObservationCache, ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from .protection import normalize_protection_level, get_protection_group
+from .supermap import supermap_status_payload
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -1111,6 +1112,11 @@ def ai_chat(request):
 # ==========================================
 def index_view(request):
     return render(request, 'index.html')
+
+
+@require_GET
+def supermap_status(request):
+    return JsonResponse(supermap_status_payload())
 
 
 def get_todays_hotspot(request):

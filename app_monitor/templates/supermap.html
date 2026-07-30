@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SuperMap 空间服务中心 | 黄河生态方舟</title>
+  <style>
+    :root { --ink:#17212b; --muted:#5f6b76; --line:#d9e0e5; --surface:#ffffff; --canvas:#f3f6f7; --river:#0d6e8a; --wetland:#177245; --sand:#e7b84b; --danger:#b14335; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--canvas); font:15px/1.55 Arial,"Microsoft YaHei",sans-serif; }
+    a { color:inherit; }
+    header { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:14px clamp(20px,4vw,58px); background:var(--surface); border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+    .brand-mark { width:36px; height:36px; display:grid; place-items:center; color:white; background:var(--wetland); border-radius:6px; font-weight:700; }
+    .brand strong { display:block; font-size:16px; }
+    .brand span { color:var(--muted); font-size:13px; }
+    .nav { display:flex; gap:8px; flex-wrap:wrap; }
+    .nav a, button { border:1px solid var(--line); border-radius:5px; background:white; padding:8px 11px; text-decoration:none; cursor:pointer; font:inherit; }
+    .nav a:hover, button:hover { border-color:var(--river); color:var(--river); }
+    main { max-width:1240px; margin:0 auto; padding:30px clamp(20px,4vw,48px) 54px; }
+    .intro { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:24px; }
+    h1 { margin:0; font-size:28px; font-weight:700; letter-spacing:0; }
+    .intro p { max-width:650px; margin:7px 0 0; color:var(--muted); }
+    .summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:22px; }
+    .card, .panel { background:var(--surface); border:1px solid var(--line); border-radius:6px; }
+    .card { padding:17px; min-height:112px; }
+    .label { display:block; color:var(--muted); font-size:13px; }
+    .value { display:block; margin-top:7px; font-size:22px; font-weight:700; }
+    .ok { color:var(--wetland); } .warn { color:var(--sand); } .bad { color:var(--danger); }
+    .layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.8fr); gap:18px; }
+    .panel { padding:21px; }
+    h2 { margin:0 0 12px; font-size:17px; }
+    .meta { margin:0; color:var(--muted); }
+    dl { margin:16px 0 0; border-top:1px solid var(--line); }
+    .row { display:grid; grid-template-columns:130px 1fr; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
+    dt { color:var(--muted); } dd { margin:0; overflow-wrap:anywhere; }
+    .steps { padding-left:20px; margin:12px 0 0; }
+    .steps li { margin:8px 0; }
+    .actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:17px; }
+    .primary { color:white; background:var(--river); border-color:var(--river); }
+    .primary:hover { color:white; background:#07566d; border-color:#07566d; }
+    .status-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; background:#98a4ad; }
+    .status-dot.ready { background:var(--wetland); } .status-dot.pending { background:var(--sand); } .status-dot.error { background:var(--danger); }
+    code { padding:2px 5px; background:#edf1f3; border-radius:3px; font-family:Consolas,monospace; font-size:12px; }
+    @media (max-width:760px) { header,.intro { align-items:flex-start; flex-direction:column; } .summary,.layout { grid-template-columns:1fr; } .row { grid-template-columns:1fr; gap:2px; } h1 { font-size:24px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="brand-mark">SM</div><div><strong>黄河生态方舟</strong><span>SuperMap iServer 空间服务中心</span></div></div>
+    <nav class="nav"><a href="/">返回监测平台</a><a id="catalog-link" href="http://127.0.0.1:8090/iserver/services" target="_blank" rel="noopener">服务目录</a></nav>
+  </header>
+  <main>
+    <section class="intro"><div><h1>空间服务接入状态</h1><p>业务数据继续由 Django 与 PostGIS 管理。此页面只展示 iServer 的真实连通状态与可发布空间图层，不会将未发布服务标记为可用。</p></div><button class="primary" id="refresh">刷新状态</button></section>
+    <section class="summary" aria-label="服务摘要">
+      <article class="card"><span class="label">iServer 服务</span><span class="value" id="server-state">检测中</span><span class="meta" id="latency">正在连接本机服务目录</span></article>
+      <article class="card"><span class="label">可发布观测点</span><span class="value" id="record-count">-</span><span class="meta" id="view-state">检查空间视图</span></article>
+      <article class="card"><span class="label">地图服务图层</span><span class="value" id="map-state">未配置</span><span class="meta" id="map-detail">等待 iServer 管理端发布</span></article>
+    </section>
+    <section class="layout">
+      <article class="panel"><h2>服务连接</h2><p class="meta"><span class="status-dot" id="server-dot"></span><span id="server-message">等待探测结果</span></p><dl><div class="row"><dt>iServer 地址</dt><dd id="catalog-url">-</dd></div><div class="row"><dt>空间数据源</dt><dd><code>YellowRiverSuperMap</code></dd></div><div class="row"><dt>发布视图</dt><dd><code>supermap_observation_points</code></dd></div><div class="row"><dt>坐标参考</dt><dd id="srid">-</dd></div><div class="row"><dt>地图服务 URL</dt><dd id="service-url">尚未配置</dd></div></dl><div class="actions"><a class="nav-link" id="open-catalog" target="_blank" rel="noopener">打开 iServer 服务目录</a><button id="copy-command">复制准备命令</button></div></article>
+      <aside class="panel"><h2>发布下一步</h2><ol class="steps"><li>在 iServer 管理端连接 <code>YellowRiverSuperMap</code>。</li><li>将 <code>supermap_observation_points</code> 加入工作空间并保存。</li><li>发布地图服务和数据服务，服务名建议为 <code>YellowRiverEcology</code>。</li><li>将发布的公开地图服务地址设置为 <code>SUPERMAP_MAP_SERVICE_URL</code>。</li></ol><p class="meta">管理员账户与数据库密码不应写入项目代码或提交到 Git。</p></aside>
+    </section>
+  </main>
+  <script>
+    const elements = {
+      serverState: document.getElementById('server-state'), latency: document.getElementById('latency'),
+      recordCount: document.getElementById('record-count'), viewState: document.getElementById('view-state'),
+      mapState: document.getElementById('map-state'), mapDetail: document.getElementById('map-detail'),
+      dot: document.getElementById('server-dot'), message: document.getElementById('server-message'),
+      catalogUrl: document.getElementById('catalog-url'), serviceUrl: document.getElementById('service-url'), srid: document.getElementById('srid'),
+    };
+    function setDot(state) { elements.dot.className = `status-dot ${state}`; }
+    async function loadStatus() {
+      elements.serverState.textContent = '检测中'; setDot('');
+      try {
+        const response = await fetch('/api/supermap/status/', {cache:'no-store'});
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const server = data.server;
+        elements.catalogUrl.textContent = data.catalog_url;
+        document.getElementById('catalog-link').href = data.catalog_url;
+        document.getElementById('open-catalog').href = data.catalog_url;
+        elements.serverState.textContent = server.available ? '服务可用' : '不可用';
+        elements.serverState.className = `value ${server.available ? 'ok' : 'bad'}`;
+        elements.latency.textContent = server.available ? `${server.latency_ms} ms 响应` : (server.error || '连接失败');
+        elements.message.textContent = server.available ? `服务目录响应 HTTP ${server.http_status}` : (server.error || '连接失败');
+        setDot(server.available ? 'ready' : 'error');
+        elements.recordCount.textContent = data.spatial_view.ready ? data.spatial_view.record_count.toLocaleString() : '未准备';
+        elements.viewState.textContent = data.spatial_view.ready ? `空间视图已就绪，EPSG:${data.spatial_view.srid}` : '请运行准备命令';
+        elements.mapState.textContent = data.map_service_configured ? '已配置' : '未配置';
+        elements.mapState.className = `value ${data.map_service_configured ? 'ok' : 'warn'}`;
+        elements.mapDetail.textContent = data.map_service_configured ? '可进入下一阶段图层渲染' : '等待 iServer 管理端发布';
+        elements.serviceUrl.textContent = data.map_service_url || '尚未配置';
+      } catch (error) { elements.serverState.textContent = '检测失败'; elements.serverState.className = 'value bad'; elements.latency.textContent = error.message; elements.message.textContent = error.message; setDot('error'); }
+    }
+    document.getElementById('refresh').addEventListener('click', loadStatus);
+    document.getElementById('copy-command').addEventListener('click', async () => { await navigator.clipboard.writeText('python manage.py prepare_supermap_layers'); });
+    loadStatus();
+  </script>
+</body>
+</html>

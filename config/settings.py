@@ -212,6 +212,11 @@ CACHES = {
     }
 }
 
+# SuperMap iServer settings. Keep credentials out of version control and use
+# environment variables when an authenticated service must be consumed.
+SUPERMAP_ISERVER_URL = os.getenv('SUPERMAP_ISERVER_URL', 'http://127.0.0.1:8090/iserver').rstrip('/')
+SUPERMAP_MAP_SERVICE_URL = os.getenv('SUPERMAP_MAP_SERVICE_URL', '').strip()
+
 # 注意：生产环境建议使用 Redis
 # CACHES = {
 #     'default': {
