@@ -233,3 +233,11 @@ except ImportError:
 else:
     DATABASES['default']['NAME'] = LOCAL_DATABASE_NAME
     CACHES['default']['LOCATION'] = LOCAL_CACHE_LOCATION
+
+try:
+    from .local_settings import LOCAL_SUPERMAP_ISERVER_URL, LOCAL_SUPERMAP_MAP_SERVICE_URL
+except ImportError:
+    pass
+else:
+    SUPERMAP_ISERVER_URL = LOCAL_SUPERMAP_ISERVER_URL.rstrip('/')
+    SUPERMAP_MAP_SERVICE_URL = LOCAL_SUPERMAP_MAP_SERVICE_URL.strip()

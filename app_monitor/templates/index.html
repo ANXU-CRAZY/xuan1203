@@ -1250,7 +1250,7 @@
     const app = {
         api: '/api',
         map: null,
-        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
+        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup(), supermap: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         serverStats: null,
@@ -1280,6 +1280,7 @@
 
         init: function() {
             this.initMap();
+            this.initSuperMapLayer();
             this.loadRegionBoundaries();
             this.initHeatmapTools();
             this.initDates();
@@ -1394,6 +1395,9 @@
             this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
+            this.map.createPane('supermapPane');
+            this.map.getPane('supermapPane').style.zIndex = 390;
+            this.map.getPane('supermapPane').style.pointerEvents = 'none';
             this.map.createPane('heatmapPane');
             this.map.getPane('heatmapPane').style.zIndex = 620;
             this.map.createPane('recordPane');
@@ -1401,9 +1405,10 @@
             this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img },
-                { "图层注记": labelLayer, "行政区界": this.layers.region, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { "图层注记": labelLayer, "行政区界": this.layers.region, "SuperMap服务图层": this.layers.supermap, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
+            this.layerControl = layerControl;
             setTimeout(() => {
                 layerControl.expand();
                 const controlEl = layerControl.getContainer();
@@ -1438,6 +1443,50 @@
                 this.updateAutoHeatmapByZoom();
                 this.scheduleVisibleRecordMarkers();
             });
+        },
+
+        loadExternalScript: function(src) {
+            if (!src) return Promise.reject(new Error('Missing script URL'));
+            const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+            if (existing) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.dataset.dynamicSrc = src;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                document.head.appendChild(script);
+            });
+        },
+
+        initSuperMapLayer: async function() {
+            try {
+                const response = await fetch('/api/supermap/status/', { cache: 'no-store' });
+                if (!response.ok) throw new Error(`SuperMap status HTTP ${response.status}`);
+                const status = await response.json();
+                if (!status.map_service_configured || !status.map_service_url) return;
+                if (!window.L || !L.supermap || !L.supermap.tiledMapLayer) {
+                    await this.loadExternalScript(status.iclient_leaflet_url);
+                }
+                if (!L.supermap || !L.supermap.tiledMapLayer) {
+                    throw new Error('SuperMap iClient Leaflet API is unavailable');
+                }
+                const layer = L.supermap.tiledMapLayer(status.map_service_url, {
+                    pane: 'supermapPane',
+                    transparent: true,
+                    opacity: 0.68,
+                    noWrap: true,
+                    cacheEnabled: true,
+                    prjCoordSys: { epsgCode: 3857 },
+                    attribution: 'SuperMap iServer'
+                });
+                layer.on('tileerror', (event) => console.warn('SuperMap tile failed', event));
+                this.layers.supermap.clearLayers();
+                this.layers.supermap.addLayer(layer);
+            } catch (error) {
+                console.warn('SuperMap layer unavailable:', error);
+            }
         },
 
         escapeHtml: function(value) {
