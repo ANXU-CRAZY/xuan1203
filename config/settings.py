@@ -69,11 +69,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'Yellow River',
-        'USER': 'postgres',
-        'PASSWORD': '111111',  # 【注意】确保你服务器上的数据库密码也是这个，否则需要修改
-        'HOST': 'localhost',
-        'PORT': '5432',
+        # These safe defaults make a fresh clone usable after the developer
+        # creates config/local_settings.py from the supplied template.
+        'NAME': os.environ.get('POSTGRES_DB', 'yellow_river_arcgis'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
         'CONN_MAX_AGE': 60,  # 连接持久化，避免每次请求新建连接
     }
 }
