@@ -222,9 +222,9 @@ CACHES = {
 
 # Local machine overrides are intentionally ignored by Git.
 try:
-    from .local_settings import LOCAL_CACHE_LOCATION, LOCAL_DATABASE_NAME
+    from .local_settings import LOCAL_CACHE_LOCATION, LOCAL_DATABASE_OVERRIDES
 except ImportError:
     pass
 else:
-    DATABASES['default']['NAME'] = LOCAL_DATABASE_NAME
+    DATABASES['default'].update(LOCAL_DATABASE_OVERRIDES)
     CACHES['default']['LOCATION'] = LOCAL_CACHE_LOCATION

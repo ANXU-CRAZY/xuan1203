@@ -2,7 +2,7 @@
 
 > 面向对象：负责 ArcGIS 开发的队友，以及需要继续执行本任务的 AI Agent。  
 > 当前分支：`competition/arcgis-server`  
-> 当前工作目录：`D:\xuan1203-arcgis`  
+> 工作目录：由每位开发者自行选择，以下统一记作 `<PROJECT_DIR>`。  
 > 基线标签：`baseline-webgis-2026-07-30`  
 > 本文目标：在**不破坏原有 Django + PostGIS + Leaflet 平台**的前提下，完成可演示、可部署、可复现的 ArcGIS Server / ArcGIS JavaScript API 集成版本。
 
@@ -10,20 +10,85 @@
 
 ## 0. 先读这一节
 
-### 0.1 当前已完成的事情
+### 0.1 仓库中已经准备好的内容
 
-以下内容已经存在，不需要重复创建：
+以下内容已经提交到 GitHub 的 `competition/arcgis-server` 分支。队友不需要复制原开发者的电脑，只需要从 GitHub 克隆自己的副本：
 
 | 项目 | 当前状态 | 说明 |
 |---|---|---|
-| 原始平台 | 已保留 | `D:\xuan1203`，分支为 `master`，不要在这里做 ArcGIS 开发 |
-| ArcGIS 工作区 | 已创建 | `D:\xuan1203-arcgis`，分支为 `competition/arcgis-server` |
-| SuperMap 工作区 | 已创建 | `D:\xuan1203-supermap`，与本任务无关，不要修改 |
-| ArcGIS 数据库副本 | 已创建 | PostgreSQL/PostGIS 数据库 `YellowRiverArcGIS` |
-| 原始数据库 | 已保留 | `Yellow River`，不得在 ArcGIS 工作中做破坏性操作 |
-| 本地媒体和数据 | 已复制 | ArcGIS 工作区已经有 `media/`、`data/` 和 `.env.local` |
-| 本地配置覆盖 | 已启用 | `config/local_settings.py` 被 Git 忽略，仅本机使用 |
-| 已推送分支 | 已完成 | 远端分支 `origin/competition/arcgis-server` |
+| 代码分支 | 已准备 | `origin/competition/arcgis-server`，基于 `baseline-webgis-2026-07-30` |
+| Django 本地配置入口 | 已准备 | `config/settings.py` 支持被 Git 忽略的 `config/local_settings.py` |
+| ArcGIS 开发手册 | 已准备 | 本文已提交到 `docs/ARCGIS_DEVELOPMENT_PLAYBOOK.md` |
+| 原版保护 | 已准备 | 原版代码在 `master`，队友不需要也不应访问原开发者的本地路径 |
+| 数据与数据库 | 由队友创建 | 每个开发者必须创建自己的 PostGIS 数据库并运行迁移/导入 |
+
+### 0.2 队友从 GitHub 开始的完整流程
+
+下面步骤是队友第一次接手时应执行的顺序。不要跳过数据库配置，也不要复制其他人的 `.venv` 或 `local_settings.py`。
+
+#### Windows PowerShell
+
+```powershell
+# 1. 克隆自己的开发副本；目录可以自定义
+git clone --branch competition/arcgis-server https://github.com/ANXU-CRAZY/xuan1203.git xuan1203-arcgis
+cd xuan1203-arcgis
+
+# 2. 使用 Python 3.11 或 3.12 创建独立虚拟环境
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+# 3. 复制环境模板（不要把真实密钥提交到 Git）
+Copy-Item .env.local.example .env.local -ErrorAction SilentlyContinue
+
+# 4. 配置 config/local_settings.py，见第 2.3 节
+# 5. 迁移数据库、导入数据、生成首页缓存
+python manage.py migrate
+python manage.py refresh_map_observation_cache --batch-size 5000
+python manage.py check
+```
+
+如果仓库中没有 `.env.local.example`，直接新建 `.env.local` 即可；该文件只保存本机配置，不要提交。
+
+#### GitHub 克隆后不会自动获得的内容
+
+当前仓库有意不提交以下内容：
+
+- PostgreSQL/PostGIS 数据库本身。
+- 含大量记录的 CSV、XLSX、SHP 和临时数据文件。
+- `media/` 中的用户上传图像和图库资源。
+- `.env.local`、API Key、Token 和本机密码。
+- Python 虚拟环境、模型权重和发布缓存。
+
+因此队友还需要向项目负责人索取一个**经过授权的数据包**或 PostgreSQL dump。推荐提供：
+
+```text
+arcgis-data-package/
+  data/                         # CSV/XLSX/SHP 及所有 SHP 伴随文件
+  media/                        # 可公开的图库/演示图片
+  yellow_river_arcgis.dump     # 可选，PostgreSQL custom-format dump
+  DATA_README.md                # 数据来源、日期、授权和导入顺序
+```
+
+如果没有 dump，就按第 2.4 节运行迁移，再使用获得的 CSV/SHP 导入。没有数据包时仍可以完成页面骨架和服务配置，但不能声称已经完成真实观测服务。
+
+#### Linux/macOS Bash
+
+```bash
+git clone --branch competition/arcgis-server https://github.com/ANXU-CRAZY/xuan1203.git xuan1203-arcgis
+cd xuan1203-arcgis
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+cp .env.local.example .env.local 2>/dev/null || touch .env.local
+python manage.py migrate
+python manage.py refresh_map_observation_cache --batch-size 5000
+python manage.py check
+```
+
+### 0.3 当前还没有完成的事情
 
 ### 0.2 当前还没有完成的事情
 
@@ -36,7 +101,7 @@
 - 尚未配置 ArcGIS Server CORS、Token、反向代理或生产环境部署。
 - 尚未做 ArcGIS 空间分析工具箱、地理处理服务或三维场景。
 
-### 0.3 三条不可违反的规则
+### 0.4 三条不可违反的规则
 
 1. **PostGIS 是业务数据唯一事实来源。** 不要把 ArcGIS 服务层变成新的主数据库，也不要手工在 ArcGIS 服务中修改观测记录。
 2. **不要退回旧的全量点位加载方式。** 首页数据逻辑必须继续使用 `MapObservationCache` 和 `/api/map-observations/`，不应重新让浏览器全量访问 `/api/observations/`。
@@ -76,27 +141,130 @@
 | 竞赛要求 | 决定优先做二维、三维、分析或移动端 | 评分表/主题/截止日期 |
 | 是否允许公网服务 | 决定 Token、代理和部署方案 | 公网 / 校园网 / 内网 |
 
-### 2.2 本机检查命令
+### 2.2 安装 PostgreSQL 和 PostGIS
 
-在 PowerShell 中执行。所有命令均在 `D:\xuan1203-arcgis` 下执行。
+队友必须在自己的电脑或开发服务器上安装 PostgreSQL 和 PostGIS。不要连接原开发者的数据库。
 
-```powershell
-cd D:\xuan1203-arcgis
+建议版本：PostgreSQL 14/15/16，PostGIS 3.x。安装完成后，使用 pgAdmin 或 `psql` 创建自己的数据库：
 
-# 应显示 competition/arcgis-server
-git branch --show-current
-
-# 应显示数据库隔离配置文件被忽略；不要提交它
-git status --short
-
-# 使用已有虚拟环境检查 Django
-D:\xuan1203\anxu\Scripts\python.exe manage.py check
+```sql
+CREATE USER gis_app WITH PASSWORD '<your-local-password>';
+CREATE DATABASE yellow_river_arcgis_dev OWNER gis_app;
+\c yellow_river_arcgis_dev
+CREATE EXTENSION postgis;
 ```
 
-确认当前数据库确实是 ArcGIS 副本：
+如果使用已有 `postgres` 用户，也可以不创建 `gis_app`，但密码不能写入 Git。
+
+检查 PostGIS：
+
+```sql
+SELECT current_database(), postgis_full_version();
+```
+
+### 2.3 创建队友自己的本地配置
+
+在项目根目录创建 `config/local_settings.py`。该文件已被 `.gitignore` 忽略，只存在于队友自己的电脑：
+
+```python
+# config/local_settings.py
+# 这个文件绝不提交到 Git。
+LOCAL_DATABASE_OVERRIDES = {
+    'NAME': 'yellow_river_arcgis_dev',
+    'USER': 'gis_app',
+    'PASSWORD': '<your-local-password>',
+    'HOST': '127.0.0.1',
+    'PORT': '5432',
+}
+LOCAL_CACHE_LOCATION = 'yellow-river-arcgis-dev-cache'
+```
+
+远程 PostgreSQL 时，将 `HOST` 改成数据库服务器地址，并确认防火墙、`pg_hba.conf` 和 PostgreSQL `listen_addresses` 已允许连接。不要修改 `config/settings.py` 中的默认密码来临时解决连接问题。
+
+也可以使用环境变量：
+
+```python
+import os
+
+LOCAL_DATABASE_OVERRIDES = {
+    'NAME': os.environ['GIS_DB_NAME'],
+    'USER': os.environ['GIS_DB_USER'],
+    'PASSWORD': os.environ['GIS_DB_PASSWORD'],
+    'HOST': os.environ.get('GIS_DB_HOST', '127.0.0.1'),
+    'PORT': os.environ.get('GIS_DB_PORT', '5432'),
+}
+LOCAL_CACHE_LOCATION = os.environ.get(
+    'GIS_CACHE_LOCATION', 'yellow-river-arcgis-dev-cache'
+)
+```
+
+### 2.4 初始化自己的数据库
+
+激活虚拟环境后执行：
 
 ```powershell
-@'
+# Windows PowerShell
+python manage.py migrate
+python manage.py check
+```
+
+```bash
+# Linux/macOS
+python manage.py migrate
+python manage.py check
+```
+
+如果拿到的是 PostgreSQL custom-format dump，并且 dump 中包含表结构与数据，可使用：
+
+```bash
+pg_restore --clean --if-exists --no-owner \\
+  --dbname=yellow_river_arcgis_dev \\
+  yellow_river_arcgis.dump
+```
+
+恢复后仍要执行一次 `python manage.py check`，并确认 `SELECT current_database()` 返回队友自己的数据库。不要把 dump 恢复到不确定的数据库名。
+
+如果需要演示数据，可使用项目负责人提供的 CSV：
+
+```bash
+python manage.py fast_import_observations data/bird_monitor_import_ready.csv \\
+  --batch-size 5000 --replace
+python manage.py normalize_protection_levels
+python manage.py refresh_map_observation_cache --batch-size 5000
+```
+
+`--replace` 会清空当前开发库中的旧观测数据，只能对自己的数据库使用。首次不确定时先不加 `--replace`。
+
+SHP 样线/点位导入：
+
+```bash
+python manage.py load_shp
+```
+
+该命令默认从 `data/水鸟监测点.shp` 和 `data/水鸟监测样线.shp` 读取数据。`.shp`、`.shx`、`.dbf`、`.prj`、`.cpg` 必须放在同一目录。
+
+### 2.5 本机检查命令
+
+在队友自己选择的项目目录执行：
+
+```powershell
+# Windows，虚拟环境激活后
+git branch --show-current
+git status --short
+python manage.py check
+```
+
+```bash
+# Linux/macOS，虚拟环境激活后
+git branch --show-current
+git status --short
+python manage.py check
+```
+
+确认当前数据库：
+
+```bash
+python - <<'PY'
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 import django
@@ -105,12 +273,12 @@ from django.db import connection
 with connection.cursor() as cursor:
     cursor.execute('SELECT current_database(), postgis_lib_version()')
     print(cursor.fetchone())
-'@ | D:\xuan1203\anxu\Scripts\python.exe -
+PY
 ```
 
-预期数据库名为 `YellowRiverArcGIS`。如果显示 `Yellow River`，立刻停止数据导入和迁移，检查 `config/local_settings.py`。
+预期显示队友自己的数据库名，例如 `yellow_river_arcgis_dev`。如果显示陌生数据库，立刻停止迁移和导入，检查 `config/local_settings.py`。
 
-### 2.3 需要阅读的代码顺序
+### 2.6 需要阅读的代码顺序
 
 不要上来就改 `index.html`。按此顺序阅读：
 
@@ -121,7 +289,7 @@ with connection.cursor() as cursor:
 5. `app_monitor/serializers.py`：监测点/样线/观测记录的现有输出格式。
 6. `app_monitor/management/commands/refresh_map_observation_cache.py`：首页缓存刷新过程。
 7. `app_monitor/templates/index.html`：现有 Leaflet 首页，不要贸然替换。
-8. `docs/AI_TECHNICAL_HANDOVER.md`：原平台完整交接说明。该文件在原工作区有一份未跟踪版本；需要时从 `D:\xuan1203\docs\` 读取。
+8. `docs/AI_TECHNICAL_HANDOVER.md`：如果项目负责人另行提供了原平台交接书，再阅读该文件；不要依赖其他电脑上的本地路径。
 
 ---
 
@@ -309,7 +477,7 @@ Django 的数据库表属于应用内部实现。直接把 `app_monitor_*` 所�
 
 ```sql
 CREATE ROLE arcgis_reader LOGIN PASSWORD '<strong-password>';
-GRANT CONNECT ON DATABASE "YellowRiverArcGIS" TO arcgis_reader;
+GRANT CONNECT ON DATABASE "yellow_river_arcgis_dev" TO arcgis_reader;
 GRANT USAGE ON SCHEMA public TO arcgis_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO arcgis_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
@@ -325,7 +493,7 @@ GRANT USAGE ON SCHEMA arcgis_export TO arcgis_reader;
 
 ### 6.3 创建观测点视图
 
-在 `YellowRiverArcGIS` 数据库执行。执行前在 pgAdmin 中核对表名；Django 默认表名通常为 `app_monitor_mapobservationcache`。
+在队友自己创建的数据库（例如 `yellow_river_arcgis_dev`）中执行。执行前在 pgAdmin 中核对表名；Django 默认表名通常为 `app_monitor_mapobservationcache`。
 
 ```sql
 CREATE OR REPLACE VIEW arcgis_export.observation_points AS
@@ -435,7 +603,7 @@ LIMIT 5;
 
 ### 7.1 建立 PostgreSQL 数据库连接
 
-1. 打开 ArcGIS Pro，新建项目，例如 `YellowRiverArcGIS`。
+1. 打开 ArcGIS Pro，新建项目，例如 `YellowRiverArcGISDemo`。
 2. 打开 Catalog Pane -> Databases -> Add Database Connection。
 3. 选择 PostgreSQL，填写 ArcGIS Server 可访问的数据库地址。
 4. 使用 `arcgis_reader`，不要使用 Django 的管理员账号。
@@ -559,8 +727,8 @@ path('arcgis/', arcgis_map_view, name='arcgis_map'),
 完成后先验证：
 
 ```powershell
-D:\xuan1203\anxu\Scripts\python.exe manage.py check
-D:\xuan1203\anxu\Scripts\python.exe manage.py runserver 8001
+python manage.py check
+python manage.py runserver 8001
 ```
 
 浏览器访问 `http://127.0.0.1:8001/arcgis/`。在服务 URL 未准备好前，页面也应展示清晰的“服务尚未配置”状态，而不是白屏。
@@ -789,8 +957,8 @@ renderAnalysisPanel(summary);
 原平台数据变化后，至少执行：
 
 ```powershell
-D:\xuan1203\anxu\Scripts\python.exe manage.py normalize_protection_levels
-D:\xuan1203\anxu\Scripts\python.exe manage.py refresh_map_observation_cache --batch-size 10000
+python manage.py normalize_protection_levels
+python manage.py refresh_map_observation_cache --batch-size 10000
 ```
 
 如果 ArcGIS 使用物化视图，再执行物化视图刷新。建议增加一个新命令，而不是靠人工记忆 SQL：
@@ -799,7 +967,7 @@ D:\xuan1203\anxu\Scripts\python.exe manage.py refresh_map_observation_cache --ba
 python manage.py refresh_arcgis_exports
 ```
 
-该命令应只连接 ArcGIS 数据库副本，执行固定的 `REFRESH MATERIALIZED VIEW`，完成后输出行数和时间。实现前先征求项目负责人确认，避免误刷新原版数据库。
+该命令应只连接队友自己的 ArcGIS 开发数据库，执行固定的 `REFRESH MATERIALIZED VIEW`，完成后输出行数和时间。实现前先确认数据库连接，避免误刷新其他环境。
 
 ### 10.2 同步验收
 
@@ -820,14 +988,14 @@ python manage.py refresh_arcgis_exports
 ### 11.1 后端与数据
 
 ```powershell
-cd D:\xuan1203-arcgis
-D:\xuan1203\anxu\Scripts\python.exe manage.py check
-D:\xuan1203\anxu\Scripts\python.exe manage.py showmigrations
+cd <PROJECT_DIR>
+python manage.py check
+python manage.py showmigrations
 ```
 
 必要验证：
 
-- `YellowRiverArcGIS` 不等于原版 `Yellow River`。
+- 当前连接的数据库必须是队友自己创建的开发库，不得误连生产库或其他队友的数据库。
 - `refresh_map_observation_cache` 成功。
 - `/api/map-observations/` 返回 200。
 - 服务账户只能 `SELECT`，不能 `INSERT/UPDATE/DELETE`。
@@ -908,12 +1076,12 @@ sudo systemctl reload nginx
 ### 13.1 只在自己的分支开发
 
 ```powershell
-cd D:\xuan1203-arcgis
+cd <PROJECT_DIR>
 git branch --show-current
 # 必须显示 competition/arcgis-server
 ```
 
-不要在 `D:\xuan1203` 的 `master` 上写 ArcGIS 功能。
+不要在 `master` 分支上写 ArcGIS 功能；始终确认当前目录位于 `competition/arcgis-server`。
 
 ### 13.2 每次工作前后
 
@@ -923,7 +1091,7 @@ git pull --ff-only origin competition/arcgis-server
 git status --short
 
 # 修改后
-D:\xuan1203\anxu\Scripts\python.exe manage.py check
+python manage.py check
 git diff
 git add <明确的文件>
 git commit -m "<清晰说明>"
@@ -966,7 +1134,7 @@ git push origin competition/arcgis-server
 ### M0：环境和数据确认
 
 - [ ] ArcGIS Pro/Server/Portal 信息确认。
-- [ ] `YellowRiverArcGIS` 数据库连接确认。
+- [ ] 队友自己的 PostgreSQL/PostGIS 数据库连接确认。
 - [ ] 只读账号创建。
 - [ ] ArcGIS 服务视图 SQL 验证。
 
@@ -1005,7 +1173,7 @@ git push origin competition/arcgis-server
 将下面文本与具体任务一起提供给 Agent：
 
 ```text
-你正在 `D:\xuan1203-arcgis` 的 `competition/arcgis-server` 分支工作。
+你正在 `<PROJECT_DIR>` 的 `competition/arcgis-server` 分支工作。
 先阅读 `docs/ARCGIS_DEVELOPMENT_PLAYBOOK.md`，再阅读：
 1. config/settings.py
 2. config/urls.py
@@ -1014,12 +1182,12 @@ git push origin competition/arcgis-server
 5. app_monitor/templates/index.html
 
 约束：
-- 不修改 D:\xuan1203 的 master 工作区。
-- 不修改或删除原始数据库 Yellow River；只使用 YellowRiverArcGIS。
+- 不修改 `master` 分支；ArcGIS 代码只提交到 `competition/arcgis-server`。
+- 不连接、修改或删除其他人的数据库；只使用自己创建的开发数据库。
 - 不提交 config/local_settings.py、.env.local、Token、密码或数据集。
 - 保留现有 /api/map-observations/ 与 MapObservationCache 逻辑。
 - 不替换原 Leaflet 首页；先新增 /arcgis/ 页面。
-- 每个阶段先运行 D:\xuan1203\anxu\Scripts\python.exe manage.py check。
+- 每个阶段先运行当前虚拟环境中的 `python manage.py check`。
 - 修改前说明计划，修改后列出文件、验证结果、未解决风险。
 ```
 
@@ -1030,7 +1198,7 @@ git push origin competition/arcgis-server
 当且仅当以下条件都满足时，ArcGIS 版本才可称为“完成”：
 
 - [ ] 远端 `competition/arcgis-server` 分支包含全部 ArcGIS 代码和文档。
-- [ ] 原版 `master` 与 `Yellow River` 数据库未被 ArcGIS 开发污染。
+- [ ] `master` 分支和其他开发者的数据库未被 ArcGIS 开发污染。
 - [ ] ArcGIS REST 服务真实可访问，不是截图或本地假数据。
 - [ ] Django/PostGIS 数据更新后有明确、可复现的 ArcGIS 更新流程。
 - [ ] ArcGIS 页面能完成图层加载、筛选、弹窗、热力图和至少一项空间分析。
