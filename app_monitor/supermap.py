@@ -1,6 +1,7 @@
 """Small, credential-free bridge to a local SuperMap iServer instance."""
 
 import os
+import json
 import time
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
@@ -80,3 +81,61 @@ def supermap_status_payload():
         'iclient_leaflet_url': config['iclient_leaflet_url'],
         'map_service_configured': bool(config['map_service_url']),
     }
+
+
+def supermap_buffer_geometry(lng, lat, radius_m):
+    """Create a WGS84 buffer through iServer's geometry analyst endpoint."""
+    config = supermap_config()
+    endpoint = (
+        f"{config['base_url']}/services/spatialAnalysis-YellowRiverSuperMap/"
+        "restjsr/spatialanalyst/geometry/buffer"
+        "?returnContent=true&asynchronousReturn=false"
+    )
+    payload = {
+        'sourceGeometry': {
+            'type': 'POINT',
+            'points': [{'x': lng, 'y': lat}],
+            'prjCoordSys': {'epsgCode': 4326},
+        },
+        'analystParameter': {
+            'leftDistance': {'value': radius_m},
+            'rightDistance': {'value': radius_m},
+            'radiusUnit': 'METER',
+            'endType': 'ROUND',
+            'semicircleLineSegment': 16,
+        },
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+    request = urlrequest.Request(
+        endpoint,
+        data=body,
+        headers={
+            'Accept': 'application/json',
+            'Content-Type': 'application/json;charset=UTF-8',
+            'User-Agent': 'YellowRiver-SuperMap-Bridge/1.0',
+        },
+        method='POST',
+    )
+    try:
+        with urlrequest.urlopen(request, timeout=20) as response:
+            result = json.loads(response.read().decode('utf-8'))
+    except (HTTPError, URLError, OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f'iServer 缓冲分析失败: {error}') from error
+
+    geometry = result.get('resultGeometry') if isinstance(result, dict) else None
+    if not geometry or not geometry.get('points'):
+        raise RuntimeError(result.get('message') or 'iServer 未返回缓冲几何')
+    points = geometry['points']
+    parts = geometry.get('parts') or [len(points)]
+    rings = []
+    offset = 0
+    for length in parts:
+        ring = [[point['x'], point['y']] for point in points[offset:offset + length]]
+        offset += length
+        if ring and ring[0] != ring[-1]:
+            ring.append(ring[0])
+        if ring:
+            rings.append(ring)
+    if not rings:
+        raise RuntimeError('iServer 返回了空缓冲几何')
+    return {'type': 'Polygon', 'coordinates': rings}

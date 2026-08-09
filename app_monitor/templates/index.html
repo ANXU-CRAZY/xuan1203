@@ -190,6 +190,19 @@
             font-size: 12px; color: #666; background: #fff; transition: 0.2s;
         }
         .btn-clear:hover { border-color: var(--c-aqua); color: var(--c-aqua); }
+        .btn-analysis { border: 1px solid rgba(31,111,120,0.24); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; color: #1f6f78; background: #fff; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-analysis:hover, .btn-analysis.active { color: #fff; background: #1f6f78; }
+        #analysis-panel { position: absolute; top: 132px; right: 20px; z-index: 1000; width: 270px; padding: 12px 14px; display: none; gap: 9px; color: #2c3e50; font-size: 12px; }
+        #analysis-panel.visible { display: flex; }
+        #analysis-panel .analysis-row { display: flex; align-items: center; gap: 8px; }
+        #analysis-panel label { width: 62px; color: #6b7b82; font-weight: 700; }
+        #analysis-panel input, #analysis-panel select { flex: 1; min-width: 0; border: 1px solid #d8e0e2; border-radius: 5px; padding: 6px 7px; background: #f8fbfb; color: #2c3e50; }
+        #analysis-panel .analysis-actions { display: flex; gap: 7px; justify-content: flex-end; }
+        #analysis-panel .analysis-actions button { border: 0; border-radius: 5px; padding: 6px 10px; cursor: pointer; font-weight: 700; }
+        #analysis-run { background: #1f6f78; color: #fff; }
+        #analysis-clear { background: #edf2f3; color: #526269; }
+        #analysis-status { color: #62737a; line-height: 1.45; }
+        .analysis-selecting #map { cursor: crosshair; }
         #heat-info {
             position: absolute; top: 126px; right: 20px; z-index: 1000;
             padding: 8px 12px; min-width: 260px; font-size: 12px; color: #2c3e50;
@@ -639,6 +652,7 @@
                 top: auto; left: 12px; right: 12px; bottom: 370px;
                 min-width: 0; border-radius: 18px; font-size: 12px;
             }
+            #analysis-panel { top: 136px; left: 12px; right: 12px; width: auto; border-radius: 18px; }
 
             #rank-panel {
                 left: 12px !important; right: 12px !important; bottom: 118px !important;
@@ -1033,8 +1047,20 @@
         <input type="date" id="d-end" class="date-inp">
         <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
         <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
+        <button id="buffer-analysis-toggle" class="btn-analysis" onclick="app.toggleBufferAnalysis()" title="在地图上选择分析中心"><i class="fas fa-draw-polygon"></i> 缓冲分析</button>
         <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
     </div>
+</div>
+
+<div id="analysis-panel" class="glass-panel" aria-live="polite">
+    <div class="panel-head" style="cursor:default; padding:0 0 8px;">
+        <span><i class="fas fa-shield-alt" style="color:#1f6f78"></i> 保护物种缓冲区</span>
+        <button type="button" class="btn-clear" onclick="app.toggleBufferAnalysis(false)" title="关闭"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="analysis-row"><label for="buffer-radius">半径</label><input id="buffer-radius" type="number" min="50" max="10000" step="50" value="500"><span>米</span></div>
+    <div class="analysis-row"><label for="buffer-protection">筛选</label><select id="buffer-protection"><option value="all">全部物种</option><option value="国家一级">国家一级</option><option value="国家二级">国家二级</option><option value="三有动物">三有动物</option><option value="无危/其他">无危/其他</option></select></div>
+    <div id="analysis-status">点击地图选择中心点，然后运行分析。</div>
+    <div class="analysis-actions"><button id="analysis-clear" type="button" onclick="app.clearBufferAnalysis()">清除</button><button id="analysis-run" type="button" onclick="app.runBufferAnalysis()">运行分析</button></div>
 </div>
 
 <div id="heat-info" class="glass-panel">
@@ -1285,6 +1311,7 @@
             autoDismissZoom: null,
             bounds: null
         },
+        bufferAnalysis: { active: false, center: null, layer: null },
 
         init: function() {
             this.initMap();
@@ -1501,6 +1528,16 @@
         },
 
         handleSuperMapClick: function(event) {
+            if (this.bufferAnalysis.active) {
+                this.bufferAnalysis.center = event.latlng;
+                if (this.bufferAnalysis.layer) this.bufferAnalysis.layer.clearLayers();
+                const marker = L.circleMarker(event.latlng, { radius: 7, color: '#fff', weight: 2, fillColor: '#1f6f78', fillOpacity: 1 })
+                    .bindTooltip('分析中心', { permanent: true, direction: 'top', offset: [0, -8] });
+                this.bufferAnalysis.layer = L.layerGroup([marker]).addTo(this.map);
+                const status = document.getElementById('analysis-status');
+                if (status) status.textContent = `已选择 ${event.latlng.lat.toFixed(5)}, ${event.latlng.lng.toFixed(5)}，点击“运行分析”。`;
+                return;
+            }
             if (!this.map || !this.layers.supermap || !this.map.hasLayer(this.layers.supermap)) return;
             if (!event || !event.latlng) return;
             const point = this.map.latLngToContainerPoint(event.latlng);
@@ -1522,6 +1559,70 @@
                 this.showSuperMapHit(enrichedRecord);
                 window.setTimeout(() => this.openDetailModal(enrichedRecord, this.currentStats || {}), 140);
             }).fail(() => console.warn('Nearest SuperMap observation lookup failed'));
+        },
+
+        toggleBufferAnalysis: function(force) {
+            const active = typeof force === 'boolean' ? force : !this.bufferAnalysis.active;
+            this.bufferAnalysis.active = active;
+            document.body.classList.toggle('analysis-selecting', active);
+            const panel = document.getElementById('analysis-panel');
+            const button = document.getElementById('buffer-analysis-toggle');
+            if (panel) panel.classList.toggle('visible', active);
+            if (button) button.classList.toggle('active', active);
+            if (active) {
+                const status = document.getElementById('analysis-status');
+                if (status && !this.bufferAnalysis.center) status.textContent = '点击地图选择分析中心，然后运行分析。';
+            } else {
+                this.clearBufferAnalysis();
+            }
+        },
+
+        runBufferAnalysis: async function() {
+            const status = document.getElementById('analysis-status');
+            if (!this.bufferAnalysis.center) {
+                if (status) status.textContent = '请先点击地图选择分析中心。';
+                this.toggleBufferAnalysis(true);
+                return;
+            }
+            const radius = Math.max(50, Math.min(10000, Number(document.getElementById('buffer-radius')?.value || 500)));
+            const protection = document.getElementById('buffer-protection')?.value || 'all';
+            if (status) status.textContent = '正在调用 SuperMap 空间分析服务…';
+            const params = new URLSearchParams({ lng: this.bufferAnalysis.center.lng, lat: this.bufferAnalysis.center.lat, radius, protection });
+            try {
+                const response = await fetch(`${this.api}/supermap/protected-buffer/?${params.toString()}`, { cache: 'no-store' });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.detail || `HTTP ${response.status}`);
+                if (this.bufferAnalysis.layer) this.bufferAnalysis.layer.clearLayers();
+                const buffer = L.geoJSON(payload.buffer, { style: { color: '#1f6f78', weight: 2, fillColor: '#37a7a8', fillOpacity: 0.2 } });
+                const hits = L.geoJSON(payload.observations, {
+                    pointToLayer: (feature, latlng) => L.circleMarker(latlng, { radius: 5, color: '#fff', weight: 1.5, fillColor: '#e67e22', fillOpacity: 0.9 }),
+                    onEachFeature: (feature, layer) => {
+                        const props = feature.properties || {};
+                        layer.bindPopup(`<strong>${this.escapeHtml(props.species_name)}</strong><br>${this.escapeHtml(props.protection)} · ${this.escapeHtml(props.zone_name)}<br>数量：${props.count || 0}`);
+                    },
+                });
+                const routes = L.geoJSON(payload.routes, {
+                    style: { color: '#7c3aed', weight: 4, opacity: 0.85 },
+                    onEachFeature: (feature, layer) => {
+                        const props = feature.properties || {};
+                        layer.bindPopup(`<strong>${this.escapeHtml(props.name || '监测样线')}</strong><br>缓冲区覆盖：${props.overlap_percent || 0}%`);
+                    },
+                });
+                this.bufferAnalysis.layer = L.layerGroup([buffer, hits, routes]).addTo(this.map);
+                if (status) status.textContent = `分析完成：${payload.summary.matched_records} 条记录，${payload.summary.bird_count} 只鸟，命中 ${payload.summary.matched_routes} 条监测样线。`;
+            } catch (error) {
+                if (status) status.textContent = `分析失败：${error.message}`;
+            }
+        },
+
+        clearBufferAnalysis: function() {
+            if (this.bufferAnalysis.layer) {
+                this.bufferAnalysis.layer.removeFrom(this.map);
+                this.bufferAnalysis.layer = null;
+            }
+            this.bufferAnalysis.center = null;
+            const status = document.getElementById('analysis-status');
+            if (status) status.textContent = '点击地图选择分析中心，然后运行分析。';
         },
 
         showSuperMapHit: function(record) {

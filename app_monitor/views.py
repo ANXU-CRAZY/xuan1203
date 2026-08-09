@@ -38,7 +38,7 @@ except ImportError:
 # 确保包含 Product, UserProfile
 from .models import MapObservationCache, ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from .protection import normalize_protection_level, get_protection_group
-from .supermap import supermap_status_payload
+from .supermap import supermap_status_payload, supermap_buffer_geometry
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -1136,6 +1136,112 @@ def ai_chat(request):
 # ==========================================
 def index_view(request):
     return render(request, 'index.html')
+
+
+@require_GET
+def supermap_protected_buffer(request):
+    """Run a point buffer in iServer and return nearby approved observations."""
+    try:
+        lng = float(request.GET.get('lng'))
+        lat = float(request.GET.get('lat'))
+        radius = float(request.GET.get('radius', 500))
+    except (TypeError, ValueError):
+        return JsonResponse({'detail': 'lng、lat 和 radius 必须是数字'}, status=400)
+
+    if not (-180 <= lng <= 180 and -90 <= lat <= 90):
+        return JsonResponse({'detail': '坐标超出 WGS84 范围'}, status=400)
+    radius = max(50.0, min(radius, 10000.0))
+    protection = (request.GET.get('protection') or 'all').strip()
+
+    try:
+        buffer_geometry = supermap_buffer_geometry(lng, lat, radius)
+    except RuntimeError as error:
+        return JsonResponse({'detail': str(error)}, status=502)
+
+    observations = []
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT source_record_id, species_name, species_protection,
+                   zone_name, observation_time, observation_count,
+                   longitude, latitude
+            FROM supermap_observation_points
+            WHERE status = 'approved'
+              AND geom IS NOT NULL
+              AND ST_DWithin(
+                    geom::geography,
+                    ST_SetSRID(ST_Point(%s, %s), 4326)::geography,
+                    %s
+                  )
+            ORDER BY ST_Distance(
+                geom::geography,
+                ST_SetSRID(ST_Point(%s, %s), 4326)::geography
+            )
+            LIMIT 5000
+            """,
+            [lng, lat, radius, lng, lat],
+        )
+        for row in cursor.fetchall():
+            if protection != 'all' and get_protection_group(row[2]) != protection:
+                continue
+            observations.append({
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': [row[6], row[7]]},
+                'properties': {
+                    'id': row[0],
+                    'species_name': row[1] or '未知物种',
+                    'protection': get_protection_group(row[2]),
+                    'zone_name': row[3] or '未知区域',
+                    'observation_time': row[4].isoformat() if row[4] else None,
+                    'count': row[5] or 0,
+                },
+            })
+            if len(observations) >= 500:
+                break
+
+    routes = []
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            WITH center AS (
+                SELECT ST_Transform(ST_SetSRID(ST_Point(%s, %s), 4326), 3857) AS geom
+            )
+            SELECT r.id, r.name, ST_AsGeoJSON(r.path_geom),
+                   ROUND((
+                       ST_Length(ST_Intersection(
+                           ST_Transform(r.path_geom, 3857),
+                           ST_Buffer(center.geom, %s)
+                       )) / NULLIF(ST_Length(ST_Transform(r.path_geom, 3857)), 0) * 100
+                   )::numeric, 1)
+            FROM app_monitor_monitoringroute r, center
+            WHERE r.path_geom IS NOT NULL
+              AND ST_DWithin(ST_Transform(r.path_geom, 3857), center.geom, %s)
+            ORDER BY r.id
+            LIMIT 100
+            """,
+            [lng, lat, radius, radius],
+        )
+        for row in cursor.fetchall():
+            routes.append({
+                'type': 'Feature',
+                'geometry': json.loads(row[2]) if row[2] else None,
+                'properties': {'id': row[0], 'name': row[1], 'overlap_percent': float(row[3] or 0)},
+            })
+
+    return JsonResponse({
+        'type': 'FeatureCollection',
+        'buffer': {'type': 'Feature', 'geometry': buffer_geometry, 'properties': {
+            'lng': lng, 'lat': lat, 'radius_m': radius, 'protection': protection,
+        }},
+        'observations': {'type': 'FeatureCollection', 'features': observations},
+        'routes': {'type': 'FeatureCollection', 'features': routes},
+        'summary': {
+            'radius_m': radius,
+            'matched_records': len(observations),
+            'bird_count': sum(item['properties']['count'] for item in observations),
+            'matched_routes': len(routes),
+        },
+    }, json_dumps_params={'ensure_ascii': False})
 
 
 @require_GET
