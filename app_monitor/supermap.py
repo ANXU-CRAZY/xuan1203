@@ -2,6 +2,7 @@
 
 import os
 import json
+import re
 import time
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
@@ -70,6 +71,61 @@ def spatial_view_status():
         return {'ready': False, 'record_count': 0, 'srid': None}
 
 
+def map_source_status(config):
+    """Read the published map metadata and report its concrete data sources."""
+    map_service_url = config['map_service_url'].rstrip('/')
+    expected_source = _setting(
+        'SUPERMAP_POSTGIS_DATASOURCE',
+        '127_0_0_1_5432_YellowRiverSuperMap_public',
+    )
+    if not map_service_url:
+        return {
+            'available': False,
+            'uses_postgis': False,
+            'expected_source': expected_source,
+            'source_names': [],
+            'error': '地图服务尚未配置',
+        }
+
+    request = urlrequest.Request(
+        f'{map_service_url}/layers.json',
+        headers={'Accept': 'application/json', 'User-Agent': 'YellowRiver-SuperMap-Bridge/1.0'},
+    )
+    try:
+        with urlrequest.urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode('utf-8'))
+    except (HTTPError, URLError, OSError, json.JSONDecodeError) as error:
+        return {
+            'available': False,
+            'uses_postgis': False,
+            'expected_source': expected_source,
+            'source_names': [],
+            'error': str(error.reason if isinstance(error, URLError) else error),
+        }
+
+    source_names = set()
+
+    def collect_sources(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                collect_sources(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect_sources(item)
+        elif isinstance(value, str):
+            source_names.update(re.findall(r'[^@\s"/]+@[^@\s"/]+', value))
+
+    collect_sources(payload)
+    source_names = sorted(source_names)
+    return {
+        'available': True,
+        'uses_postgis': any(expected_source in name for name in source_names),
+        'expected_source': expected_source,
+        'source_names': source_names,
+        'error': None,
+    }
+
+
 def supermap_status_payload():
     config = supermap_config()
     return {
@@ -80,6 +136,7 @@ def supermap_status_payload():
         'map_service_url': config['map_service_url'],
         'iclient_leaflet_url': config['iclient_leaflet_url'],
         'map_service_configured': bool(config['map_service_url']),
+        'map_source': map_source_status(config),
     }
 
 
