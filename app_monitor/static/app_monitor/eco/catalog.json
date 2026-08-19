@@ -1,0 +1,54 @@
+{
+  "quality_c_ref": {
+    "name": "quality_c_ref",
+    "url": "/static/app_monitor/eco/quality_c_ref.png",
+    "bounds": [
+      112.7144002509602,
+      34.2635558854215,
+      114.2145867754398,
+      34.99900760254006
+    ]
+  },
+  "redline_score_spring": {
+    "name": "redline_score_spring",
+    "url": "/static/app_monitor/eco/redline_score_spring.png",
+    "bounds": [
+      112.7144002509602,
+      34.2635558854215,
+      114.2145867754398,
+      34.99900760254006
+    ]
+  },
+  "redline_score_summer": {
+    "name": "redline_score_summer",
+    "url": "/static/app_monitor/eco/redline_score_summer.png",
+    "bounds": [
+      112.7144002509602,
+      34.2635558854215,
+      114.2145867754398,
+      34.99900760254006
+    ]
+  },
+  "redline_score_autumn": {
+    "name": "redline_score_autumn",
+    "url": "/static/app_monitor/eco/redline_score_autumn.png",
+    "bounds": [
+      112.7144002509602,
+      34.2635558854215,
+      114.2145867754398,
+      34.99900760254006
+    ]
+  },
+  "redline_score_winter": {
+    "name": "redline_score_winter",
+    "url": "/static/app_monitor/eco/redline_score_winter.png",
+    "bounds": [
+      112.7144002509602,
+      34.2635558854215,
+      114.2145867754398,
+      34.99900760254006
+    ]
+  },
+  "core_feature_count": 693,
+  "core_area_km2": 103.1
+}

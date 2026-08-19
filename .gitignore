@@ -43,6 +43,12 @@ bird_recognition/yolo_model/
 # Locally generated SuperMap import layers
 data/supermap/
 
+# Generated local terrain/Realspace caches (rebuild from the published service)
+work/
+data/local_terrain/
+data/local_terrain_backup_*/
+~*@YellowRiverSuperMap.smwu
+
 # IDE and OS files
 .idea/
 .vscode/

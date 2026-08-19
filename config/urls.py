@@ -8,10 +8,15 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
-    index_view, UserProfileViewSet, bird_recognition_page,
+    index_view, ecology_center_view, ecology_3d_view, ecology_scene_river, ecology_realspace_proxy, ecology_iserver_probe_proxy, ecology_report_view, supermap_3d_sdk_proxy, UserProfileViewSet, bird_recognition_page,
     ProductViewSet, SpeciesViewSet, RegisterViewSet,
     ArticleViewSet, SpeciesImageViewSet,
     ai_chat, map_observations, supermap_status, supermap_protected_buffer,
+    supermap_pick_observation, supermap_thematic_points,
+    ecology_layers, ecology_capacity, ecology_risk_alerts, ecology_hotspots,
+    ecology_patrol_plan, ecology_live_feed, ecology_report_data,
+    ecology_dem_imagery_health,
+    local_terrain_config, local_terrain_tile,
 )
 
 # === 1. 注册 API 路由 ===
@@ -28,9 +33,46 @@ router.register(r'species-images', SpeciesImageViewSet, basename='species-image'
 
 # === 2. 定义 URL 模式 ===
 urlpatterns = [
+    # Generated B79 assets are also served in the local DEBUG=False demo.
+    re_path(
+        r'^static/app_monitor/eco/(?P<path>.*)$',
+        serve,
+        {'document_root': settings.BASE_DIR / 'app_monitor' / 'static' / 'app_monitor' / 'eco'},
+    ),
+    re_path(r'^supermap-sdk/(?P<path>.*)$', supermap_3d_sdk_proxy, name='supermap_3d_sdk_proxy'),
+    # SuperMap3D resolves scene metadata relative to the iServer REST path.
+    # Keep that exact path on the web origin so every follow-up request hits
+    # the same compatibility proxy instead of becoming a browser 404.
+    re_path(
+        r'^iserver/services/YellowRiverEcology3D/rest/realspace(?:/(?P<resource_path>.*))?$',
+        ecology_realspace_proxy,
+        name='ecology_realspace_iserver_proxy',
+    ),
+    re_path(
+        r'^iserver/(?P<probe_path>services/YellowRiverEcology3D\.rjson|manager/license\.json)$',
+        ecology_iserver_probe_proxy,
+        name='ecology_iserver_probe_proxy',
+    ),
+    # SuperMap3D resolves this capability probe from the current site root.
+    path(
+        'manager/license.json',
+        ecology_iserver_probe_proxy,
+        {'probe_path': 'manager/license.json'},
+        name='ecology_iserver_license_proxy',
+    ),
     # 首页直接指向 index_view
     path('', index_view, name='home'),
-    path('supermap/', lambda r: render(r, 'supermap.html'), name='supermap'),
+    path('supermap/', index_view, name='supermap'),
+    path('ecology/', ecology_center_view, name='ecology_center'),
+    path('ecology/3d/', ecology_3d_view, name='ecology_3d'),
+    path('api/ecology/scene-assets/river/', ecology_scene_river, name='ecology_scene_river'),
+    path('api/ecology/dem-imagery-health/', ecology_dem_imagery_health, name='ecology_dem_imagery_health'),
+    # 本地生成的地形瓦片(绕开 iServer,供 SuperMapTerrainProvider isSct 加载)
+    path('api/terrain/datas/terrain/config', local_terrain_config, name='local_terrain_config'),
+    re_path(r'^api/terrain/datas/terrain/data/path/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)\.terrainz$', local_terrain_tile, name='local_terrain_tile'),
+    re_path(r'^api/ecology/realspace(?:/(?P<resource_path>.*))?$', ecology_realspace_proxy, name='ecology_realspace_proxy'),
+    path('ecology/report/', ecology_report_view, name='ecology_report'),
+    path('supermap/status/', lambda r: render(r, 'supermap.html'), name='supermap_status_page'),
 
     # 协作者补充的前端页面
     path('report/', lambda r: render(r, 'report.html'), name='report'),
@@ -56,6 +98,15 @@ urlpatterns = [
     path('api/map-observations/', map_observations, name='map_observations'),
     path('api/supermap/status/', supermap_status, name='supermap_status'),
     path('api/supermap/protected-buffer/', supermap_protected_buffer, name='supermap_protected_buffer'),
+    path('api/supermap/pick/', supermap_pick_observation, name='supermap_pick_observation'),
+    path('api/supermap/thematic-points/', supermap_thematic_points, name='supermap_thematic_points'),
+    path('api/ecology/layers/', ecology_layers, name='ecology_layers'),
+    path('api/ecology/capacity/', ecology_capacity, name='ecology_capacity'),
+    path('api/ecology/risk-alerts/', ecology_risk_alerts, name='ecology_risk_alerts'),
+    path('api/ecology/hotspots/', ecology_hotspots, name='ecology_hotspots'),
+    path('api/ecology/patrol-plan/', ecology_patrol_plan, name='ecology_patrol_plan'),
+    path('api/ecology/live-feed/', ecology_live_feed, name='ecology_live_feed'),
+    path('api/ecology/report-data/', ecology_report_data, name='ecology_report_data'),
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口

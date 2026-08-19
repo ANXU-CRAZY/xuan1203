@@ -220,6 +220,18 @@
         .heat-selecting #map { cursor: crosshair; }
         .leaflet-interactive:focus { outline: none; }
 
+        #thematic-legend {
+            position: absolute; left: 12px; top: 250px; z-index: 950;
+            display: none; width: 156px; padding: 9px 10px;
+            color: var(--c-dark); font-size: 11px; line-height: 1.55;
+        }
+        #thematic-legend.visible { display: block; }
+        .thematic-legend-title { display: flex; align-items: center; gap: 6px; font-weight: 800; margin-bottom: 5px; }
+        .thematic-legend-title i { color: var(--c-aqua); }
+        .thematic-legend-row { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+        .thematic-swatch { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .thematic-legend-note { margin-top: 5px; color: #77858c; font-size: 10px; }
+
         /* === 面板初始位置 === */
         /* 注意：拖动后这些 bottom/right 属性会被 JS 覆盖为 top/left */
         #rank-panel { position: absolute; bottom: 48px; left: 20px; width: 320px; height: 400px; z-index: 1000; }
@@ -1011,6 +1023,7 @@
             <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
             <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
             <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
+            <a href="/ecology/" class="nav-btn" style="background: linear-gradient(135deg, #1f6f78, #15505a); color: white; border: none;"><i class="fas fa-chart-area"></i><span>决策平台</span></a>
             <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
             <a href="/articles/" class="nav-btn" style="background: linear-gradient(135deg, #2D9CDB, #1b6fa8); color: white; border: none;"><i class="fas fa-newspaper"></i><span>科普</span></a>
             <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
@@ -1027,6 +1040,7 @@
             <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
             <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
             <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
+            <a href="/ecology/" class="nav-btn" style="background: linear-gradient(135deg, #1f6f78, #15505a); color: white; border: none;"><i class="fas fa-chart-area"></i><span>决策平台</span></a>
             <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
             <a href="/articles/" class="nav-btn" style="background: linear-gradient(135deg, #2D9CDB, #1b6fa8); color: white; border: none;"><i class="fas fa-newspaper"></i><span>科普</span></a>
             <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
@@ -1049,6 +1063,7 @@
         <span style="color:#999">-</span>
         <input type="date" id="d-end" class="date-inp">
         <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
+        <button id="timeline-toggle" class="btn-analysis" onclick="app.toggleTimeline()" title="按年度播放观测变化"><i class="fas fa-play"></i></button>
         <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
         <button id="buffer-analysis-toggle" class="btn-analysis" onclick="app.toggleBufferAnalysis()" title="在地图上选择分析中心"><i class="fas fa-draw-polygon"></i> 缓冲分析</button>
         <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
@@ -1063,12 +1078,21 @@
     <div class="analysis-row"><label for="buffer-radius">半径</label><input id="buffer-radius" type="number" min="50" max="10000" step="50" value="500"><span>米</span></div>
     <div class="analysis-row"><label for="buffer-protection">筛选</label><select id="buffer-protection"><option value="all">全部物种</option><option value="国家一级">国家一级</option><option value="国家二级">国家二级</option><option value="三有动物">三有动物</option><option value="无危/其他">无危/其他</option></select></div>
     <div id="analysis-status">点击地图选择中心点，然后运行分析。</div>
-    <div class="analysis-actions"><button id="analysis-clear" type="button" onclick="app.clearBufferAnalysis()">清除</button><button id="analysis-run" type="button" onclick="app.runBufferAnalysis()">运行分析</button></div>
+    <div class="analysis-actions"><button id="analysis-clear" type="button" onclick="app.clearBufferAnalysis()">清除</button><button id="analysis-export" type="button" onclick="app.exportBufferResults()" title="导出 iServer 缓冲分析结果" disabled><i class="fas fa-file-csv"></i></button><button id="analysis-run" type="button" onclick="app.runBufferAnalysis()">运行分析</button></div>
 </div>
 
 <div id="heat-info" class="glass-panel">
     <div id="heat-info-text">拖拽地图圈选区域，系统将按外接矩形生成观鸟数量热力图。</div>
     <div class="heat-legend"><span>低</span><div class="heat-gradient"></div><span>高</span></div>
+</div>
+
+<div id="thematic-legend" class="glass-panel" aria-live="polite">
+    <div class="thematic-legend-title"><i class="fas fa-database"></i><span>PostGIS 保护专题</span></div>
+    <div class="thematic-legend-row"><span><i class="thematic-swatch" style="background:#E84B43"></i>国家一级</span></div>
+    <div class="thematic-legend-row"><span><i class="thematic-swatch" style="background:#F39C12"></i>国家二级</span></div>
+    <div class="thematic-legend-row"><span><i class="thematic-swatch" style="background:#4A9BE0"></i>三有动物</span></div>
+    <div class="thematic-legend-row"><span><i class="thematic-swatch" style="background:#58C96D"></i>无危/其他</span></div>
+    <div class="thematic-legend-note" id="thematic-legend-note">打开图层后加载</div>
 </div>
 
 <div id="rank-panel" class="glass-panel">
@@ -1287,7 +1311,7 @@
     const app = {
         api: '/api',
         map: null,
-        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup(), supermap: L.layerGroup(), supermapHit: L.layerGroup() },
+        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup(), supermap: L.layerGroup(), supermapHit: L.layerGroup(), thematic: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         serverStats: null,
@@ -1314,7 +1338,9 @@
             autoDismissZoom: null,
             bounds: null
         },
-        bufferAnalysis: { active: false, center: null, layer: null },
+        bufferAnalysis: { active: false, center: null, layer: null, payload: null },
+        thematic: { requestSeq: 0, timer: null, controller: null },
+        timeline: { playing: false, timer: null, years: [], index: 0 },
 
         init: function() {
             this.initMap();
@@ -1438,14 +1464,29 @@
             this.map.getPane('supermapPane').style.pointerEvents = 'none';
             this.map.createPane('supermapHitPane');
             this.map.getPane('supermapHitPane').style.zIndex = 510;
+            this.map.createPane('thematicPane');
+            this.map.getPane('thematicPane').style.zIndex = 405;
             this.map.createPane('heatmapPane');
             this.map.getPane('heatmapPane').style.zIndex = 620;
             this.map.createPane('recordPane');
             this.map.getPane('recordPane').style.zIndex = 430;
             this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
+            const mapContainer = this.map.getContainer();
+            this.bufferClickCapture = (event) => {
+                if (!this.bufferAnalysis.active) return;
+                const target = event.target;
+                const interactive = target && target.closest ? target.closest(
+                    '.leaflet-control, .leaflet-popup, .leaflet-tooltip, .glass-panel, .top-beam, #filter-bar, #analysis-panel, button, input, select, textarea, a, label'
+                ) : null;
+                if (interactive) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                this.selectBufferCenter(this.map.mouseEventToLatLng(event));
+            };
+            mapContainer.addEventListener('click', this.bufferClickCapture, true);
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img },
-                { "图层注记": labelLayer, "行政区界": this.layers.region, "SuperMap服务图层": this.layers.supermap, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { "图层注记": labelLayer, "行政区界": this.layers.region, "SuperMap服务图层": this.layers.supermap, "PostGIS专题点位": this.layers.thematic, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
             this.layerControl = layerControl;
@@ -1478,12 +1519,50 @@
                 }
             });
             L.control.zoom({ position: 'topleft' }).addTo(this.map);
-            this.map.on('moveend', () => this.scheduleVisibleRecordMarkers());
+            this.map.on('moveend', () => {
+                this.scheduleVisibleRecordMarkers();
+                this.scheduleThematicPoints();
+            });
             this.map.on('zoomend', () => {
                 this.updateAutoHeatmapByZoom();
                 this.scheduleVisibleRecordMarkers();
+                this.scheduleThematicPoints();
+            });
+            this.map.on('overlayadd', (event) => {
+                if (event.layer === this.layers.thematic) this.loadThematicPoints();
+            });
+            this.map.on('overlayremove', (event) => {
+                if (event.layer === this.layers.thematic) this.updateThematicLegend(false);
             });
             this.map.on('click', (event) => this.handleSuperMapClick(event));
+        },
+
+        toggleTimeline: function() {
+            const button = document.getElementById('timeline-toggle');
+            if (this.timeline.playing) {
+                this.timeline.playing = false;
+                window.clearInterval(this.timeline.timer);
+                this.timeline.timer = null;
+                if (button) button.innerHTML = '<i class="fas fa-play"></i>';
+                return;
+            }
+            const yearly = (this.serverStats && this.serverStats.yearly_trend) || [];
+            const years = yearly.map(item => Number(item.year)).filter(Number.isFinite);
+            this.timeline.years = years.length ? years : Array.from({ length: new Date().getFullYear() - 2014 + 1 }, (_, index) => 2014 + index);
+            const selectedYear = Number((document.getElementById('d-start')?.value || '').slice(0, 4));
+            this.timeline.index = Math.max(0, this.timeline.years.indexOf(selectedYear));
+            this.timeline.playing = true;
+            if (button) button.innerHTML = '<i class="fas fa-pause"></i>';
+            const advance = () => {
+                const year = this.timeline.years[this.timeline.index];
+                document.getElementById('d-start').value = `${year}-01-01`;
+                document.getElementById('d-end').value = `${year}-12-31`;
+                this.loadMapObservations();
+                this.timeline.index += 1;
+                if (this.timeline.index >= this.timeline.years.length) this.toggleTimeline();
+            };
+            advance();
+            this.timeline.timer = window.setInterval(advance, 1200);
         },
 
         loadExternalScript: function(src) {
@@ -1532,8 +1611,87 @@
             }
         },
 
+        updateThematicLegend: function(visible, count, mode, truncated) {
+            const legend = document.getElementById('thematic-legend');
+            const note = document.getElementById('thematic-legend-note');
+            if (legend) legend.classList.toggle('visible', !!visible);
+            if (note && visible) {
+                note.textContent = mode === 'clusters'
+                    ? `概览聚合：${Number(count || 0).toLocaleString()} 个网格`
+                    : `真实点位：${Number(count || 0).toLocaleString()} 条记录${truncated ? '（当前视图过密，请继续放大）' : ''}`;
+            }
+        },
+
+        scheduleThematicPoints: function() {
+            if (!this.map || !this.map.hasLayer(this.layers.thematic)) return;
+            window.clearTimeout(this.thematic.timer);
+            this.thematic.timer = window.setTimeout(() => this.loadThematicPoints(), 220);
+        },
+
+        loadThematicPoints: async function() {
+            if (!this.map || !this.map.hasLayer(this.layers.thematic)) return;
+            const bounds = this.map.getBounds().pad(0.08);
+            const requestSeq = ++this.thematic.requestSeq;
+            if (this.thematic.controller) this.thematic.controller.abort();
+            this.thematic.controller = new AbortController();
+            const allRecords = [];
+            try {
+                let page = 1;
+                let payload = null;
+                do {
+                    const params = new URLSearchParams({
+                        west: bounds.getWest(), south: bounds.getSouth(),
+                        east: bounds.getEast(), north: bounds.getNorth(),
+                        zoom: this.map.getZoom(), page, page_size: 5000,
+                        start: document.getElementById('d-start')?.value || '',
+                        end: document.getElementById('d-end')?.value || ''
+                    });
+                    const response = await fetch(`${this.api}/supermap/thematic-points/?${params.toString()}`, {
+                        cache: 'no-store', signal: this.thematic.controller.signal
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    payload = await response.json();
+                    allRecords.push(...(payload.results || []));
+                    page += 1;
+                    if (requestSeq !== this.thematic.requestSeq || !this.map.hasLayer(this.layers.thematic)) return;
+                } while (payload.has_more && page <= 100);
+
+                const records = allRecords.filter(record => this.matchesProtectionFilter(record));
+                this.layers.thematic.clearLayers();
+                records.forEach(record => {
+                    const pos = this.getObservationPosition(record);
+                    if (!pos) return;
+                    const group = this.getProtectionGroup(record.species_protection);
+                    const clusterSize = Number(record.cluster_size || 1);
+                    const radius = clusterSize > 1 ? Math.min(16, 5 + Math.log2(clusterSize) * 1.35) : 6;
+                    const marker = L.circleMarker([pos.lat, pos.lng], {
+                        pane: 'thematicPane', radius, color: '#fff', weight: 1.4,
+                        fillColor: this.getProtectionColor(group), fillOpacity: clusterSize > 1 ? 0.78 : 0.92,
+                    });
+                    if (clusterSize > 1) {
+                        marker.bindTooltip(`${group} · ${clusterSize} 条记录`, { direction: 'top' });
+                        marker.on('click', () => this.map.flyTo([pos.lat, pos.lng], Math.max(12, this.map.getZoom() + 2), { duration: 0.55 }));
+                    } else {
+                        marker.bindTooltip(`${record.species_name || '未知物种'} · ${group}`, { direction: 'top' });
+                        marker.on('click', () => this.openDetailModal(this.enrichObservation(record), this.currentStats || {}));
+                    }
+                    marker.addTo(this.layers.thematic);
+                });
+                this.updateThematicLegend(true, records.length, payload.mode, !!payload.has_more);
+            } catch (error) {
+                if (error.name === 'AbortError') return;
+                console.warn('PostGIS thematic layer failed:', error);
+                this.updateThematicLegend(true, 0, 'error');
+            }
+        },
+
         handleSuperMapClick: function(event) {
             if (this.bufferAnalysis.active) {
+                this.selectBufferCenter(event.latlng);
+                return;
+            }
+            /* buffer mode is handled by the capture listener on the map container. */
+            if (false) {
                 this.bufferAnalysis.center = event.latlng;
                 if (this.bufferAnalysis.layer) this.bufferAnalysis.layer.clearLayers();
                 const marker = L.circleMarker(event.latlng, { radius: 7, color: '#fff', weight: 2, fillColor: '#1f6f78', fillOpacity: 1 })
@@ -1546,30 +1704,48 @@
             if (!this.map || !this.layers.supermap || !this.map.hasLayer(this.layers.supermap)) return;
             if (!event || !event.latlng) return;
             const point = this.map.latLngToContainerPoint(event.latlng);
-            const nearby = this.map.containerPointToLatLng(L.point(point.x + 18, point.y + 18));
-            const radius = Math.max(
-                Math.abs(nearby.lng - event.latlng.lng),
-                Math.abs(nearby.lat - event.latlng.lat),
-                0.0006
-            );
-            const params = this.getMapObservationParams({ includeStats: false });
-            params.nearest_lng = event.latlng.lng;
-            params.nearest_lat = event.latlng.lat;
-            params.radius = radius;
-            params.stats = '0';
-            $.get(`${this.api}/map-observations/`, params).done(payload => {
-                const record = (payload.results || payload || [])[0];
+            const nearby = this.map.containerPointToLatLng(L.point(point.x + 14, point.y + 14));
+            const radius = Math.max(25, Math.min(800, this.map.distance(event.latlng, nearby)));
+            const params = new URLSearchParams({
+                lng: event.latlng.lng,
+                lat: event.latlng.lat,
+                radius: radius.toFixed(1)
+            });
+            fetch(`${this.api}/supermap/pick/?${params.toString()}`, { cache: 'no-store' })
+                .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+                .then(payload => {
+                const record = payload.result;
                 if (!record) return;
                 const enrichedRecord = this.enrichObservation(record);
                 this.showSuperMapHit(enrichedRecord);
                 window.setTimeout(() => this.openDetailModal(enrichedRecord, this.currentStats || {}), 140);
-            }).fail(() => console.warn('Nearest SuperMap observation lookup failed'));
+            }).catch(() => console.warn('PostGIS SuperMap observation lookup failed'));
+        },
+
+        selectBufferCenter: function(latlng) {
+            if (!latlng || !this.map) return;
+            this.bufferAnalysis.center = latlng;
+            if (this.bufferAnalysis.layer) this.bufferAnalysis.layer.clearLayers();
+            const marker = L.circleMarker(latlng, {
+                radius: 7, color: '#fff', weight: 2, fillColor: '#1f6f78', fillOpacity: 1
+            }).bindTooltip('Analysis center', {
+                permanent: true, direction: 'top', offset: [0, -8]
+            });
+            this.bufferAnalysis.layer = L.layerGroup([marker]).addTo(this.map);
+            const status = document.getElementById('analysis-status');
+            if (status) {
+                status.textContent = `Center selected: ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}. Run analysis when ready.`;
+            }
         },
 
         toggleBufferAnalysis: function(force) {
             const active = typeof force === 'boolean' ? force : !this.bufferAnalysis.active;
             this.bufferAnalysis.active = active;
             document.body.classList.toggle('analysis-selecting', active);
+            ['regionPane', 'thematicPane', 'recordPane', 'heatmapPane', 'supermapHitPane'].forEach((paneName) => {
+                const pane = this.map && this.map.getPane(paneName);
+                if (pane) pane.style.pointerEvents = active ? 'none' : '';
+            });
             const panel = document.getElementById('analysis-panel');
             const button = document.getElementById('buffer-analysis-toggle');
             if (panel) panel.classList.toggle('visible', active);
@@ -1614,6 +1790,9 @@
                     },
                 });
                 this.bufferAnalysis.layer = L.layerGroup([buffer, hits, routes]).addTo(this.map);
+                this.bufferAnalysis.payload = payload;
+                const exportButton = document.getElementById('analysis-export');
+                if (exportButton) exportButton.disabled = false;
                 if (status) status.textContent = `分析完成：${payload.summary.matched_records} 条记录，${payload.summary.bird_count} 只鸟，命中 ${payload.summary.matched_routes} 条监测样线。`;
             } catch (error) {
                 if (status) status.textContent = `分析失败：${error.message}`;
@@ -1626,8 +1805,38 @@
                 this.bufferAnalysis.layer = null;
             }
             this.bufferAnalysis.center = null;
+            this.bufferAnalysis.payload = null;
+            const exportButton = document.getElementById('analysis-export');
+            if (exportButton) exportButton.disabled = true;
             const status = document.getElementById('analysis-status');
             if (status) status.textContent = '点击地图选择分析中心，然后运行分析。';
+        },
+
+        exportBufferResults: function() {
+            const payload = this.bufferAnalysis.payload;
+            if (!payload) return;
+            const summary = payload.summary || {};
+            const rows = [
+                ['分析类型', 'iServer 保护物种缓冲分析'],
+                ['缓冲半径(米)', summary.radius_m || ''],
+                ['命中记录数', summary.matched_records || 0],
+                ['命中鸟类数量', summary.bird_count || 0],
+                ['命中监测样线数', summary.matched_routes || 0],
+                [],
+                ['记录ID', '物种', '保护等级', '区域', '观测日期', '数量', '经度', '纬度']
+            ];
+            (payload.observations?.features || []).forEach(feature => {
+                const props = feature.properties || {};
+                const coordinates = feature.geometry?.coordinates || [];
+                rows.push([props.id || '', props.species_name || '', props.protection || '', props.zone_name || '', props.observation_time || '', props.count || 0, coordinates[0] || '', coordinates[1] || '']);
+            });
+            const csv = '\ufeff' + rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `supermap-buffer-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
         },
 
         showSuperMapHit: function(record) {
@@ -1893,6 +2102,7 @@
                 btn.classList.toggle('active', btn.dataset.protectionFilter === this.protectionFilter);
             });
             this.loadMapObservations();
+            this.scheduleThematicPoints();
         },
 
         enrichObservation: function(record) {
@@ -2230,6 +2440,7 @@
                 this.data = (payload.results || payload || []).map(item => this.enrichObservation(item));
                 this.data.sort((a, b) => new Date(b.observation_time) - new Date(a.observation_time));
                 this.refresh();
+                this.scheduleThematicPoints();
             }).fail(() => console.error("Map observations API Error"));
         },
 

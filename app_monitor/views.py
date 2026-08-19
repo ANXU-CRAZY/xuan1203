@@ -19,6 +19,7 @@ from urllib.error import HTTPError, URLError
 import json
 import os
 import re
+from collections import defaultdict
 
 # DRF 相关引用
 from rest_framework import viewsets, permissions, status, serializers
@@ -1138,6 +1139,148 @@ def index_view(request):
     return render(request, 'index.html')
 
 
+def ecology_center_view(request):
+    return render(request, 'ecology_center.html')
+
+
+def ecology_3d_view(request):
+    return render(request, 'ecology_3d.html')
+
+
+@require_GET
+def ecology_scene_river(request):
+    """Return only the curated Yellow River overlay used by the 3D scene."""
+    river_path = settings.BASE_DIR / 'work' / 'YellowRiverEcology3D' / 'YellowRiver_MainChannel.geojson'
+    try:
+        content = river_path.read_bytes()
+    except OSError:
+        return HttpResponse(status=404)
+    return HttpResponse(content, content_type='application/geo+json; charset=utf-8')
+
+
+@require_GET
+def ecology_realspace_proxy(request, resource_path=''):
+    """Proxy the single published ecology scene and repair its malformed SCI3D XML."""
+    clean_path = resource_path.replace('\\', '/').lstrip('/')
+    if '..' in clean_path:
+        return HttpResponse(status=404)
+
+    base_url = 'http://127.0.0.1:8090/iserver/services/YellowRiverEcology3D/rest/realspace'
+    target = f'{base_url}/{clean_path}' if clean_path else base_url
+    if request.META.get('QUERY_STRING'):
+        target = f'{target}?{request.META["QUERY_STRING"]}'
+
+    try:
+        with urlrequest.urlopen(target, timeout=45) as response:
+            content = response.read()
+            content_type = response.headers.get_content_type() or 'application/octet-stream'
+    except (HTTPError, URLError, OSError):
+        return HttpResponse(status=502)
+
+    if clean_path == 'scenes.json':
+        try:
+            scene_index = json.loads(content.decode('utf-8'))
+            local_scene_root = (
+                'http://127.0.0.1:8003/iserver/services/YellowRiverEcology3D/rest/realspace/scenes/'
+                'YellowRiver_DEM_GLO30_StudyArea@YellowRiverEcology3D'
+            )
+            if not isinstance(scene_index, list) or not scene_index:
+                return HttpResponse(status=502)
+            scene_index[0]['path'] = local_scene_root
+            content = json.dumps(scene_index, ensure_ascii=False).encode('utf-8')
+            content_type = 'application/json'
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, KeyError):
+            return HttpResponse(status=502)
+
+    # iDesktop writes this scene cache without the sml declaration. iDesktopX
+    # tolerates it, but the 2025U1 WebGL SCI3D parser dereferences empty Levels.
+    if clean_path.endswith('/config') or clean_path.endswith('/config.sci3d'):
+        if b'<SuperMapCache>' in content and b'xmlns:sml=' not in content:
+            content = content.replace(
+                b'<SuperMapCache>',
+                b'<SuperMapCache xmlns:sml="http://www.supermap.com/SuperMapCache/sci3d">',
+                1,
+            )
+        # The original raster cache publishes Scales but no SCI3D Levels.
+        # SuperMap3D's parser treats the latter as mandatory and otherwise
+        # crashes while reading its length before requesting any DEM tile.
+        if b'<sml:Levels>' not in content:
+            level_xml = b'<sml:Levels>' + b''.join(
+                b'<sml:Level>%d</sml:Level>' % level for level in range(7)
+            ) + b'</sml:Levels>'
+            content = content.replace(b'<sml:Bounds>', level_xml + b'<sml:Bounds>', 1)
+        content_type = 'application/sci3d'
+
+    return HttpResponse(content, content_type=content_type)
+
+
+@require_GET
+def ecology_iserver_probe_proxy(request, probe_path):
+    """Expose only the two iServer capability probes required by SuperMap3D."""
+    allowed_paths = {
+        'services/YellowRiverEcology3D.rjson',
+        'manager/license.json',
+    }
+    clean_path = probe_path.replace('\\', '/').lstrip('/')
+    if clean_path not in allowed_paths:
+        return HttpResponse(status=404)
+    try:
+        with urlrequest.urlopen(f'http://127.0.0.1:8090/iserver/{clean_path}', timeout=20) as response:
+            content = response.read()
+            content_type = response.headers.get_content_type() or 'application/octet-stream'
+    except (HTTPError, URLError, OSError):
+        return HttpResponse(status=502)
+    return HttpResponse(content, content_type=content_type)
+
+
+@require_GET
+@cache_page(15)
+def ecology_dem_imagery_health(request):
+    """Probe one representative iServer DEM image tile without flooding the browser."""
+    tile_url = (
+        'http://127.0.0.1:8090/iserver/services/3D-YellowRiverEcology3D/'
+        'rest/realspace/datas/YellowRiver_DEM_GLO30_StudyArea%40YellowRiverEcology3D/'
+        'data/index/1/3.png?level=2'
+    )
+    try:
+        with urlrequest.urlopen(tile_url, timeout=8) as response:
+            content_type = response.headers.get_content_type() or ''
+            available = response.status == 200 and content_type.startswith('image/')
+            return JsonResponse({
+                'available': available,
+                'status': response.status,
+                'content_type': content_type,
+            })
+    except HTTPError as error:
+        return JsonResponse({'available': False, 'status': error.code})
+    except (URLError, OSError):
+        return JsonResponse({'available': False, 'status': 0})
+
+
+def ecology_report_view(request):
+    return render(request, 'ecology_report_v2.html')
+
+
+@require_GET
+def supermap_3d_sdk_proxy(request, path):
+    """Serve the local iServer 3D SDK from the web app origin.
+
+    The SDK loads many relative WASM/texture files. Proxying the read-only
+    local bundle avoids browser CORS failures between ports 8003 and 8090.
+    """
+    clean_path = path.replace('\\', '/')
+    if '..' in clean_path or not clean_path.startswith('en/Build/SuperMap3D/'):
+        return HttpResponse(status=404)
+    target = f'http://127.0.0.1:8090/iserver/iClient/for3D/webgl/{clean_path}'
+    try:
+        with urlrequest.urlopen(target, timeout=20) as response:
+            content = response.read()
+            content_type = response.headers.get_content_type() or 'application/octet-stream'
+    except (HTTPError, URLError, OSError):
+        return HttpResponse(status=404)
+    return HttpResponse(content, content_type=content_type)
+
+
 @require_GET
 def supermap_protected_buffer(request):
     """Run a point buffer in iServer and return nearby approved observations."""
@@ -1245,8 +1388,461 @@ def supermap_protected_buffer(request):
 
 
 @require_GET
+def supermap_pick_observation(request):
+    """Resolve a clicked iServer map location against the PostGIS point source."""
+    try:
+        lng = float(request.GET.get('lng'))
+        lat = float(request.GET.get('lat'))
+        radius = float(request.GET.get('radius', 150))
+    except (TypeError, ValueError):
+        return JsonResponse({'detail': 'lng、lat 和 radius 必须是数字'}, status=400)
+
+    if not (-180 <= lng <= 180 and -90 <= lat <= 90):
+        return JsonResponse({'detail': '坐标超出 WGS84 范围'}, status=400)
+    radius = max(20.0, min(radius, 2000.0))
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            WITH click_point AS (
+                SELECT ST_SetSRID(ST_Point(%s, %s), 4326) AS geom
+            )
+            SELECT source_record_id, observation_time, observation_count, status,
+                   species_name, species_latin, species_protection,
+                   zone_name, transect_name, longitude, latitude,
+                   image_url, description,
+                   ROUND(ST_Distance(p.geom::geography, click_point.geom::geography)::numeric, 1)
+            FROM supermap_observation_points p, click_point
+            WHERE p.status = 'approved'
+              AND p.geom IS NOT NULL
+              AND ST_DWithin(p.geom::geography, click_point.geom::geography, %s)
+            ORDER BY ST_Distance(p.geom::geography, click_point.geom::geography),
+                     p.observation_time DESC NULLS LAST, p.source_record_id DESC
+            LIMIT 1
+            """,
+            [lng, lat, radius],
+        )
+        row = cursor.fetchone()
+
+    if not row:
+        return JsonResponse({'result': None, 'radius_m': radius})
+
+    result = {
+        'id': row[0],
+        'observation_time': row[1].isoformat() if row[1] else None,
+        'count': row[2] or 0,
+        'status': row[3],
+        'species_name': row[4] or '未知物种',
+        'species_latin': row[5] or '',
+        'species_protection': row[6] or '',
+        'zone_name': row[7] or '未知区域',
+        'transect_name': row[8] or '',
+        'longitude': row[9],
+        'latitude': row[10],
+        'lng': row[9],
+        'lat': row[10],
+        'image': row[11] or '',
+        'description': row[12] or '',
+        'distance_m': float(row[13] or 0),
+        'source': 'PostGIS supermap_observation_points',
+    }
+    return JsonResponse({'result': result, 'radius_m': radius}, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def supermap_thematic_points(request):
+    """Return a bounded PostGIS thematic layer for the web map.
+
+    At overview scales, records are aggregated into grid cells. At close scales,
+    individual observations are returned so the user can inspect a real record.
+    """
+    bbox = _get_bbox_params(request)
+    if not bbox:
+        return JsonResponse({'detail': 'west、south、east 和 north 为必填范围参数'}, status=400)
+
+    west, south, east, north = bbox
+    if not (-180 <= west <= 180 and -180 <= east <= 180 and -90 <= south <= 90 and -90 <= north <= 90):
+        return JsonResponse({'detail': '范围超出 WGS84 坐标系'}, status=400)
+    if west >= east or south >= north:
+        return JsonResponse({'detail': '地图范围无效'}, status=400)
+
+    try:
+        zoom = float(request.GET.get('zoom', 10))
+    except (TypeError, ValueError):
+        zoom = 10
+    zoom = max(3, min(18, zoom))
+
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (TypeError, ValueError):
+        page = 1
+    try:
+        page_size = int(request.GET.get('page_size', 5000))
+    except (TypeError, ValueError):
+        page_size = 5000
+    page_size = max(500, min(page_size, 5000))
+
+    start_date = parse_date(request.GET.get('start') or request.GET.get('start_date') or '')
+    end_date = parse_date(request.GET.get('end') or request.GET.get('end_date') or '')
+    date_sql = []
+    date_params = []
+    if start_date:
+        date_sql.append('p.observation_time >= %s')
+        date_params.append(start_date)
+    if end_date:
+        date_sql.append('p.observation_time <= %s')
+        date_params.append(end_date)
+    date_clause = (' AND ' + ' AND '.join(date_sql)) if date_sql else ''
+    extent_params = [west, south, east, north]
+
+    # Keep clustered data through medium scales; raw rows are capped and can
+    # otherwise make dense areas look empty immediately after zooming.
+    if zoom >= 14:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                WITH extent AS (
+                    SELECT ST_MakeEnvelope(%s, %s, %s, %s, 4326) AS geom
+                )
+                SELECT source_record_id, observation_time, observation_count, status,
+                       species_name, species_latin, species_protection,
+                       zone_name, transect_name, longitude, latitude,
+                       image_url, description
+                FROM supermap_observation_points p, extent
+                WHERE p.status = 'approved'
+                  AND p.geom IS NOT NULL
+                  AND p.geom && extent.geom
+                  {date_clause}
+                ORDER BY p.observation_time DESC NULLS LAST, p.source_record_id DESC
+                LIMIT %s OFFSET %s
+                """,
+                extent_params + date_params + [page_size, (page - 1) * page_size],
+            )
+            rows = cursor.fetchall()
+        results = [
+            {
+                'id': row[0],
+                'observation_time': row[1].isoformat() if row[1] else None,
+                'count': row[2] or 0,
+                'status': row[3],
+                'species_name': row[4] or '未知物种',
+                'species_latin': row[5] or '',
+                'species_protection': row[6] or '',
+                'zone_name': row[7] or '未知区域',
+                'transect_name': row[8] or '',
+                'longitude': row[9],
+                'latitude': row[10],
+                'lng': row[9],
+                'lat': row[10],
+                'image': row[11] or '',
+                'description': row[12] or '',
+                'cluster_size': 1,
+            }
+            for row in rows
+        ]
+        mode = 'points'
+        has_more = len(results) == page_size
+    else:
+        grid_size = 0.08 if zoom <= 8 else (0.035 if zoom <= 10 else (0.008 if zoom <= 13 else 0.003))
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                WITH extent AS (
+                    SELECT ST_MakeEnvelope(%s, %s, %s, %s, 4326) AS geom
+                ), filtered AS (
+                    SELECT p.species_protection, p.geom, p.observation_count
+                    FROM supermap_observation_points p, extent
+                    WHERE p.status = 'approved'
+                      AND p.geom IS NOT NULL
+                      AND p.geom && extent.geom
+                      {date_clause}
+                ), clustered AS (
+                    SELECT species_protection, observation_count, geom,
+                           ST_SnapToGrid(geom, %s) AS cell
+                    FROM filtered
+                )
+                SELECT species_protection,
+                       ST_X(ST_Centroid(ST_Collect(geom))),
+                       ST_Y(ST_Centroid(ST_Collect(geom))),
+                       COUNT(*), COALESCE(SUM(observation_count), 0)
+                FROM clustered
+                GROUP BY species_protection, cell
+                ORDER BY COUNT(*) DESC
+                LIMIT 1800
+                """,
+                extent_params + date_params + [grid_size],
+            )
+            rows = cursor.fetchall()
+        results = [
+            {
+                'id': f'cluster-{index}',
+                'species_protection': row[0] or '',
+                'longitude': row[1],
+                'latitude': row[2],
+                'lng': row[1],
+                'lat': row[2],
+                'cluster_size': row[3],
+                'count': row[4],
+            }
+            for index, row in enumerate(rows)
+        ]
+        mode = 'clusters'
+        has_more = False
+
+    return JsonResponse({
+        'mode': mode,
+        'zoom': zoom,
+        'bbox': [west, south, east, north],
+        'results': results,
+        'page': page,
+        'page_size': page_size,
+        'has_more': has_more,
+        'truncated': has_more,
+        'source': 'PostGIS supermap_observation_points',
+    }, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
 def supermap_status(request):
     return JsonResponse(supermap_status_payload())
+
+
+# B79 verified ecological assessment outputs.  These APIs deliberately expose
+# metadata and data-derived statistics rather than inventing new model scores.
+_ECO_ASSET_ROOT = Path(settings.BASE_DIR) / 'app_monitor' / 'static' / 'app_monitor' / 'eco'
+_ECO_CATALOG_PATH = _ECO_ASSET_ROOT / 'catalog.json'
+_ECO_REGIONS_PATH = Path(settings.BASE_DIR) / 'app_monitor' / 'static' / 'app_monitor' / 'geo' / 'region_boundary.geojson'
+_ECO_SEASON_ALIASES = {
+    'spring': '春季', 'summer': '夏季', 'autumn': '秋季', 'winter': '冬季',
+}
+
+
+def _load_ecology_catalog():
+    with _ECO_CATALOG_PATH.open(encoding='utf-8') as stream:
+        return json.load(stream)
+
+
+def _load_target_regions():
+    with _ECO_REGIONS_PATH.open(encoding='utf-8') as stream:
+        payload = json.load(stream)
+    codes = {'410100': '郑州', '410800': '焦作', '410700': '新乡'}
+    return [feature for feature in payload.get('features', []) if feature.get('properties', {}).get('city_code') in codes]
+
+
+@require_GET
+def ecology_layers(request):
+    """Catalog of B79 InVEST / four-season priority layers for the web client."""
+    catalog = _load_ecology_catalog()
+    layers = [
+        {
+            'id': 'habitat_quality', 'label': 'InVEST 生境质量',
+            'description': '全域 Habitat Quality（0-1），以城市结构、人类活动、夜间灯光为威胁源。',
+            'asset': catalog['quality_c_ref'], 'legend': ['低质量', '高质量'], 'method': 'InVEST Habitat Quality',
+        },
+        *[
+            {
+                'id': f'priority_{season}', 'label': f'{label}保护优先度',
+                'description': '四季 MaxEnt 适宜性、Gi* 集聚性与全域生境质量的融合连续优先度。',
+                'asset': catalog[f'redline_score_{season}'], 'legend': ['低优先度', '高优先度'],
+                'method': 'MaxEnt + Getis-Ord Gi* + InVEST', 'season': season,
+            }
+            for season, label in _ECO_SEASON_ALIASES.items()
+        ],
+        {
+            'id': 'pca_core', 'label': '高适宜-高集聚核心区',
+            'description': '四季 PCA 综合适宜度与综合集聚度的五级自然断点最高等级交集。',
+            'url': '/static/app_monitor/eco/pca_core_area.geojson', 'area_km2': catalog['core_area_km2'],
+            'feature_count': catalog['core_feature_count'], 'method': 'PCA + natural breaks',
+        },
+    ]
+    return JsonResponse({'layers': layers, 'source': 'B79 verified ecological outputs'}, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_capacity(request):
+    """Administrative ecological carrying-pressure proxy based on real observation data."""
+    regions = _load_target_regions()
+    rows = []
+    with connection.cursor() as cursor:
+        for feature in regions:
+            properties = feature['properties']
+            city = {'410100': '郑州', '410800': '焦作', '410700': '新乡'}[properties['city_code']]
+            geometry = json.dumps(feature['geometry'])
+            cursor.execute(
+                """
+                WITH region AS (SELECT ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326) AS geom)
+                SELECT COUNT(*), COALESCE(SUM(p.observation_count), 0),
+                       COUNT(DISTINCT p.species_name),
+                       COUNT(*) FILTER (WHERE p.species_protection ~ '一级|I级|Ⅰ')
+                FROM supermap_observation_points p, region
+                WHERE p.status = 'approved' AND p.geom IS NOT NULL AND ST_Within(p.geom, region.geom)
+                """, [geometry]
+            )
+            record_count, bird_count, species_count, level_one = cursor.fetchone()
+            # Pressure uses observed density and protected-species concentration; it is an
+            # operational ranking, not a substituted InVEST score.
+            pressure = min(100, round(record_count / 85 + level_one * 1.8 + species_count * 0.35, 1))
+            rows.append({
+                'city': city, 'city_code': properties['city_code'], 'record_count': record_count,
+                'bird_count': int(bird_count or 0), 'species_count': species_count,
+                'level_one_records': level_one, 'pressure_index': pressure,
+                'recommendation': '优先巡护与承载管控' if pressure >= 55 else '维持监测与栖息地修复',
+            })
+    return JsonResponse({'regions': rows, 'basis': 'PostGIS 观测记录 + 保护级别密度', 'core_area_km2': 103.1}, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_risk_alerts(request):
+    """Protected-bird risk alerts derived from distance to the published Yellow River line."""
+    try:
+        radius = float(request.GET.get('radius', 1500))
+    except (TypeError, ValueError):
+        radius = 1500
+    radius = max(200, min(radius, 10000))
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            WITH selected AS (
+                SELECT source_record_id, species_name, species_protection, zone_name, observation_time,
+                       observation_count, longitude, latitude, geom
+                FROM supermap_observation_points
+                WHERE status = 'approved' AND geom IS NOT NULL
+                  AND species_protection ~ '一级|I级|Ⅰ|二级|II级|Ⅱ'
+                ORDER BY observation_time DESC NULLS LAST
+                LIMIT 2000
+            )
+            SELECT source_record_id, species_name, species_protection, zone_name, observation_time,
+                   observation_count, longitude, latitude
+            FROM selected
+            ORDER BY observation_time DESC NULLS LAST
+            LIMIT 80
+            """
+        )
+        raw_rows = cursor.fetchall()
+
+    alerts = []
+    for row in raw_rows:
+        group = get_protection_group(row[2])
+        severity = 'high' if group == '国家一级' else 'medium'
+        alerts.append({
+            'id': row[0], 'species_name': row[1] or '未知物种', 'protection': group,
+            'zone_name': row[3] or '未知区域', 'observation_time': row[4].isoformat() if row[4] else None,
+            'count': row[5] or 0, 'lng': row[6], 'lat': row[7], 'severity': severity,
+            'action': f'在 {int(radius)} m 管控缓冲范围内开展低干扰巡护与复核。',
+        })
+    return JsonResponse({
+        'alerts': alerts, 'radius_m': radius,
+        'method': '保护等级筛选 + iServer 缓冲区分析联动',
+    }, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_hotspots(request):
+    """A bounded grid hotspot layer for fast web rendering."""
+    try:
+        grid = float(request.GET.get('grid', 0.04))
+    except (TypeError, ValueError):
+        grid = 0.04
+    grid = max(0.01, min(grid, 0.12))
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            WITH grouped AS (
+                SELECT ST_SnapToGrid(geom, %s) AS cell, COUNT(*) AS records,
+                       COALESCE(SUM(observation_count), 0) AS birds,
+                       COUNT(DISTINCT species_name) AS species
+                FROM supermap_observation_points
+                WHERE status = 'approved' AND geom IS NOT NULL
+                GROUP BY ST_SnapToGrid(geom, %s)
+            )
+            SELECT ST_X(ST_Centroid(cell)), ST_Y(ST_Centroid(cell)), records, birds, species
+            FROM grouped ORDER BY records DESC LIMIT 300
+            """, [grid, grid]
+        )
+        features = [
+            {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [row[0], row[1]]},
+             'properties': {'records': row[2], 'birds': int(row[3] or 0), 'species': row[4]}}
+            for row in cursor.fetchall()
+        ]
+    return JsonResponse({'type': 'FeatureCollection', 'features': features, 'method': '观测记录网格热点'}, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_patrol_plan(request):
+    """Build a practical patrol shortlist from the most active protected-bird cells."""
+    hotspots = ecology_hotspots(request)
+    payload = json.loads(hotspots.content.decode('utf-8'))
+    features = payload['features'][:8]
+    stops = []
+    for index, feature in enumerate(features, start=1):
+        lng, lat = feature['geometry']['coordinates']
+        props = feature['properties']
+        stops.append({'order': index, 'lng': lng, 'lat': lat, **props, 'task': '核查鸟类活动并记录干扰源'})
+    return JsonResponse({
+        'stops': stops,
+        'method': '热点网格排序；可与现有 iServer 缓冲分析和监测样线联动。',
+        'notice': '该结果为巡护优先点序列，不替代道路网络最短路径求解。',
+    }, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_live_feed(request):
+    """Deterministic mock station feed for the presentation-only IoT workflow."""
+    stations = [
+        {'id': 'YR-01', 'name': 'Zhengzhou Yellow River wetland station', 'lng': 113.63, 'lat': 34.92, 'type': 'acoustic monitoring', 'signal': 96, 'status': 'normal', 'species': 'Egret'},
+        {'id': 'YR-02', 'name': 'Xinxiang plain wetland station', 'lng': 113.91, 'lat': 35.22, 'type': 'infrared camera', 'signal': 91, 'status': 'attention', 'species': 'Swan'},
+        {'id': 'YR-03', 'name': 'Jiaozuo river beach station', 'lng': 113.22, 'lat': 35.09, 'type': 'water level', 'signal': 88, 'status': 'normal', 'species': 'Grey heron'},
+        {'id': 'YR-04', 'name': 'Gongyi riverbank station', 'lng': 113.04, 'lat': 34.76, 'type': 'acoustic monitoring', 'signal': 84, 'status': 'attention', 'species': 'Black stork'},
+    ]
+    now = timezone.localtime()
+    for index, station in enumerate(stations):
+        station['observed_at'] = now.isoformat()
+        station['water_level_m'] = round(1.42 + index * 0.17 + (now.minute % 5) * 0.01, 2)
+        station['activity_index'] = 48 + index * 11 + (now.minute % 7)
+        station['message'] = 'simulated device alert' if station['status'] == 'attention' else 'simulated device normal'
+    return JsonResponse({
+        'mode': 'simulation',
+        'updated_at': now.isoformat(),
+        'stations': stations,
+        'notice': 'Simulation-only feed for the competition demonstration; not a live device stream.',
+    }, json_dumps_params={'ensure_ascii': False})
+
+
+@require_GET
+def ecology_report_data(request):
+    """Evidence-labelled data used by the client-side report export."""
+    capacity_response = ecology_capacity(request)
+    capacity = json.loads(capacity_response.content.decode('utf-8'))
+    catalog = _load_ecology_catalog()
+    return JsonResponse({
+        'title': '郑州黄河湿地水鸟保护优先区评估简报',
+        'generated_at': timezone.localtime().strftime('%Y-%m-%d %H:%M'),
+        'study_area': '郑州黄河湿地水鸟栖息地保护优先区',
+        'methods': [
+            '以 2014-2024 年水鸟记录、遥感与环境变量为基础，按春、夏、秋、冬构建 MaxEnt 水鸟栖息地适宜性结果；2025 年监测坐标用于外部时相验证。',
+            '对四季适宜性和 Getis-Ord Gi* 空间集聚度分别进行 PCA 综合，并以五级自然断点法提取“高适宜-高集聚”核心区。',
+            '在完整研究区独立运行 InVEST Habitat Quality，将城市结构、人类活动和夜间灯光作为威胁源；随后与适宜性、集聚性结果在统一栅格上融合为连续保护优先度。',
+        ],
+        'core_area_km2': catalog['core_area_km2'],
+        'capacity': capacity['regions'],
+        'sources': [
+            '中国观鸟记录中心：水鸟观测记录与时空验证数据',
+            '天地图：基础地理底图与地名注记服务',
+            'OpenStreetMap（OSM）：道路、水系及开放地理要素参考数据',
+            '地理空间数据云：遥感影像、数字高程与土地利用等基础环境数据',
+        ],
+        'findings': [
+            '约 103.10 km² 被识别为高适宜-高集聚核心区；该二值结果用于直观空间管控参考，连续保护优先度才是巡护与修复排序的主产品。',
+            '高优先度单元主要位于黄河主河道、滩地及邻近低干扰湿地斑块。春、冬季范围相对连续，夏、秋季呈收缩和破碎化特征。',
+            '2025 年受限背景验证的春、夏、秋、冬 AUC 分别为 0.901、0.828、0.816 和 0.846；零模型经验 p 均不高于 0.002。',
+        ],
+        'recommendations': [
+            '按春、夏、秋、冬连续优先度安排迁飞期重点巡查，动态调整巡护资源投放。',
+            '优先筛查保护地外高需求、高集聚且生境质量较好的连通斑块，作为修复和生态补偿候选区。',
+            '夏季结果仅用于探索性比较，不单独形成稳定边界或管理推荐；平台压力指数仅用于运营排序，不替代 InVEST 生境质量值。',
+        ],
+        'disclaimer': '简报中的方法、核心区面积与验证结论来自《B79 作品简介》；右侧行政区统计来自平台 PostGIS 观测数据，两类信息在用途上保持区分。',
+    }, json_dumps_params={'ensure_ascii': False})
 
 
 def get_todays_hotspot(request):
@@ -1299,3 +1895,19 @@ from django.shortcuts import render
 def bird_recognition_page(request):
     """水鸟识别页面"""
     return render(request, 'app_monitor/bird_recognition.html')
+
+_LOCAL_TERRAIN_SCT = '<?xml version="1.0" encoding="UTF-8"?>\n<SuperMapCache>\n<sml:Version>1.000000</sml:Version>\n<sml:NetCachePath/>\n<sml:LocalCachePath/>\n<sml:CacheName>local-terrain</sml:CacheName>\n<sml:StoreType BlockScale="3">MixedFiles</sml:StoreType>\n<sml:CompressType>ZIP</sml:CompressType>\n<sml:TileSplitType>GLOBAL</sml:TileSplitType>\n<sml:Projection>Geographic</sml:Projection>\n<sml:DataFormat>FLOAT</sml:DataFormat>\n<sml:FileExtentName>terrainz</sml:FileExtentName>\n<sml:Type>DEM</sml:Type>\n<sml:Width>7809</sml:Width>\n<sml:Height>5106</sml:Height>\n<sml:CellWidth>33</sml:CellWidth>\n<sml:CellHeight>33</sml:CellHeight>\n<sml:HeightRange>\n<sml:MaxHeight>1793.677734</sml:MaxHeight>\n<sml:MinHeight>31.499165</sml:MinHeight>\n</sml:HeightRange>\n<sml:Bounds>\n<sml:Left>112.5</sml:Left>\n<sml:Top>35.9</sml:Top>\n<sml:Right>115.1</sml:Right>\n<sml:Bottom>34.2</sml:Bottom>\n</sml:Bounds>\n<sml:Level0>\n<sml:Level0Width>180.0</sml:Level0Width>\n<sml:Level0Height>180.0</sml:Level0Height>\n</sml:Level0>\n<sml:Levels>\n<sml:Level>0</sml:Level>\n<sml:Level>1</sml:Level>\n<sml:Level>2</sml:Level>\n<sml:Level>3</sml:Level>\n<sml:Level>4</sml:Level>\n<sml:Level>5</sml:Level>\n<sml:Level>6</sml:Level>\n<sml:Level>7</sml:Level>\n<sml:Level>8</sml:Level>\n<sml:Level>9</sml:Level>\n<sml:Level>10</sml:Level>\n</sml:Levels>\n</SuperMapCache>'
+
+
+@require_GET
+def local_terrain_config(request):
+    return HttpResponse(_LOCAL_TERRAIN_SCT, content_type='application/xml; charset=utf-8')
+
+
+@require_GET
+def local_terrain_tile(request, z, x, y):
+    path = settings.BASE_DIR / 'data' / 'local_terrain' / str(z) / str(x) / (str(y) + '.terrainz')
+    if not path.exists():
+        return HttpResponse(status=404)
+    with open(path, 'rb') as fh:
+        return HttpResponse(fh.read(), content_type='application/octet-stream')

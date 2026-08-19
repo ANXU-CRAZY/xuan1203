@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>黄河生态方舟——郑州黄河湿地生态保护决策台</title>
+  <style>
+    :root { --deep:#174d50; --teal:#126d71; --aqua:#14aeb5; --line:#dce8e6; --muted:#718688; --canvas:#f3f7f6; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:#284b4d; font:14px/1.65 "Microsoft YaHei", Arial, sans-serif; }
+    .topbar { height:64px; padding:0 28px; display:flex; align-items:center; background:#fff; border-bottom:3px solid var(--aqua); color:var(--deep); box-shadow:0 1px 9px #143a3d10; }
+    .brand { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:800; }
+    .brand img { width:34px; height:34px; border-radius:50%; object-fit:cover; background:#fff; box-shadow:0 2px 8px #183b3d22; }
+    .brand small { display:block; color:#7c9293; font-size:10px; font-weight:600; }
+    .actions { margin-left:auto; display:flex; gap:7px; }
+    .actions a,.actions button { border:1px solid #c9dcda; border-radius:4px; background:#fff; color:#426466; padding:7px 10px; text-decoration:none; font:700 12px "Microsoft YaHei",Arial,sans-serif; cursor:pointer; }.actions a:hover,.actions button:hover{color:#075e64;border-color:#8ccdc7;background:#effaf8}
+    .sheet { width:min(1010px,calc(100% - 32px)); margin:20px auto 36px; padding:0 42px 42px; background:#fff; border:1px solid var(--line); border-radius:6px; box-shadow:0 1px 3px #12393b12; }
+    .report-head { margin:0 -42px 28px; padding:25px 42px 21px; border-bottom:1px solid var(--line); background:#fbfdfc; }
+    .eyebrow { margin-bottom:6px; color:#748d8e; font-size:10px; font-weight:800; letter-spacing:1.15px; }
+    h1 { margin:0; color:var(--deep); font-size:25px; letter-spacing:0; } h2 { margin:29px 0 12px; padding:0 0 8px; border-bottom:1px solid var(--line); color:var(--deep); font-size:16px; }
+    .meta { margin:6px 0 0; color:var(--muted); font-size:12px; }.summary { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+    .metric { padding:13px 14px; border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:4px; background:#fff; }.metric strong { display:block; color:var(--teal); font-size:22px; line-height:1.3; }
+    table { width:100%; border-collapse:collapse; } th,td { padding:10px 8px; text-align:left; border-bottom:1px solid #e8f0ee; } th { color:#698486; font-size:12px; font-weight:700; background:#f6faf9; } tr:hover td { background:#fbfdfc; }
+    .note { padding:12px; border:1px solid #ead9a6; border-left:3px solid #d0a050; border-radius:3px; background:#fffaf0; line-height:1.65; }
+    .brief-list { margin:0; padding-left:20px; color:#3a5a5c; }.brief-list li { margin:0 0 9px; padding-left:3px; }.brief-list li::marker { color:var(--teal); }
+    .recommendation { padding:13px 14px; border:1px solid #cfe4e0; border-left:3px solid var(--teal); border-radius:4px; background:#f5fbfa; }
+    @media print { body{background:#fff}.topbar{display:none}.sheet{width:auto;margin:0;padding:20px;box-shadow:none;border:0} }
+    @media(max-width:650px) { .topbar{height:60px;padding:0 14px}.brand small{display:none}.sheet{width:calc(100% - 20px);margin:10px;padding:0 24px 24px}.report-head{margin:0 -24px 20px;padding:24px}.summary{grid-template-columns:1fr}.actions a{display:none} }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟——郑州黄河湿地生态保护决策台"><span>黄河生态方舟——郑州黄河湿地生态保护决策台 <small>生态评价成果简报</small></span></div><div class="actions"><a href="/ecology/">返回决策中心</a><button onclick="window.print()">打印 / 导出 PDF</button></div></header>
+  <article class="sheet">
+    <div class="report-head"><div class="eyebrow">郑州黄河湿地 · 生态评价成果</div><h1 id="title">郑州黄河湿地水鸟保护优先区评估简报</h1><div id="meta" class="meta">正在汇总成果数据...</div></div>
+    <section id="summary" class="summary"></section>
+    <h2>两步式评估方法</h2><ol id="methods" class="brief-list"></ol>
+    <h2>主要评估结论</h2><ul id="findings" class="brief-list"></ul>
+    <h2>平台观测数据统计</h2><table><thead><tr><th>行政区</th><th>观测记录</th><th>鸟类数量</th><th>物种数</th><th>压力指数</th></tr></thead><tbody id="capacity"></tbody></table>
+    <h2>管理建议</h2><div id="recommendations" class="recommendation"></div>
+    <h2>数据来源</h2><ul id="sources"></ul>
+    <h2>结果使用说明</h2><div id="disclaimer" class="note"></div>
+  </article>
+  <script>
+    fetch('/api/ecology/report-data/').then(r => r.json()).then(p => {
+      document.querySelector('#title').textContent = p.title;
+      document.querySelector('#meta').textContent = p.study_area + ' · ' + p.generated_at;
+      const total = p.capacity.reduce((sum, item) => sum + item.record_count, 0);
+      const species = Math.max(...p.capacity.map(item => item.species_count));
+      document.querySelector('#summary').innerHTML = `<div class="metric"><strong>${p.core_area_km2} km²</strong>高适宜-高集聚核心区</div><div class="metric"><strong>${total.toLocaleString()}</strong>平台已入库观测记录</div><div class="metric"><strong>${species}</strong>最大分区物种数</div>`;
+      document.querySelector('#methods').innerHTML = p.methods.map(item => `<li>${item}</li>`).join('');
+      document.querySelector('#findings').innerHTML = p.findings.map(item => `<li>${item}</li>`).join('');
+      document.querySelector('#capacity').innerHTML = p.capacity.map(item => `<tr><td>${item.city}</td><td>${item.record_count.toLocaleString()}</td><td>${item.bird_count.toLocaleString()}</td><td>${item.species_count}</td><td>${item.pressure_index}</td></tr>`).join('');
+      document.querySelector('#recommendations').innerHTML = `<ol class="brief-list">${p.recommendations.map(item => `<li>${item}</li>`).join('')}</ol>`;
+      document.querySelector('#sources').innerHTML = p.sources.map(item => `<li>${item}</li>`).join('');
+      document.querySelector('#disclaimer').textContent = p.disclaimer;
+    });
+  </script>
+</body>
+</html>
