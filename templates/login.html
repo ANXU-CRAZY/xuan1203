@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --c-aqua: #00ADB5;
@@ -218,8 +217,9 @@
             }
         }
     </style>
+{% include "app_monitor/site_theme.html" %}
 </head>
-<body>
+<body data-ark-page="content">
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
@@ -283,7 +283,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <script>
         const API = '/api';
         const TOKEN_KEY = 'yb_token';

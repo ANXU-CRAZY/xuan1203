@@ -1,0 +1,86 @@
+{
+  "actual": {
+    "theme": "http://127.0.0.1:8012/static/app_monitor/site-theme.css?v=20261024-3",
+    "accent": "#20909D",
+    "tiles": "saturate(1.2) brightness(1.02)",
+    "buttons": [
+      {
+        "text": "生态互动",
+        "bg": "linear-gradient(135deg, rgb(155, 89, 182), rgb(142, 68, 173))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "上报",
+        "bg": "linear-gradient(135deg, rgb(0, 173, 181), rgb(0, 140, 147))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "百科",
+        "bg": "linear-gradient(135deg, rgb(0, 173, 181), rgb(0, 140, 147))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "科普",
+        "bg": "linear-gradient(135deg, rgb(45, 156, 219), rgb(27, 111, 168))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "图库",
+        "bg": "linear-gradient(135deg, rgb(74, 140, 111), rgb(58, 112, 85))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "后台",
+        "bg": "linear-gradient(135deg, rgb(44, 62, 80), rgb(31, 45, 58))",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "text": "访问方舟实验室",
+        "bg": "none",
+        "color": "rgb(0, 155, 163)"
+      }
+    ],
+    "trend": "#20909D",
+    "records": 117911,
+    "overviewBottom": 20
+  },
+  "layout": [
+    {
+      "width": 1536,
+      "overflow": false,
+      "menuRight": 1160,
+      "menuBottom": 408,
+      "menuTop": 80,
+      "headerBottom": 72,
+      "filterTop": 80
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "menuRight": 904,
+      "menuBottom": 408,
+      "menuTop": 80,
+      "headerBottom": 72,
+      "filterTop": 80
+    },
+    {
+      "width": 1024,
+      "overflow": false,
+      "menuRight": 820.65625,
+      "menuBottom": 408,
+      "menuTop": 80,
+      "headerBottom": 72,
+      "filterTop": 80
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "menuRight": 378,
+      "menuBottom": 422.578125,
+      "menuTop": 123.078125,
+      "headerBottom": 115.078125,
+      "filterTop": 123.078125
+    }
+  ],
+  "errors": []
+}

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>看图识鸟 | 黄河生态方舟</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <style>
         :root {
             --primary: #2d6a4f;
@@ -927,8 +927,9 @@
             .bird-image-wrap .zoom-icon { opacity: 0.7; }
         }
     </style>
+{% include "app_monitor/site_theme.html" %}
 </head>
-<body>
+<body data-ark-page="game">
     <!-- Background decoration -->
     <div class="bg-decoration" id="bgDecoration"></div>
 
@@ -1147,7 +1148,7 @@
 
     </main>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <script>
     (function() {

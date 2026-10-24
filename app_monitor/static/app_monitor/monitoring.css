@@ -1,0 +1,98 @@
+.brand-logo-fallback { display:none; width:36px; height:36px; border-radius:50%; align-items:center; justify-content:center; background:#fff; color:#1f6f78; font-size:12px; font-weight:900; }
+.brand-logo-fallback.show { display:flex; }
+.monitor-btn { border:1px solid #b4d6d3; padding:6px 10px; border-radius:7px; background:white; color:#1f6f78; cursor:pointer; white-space:nowrap; font-weight:600; }
+.monitor-btn.active { background:#1f6f78; color:white; }
+.monitor-btn:disabled { opacity:.5; cursor:default; }
+#monitor-sidebar { position:absolute; right:20px; width:340px; top:var(--monitor-sidebar-top,180px); bottom:var(--monitor-sidebar-bottom,100px); display:flex; flex-direction:column; gap:8px; z-index:1000; pointer-events:none; overflow-y:auto; scrollbar-width:thin; }
+#monitor-sidebar > * { pointer-events:auto; flex-shrink:0; position:static; box-sizing:border-box; min-width:0; width:100%; }
+#monitor-sidebar [hidden] { display:none !important; }
+#thematic-legend { padding:10px 12px; font-size:12px; color:#31565a; gap:7px; }
+.legend-swatches { display:flex; gap:6px 12px; flex-wrap:wrap; }
+.legend-swatches span { white-space:nowrap; }
+.legend-swatches i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+#thematic-note { line-height:1.5; }
+#point-next { align-self:flex-start; }
+#analysis-panel { display:none; padding:12px; gap:10px; color:#31565a; font-size:13px; }
+#analysis-panel.visible { display:flex; }
+#analysis-panel .panel-head { padding:0 0 8px; cursor:default; }
+.analysis-row, .analysis-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.analysis-row label { flex:0 0 60px; }
+.analysis-row input { min-width:0; flex:1; width:100px; padding:7px; border:1px solid #b4d6d3; border-radius:6px; }
+.analysis-actions button { flex:1; }
+#analysis-status { line-height:1.6; overflow-wrap:anywhere; }
+#analysis-results { margin:0; padding-left:22px; max-height:160px; overflow:auto; }
+#analysis-results button { border:0; background:none; color:#1f6f78; cursor:pointer; text-align:left; padding:5px; }
+#analysis-scope { font-size:12px; color:#657c7b; }
+#monitor-sidebar #heat-info { margin:0; max-width:none; }
+body.analysis-open #detail-panel, body.heat-selecting #detail-panel { display:none !important; }
+body.analysis-selecting #map { cursor:crosshair; }
+body.analysis-open #ai-agent { left:calc(50% - 33px) !important; right:auto !important; top:auto !important; bottom:var(--monitor-sidebar-bottom,90px) !important; }
+body.heat-selecting .leaflet-interactive, body.analysis-selecting .leaflet-interactive { pointer-events:none !important; }
+body.heat-selecting .leaflet-pane canvas, body.analysis-selecting .leaflet-pane canvas { pointer-events:none !important; }
+#detail-panel { top:auto; bottom:20px; height:500px; max-height:calc(100dvh - var(--monitor-sidebar-top,140px) - 40px); }
+#detail-panel.minimized { top:auto; height:44px; }
+
+/* Keep the original/master and reference-branch dimensions. Width follows
+   the controls, never a percentage of the window or a stretched date input. */
+#filter-bar {
+    left:auto; right:20px; top:var(--monitor-filter-top,80px); bottom:auto;
+    width:max-content; max-width:calc(100vw - 240px); box-sizing:border-box;
+    padding:8px 12px; gap:8px; flex-direction:row; flex-wrap:wrap;
+}
+#filter-bar .filter-tools {
+    display:flex; width:auto; min-width:0; flex-wrap:nowrap;
+    align-items:center; justify-content:flex-end; gap:8px;
+}
+#filter-bar .date-inp { flex:0 0 auto; width:110px; }
+#filter-bar .timeline-play, #filter-bar #buffer-analysis-toggle {
+    height:30px; padding:6px 10px; border-radius:4px;
+    border:1px solid rgba(31,111,120,.24); background:#fff; color:#1f6f78;
+    font-size:12px; display:inline-flex; align-items:center; gap:5px;
+}
+#filter-bar .timeline-play { width:30px; justify-content:center; padding:0; }
+#filter-bar #buffer-analysis-toggle.active { background:#1f6f78; color:#fff; }
+#timeline-year, #thematic-legend { display:none !important; }
+/* Compact pagination is independent of the removed thematic card. */
+#point-pagination {
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:var(--point-pagination-bottom,100px); z-index:990;
+    padding:6px 10px; gap:8px; align-items:center; flex-direction:row;
+    max-width:calc(100vw - 48px); box-sizing:border-box; font-size:11px; color:#426269;
+}
+#point-pagination[hidden] { display:none; }
+#point-page-note { min-width:0; }
+@media (max-width:1100px) and (min-width:769px) {
+    #filter-bar { max-width:calc(100vw - 220px); }
+}
+@media (max-width:1024px) {
+    #filter-bar { right:14px; }
+    #monitor-sidebar { right:14px; width:310px; }
+    #detail-panel { height:430px; bottom:92px; max-height:calc(100dvh - var(--monitor-sidebar-top,170px) - 110px); }
+    body.analysis-open #rank-panel { display:none !important; }
+}
+@media (max-width:768px) {
+    #filter-bar {
+        left:12px; right:12px; width:auto; max-width:none;
+        top:var(--monitor-filter-top,124px); bottom:auto; padding:9px;
+        flex-direction:column; align-items:stretch;
+    }
+    #filter-bar .protection-filter { min-width:0; width:100%; overflow-x:auto; flex-shrink:1; }
+    #filter-bar .filter-tools {
+        min-width:0; width:100%; justify-content:flex-start; overflow-x:auto;
+        flex-wrap:nowrap; scrollbar-width:none;
+    }
+    #filter-bar .date-inp { width:136px; min-width:136px; flex:0 0 136px; }
+    #filter-bar .timeline-play, #filter-bar #buffer-analysis-toggle { flex:0 0 auto; height:38px; border-radius:13px; }
+    #filter-bar .timeline-play { width:38px; }
+    #monitor-sidebar { left:72px; right:12px; width:auto; }
+    #analysis-panel { border-radius:16px; }
+    #analysis-panel.visible { flex:0 1 auto; min-height:0; max-height:100%; overflow-y:auto; }
+    #analysis-panel .panel-head { position:sticky; top:-12px; background:#fff; z-index:1; padding-top:8px; }
+    #analysis-panel .analysis-actions { position:sticky; bottom:-12px; background:#fff; padding:7px 0; }
+    body.layers-expanded #monitor-sidebar { visibility:hidden; }
+    body.analysis-selecting #rank-panel { display:none !important; }
+    .leaflet-top.leaflet-left { top:var(--monitor-sidebar-top,230px); }
+    #point-pagination { left:72px; right:12px; transform:none; max-width:none; }
+}
+
+.site-record-footer { box-sizing:border-box; }

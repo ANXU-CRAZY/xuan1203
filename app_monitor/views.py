@@ -318,93 +318,11 @@ def _map_cache_stats(queryset):
     }
 
 
-@require_GET
 def map_observations(request):
-    # 构建缓存键，包含所有查询参数
-    cache_key_parts = [
-        'map_obs',
-        request.GET.get('start', ''),
-        request.GET.get('end', ''),
-        request.GET.get('start_date', ''),
-        request.GET.get('end_date', ''),
-        request.GET.get('protection', 'all'),
-        request.GET.get('protection_filter', 'all'),
-        request.GET.get('bbox', ''),
-        request.GET.get('west', ''),
-        request.GET.get('south', ''),
-        request.GET.get('east', ''),
-        request.GET.get('north', ''),
-        request.GET.get('stats', '1'),
-    ]
-    cache_key = ':'.join(str(p) for p in cache_key_parts)
-    
-    # 尝试从缓存获取
-    cached_response = cache.get(cache_key)
-    if cached_response is not None:
-        return JsonResponse(cached_response, json_dumps_params={'ensure_ascii': False})
-    
-    base_queryset = MapObservationCache.objects.filter(status='approved')
-
-    start_date = parse_date(request.GET.get('start') or request.GET.get('start_date') or '')
-    end_date = parse_date(request.GET.get('end') or request.GET.get('end_date') or '')
-    if start_date:
-        base_queryset = base_queryset.filter(observation_time__gte=start_date)
-    if end_date:
-        base_queryset = base_queryset.filter(observation_time__lte=end_date)
-
-    protection_filter = request.GET.get('protection') or request.GET.get('protection_filter') or 'all'
-    base_queryset = _filter_cache_by_protection(base_queryset, protection_filter)
-
-    include_stats = request.GET.get('stats', '1') != '0'
-    stats = _map_cache_stats(base_queryset) if include_stats else None
-
-    viewport_queryset = base_queryset
-    bbox = _get_bbox_params(request)
-    if bbox:
-        west, south, east, north = bbox
-        viewport_queryset = viewport_queryset.filter(
-            longitude__gte=min(west, east),
-            longitude__lte=max(west, east),
-            latitude__gte=min(south, north),
-            latitude__lte=max(south, north),
-        )
-
-    rows = (
-        viewport_queryset
-        .order_by('-observation_time', '-record_id')
-        [:10000]  # 限制最多返回 10000 条，避免数据过大
-        .values(
-            'record_id',
-            'observation_time',
-            'count',
-            'status',
-            'species_id_cached',
-            'species_name',
-            'species_latin',
-            'species_protection',
-            'zone_id_cached',
-            'zone_name',
-            'transect_name',
-            'longitude',
-            'latitude',
-            'image_url',
-            'description',
-        )
-    )
-
-    data = [_cache_row_to_dict(row) for row in rows]
-    
-    response_data = {
-        'results': data,
-        'stats': stats,
-        'bbox': bbox,
-        'count': len(data),
-    }
-    
-    # 缓存结果 5 分钟（300秒）
-    cache.set(cache_key, response_data, 300)
-    
-    return JsonResponse(response_data, json_dumps_params={'ensure_ascii': False})
+    # The 2D dashboard reads approved source records, with bounded detail pages
+    # and complete statistics. Existing cache helpers remain for other callers.
+    from .monitoring import map_observations as query_map
+    return query_map(request)
 
 
 class ProductViewSet(viewsets.ModelViewSet):

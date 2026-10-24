@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>黄河生态方舟 | 态势感知终端</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
+    <script src="/static/vendor/chart.js/chart.umd.min.js"></script>
 
     <style>
         /* === UI 设计系统 === */
@@ -968,48 +967,45 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-4">
+{% include "app_monitor/site_theme.html" %}
 </head>
-<body>
+<body data-ark-page="monitor">
 
 <div class="top-beam">
     <div class="brand">
-        <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-logo">
-        <span>黄河生态方舟</span>
+        <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-logo" onerror="this.hidden=true;this.style.display='none';this.nextElementSibling.classList.add('show')">
+        <div class="brand-logo-fallback" aria-hidden="true">黄河</div>
+        <div class="brand-copy"><span class="brand-title">黄河生态方舟</span><small>方舟实验室 · 郑州大学地球科学与技术学院 · 郑州市自然保护地事务中心</small></div>
     </div>
-    <div class="nav-links" id="navArea">
-        <!-- 未登录：显示游戏入口（游客可玩但不计积分）+ 登录按钮 -->
-        <div id="navGuest" style="display:flex; align-items:center; gap:6px;">
-            <a href="/bird-guess/" class="nav-btn" style="background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; border: none;"><i class="fas fa-feather"></i><span>识鸟</span></a>
-            <a href="/bird-runner/" class="nav-btn" style="background: linear-gradient(135deg, #E74C3C, #C0392B); color: white; border: none;"><i class="fas fa-dove"></i><span>闯关</span></a>
-            <a href="/wetland-restorer/" class="nav-btn" style="background: linear-gradient(135deg, #27AE60, #1E8449); color: white; border: none;"><i class="fas fa-leaf"></i><span>修复</span></a>
-            <a href="/migration/" class="nav-btn" style="background: linear-gradient(135deg, #3498DB, #2980B9); color: white; border: none;"><i class="fas fa-feather-alt"></i><span>迁徙</span></a>
-            <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
-            <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
-            <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
-            <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
-            <a href="/articles/" class="nav-btn" style="background: linear-gradient(135deg, #2D9CDB, #1b6fa8); color: white; border: none;"><i class="fas fa-newspaper"></i><span>科普</span></a>
-            <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
-            <a href="/admin/" class="nav-btn" style="background: linear-gradient(135deg, #2C3E50, #1f2d3a); color: white; border: none;"><i class="fas fa-cog"></i><span>后台</span></a>
-            <a href="/login/" class="nav-btn nav-btn-outline"><i class="fas fa-user"></i><span>个人登录</span></a>
+    <nav class="nav-links" id="navArea" aria-label="主导航">
+        <button id="games-toggle" class="nav-btn nav-games" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span><i class="fas fa-chevron-down games-chevron" aria-hidden="true"></i></button>
+        <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus" aria-hidden="true"></i><span>上报</span></a>
+        <a href="/species/" class="nav-btn nav-species"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
+        <a href="/articles/" class="nav-btn nav-articles"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
+        <a href="/gallery/" class="nav-btn nav-gallery"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
+        <a href="/admin/" class="nav-btn nav-admin"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>
+        <a href="https://3.1415926.love/arklb-geoai/" class="nav-btn lab-visit" target="_blank" rel="noopener noreferrer"><span>访问方舟实验室</span><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+        <div id="navGuest" class="nav-auth" style="display:flex; align-items:center; gap:6px;">
+            <a href="/login/" class="nav-btn nav-btn-outline"><i class="fas fa-user" aria-hidden="true"></i><span>个人登录</span></a>
         </div>
-        <!-- 已登录：显示游戏入口 + 积分 + 个人中心 -->
-        <div id="navUser" style="display:none; align-items:center; gap:10px;">
-            <span class="nav-score" id="navScore"><i class="fas fa-coins"></i> <span>0</span> 分</span>
-            <a href="/bird-guess/" class="nav-btn" style="background: linear-gradient(135deg, #9B59B6, #8E44AD); color: white; border: none;"><i class="fas fa-feather"></i><span>识鸟</span></a>
-            <a href="/bird-runner/" class="nav-btn" style="background: linear-gradient(135deg, #E74C3C, #C0392B); color: white; border: none;"><i class="fas fa-dove"></i><span>闯关</span></a>
-            <a href="/wetland-restorer/" class="nav-btn" style="background: linear-gradient(135deg, #27AE60, #1E8449); color: white; border: none;"><i class="fas fa-leaf"></i><span>修复</span></a>
-            <a href="/migration/" class="nav-btn" style="background: linear-gradient(135deg, #3498DB, #2980B9); color: white; border: none;"><i class="fas fa-feather-alt"></i><span>迁徙</span></a>
-            <a href="/wetland-detective/" class="nav-btn" style="background: linear-gradient(135deg, #795548, #5D4037); color: white; border: none;"><i class="fas fa-search"></i><span>侦探</span></a>
-            <a href="/floating-island/" class="nav-btn" style="background: linear-gradient(135deg, #00BCD4, #0097A7); color: white; border: none;"><i class="fas fa-water"></i><span>浮岛</span></a>
-            <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus"></i><span>上报</span></a>
-            <a href="/species/" class="nav-btn" style="background: linear-gradient(135deg, #00ADB5, #008c93); color: white; border: none;"><i class="fas fa-book"></i><span>百科</span></a>
-            <a href="/articles/" class="nav-btn" style="background: linear-gradient(135deg, #2D9CDB, #1b6fa8); color: white; border: none;"><i class="fas fa-newspaper"></i><span>科普</span></a>
-            <a href="/gallery/" class="nav-btn" style="background: linear-gradient(135deg, #4A8C6F, #3A7055); color: white; border: none;"><i class="fas fa-images"></i><span>图库</span></a>
-            <a href="/admin/" class="nav-btn" style="background: linear-gradient(135deg, #2C3E50, #1f2d3a); color: white; border: none;"><i class="fas fa-cog"></i><span>后台</span></a>
-            <a href="/profile/" class="nav-btn nav-btn-outline"><i class="fas fa-user"></i><span>个人</span></a>
+        <div id="navUser" class="nav-auth" style="display:none; align-items:center; gap:6px;">
+            <span class="nav-score" id="navScore"><i class="fas fa-coins" aria-hidden="true"></i> <span>0</span> 分</span>
+            <a href="/profile/" class="nav-btn nav-btn-outline"><i class="fas fa-user" aria-hidden="true"></i><span>个人</span></a>
         </div>
-    </div>
+    </nav>
 </div>
+<section id="games-panel" class="games-panel" aria-labelledby="games-title" hidden>
+    <div class="games-panel-head"><div><small>探索 · 学习 · 守护</small><h2 id="games-title">生态互动</h2></div><button id="games-close" type="button" aria-label="关闭生态互动"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+    <div class="games-grid">
+        <a href="/bird-guess/" title="认识湿地中的鸟类"><i class="fas fa-feather" aria-hidden="true"></i><strong>识鸟</strong></a>
+        <a href="/bird-runner/" title="开启鸟类知识挑战"><i class="fas fa-dove" aria-hidden="true"></i><strong>闯关</strong></a>
+        <a href="/wetland-restorer/" title="探索湿地生态修复"><i class="fas fa-leaf" aria-hidden="true"></i><strong>修复</strong></a>
+        <a href="/migration/" title="跟随候鸟的迁徙旅程"><i class="fas fa-feather-alt" aria-hidden="true"></i><strong>迁徙</strong></a>
+        <a href="/wetland-detective/" title="寻找湿地中的生态线索"><i class="fas fa-search" aria-hidden="true"></i><strong>侦探</strong></a>
+        <a href="/floating-island/" title="体验生态浮岛建设"><i class="fas fa-water" aria-hidden="true"></i><strong>浮岛</strong></a>
+    </div>
+</section>
 
 <div id="filter-bar" class="glass-panel">
     <div class="protection-filter" aria-label="保护等级筛选">
@@ -1019,19 +1015,52 @@
         <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有动物</button>
         <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危/其他</button>
     </div>
-    <div class="filter-tools" aria-label="时间和热力图工具">
-        <input type="date" id="d-start" class="date-inp">
+    <div id="monitor-filter-tools" class="filter-tools" aria-label="时间和热力图工具">
+        <input type="date" aria-label="开始日期" id="d-start" class="date-inp">
         <span style="color:#999">-</span>
-        <input type="date" id="d-end" class="date-inp">
-        <button class="btn-go" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
+        <input type="date" aria-label="结束日期" id="d-end" class="date-inp">
+        <button class="btn-go" title="应用筛选" aria-label="应用筛选" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
+        <button id="timeline-toggle" type="button" class="monitor-btn timeline-play" onclick="app.toggleTimeline()" disabled title="年度播放" aria-label="年度播放"><i class="fas fa-play"></i></button>
         <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
-        <button class="btn-clear" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
+        <button id="buffer-analysis-toggle" type="button" class="monitor-btn" onclick="app.toggleBufferAnalysis()"><i class="fas fa-draw-polygon"></i> 缓冲分析</button>
+        <button class="btn-clear" title="清除热力圈选" aria-label="清除热力圈选" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
     </div>
+    <select id="timeline-year" aria-label="选择观测年份" hidden disabled><option value="">加载年份…</option></select>
 </div>
 
+<div id="monitor-sidebar">
+<div id="thematic-legend" class="glass-panel" aria-live="polite">
+    <strong>观鸟记录 · 保护等级专题</strong>
+    <div class="legend-swatches">
+        <span><i style="background:#E84B43"></i>国家一级</span><span><i style="background:#F39C12"></i>国家二级</span>
+        <span><i style="background:#4A9BE0"></i>三有动物</span><span><i style="background:#58C96D"></i>无危/其他</span>
+    </div>
+    <div id="thematic-note">正在加载当前视域…</div>
+</div>
+<div id="analysis-panel" class="glass-panel" aria-live="polite">
+    <div class="panel-head"><span>观测缓冲分析</span><button type="button" class="monitor-btn" title="关闭缓冲分析" onclick="app.toggleBufferAnalysis(false)">关闭</button></div>
+    <div class="analysis-row"><label for="buffer-radius">缓冲半径</label><input id="buffer-radius" type="number" min="50" max="10000" step="50" value="500"><span>米</span></div>
+    <div class="analysis-row"><button id="buffer-pick" type="button" class="monitor-btn" onclick="app.pickBufferCenter()">重选中心</button><span>沿用上方日期与保护等级筛选</span></div>
+    <div id="analysis-status">点击地图选择中心点。</div>
+    <div id="analysis-scope">统计覆盖完整命中结果，明细每页最多 5,000 条。</div>
+    <div class="analysis-actions">
+        <button id="analysis-clear" type="button" class="monitor-btn" onclick="app.clearBufferAnalysis()">清除</button>
+        <button id="analysis-export" type="button" class="monitor-btn" onclick="app.exportBufferResults()" disabled>导出全部 CSV</button>
+        <button id="analysis-run" type="button" class="monitor-btn" onclick="app.runBufferAnalysis()">运行分析</button>
+    </div>
+    <ol id="analysis-results"></ol>
+    <button id="buffer-next" type="button" class="monitor-btn" onclick="app.runBufferAnalysis(app.bufferAnalysis.payload?.next_after)" hidden>下一页命中记录</button>
+</div>
 <div id="heat-info" class="glass-panel">
     <div id="heat-info-text">拖拽地图圈选区域，系统将按外接矩形生成观鸟数量热力图。</div>
     <div class="heat-legend"><span>低</span><div class="heat-gradient"></div><span>高</span></div>
+</div>
+</div>
+
+<div id="point-pagination" class="glass-panel" hidden>
+    <span id="point-page-note"></span>
+    <button type="button" class="monitor-btn" onclick="app.loadMapObservations({viewport:true})">第一页</button>
+    <button id="point-next" type="button" class="monitor-btn" onclick="app.loadMapObservations({after:app.nextPointAfter})" hidden>下一页</button>
 </div>
 
 <div id="rank-panel" class="glass-panel">
@@ -1076,13 +1105,13 @@
         <div class="chart-row">
             <div class="chart-col">
                 <div class="chart-card">
-                    <div class="chart-card-title"><i class="fas fa-chart-bar"></i> 物种数量分布 Top 6</div>
+                    <div class="chart-card-title"><i class="fas fa-chart-bar"></i> 物种数量 Top 6（只）</div>
                     <canvas id="chart-bar"></canvas>
                 </div>
             </div>
             <div class="chart-col">
                 <div class="chart-card">
-                    <div class="chart-card-title"><i class="fas fa-shield-alt"></i> 保护等级占比</div>
+                    <div class="chart-card-title"><i class="fas fa-shield-alt"></i> 保护等级占比（记录）</div>
                     <canvas id="chart-level"></canvas>
                 </div>
             </div>
@@ -1090,7 +1119,7 @@
 
         <!-- 图表行2：年度趋势 -->
         <div class="chart-card">
-            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 年度观测趋势（近6年）</div>
+            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 年度观测趋势（当前筛选）</div>
             <canvas id="chart-trend" style="max-height:70px;"></canvas>
         </div>
 
@@ -1243,14 +1272,15 @@
     </section>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
+<script src="/static/app_monitor/monitoring.js?v=20261024-5"></script>
 <script>
     const app = {
         api: '/api',
         map: null,
-        layers: { region: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
+        layers: { region: L.layerGroup(), protectedArea: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         serverStats: null,
@@ -1281,6 +1311,7 @@
         init: function() {
             this.initMap();
             this.loadRegionBoundaries();
+            this.loadProtectedAreas();
             this.initHeatmapTools();
             this.initDates();
             this.loadStatic();
@@ -1301,7 +1332,7 @@
                 try {
                     const user = JSON.parse(userStr);
                     $('#navGuest').hide();
-                    $('#navUser').show();
+                    $('#navUser').css('display', 'flex');
                     if (user.username) {
                         const initial = user.username[0].toUpperCase();
                         $('#navUser').prepend(
@@ -1324,7 +1355,7 @@
                             localStorage.removeItem('yb_token');
                             localStorage.removeItem('yb_user');
                             $('#navUser').hide();
-                            $('#navGuest').show();
+                            $('#navGuest').css('display', 'flex');
                         }
                     });
                 } catch(e) {}
@@ -1386,26 +1417,36 @@
             };
             const vec = L.tileLayer(tdt('vec'), tileOptions);
             const img = L.tileLayer(tdt('img'), tileOptions);
+            const blank = L.layerGroup();
             const vecLabel = L.tileLayer(tdt('cva'), tileOptions);
             const imgLabel = L.tileLayer(tdt('cia'), tileOptions);
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedArea, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
+            this.map.createPane('protectedAreaPane');
+            this.map.getPane('protectedAreaPane').style.zIndex = 390;
+            this.map.createPane('protectedAreaOutlinePane');
+            this.map.getPane('protectedAreaOutlinePane').style.zIndex = 625;
+            this.map.getPane('protectedAreaOutlinePane').style.pointerEvents = 'none';
             this.map.createPane('heatmapPane');
             this.map.getPane('heatmapPane').style.zIndex = 620;
+            this.map.getPane('heatmapPane').style.pointerEvents = 'none';
             this.map.createPane('recordPane');
             this.map.getPane('recordPane').style.zIndex = 430;
             this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
             const layerControl = L.control.layers(
-                { "电子地图": vec, "卫星影像": img },
-                { "图层注记": labelLayer, "行政区界": this.layers.region, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { "电子地图": vec, "卫星影像": img, "不显示底图": blank },
+                { "图层注记": labelLayer, "行政区界": this.layers.region, "保护区范围": this.layers.protectedArea, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
+            this.layerControl = layerControl;
+            this.baseLayers = { vec, img, blank, labelLayer };
             setTimeout(() => {
-                layerControl.expand();
+                if (innerWidth > 1024) layerControl.expand();
+                else layerControl.collapse();
                 const controlEl = layerControl.getContainer();
                 const toggleEl = controlEl ? controlEl.querySelector('.leaflet-control-layers-toggle') : null;
                 if (toggleEl) {
@@ -1422,6 +1463,11 @@
                 }
             }, 0);
             this.map.on('baselayerchange', (e) => {
+                if (e.layer === blank) {
+                    labelLayer.clearLayers();
+                    currentLabel = null;
+                    return;
+                }
                 const nextLabel = e.name === '卫星影像' ? imgLabel : vecLabel;
                 if (nextLabel === currentLabel) return;
                 const wasVisible = this.map.hasLayer(labelLayer);
@@ -1503,6 +1549,7 @@
                                 }
                             },
                             click: (event) => {
+                                if (this.heatmap.active || this.bufferAnalysis?.picking) return;
                                 if (this.selectedRegionLayer && this.selectedRegionLayer !== event.target) {
                                     this.selectedRegionLayer.setStyle(regionStyle);
                                 }
@@ -1523,6 +1570,77 @@
                 this.updateAutoHeatmapByZoom();
             } catch (error) {
                 console.warn('行政区界加载失败：', error);
+            }
+        },
+
+        loadProtectedAreas: async function() {
+            const style = { color:'#33865A', weight:2, opacity:0.95, fillColor:'#5EAF73', fillOpacity:0.18 };
+            try {
+                const response = await fetch('/static/app_monitor/geo/protected_areas.geojson?v=20261024-1');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const boundaries = L.geoJSON(data, {
+                    pane:'protectedAreaPane', bubblingMouseEvents:false, style,
+                    onEachFeature:(feature, layer) => {
+                        const name = this.escapeHtml(feature.properties?.name || `图斑 ${feature.id}`);
+                        layer.bindTooltip(`保护区范围 · ${name}`, { sticky:true });
+                        layer.on({
+                            mouseover:() => layer.setStyle({ weight:3, fillOpacity:0.28 }),
+                            mouseout:() => layer.setStyle(style),
+                            click:event => {
+                                if (this.heatmap.active || this.bufferAnalysis?.picking) return;
+                                layer.bindPopup(`<div class="region-popup"><strong>保护区范围</strong><div>图斑名称：${name}</div></div>`).openPopup(event.latlng);
+                            }
+                        });
+                    }
+                });
+                this.layers.protectedArea.clearLayers();
+                boundaries.addTo(this.layers.protectedArea);
+                this.protectedAreaBoundary = boundaries;
+                // Keep the outline visible above the heat canvas, without
+                // intercepting clicks on observation markers beneath it.
+                L.geoJSON(data, {
+                    pane:'protectedAreaOutlinePane', interactive:false,
+                    style:{ color:'#33865A', weight:2, opacity:0.95, fill:false }
+                }).addTo(this.layers.protectedArea);
+                // Leaflet's point canvases cover empty map space as well.
+                // A map click that did not hit a marker can select a polygon;
+                // check rings and holes instead of a bounding box alone.
+                const inRing = (point, ring) => {
+                    let inside = false;
+                    for (let i=0, j=ring.length-1; i<ring.length; j=i++) {
+                        const a=ring[i], b=ring[j];
+                        if ((a[1]>point[1]) !== (b[1]>point[1]) &&
+                            point[0] < (b[0]-a[0])*(point[1]-a[1])/(b[1]-a[1])+a[0]) inside=!inside;
+                    }
+                    return inside;
+                };
+                if (this._protectedAreaClick) this.map.off('click', this._protectedAreaClick);
+                this._protectedAreaClick = event => {
+                    if (!this.map.hasLayer(this.layers.protectedArea) || this.heatmap.active || this.bufferAnalysis?.active) return;
+                    const point=[event.latlng.lng,event.latlng.lat];
+                    const hit=boundaries.getLayers().reverse().find(layer => {
+                        if (!layer.getBounds().contains(event.latlng)) return false;
+                        const geometry=layer.feature.geometry;
+                        const polygons=geometry.type==='Polygon' ? [geometry.coordinates] : geometry.coordinates;
+                        return polygons.some(rings => inRing(point,rings[0]) && !rings.slice(1).some(hole=>inRing(point,hole)));
+                    });
+                    if (hit) {
+                        const name=this.escapeHtml(hit.feature.properties?.name || `图斑 ${hit.feature.id}`);
+                        hit.bindPopup(`<div class="region-popup"><strong>保护区范围</strong><div>图斑名称：${name}</div></div>`).openPopup(event.latlng);
+                    }
+                };
+                this.map.on('click', this._protectedAreaClick);
+            } catch (error) {
+                const labels = this.layerControl.getContainer().querySelectorAll('label');
+                const label = [...labels].find(item => item.textContent.includes('保护区范围'));
+                if (label) {
+                    const status = document.createElement('span');
+                    status.textContent = '（加载失败，请刷新）';
+                    status.style.color = '#B85450';
+                    label.append(status);
+                }
+                console.warn('保护区范围加载失败：', error);
             }
         },
 
@@ -1702,7 +1820,7 @@
             end.setHours(23, 59, 59);
             return this.data.filter(item => {
                 const time = new Date(item.observation_time);
-                return time >= start && time <= end && this.matchesProtectionFilter(item);
+                return (!document.getElementById('d-start').value || time >= start) && (!document.getElementById('d-end').value || time <= end) && this.matchesProtectionFilter(item);
             });
         },
 
@@ -1959,9 +2077,8 @@
         },
 
         initDates: function() {
-            const d = new Date();
-            document.getElementById('d-end').valueAsDate = d;
-            document.getElementById('d-start').value = '2014-01-01';
+            document.getElementById('d-end').value = '';
+            document.getElementById('d-start').value = '';
         },
 
         loadStatic: function() {
@@ -2006,10 +2123,10 @@
             };
             if (this.map) {
                 const bounds = this.map.getBounds().pad(0.16);
-                params.west = bounds.getWest();
-                params.south = bounds.getSouth();
-                params.east = bounds.getEast();
-                params.north = bounds.getNorth();
+                params.west = Math.max(-180, bounds.getWest());
+                params.south = Math.max(-90, bounds.getSouth());
+                params.east = Math.min(180, bounds.getEast());
+                params.north = Math.min(90, bounds.getNorth());
             }
             return params;
         },
@@ -2052,7 +2169,8 @@
                 fillOpacity: fillOpacity,
                 dashArray: isApproved ? null : '4,3',
                 protectionGroup: levelGroup,
-                baseFillOpacity: fillOpacity
+                baseFillOpacity: fillOpacity,
+                bubblingMouseEvents: false
             }).on('click', () => this.openDetailModal(p, stats || this.currentStats || {}));
         },
 
@@ -2176,7 +2294,7 @@
             this.renderDashboard(this.getStatsFromServer(stats));
             this.renderRealTimeLogs(filteredLogs);
             if (this.heatmap.bounds) {
-                this.buildHeatmapForBounds(this.heatmap.bounds);
+                // The request coordinator refreshes and awaits the selected heat area.
             } else {
                 this.updateAutoHeatmapByZoom();
             }
@@ -2256,7 +2374,7 @@
         renderDashboard: function(stats) {
             const arr = Object.keys(stats).map(k => ({ name: k, ...stats[k] })).sort((a,b) => b.count - a.count);
             const top10 = arr.slice(0, 10);
-            const colors10 = ['#00ADB5','#2ECC71','#F39C12','#E74C3C','#9B59B6','#34495E','#16A085','#27AE60','#2980B9','#8E44AD'];
+            const colors10 = ['#20909D','#7CA58C','#578796','#ABC0AE','#426D7B','#BCD0D2','#187583','#92AFA1','#6B828A','#A2BAC0'];
 
             // === 1. 物种柱状图 ===
             const barData = arr.slice(0, 6);
@@ -2275,7 +2393,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 条' } } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 只' } } },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#999' } },
                         y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1, font: { size: 9 }, color: '#999' } }
@@ -2285,11 +2403,8 @@
 
             // === 2. 保护等级饼图 ===
             const levelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
-            arr.forEach(item => {
-                if (item.level.includes('一')) levelStats['国家一级']++;
-                else if (item.level.includes('二')) levelStats['国家二级']++;
-                else if (item.level.includes('三有')) levelStats['三有动物']++;
-                else levelStats['无危/其他']++;
+            (this.serverStats?.protection_distribution || []).forEach(item => {
+                levelStats[item.level] = Number(item.records || 0);
             });
             const levelColors = ['#E74C3C','#F39C12','#3498DB','#2ECC71'];
             if(this.charts.level) this.charts.level.destroy();
@@ -2308,12 +2423,10 @@
             // === 3. 年度趋势图 ===
             const years = [];
             const yearCounts = {};
-            const currentYear = new Date().getFullYear();
-            for (let i = 5; i >= 0; i--) {
-                const year = String(currentYear - i);
-                years.push(year);
-                yearCounts[year] = 0;
-            }
+            ((this.serverStats && this.serverStats.yearly_trend) || []).forEach(item => {
+                const year = String(item.year);
+                years.push(year); yearCounts[year] = 0;
+            });
             const trendSource = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
             if (this.serverStats && Array.isArray(this.serverStats.yearly_trend)) {
                 this.serverStats.yearly_trend.forEach(item => {
@@ -2333,12 +2446,12 @@
                     labels: years,
                     datasets: [{
                         data: years.map(year => yearCounts[year]),
-                        borderColor: '#00ADB5',
-                        backgroundColor: 'rgba(0,173,181,0.1)',
+                        borderColor: '#20909D',
+                        backgroundColor: 'rgba(32,144,157,0.1)',
                         fill: true,
                         tension: 0.4,
                         pointRadius: 3,
-                        pointBackgroundColor: '#00ADB5',
+                        pointBackgroundColor: '#20909D',
                     }]
                 },
                 options: {
@@ -2412,10 +2525,8 @@
             const LEVEL_COLORS = { '国家一级': '#e74c3c', '国家二级': '#f39c12', '三有动物': '#3498db', '无危/其他': '#2ecc71' };
 
             const globalLevelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
-            this.data.forEach(d => {
-                const sp = this.getSpeciesForRecord(d);
-                const lv = this.getProtectionGroup((sp && sp.protection_level) || d.species_protection || '');
-                globalLevelStats[lv] = (globalLevelStats[lv] || 0) + 1;
+            (this._detailPayload?.stats?.protection_distribution || this.serverStats?.protection_distribution || []).forEach(item => {
+                globalLevelStats[item.level] = Number(item.records || 0);
             });
 
             // 保护等级占比：当前等级扇形浮动向外突出（插件方式，不破坏底层）
@@ -2476,14 +2587,13 @@
 
             // === 区域分布图：显示当前物种在各区域的分布，当前点位高亮 ===
             const globalZoneStats = {};
-            (speciesRecords.length ? speciesRecords : [record]).forEach(d => {
-                const zn = d.zone_name || '未知区域';
-                globalZoneStats[zn] = (globalZoneStats[zn] || 0) + 1;
+            (this._detailPayload?.species_zones || []).forEach(item => {
+                globalZoneStats[item.zone__name || '未知区域'] = item.records;
             });
 
             // 区域分布：当前区域扇形浮动向外突出
             const allZoneNames = Object.keys(globalZoneStats).sort();
-            const zonePalette = ['#00ADB5','#2ECC71','#F39C12','#E74C3C','#9B59B6','#34495E','#16A085','#27AE60','#2980B9','#8E44AD','#D35400','#7F8C8D'];
+            const zonePalette = ['#20909D','#7CA58C','#578796','#ABC0AE','#426D7B','#BCD0D2','#187583','#92AFA1','#6B828A','#A2BAC0','#C59A5F','#8C9690'];
             const zoneData = allZoneNames.map(zn => globalZoneStats[zn]);
             const zoneColors2 = allZoneNames.map((_, i) => zonePalette[i % zonePalette.length]);
             const zoneBorders = allZoneNames.map(zn => zn === zone ? 2 : 1);
@@ -2881,6 +2991,7 @@
         if (e.key === 'Escape') app.closeDetailModal();
     });
 
+    installMonitoringDashboard(app);
     app.init();
 </script>
 </body>

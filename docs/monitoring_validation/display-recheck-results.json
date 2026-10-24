@@ -1,0 +1,599 @@
+[
+  {
+    "name": "static version actually served",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "overview bottom right",
+    "passed": true,
+    "detail": {
+      "width": 1536,
+      "height": 800,
+      "bar": {
+        "x": 510.5625,
+        "y": 80,
+        "w": 1005.4375,
+        "h": 52,
+        "right": 1516,
+        "bottom": 132
+      },
+      "detail": {
+        "x": 1154,
+        "y": 278,
+        "w": 362,
+        "h": 502,
+        "right": 1516,
+        "bottom": 780
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 540.8125,
+        "y": 712,
+        "width": 454.375,
+        "height": 58,
+        "top": 712,
+        "right": 995.1875,
+        "bottom": 770,
+        "left": 540.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "toolbar original compact proportions",
+    "passed": true,
+    "detail": {
+      "x": 510.5625,
+      "y": 80,
+      "w": 1005.4375,
+      "h": 52,
+      "right": 1516,
+      "bottom": 132
+    }
+  },
+  {
+    "name": "all distinct sites and all records represented",
+    "passed": true,
+    "detail": {
+      "zoom": 8.25,
+      "symbols": 2827,
+      "locations": 1124,
+      "records": 117911,
+      "birds": 1216810,
+      "stats": 117911
+    }
+  },
+  {
+    "name": "original circle markers and thematic card removed",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "cluster expands",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "dense area bounded details and paging",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "next page reachable and distinct",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "record details and highlight",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "protection filter",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "play icon toggles",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "playback pauses",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "500m analysis unchanged",
+    "passed": true,
+    "detail": {
+      "total_records": 5179,
+      "bird_count": 33027,
+      "species_count": 142,
+      "matched_records": 5179,
+      "matched_routes": 0
+    }
+  },
+  {
+    "name": "CSV all records",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "analysis clear",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "overview restores bottom right after closing",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "analysis reopens",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1440 no document overflow",
+    "passed": true,
+    "detail": {
+      "width": 1440,
+      "height": 900,
+      "bar": {
+        "x": 414.5625,
+        "y": 80,
+        "w": 1005.4375,
+        "h": 52,
+        "right": 1420,
+        "bottom": 132
+      },
+      "detail": {
+        "x": 1058,
+        "y": 378,
+        "w": 362,
+        "h": 502,
+        "right": 1420,
+        "bottom": 880
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 492.8125,
+        "y": 812,
+        "width": 454.375,
+        "height": 58,
+        "top": 812,
+        "right": 947.1875,
+        "bottom": 870,
+        "left": 492.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1440 overview lower right",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1440 analysis within available map",
+    "passed": true,
+    "detail": {
+      "width": 1440,
+      "height": 900,
+      "bar": {
+        "x": 414.5625,
+        "y": 80,
+        "w": 1005.4375,
+        "h": 52,
+        "right": 1420,
+        "bottom": 132
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 1080,
+        "y": 140,
+        "w": 340,
+        "h": 257.796875,
+        "right": 1420,
+        "bottom": 397.796875
+      },
+      "bottom": {
+        "x": 492.8125,
+        "y": 812,
+        "width": 454.375,
+        "height": 58,
+        "top": 812,
+        "right": 947.1875,
+        "bottom": 870,
+        "left": 492.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1280 no document overflow",
+    "passed": true,
+    "detail": {
+      "width": 1280,
+      "height": 720,
+      "bar": {
+        "x": 254.5625,
+        "y": 80,
+        "w": 1005.4375,
+        "h": 52,
+        "right": 1260,
+        "bottom": 132
+      },
+      "detail": {
+        "x": 898,
+        "y": 198,
+        "w": 362,
+        "h": 502,
+        "right": 1260,
+        "bottom": 700
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 412.8125,
+        "y": 632,
+        "width": 454.375,
+        "height": 58,
+        "top": 632,
+        "right": 867.1875,
+        "bottom": 690,
+        "left": 412.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1280 overview lower right",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1280 analysis within available map",
+    "passed": true,
+    "detail": {
+      "width": 1280,
+      "height": 720,
+      "bar": {
+        "x": 254.5625,
+        "y": 80,
+        "w": 1005.4375,
+        "h": 52,
+        "right": 1260,
+        "bottom": 132
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 920,
+        "y": 140,
+        "w": 340,
+        "h": 257.796875,
+        "right": 1260,
+        "bottom": 397.796875
+      },
+      "bottom": {
+        "x": 412.8125,
+        "y": 632,
+        "width": 454.375,
+        "height": 58,
+        "top": 632,
+        "right": 867.1875,
+        "bottom": 690,
+        "left": 412.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1024 no document overflow",
+    "passed": true,
+    "detail": {
+      "width": 1024,
+      "height": 768,
+      "bar": {
+        "x": 206,
+        "y": 120.796875,
+        "w": 804,
+        "h": 90,
+        "right": 1010,
+        "bottom": 210.796875
+      },
+      "detail": {
+        "x": 678,
+        "y": 244,
+        "w": 332,
+        "h": 432,
+        "right": 1010,
+        "bottom": 676
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 308.8125,
+        "y": 682,
+        "width": 406.375,
+        "height": 56,
+        "top": 682,
+        "right": 715.1875,
+        "bottom": 738,
+        "left": 308.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1024 overview lower right",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1024 analysis within available map",
+    "passed": true,
+    "detail": {
+      "width": 1024,
+      "height": 768,
+      "bar": {
+        "x": 206,
+        "y": 120.796875,
+        "w": 804,
+        "h": 90,
+        "right": 1010,
+        "bottom": 210.796875
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 700,
+        "y": 218.796875,
+        "w": 310,
+        "h": 257.796875,
+        "right": 1010,
+        "bottom": 476.59375
+      },
+      "bottom": {
+        "x": 308.8125,
+        "y": 682,
+        "width": 406.375,
+        "height": 56,
+        "top": 682,
+        "right": 715.1875,
+        "bottom": 738,
+        "left": 308.8125
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "768 no document overflow",
+    "passed": true,
+    "detail": {
+      "width": 768,
+      "height": 1024,
+      "bar": {
+        "x": 12,
+        "y": 123.078125,
+        "w": 744,
+        "h": 107,
+        "right": 756,
+        "bottom": 230.078125
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 12,
+        "y": 937.3125,
+        "width": 744,
+        "height": 48.6875,
+        "top": 937.3125,
+        "right": 756,
+        "bottom": 986,
+        "left": 12
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "768 analysis within available map",
+    "passed": true,
+    "detail": {
+      "width": 768,
+      "height": 1024,
+      "bar": {
+        "x": 12,
+        "y": 123.078125,
+        "w": 744,
+        "h": 107,
+        "right": 756,
+        "bottom": 230.078125
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 72,
+        "y": 238.078125,
+        "w": 684,
+        "h": 279.796875,
+        "right": 756,
+        "bottom": 517.875
+      },
+      "bottom": {
+        "x": 12,
+        "y": 937.3125,
+        "width": 744,
+        "height": 48.6875,
+        "top": 937.3125,
+        "right": 756,
+        "bottom": 986,
+        "left": 12
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "390 no document overflow",
+    "passed": true,
+    "detail": {
+      "width": 390,
+      "height": 844,
+      "bar": {
+        "x": 12,
+        "y": 123.078125,
+        "w": 366,
+        "h": 107,
+        "right": 378,
+        "bottom": 230.078125
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "bottom": {
+        "x": 12,
+        "y": 760.40625,
+        "width": 366,
+        "height": 45.59375,
+        "top": 760.40625,
+        "right": 378,
+        "bottom": 806,
+        "left": 12
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "390 analysis within available map",
+    "passed": true,
+    "detail": {
+      "width": 390,
+      "height": 844,
+      "bar": {
+        "x": 12,
+        "y": 123.078125,
+        "w": 366,
+        "h": 107,
+        "right": 378,
+        "bottom": 230.078125
+      },
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 72,
+        "y": 238.078125,
+        "w": 306,
+        "h": 279.796875,
+        "right": 378,
+        "bottom": 517.875
+      },
+      "bottom": {
+        "x": 12,
+        "y": 760.40625,
+        "width": 366,
+        "height": 45.59375,
+        "top": 760.40625,
+        "right": 378,
+        "bottom": 806,
+        "left": 12
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "no JS/API errors or forbidden dependencies",
+    "passed": true,
+    "detail": {
+      "js": [],
+      "api": [],
+      "forbidden": []
+    }
+  }
+]

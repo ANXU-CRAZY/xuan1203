@@ -6,6 +6,7 @@ from django.views.static import serve
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from app_monitor import monitoring
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
     index_view, UserProfileViewSet, bird_recognition_page,
@@ -53,6 +54,11 @@ urlpatterns = [
 
     # API 接口
     path('api/map-observations/', map_observations, name='map_observations'),
+    path('api/monitoring/years/', monitoring.years, name='monitoring_years'),
+    path('api/monitoring/heatmap/', monitoring.heatmap, name='monitoring_heatmap'),
+    path('api/monitoring/buffer/', monitoring.buffer_analysis, name='monitoring_buffer'),
+    path('api/monitoring/buffer.csv', monitoring.buffer_csv, name='monitoring_buffer_csv'),
+    path('api/monitoring/records/<int:record_id>/', monitoring.detail, name='monitoring_detail'),
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口
