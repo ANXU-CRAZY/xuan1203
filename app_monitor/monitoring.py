@@ -19,7 +19,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
 
-from .models import MonitoringRoute, ObservationRecord, SpeciesInfo
+from .models import MapObservationCache, MonitoringRoute, ObservationRecord, SpeciesInfo
 from .protection import get_protection_group
 
 LEVELS = ('国家一级', '国家二级', '三有动物', '无危/其他')
@@ -184,6 +184,54 @@ def page(qs, request, *, limit=PAGE_LIMIT):
             'next_after': rows[-1]['id'] if more else None, 'page_size': size}
 
 
+def preview_cache_rows(request, bounds):
+    """Return the first map batch from the synchronized denormalized cache.
+
+    The preview is deliberately separate from the authoritative GeoDjango
+    queryset: it must paint quickly while the complete spatial/statistical
+    request continues in the background.  The cache is maintained alongside
+    ObservationRecord and contains the same approved source records.
+    """
+    qs = MapObservationCache.objects.filter(status='approved')
+    for name, alias in (('start', 'start_date'), ('end', 'end_date')):
+        raw = request.GET.get(name) or request.GET.get(alias) or ''
+        if raw:
+            parsed = parse_date(raw)
+            if parsed is None:
+                raise ValueError('日期格式应为 年-月-日')
+            qs = qs.filter(**{'observation_time__gte' if name == 'start' else 'observation_time__lte': parsed})
+
+    protection = request.GET.get('protection') or request.GET.get('protection_filter') or 'all'
+    if protection not in ('all', *LEVELS):
+        raise ValueError('保护等级筛选无效')
+    if protection != 'all':
+        matched = [level for level in qs.values_list('species_protection', flat=True).distinct()
+                   if get_protection_group(level) == protection]
+        qs = qs.filter(species_protection__in=matched) if matched else qs.none()
+
+    if bounds:
+        west, south, east, north = bounds
+        qs = qs.filter(longitude__gte=west, longitude__lte=east,
+                       latitude__gte=south, latitude__lte=north)
+
+    rows = qs.order_by('-observation_time', '-record_id').values(
+        'record_id', 'observation_time', 'count', 'status', 'species_id_cached',
+        'species_name', 'species_latin', 'species_protection', 'zone_id_cached',
+        'zone_name', 'transect_name', 'longitude', 'latitude', 'image_url', 'description'
+    )[:MAP_PREVIEW_LIMIT]
+    return [{
+        'id': row['record_id'], 'observation_time': row['observation_time'].isoformat(),
+        'count': row['count'], 'status': row['status'], 'species': row['species_id_cached'],
+        'species_id': row['species_id_cached'], 'species_name': row['species_name'],
+        'species_latin': row['species_latin'], 'species_protection': row['species_protection'],
+        'zone': row['zone_id_cached'], 'zone_id': row['zone_id_cached'],
+        'zone_name': row['zone_name'], 'transect_name': row['transect_name'],
+        'x': row['longitude'], 'y': row['latitude'], 'lng': row['longitude'],
+        'lat': row['latitude'], 'longitude': row['longitude'], 'latitude': row['latitude'],
+        'image': row['image_url'], 'description': row['description'] or '',
+    } for row in rows]
+
+
 def clusters(qs, bounds, zoom):
     # At regional scales retain every distinct observation coordinate. Repeated
     # records at the SAME coordinate share a symbol, without moving that site.
@@ -219,18 +267,18 @@ def clusters(qs, bounds, zoom):
 
 @endpoint
 def map_observations(request):
-    base = observations(request)
     bounds = bbox(request)
-    qs = within(base, bounds)
-    zoom = number(request, 'zoom', 10, 0, 22)
     if request.GET.get('stage') == 'preview':
         # A bounded, cheap first paint. Never label this sample as a full total;
         # the following normal request supplies all locations and statistics.
-        rows = list(qs.order_by('-observation_time', '-pk').values(*FIELDS)[:MAP_PREVIEW_LIMIT])
+        rows = preview_cache_rows(request, bounds)
         return JsonResponse({'stage': 'preview', 'mode': 'points',
-                             'results': [record(row) for row in rows], 'stats': None,
+                             'results': rows, 'stats': None,
                              'clusters': [], 'recent': [], 'count': len(rows)},
                             json_dumps_params={'ensure_ascii': False})
+    base = observations(request)
+    qs = within(base, bounds)
+    zoom = number(request, 'zoom', 10, 0, 22)
     mode = 'points' if zoom >= 14 else 'clusters'
     payload = page(qs, request, limit=MAP_PAGE_LIMIT) if mode == 'points' else {
         'results': [], 'has_more': False, 'truncated': False, 'next_after': None, 'page_size': PAGE_LIMIT}
