@@ -971,6 +971,7 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-5">
 {% include "app_monitor/site_theme.html" %}
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261024-1">
 </head>
 <body data-ark-page="monitor">
 
@@ -1082,11 +1083,21 @@
 
 <div id="detail-panel" class="glass-panel">
     <div class="panel-head" id="drag-right">
-        <span><i class="fas fa-chart-bar" style="color:var(--c-aqua)"></i> 监测分析概览</span>
-        <i class="fas fa-minus" style="cursor:pointer;opacity:0.5;font-size:12px;" onclick="event.stopPropagation(); $('#detail-panel').toggleClass('minimized');"></i>
+        <span class="dashboard-heading">
+            <button type="button" id="ai-agent-fab" class="dashboard-avatar" title="打开小舟对话" aria-label="打开小舟对话">
+                <span class="ai-agent-person" aria-hidden="true"><span class="ai-agent-head"></span><span class="ai-agent-body"></span></span>
+                <span class="ai-agent-status" aria-hidden="true"></span>
+            </button>
+            <span>监测分析 · 小舟</span>
+        </span>
+        <button type="button" id="dashboard-collapse" class="dashboard-collapse" aria-label="收起分析面板" aria-expanded="true" onclick="app.toggleDashboardPanel()"><i class="fas fa-minus"></i></button>
     </div>
-    <div style="flex:1; padding:12px; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden;">
-
+    <div class="dashboard-tabs" role="tablist" aria-label="监测面板">
+        <button id="dashboard-overview-tab" type="button" role="tab" aria-selected="true" aria-controls="dashboard-overview" onclick="app.showDashboardTab('overview')"><i class="fas fa-chart-bar"></i> 数据概览</button>
+        <button id="dashboard-chat-tab" type="button" role="tab" aria-selected="false" aria-controls="ai-agent-panel" onclick="app.showDashboardTab('chat')"><i class="fas fa-comment-dots"></i> 小舟对话</button>
+    </div>
+    <div id="dashboard-overview" class="dashboard-overview" role="tabpanel" aria-labelledby="dashboard-overview-tab">
+        <div class="dashboard-charts">
         <!-- 快速统计行 -->
         <div style="display:flex; gap:8px; margin-bottom:10px;">
             <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
@@ -1103,7 +1114,7 @@
             </div>
         </div>
 
-        <!-- 图表行1：物种分布柱状图 + 保护等级饼图 -->
+        <!-- 图表行1：物种与保护等级横向柱状图 -->
         <div class="chart-row">
             <div class="chart-col">
                 <div class="chart-card">
@@ -1113,24 +1124,51 @@
             </div>
             <div class="chart-col">
                 <div class="chart-card">
-                    <div class="chart-card-title"><i class="fas fa-shield-alt"></i> 保护等级占比（记录）</div>
-                    <canvas id="chart-level"></canvas>
+                    <div class="chart-card-title"><i class="fas fa-shield-alt"></i> 保护等级分布（记录）</div>
+                    <div class="protection-bar-chart"><canvas id="chart-level"></canvas></div>
                 </div>
             </div>
         </div>
 
         <!-- 图表行2：年度趋势 -->
         <div class="chart-card">
-            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 年度观测趋势（当前筛选）</div>
-            <canvas id="chart-trend" style="max-height:70px;"></canvas>
+            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 近五年观测记录（当前筛选）</div>
+            <div class="annual-bar-chart"><canvas id="chart-trend"></canvas></div>
         </div>
 
+        </div>
+        <div class="dashboard-latest">
         <!-- 实时动态 -->
         <div style="font-size:11px; font-weight:700; color:var(--c-dark); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
             <span class="live-dot"></span><i class="fas fa-bolt"></i> 最新动态
         </div>
-        <div id="species-list-box" class="species-list-container" style="max-height:120px; overflow-y:auto;"></div>
+        <div id="species-list-box" class="species-list-container" ></div>
+        </div>
     </div>
+    <div id="ai-agent" class="dashboard-chat" hidden>
+    <section id="ai-agent-panel" class="ai-agent-panel" role="tabpanel" aria-labelledby="dashboard-chat-tab" hidden aria-label="智能巡护助手">
+        <div class="ai-agent-panel-head">
+            <div class="ai-agent-title">
+                <span><i class="fas fa-robot"></i> 小舟智能体</span>
+                <small>读取当前图层、日期和观测统计</small>
+            </div>
+            <span class="chat-context-badge"><span class="live-dot"></span> 当前地图</span>
+        </div>
+        <div class="ai-agent-quick">
+            <button type="button" data-ai-prompt="请解释当前地图上的观鸟记录概况，并指出最值得关注的区域。"><i class="fas fa-map-marker-alt"></i> 地图解读</button>
+            <button type="button" data-ai-prompt="请基于当前筛选范围生成一段适合汇报使用的监测摘要。"><i class="fas fa-file-alt"></i> 生成摘要</button>
+            <button type="button" data-ai-prompt="请分析当前记录中的保护等级结构，有哪些重点保护物种需要关注？"><i class="fas fa-shield-alt"></i> 保护分析</button>
+            <button type="button" data-ai-prompt="请给普通巡护人员提出下一步巡护建议，语言简洁可执行。"><i class="fas fa-route"></i> 巡护建议</button>
+        </div>
+        <div id="ai-agent-messages" class="ai-agent-messages">
+            <div class="ai-msg assistant">你好，我是小舟。你可以问我当前地图里的物种、区域热点、保护等级，或者让我生成一段汇报摘要。</div>
+        </div>
+    </section>
+    </div>
+        <div class="ai-agent-input dashboard-composer">
+            <textarea id="ai-agent-input" rows="2" maxlength="800" aria-label="向小舟提问" placeholder="问问小舟：当前哪些区域值得关注？"></textarea>
+            <button type="button" id="ai-agent-send" title="发送" aria-label="发送给小舟"><i class="fas fa-paper-plane"></i></button>
+        </div>
 </div>
 
 <div id="detail-modal-overlay">
@@ -1241,39 +1279,6 @@
     <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备15026986号-4</a>
 </div>
 
-<div id="ai-agent" class="ai-agent-widget ai-agent-closed">
-    <button type="button" id="ai-agent-fab" class="ai-agent-fab" title="智能巡护助手">
-        <span class="ai-agent-person" aria-hidden="true">
-            <span class="ai-agent-head"></span>
-            <span class="ai-agent-body"></span>
-        </span>
-        <span class="ai-agent-status" aria-hidden="true"></span>
-    </button>
-    <div class="ai-agent-tip">问问当前地图</div>
-    <section id="ai-agent-panel" class="ai-agent-panel" aria-label="智能巡护助手">
-        <div class="ai-agent-panel-head">
-            <div class="ai-agent-title">
-                <span><i class="fas fa-robot"></i> 小舟智能体</span>
-                <small>读取当前图层、日期和观测统计</small>
-            </div>
-            <button type="button" class="ai-agent-close" id="ai-agent-close" title="收起"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="ai-agent-quick">
-            <button type="button" data-ai-prompt="请解释当前地图上的观鸟记录概况，并指出最值得关注的区域。"><i class="fas fa-map-marker-alt"></i> 地图解读</button>
-            <button type="button" data-ai-prompt="请基于当前筛选范围生成一段适合汇报使用的监测摘要。"><i class="fas fa-file-alt"></i> 生成摘要</button>
-            <button type="button" data-ai-prompt="请分析当前记录中的保护等级结构，有哪些重点保护物种需要关注？"><i class="fas fa-shield-alt"></i> 保护分析</button>
-            <button type="button" data-ai-prompt="请给普通巡护人员提出下一步巡护建议，语言简洁可执行。"><i class="fas fa-route"></i> 巡护建议</button>
-        </div>
-        <div id="ai-agent-messages" class="ai-agent-messages">
-            <div class="ai-msg assistant">你好，我是小舟。你可以问我当前地图里的物种、区域热点、保护等级，或者让我生成一段汇报摘要。</div>
-        </div>
-        <div class="ai-agent-input">
-            <input id="ai-agent-input" type="text" placeholder="例如：当前哪些区域观测最集中？">
-            <button type="button" id="ai-agent-send" title="发送"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </section>
-</div>
-
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
@@ -1372,7 +1377,7 @@
 
             header.addEventListener('mousedown', (e) => {
                 // 如果点的是最小化按钮，不触发拖拽
-                if(e.target.tagName.toLowerCase() === 'i') return;
+                if(e.target.tagName.toLowerCase() === 'i' || e.target.closest('button, input, textarea, a')) return;
 
                 isDragging = true;
                 startX = e.clientX;
@@ -2428,67 +2433,46 @@
                 }
             });
 
-            // === 2. 保护等级饼图 ===
+            const horizontalOptions = unit => ({
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString()} ${unit}` } } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxTicksLimit: 3, maxRotation: 0, font: { size: 10 }, callback: value => value >= 10000 ? `${Number((value / 10000).toFixed(1))}万` : value } },
+                    y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, font: { size: 11 }, color: '#526770' } }
+                }
+            });
+
+            // Protection record counts remain complete under the active filters.
             const levelStats = { '国家一级': 0, '国家二级': 0, '三有动物': 0, '无危/其他': 0 };
             (this.serverStats?.protection_distribution || []).forEach(item => {
                 levelStats[item.level] = Number(item.records || 0);
             });
-            const levelColors = ['#E74C3C','#F39C12','#3498DB','#2ECC71'];
-            if(this.charts.level) this.charts.level.destroy();
+            if (this.charts.level) this.charts.level.destroy();
             this.charts.level = new Chart(document.getElementById('chart-level'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(levelStats),
-                    datasets: [{ data: Object.values(levelStats), backgroundColor: levelColors, borderWidth: 0 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '60%',
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 4, font: { size: 9 }, color: '#666' } } }
-                }
+                type: 'bar',
+                data: { labels: Object.keys(levelStats), datasets: [{ data: Object.values(levelStats), backgroundColor: ['#E74C3C','#F39C12','#3498DB','#2ECC71'], borderRadius: 4, borderSkipped: false, maxBarThickness: 18 }] },
+                options: horizontalOptions('条')
             });
 
-            // === 3. 年度趋势图 ===
-            const years = [];
+            // Show the latest five calendar years of the selected observations.
+            // This affects only this chart, never the timeline or map filters.
             const yearCounts = {};
-            ((this.serverStats && this.serverStats.yearly_trend) || []).forEach(item => {
-                const year = String(item.year);
-                years.push(year); yearCounts[year] = 0;
-            });
-            const trendSource = this.getDateFilteredObservations ? this.getDateFilteredObservations() : this.data;
-            if (this.serverStats && Array.isArray(this.serverStats.yearly_trend)) {
-                this.serverStats.yearly_trend.forEach(item => {
-                    const key = String(item.year || '');
-                    if (key && yearCounts[key] !== undefined) yearCounts[key] = Number(item.count || 0);
-                });
+            if (Array.isArray(this.serverStats?.yearly_trend)) {
+                this.serverStats.yearly_trend.forEach(item => { yearCounts[Number(item.year)] = Number(item.count || 0); });
             } else {
-                trendSource.forEach(item => {
-                    const key = item.observation_time ? String(item.observation_time).slice(0, 4) : '';
-                    if (key && yearCounts[key] !== undefined) yearCounts[key]++;
+                this.getDateFilteredObservations().forEach(item => {
+                    const year = Number(String(item.observation_time || '').slice(0, 4));
+                    if (year) yearCounts[year] = (yearCounts[year] || 0) + 1;
                 });
             }
-            if(this.charts.trend) this.charts.trend.destroy();
+            const availableYears = Object.keys(yearCounts).map(Number).filter(Number.isFinite);
+            const latestYear = availableYears.length ? Math.max(...availableYears) : new Date().getFullYear();
+            const years = Array.from({ length: 5 }, (_, i) => latestYear - 4 + i);
+            if (this.charts.trend) this.charts.trend.destroy();
             this.charts.trend = new Chart(document.getElementById('chart-trend'), {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        data: years.map(year => yearCounts[year]),
-                        borderColor: '#20909D',
-                        backgroundColor: 'rgba(32,144,157,0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#20909D',
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 条' } } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#999' } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1, font: { size: 9 }, color: '#999' } }
-                    }
-                }
+                type: 'bar',
+                data: { labels: years.map(String), datasets: [{ data: years.map(year => yearCounts[year] || 0), backgroundColor: '#20909D', borderRadius: 4, borderSkipped: false, maxBarThickness: 18 }] },
+                options: horizontalOptions('条')
             });
 
             // === 4. 物种清单 ===
@@ -2686,12 +2670,12 @@
             const closeBtn = document.getElementById('ai-agent-close');
             const sendBtn = document.getElementById('ai-agent-send');
             const input = document.getElementById('ai-agent-input');
-            if (!widget || !fab || !sendBtn || !input) return;
+            if (!widget || !sendBtn || !input) return;
 
             localStorage.removeItem('yb_ai_agent_pos');
             localStorage.removeItem('yb_ai_panel_pos');
 
-            fab.addEventListener('click', (e) => {
+            fab?.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (this._aiDragMoved) {
@@ -2711,7 +2695,7 @@
                 this.askAI(input.value);
             });
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
                     e.preventDefault();
                     this.askAI(input.value);
                 }
@@ -2724,84 +2708,53 @@
                     this.askAI(btn.dataset.aiPrompt || btn.textContent.trim());
                 });
             });
-            this.makeAIAssistantDraggable();
-            this.makeAIPanelDraggable();
+            // Chat shares the monitoring panel, with one scrollable message area.
+            this.toggleDashboardPanel(innerWidth > 768);
             window.addEventListener('resize', () => {
                 if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel();
             });
         },
 
+        toggleDashboardPanel: function(expanded) {
+            const panel = document.getElementById('detail-panel');
+            const show = typeof expanded === 'boolean' ? expanded : panel.classList.contains('minimized');
+            panel.classList.toggle('minimized', !show);
+            document.body.classList.toggle('dashboard-expanded', show);
+            const button = document.getElementById('dashboard-collapse');
+            button.setAttribute('aria-expanded', String(show));
+            button.setAttribute('aria-label', show ? '收起分析面板' : '展开分析面板');
+            button.innerHTML = `<i class="fas fa-${show ? 'minus' : 'plus'}"></i>`;
+            if (show) Object.values(this.charts).forEach(chart => chart?.resize());
+        },
+
+        showDashboardTab: function(tab) {
+            const chat = tab === 'chat';
+            document.getElementById('dashboard-overview').hidden = chat;
+            document.getElementById('ai-agent-panel').hidden = !chat;
+            document.getElementById('ai-agent').hidden = !chat;
+            document.getElementById('dashboard-overview-tab').setAttribute('aria-selected', String(!chat));
+            document.getElementById('dashboard-chat-tab').setAttribute('aria-selected', String(chat));
+            this.toggleDashboardPanel(true);
+            if (chat) {
+                const box = document.getElementById('ai-agent-messages');
+                box.scrollTop = box.scrollHeight;
+            }
+        },
+
         openAIAssistant: function() {
-            const widget = document.getElementById('ai-agent');
-            if (!widget) return;
-            widget.classList.remove('ai-agent-closed');
-            widget.dataset.open = 'true';
-            this.positionAIPanel();
-            setTimeout(() => {
-                const input = document.getElementById('ai-agent-input');
-                if (input) input.focus();
-            }, 120);
+            this.showDashboardTab('chat');
         },
 
         closeAIAssistant: function() {
-            const widget = document.getElementById('ai-agent');
-            if (!widget) return;
-            widget.classList.add('ai-agent-closed');
-            widget.dataset.open = 'false';
+            this.showDashboardTab('overview');
         },
 
         toggleAIAssistant: function(forceOpen) {
-            const widget = document.getElementById('ai-agent');
-            if (!widget) return;
-            const open = forceOpen === undefined ? widget.classList.contains('ai-agent-closed') : forceOpen;
-            if (open) {
-                this.openAIAssistant();
-            } else {
-                this.closeAIAssistant();
-            }
+            const open = forceOpen === undefined ? document.getElementById('ai-agent-panel').hidden : forceOpen;
+            this.showDashboardTab(open ? 'chat' : 'overview');
         },
 
-        positionAIPanel: function(force = false) {
-            const widget = document.getElementById('ai-agent');
-            const panel = document.getElementById('ai-agent-panel');
-            if (!widget || !panel) return;
-
-            const saved = localStorage.getItem('yb_ai_panel_pos');
-            if (saved && !force) {
-                try {
-                    const pos = JSON.parse(saved);
-                    if (Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
-                        const left = Math.max(10, Math.min(pos.left, window.innerWidth - panel.offsetWidth - 10));
-                        const top = Math.max(10, Math.min(pos.top, window.innerHeight - panel.offsetHeight - 10));
-                        panel.style.left = `${left}px`;
-                        panel.style.top = `${top}px`;
-                        panel.style.right = 'auto';
-                        panel.style.bottom = 'auto';
-                        return;
-                    }
-                } catch (e) {}
-            }
-
-            panel.style.left = 'auto';
-            panel.style.top = 'auto';
-            panel.style.right = 'auto';
-            panel.style.bottom = 'auto';
-            const widgetRect = widget.getBoundingClientRect();
-            const panelWidth = panel.offsetWidth || 360;
-            const panelHeight = panel.offsetHeight || 420;
-            const gap = 14;
-            let left = widgetRect.right - panelWidth;
-            let top = widgetRect.top - panelHeight - gap;
-
-            if (top < 10) top = widgetRect.bottom + gap;
-            left = Math.max(10, Math.min(left, window.innerWidth - panelWidth - 10));
-            top = Math.max(10, Math.min(top, window.innerHeight - panelHeight - 10));
-
-            panel.style.left = `${left}px`;
-            panel.style.top = `${top}px`;
-            panel.style.right = 'auto';
-            panel.style.bottom = 'auto';
-        },
+        positionAIPanel: function() { /* The chat is laid out within the dashboard. */ },
 
         makeAIAssistantDraggable: function() {
             const widget = document.getElementById('ai-agent');
@@ -2919,7 +2872,9 @@
         askAI: async function(rawMessage) {
             const input = document.getElementById('ai-agent-input');
             const message = String(rawMessage || '').trim();
-            if (!message) return;
+            if (!message || this._aiSending) return;
+            this._aiSending = true;
+            document.getElementById('ai-agent-send').disabled = true;
             this.toggleAIAssistant(true);
             if (input) input.value = '';
             this.addAIMessage('user', message);
@@ -2941,6 +2896,9 @@
             } catch (err) {
                 if (loading) loading.remove();
                 this.addAIMessage('assistant', `智能体暂时没能完成回答：${err.message || err}。如果连续出现，请刷新页面后再试。`);
+            } finally {
+                this._aiSending = false;
+                document.getElementById('ai-agent-send').disabled = false;
             }
         },
 

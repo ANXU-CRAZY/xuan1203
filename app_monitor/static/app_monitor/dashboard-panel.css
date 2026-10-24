@@ -1,0 +1,71 @@
+/* Shared monitoring and Xiaozhou workspace; all dimensions are bounded by
+   the filter bar and bottom map controls. */
+#detail-panel {
+    width:420px; height:800px; bottom:24px; right:20px;
+    max-height:calc(100dvh - var(--monitor-sidebar-top,150px) - 40px);
+    overflow:hidden; border-radius:16px; box-sizing:border-box;
+}
+#detail-panel > .panel-head { flex:none; padding:13px 16px; cursor:move; }
+.dashboard-heading { display:inline-flex; align-items:center; gap:8px; }
+.dashboard-avatar { position:relative; border:1px solid #d8e9e3; background:linear-gradient(145deg,#eefdfa,#fff); border-radius:50%; width:36px; height:36px; display:grid; place-items:center; padding:0; cursor:pointer; flex:none; }
+.dashboard-avatar .ai-agent-person { transform:scale(.68); transform-origin:center; }
+.dashboard-avatar .ai-agent-status { width:7px; height:7px; right:-1px; top:0; border-width:2px; }
+.dashboard-avatar:hover { box-shadow:0 2px 10px #20909d33; }
+.dashboard-collapse { border:0; background:transparent; color:#73898c; cursor:pointer; padding:4px 6px; }
+.dashboard-tabs { display:flex; gap:4px; padding:6px 12px; border-bottom:1px solid #e5eeeb; flex:none; }
+.dashboard-tabs button { flex:1; border:0; border-radius:8px; background:transparent; padding:9px 5px; color:#607b7d; font-family:inherit; font-weight:600; font-size:12px; cursor:pointer; }
+.dashboard-tabs button[aria-selected="true"] { background:#e4f2ef; color:#167c84; }
+.dashboard-tabs button:focus-visible, .dashboard-collapse:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
+.dashboard-overview { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; padding:12px 14px 0; gap:10px; }
+.dashboard-charts { flex:1; min-height:0; overflow:auto; scrollbar-width:thin; }
+.dashboard-latest { flex:none; border-top:1px solid #e5eeeb; padding-top:10px; }
+#detail-panel [hidden] { display:none !important; }
+#detail-panel .chart-row { gap:10px; margin-bottom:6px; }
+#detail-panel .chart-col > .chart-card { height:100%; box-sizing:border-box; }
+#detail-panel .chart-card { flex-shrink:0; }
+#detail-panel .chart-card-title { font-size:11px; line-height:1.5; }
+#detail-panel .species-bar-chart, #detail-panel .protection-bar-chart { position:relative; height:120px; }
+#detail-panel .annual-bar-chart { position:relative; height:120px; }
+#detail-panel .chart-card canvas { max-height:none; }
+#detail-panel .species-list-container { height:160px; min-height:160px; max-height:none; overflow:auto; scrollbar-width:thin; }
+#detail-panel .species-row { min-height:32px; padding:8px 3px; box-sizing:border-box; }
+#detail-panel .dashboard-chat { position:static !important; display:flex; flex:1; min-height:0; touch-action:auto; width:100%; }
+#detail-panel .ai-agent-panel {
+    display:flex; position:static; inset:auto; width:100%; height:100%; max-height:none;
+    border:0; border-radius:0; background:#fff; box-shadow:none; transform:none; opacity:1;
+}
+#detail-panel .ai-agent-panel-head { padding:12px 16px; cursor:default; flex:none; background:#f7fbf9; }
+#detail-panel .ai-agent-title { font-size:14px; }
+#detail-panel .ai-agent-title small { font-size:11px; font-weight:400; }
+.chat-context-badge { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; color:#60857a; font-size:10px; }
+#detail-panel .ai-agent-quick { display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px; flex:none; }
+#detail-panel .ai-agent-quick button { padding:6px 9px; font-family:inherit; font-weight:600; font-size:11px; border-radius:20px; }
+#detail-panel .ai-agent-messages { flex:1; min-height:0; padding:12px 16px 20px; overscroll-behavior:contain; scrollbar-width:thin; }
+#detail-panel .ai-msg { flex-shrink:0; max-width:92%; font-size:13px; line-height:1.8; }
+#detail-panel .ai-msg.assistant { background:#f4f8f6; }
+#detail-panel .ai-msg.user { background:#20909d; }
+#detail-panel .dashboard-composer { flex:none; padding:10px 12px 12px; align-items:flex-end; background:#fff; }
+.dashboard-composer textarea { flex:1; min-width:0; resize:vertical; min-height:42px; max-height:100px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:10px 12px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
+.dashboard-composer textarea:focus { border-color:#20909d; box-shadow:0 0 0 2px #20909d1a; }
+#detail-panel .dashboard-composer button { width:36px; height:36px; border-radius:12px; background:#20909d; flex:none; }
+#detail-panel .dashboard-composer button:disabled { opacity:.45; cursor:wait; }
+#detail-panel.minimized { height:110px; max-height:none; }
+#detail-panel.minimized .dashboard-overview, #detail-panel.minimized .dashboard-chat, #detail-panel.minimized .dashboard-composer { display:none !important; }
+@media (max-width:1350px) and (min-width:769px) {
+    #detail-panel { width:390px; bottom:92px; height:670px; max-height:calc(100dvh - var(--monitor-sidebar-top,150px) - 110px); right:14px; }
+}
+@media (max-width:768px) {
+    #detail-panel { display:flex; left:12px !important; right:12px !important; top:auto !important; bottom:108px; width:auto; height:510px; max-height:calc(100dvh - var(--monitor-sidebar-top,230px) - 120px); border-radius:18px; z-index:1002; }
+    #detail-panel.minimized { height:110px; max-height:none; }
+    #detail-panel > .panel-head { padding:11px 14px; cursor:default; }
+    #detail-panel .dashboard-tabs { padding:4px 10px; }
+    #detail-panel .dashboard-tabs button { padding:7px 4px; }
+    #detail-panel .dashboard-overview { padding:10px 10px 0; overflow:auto; }
+    #detail-panel .dashboard-charts { flex:none; overflow:visible; }
+    #detail-panel .chart-row { flex-direction:column; }
+    #detail-panel .chart-col > .chart-card { height:auto; }
+    #detail-panel .species-list-container { height:170px; min-height:170px; }
+    body.dashboard-expanded #rank-panel { display:none; }
+    body:not(.dashboard-expanded) #rank-panel { bottom:230px !important; }
+    body.analysis-open #detail-panel, body.heat-selecting #detail-panel { display:none !important; }
+}
