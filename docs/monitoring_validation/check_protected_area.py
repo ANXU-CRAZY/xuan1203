@@ -33,7 +33,7 @@ with sync_playwright() as p:
     page = b.new_page(viewport=dict(width=1536, height=850))
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
-    page.goto('http://127.0.0.1:8012/', wait_until='domcontentloaded')
+    page.goto(os.environ.get('MONITOR_BASE', 'http://127.0.0.1:8012')+'/', wait_until='domcontentloaded')
     page.wait_for_function("typeof app!=='undefined' && app.protectedAreaBoundary && app.serverStats", timeout=60000)
     ready(page)
     check('31 valid polygons loaded and default visible', len(geometries) == 31 and all(g.valid for g in geometries) and page.evaluate('app.map.hasLayer(app.layers.protectedArea) && app.protectedAreaBoundary.getLayers().length===31'))

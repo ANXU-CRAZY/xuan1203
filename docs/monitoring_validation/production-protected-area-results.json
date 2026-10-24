@@ -1,0 +1,81 @@
+[
+  {
+    "name": "31 valid polygons loaded and default visible",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "fill below points, outline above heat without intercepting",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "layer off",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "layer on restores fill and outline exactly once",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "observation exists inside protected geometry",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "true observation page not empty",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "observation details retain priority",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "protected interior point available",
+    "passed": true,
+    "detail": {
+      "lng": 113.64578187171492,
+      "lat": 34.92442618302076,
+      "x": 890,
+      "y": 394
+    }
+  },
+  {
+    "name": "protected polygon popup through empty point canvas",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "buffer picking passes through polygons",
+    "passed": true,
+    "detail": {
+      "center": {
+        "lat": 34.92422080418016,
+        "lng": 113.64601692312318
+      },
+      "picking": false,
+      "active": true,
+      "body": "tools-open analysis-open",
+      "popup": null
+    }
+  },
+  {
+    "name": "heat selection passes through polygons",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "mobile layer control available",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "no JS errors",
+    "passed": true,
+    "detail": []
+  }
+]

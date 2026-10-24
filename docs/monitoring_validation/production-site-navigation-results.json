@@ -1,0 +1,420 @@
+[
+  {
+    "name": "lab typeface and palette",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "brand and institution",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "visit lab destination",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "six games consolidated",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "games open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "escape closes and restores focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "close button",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "outside click closes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "keyboard reaches projects",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "basemap and annotation stop rendering",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "data overlays survive basemap off",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "panning with basemap off does not request tiles",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "satellite and labels restore",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "electronic basemap restores",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "heat above points preserved",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1536 header and games fit",
+    "passed": true,
+    "detail": {
+      "width": 1536,
+      "height": 850,
+      "header": {
+        "left": 0,
+        "right": 1536,
+        "top": 0,
+        "bottom": 72,
+        "width": 1536,
+        "height": 72
+      },
+      "filter": {
+        "left": 510.5625,
+        "right": 1516,
+        "top": 80,
+        "bottom": 132,
+        "width": 1005.4375,
+        "height": 52
+      },
+      "games": {
+        "left": 740,
+        "right": 1100,
+        "top": 80,
+        "bottom": 269,
+        "width": 360,
+        "height": 189
+      },
+      "overview": {
+        "left": 1154,
+        "right": 1516,
+        "top": 328,
+        "bottom": 830,
+        "width": 362,
+        "height": 502
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1536 toolbar below header",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1536 overview stays lower right",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1280 header and games fit",
+    "passed": true,
+    "detail": {
+      "width": 1280,
+      "height": 720,
+      "header": {
+        "left": 0,
+        "right": 1280,
+        "top": 0,
+        "bottom": 72,
+        "width": 1280,
+        "height": 72
+      },
+      "filter": {
+        "left": 254.5625,
+        "right": 1260,
+        "top": 80,
+        "bottom": 132,
+        "width": 1005.4375,
+        "height": 52
+      },
+      "games": {
+        "left": 484,
+        "right": 844,
+        "top": 80,
+        "bottom": 269,
+        "width": 360,
+        "height": 189
+      },
+      "overview": {
+        "left": 898,
+        "right": 1260,
+        "top": 198,
+        "bottom": 700,
+        "width": 362,
+        "height": 502
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1280 toolbar below header",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1280 overview stays lower right",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "1024 header and games fit",
+    "passed": true,
+    "detail": {
+      "width": 1024,
+      "height": 768,
+      "header": {
+        "left": 0,
+        "right": 1024,
+        "top": 0,
+        "bottom": 112.796875,
+        "width": 1024,
+        "height": 112.796875
+      },
+      "filter": {
+        "left": 206,
+        "right": 1010,
+        "top": 120.796875,
+        "bottom": 210.796875,
+        "width": 804,
+        "height": 90
+      },
+      "games": {
+        "left": 20,
+        "right": 380,
+        "top": 120.796875,
+        "bottom": 309.796875,
+        "width": 360,
+        "height": 189
+      },
+      "overview": {
+        "left": 678,
+        "right": 1010,
+        "top": 244,
+        "bottom": 676,
+        "width": 332,
+        "height": 432
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "1024 toolbar below header",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "768 header and games fit",
+    "passed": true,
+    "detail": {
+      "width": 768,
+      "height": 1024,
+      "header": {
+        "left": 12,
+        "right": 756,
+        "top": 10,
+        "bottom": 115.078125,
+        "width": 744,
+        "height": 105.078125
+      },
+      "filter": {
+        "left": 12,
+        "right": 756,
+        "top": 123.078125,
+        "bottom": 230.078125,
+        "width": 744,
+        "height": 107
+      },
+      "games": {
+        "left": 24,
+        "right": 384,
+        "top": 123.078125,
+        "bottom": 302.078125,
+        "width": 360,
+        "height": 179
+      },
+      "overview": {
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "768 toolbar below header",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "390 header and games fit",
+    "passed": true,
+    "detail": {
+      "width": 390,
+      "height": 844,
+      "header": {
+        "left": 12,
+        "right": 378,
+        "top": 10,
+        "bottom": 115.078125,
+        "width": 366,
+        "height": 105.078125
+      },
+      "filter": {
+        "left": 12,
+        "right": 378,
+        "top": 123.078125,
+        "bottom": 230.078125,
+        "width": 366,
+        "height": 107
+      },
+      "games": {
+        "left": 18,
+        "right": 378,
+        "top": 123.078125,
+        "bottom": 302.078125,
+        "width": 360,
+        "height": 179
+      },
+      "overview": {
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "overflow": false
+    }
+  },
+  {
+    "name": "390 toolbar below header",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "monitor no JS errors or forbidden requests",
+    "passed": true,
+    "detail": {
+      "errors": [],
+      "forbidden": []
+    }
+  },
+  {
+    "name": "signed-in profile and game access",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "signed-in games open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/species/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/articles/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/gallery/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/image-gallery/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/login/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/report/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/profile/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/bird-guess/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/bird-runner/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/wetland-restorer/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/migration/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/wetland-detective/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/floating-island/ public theme renders",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/species/ actual computed theme",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/articles/ actual computed theme",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/gallery/ actual computed theme",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "/login/ actual computed theme",
+    "passed": true,
+    "detail": null
+  }
+]

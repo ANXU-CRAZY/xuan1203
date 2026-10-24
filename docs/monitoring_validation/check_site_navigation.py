@@ -1,7 +1,7 @@
-import json,re
+import json,re,os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-BASE='http://127.0.0.1:8012'
+BASE=os.environ.get('MONITOR_BASE','http://127.0.0.1:8012')
 OUT=Path(__file__).resolve().parent
 checks=[]
 def check(name,ok,detail=None):
@@ -76,10 +76,10 @@ with sync_playwright() as p:
     for route in routes:
         response=ctx.request.get(BASE+route)
         html=response.text()
-        check(route+' public theme renders',response.status==200 and 'site-theme.css?v=20261024-3' in html and 'data-ark-page=' in html)
+        check(route+' public theme renders',response.status==200 and 'site-theme.css?v=20261024-4' in html and 'data-ark-page=' in html)
     for route in ['/species/','/articles/','/gallery/','/login/']:
         sub=ctx.new_page();sub.goto(BASE+route,wait_until='domcontentloaded');sub.wait_for_timeout(450)
         check(route+' actual computed theme',sub.evaluate("getComputedStyle(document.body).fontFamily.startsWith('Inter') && getComputedStyle(document.body).backgroundColor==='rgb(247, 249, 247)'"))
         sub.screenshot(path=str(OUT/('lab-theme-'+route.strip('/')+'.png')));sub.close()
     b.close()
-(OUT/'site-navigation-results.json').write_text(json.dumps(checks,ensure_ascii=False,indent=2),encoding='utf-8')
+(OUT/(os.environ.get('MONITOR_RESULT_PREFIX','')+'site-navigation-results.json')).write_text(json.dumps(checks,ensure_ascii=False,indent=2),encoding='utf-8')

@@ -1,0 +1,64 @@
+{
+  "records": 93032,
+  "birds": 1293198,
+  "species": 420,
+  "locations": 107,
+  "dense_center": [
+    113.583061,
+    34.760414
+  ],
+  "years": [
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "buffer_500": {
+    "total_records": 24101,
+    "bird_count": 192728,
+    "species_count": 260,
+    "matched_records": 24101,
+    "matched_routes": 0
+  },
+  "buffer_checks": [
+    {
+      "radius": 500,
+      "database": [
+        24101,
+        192728,
+        260
+      ],
+      "api": [
+        24101,
+        192728,
+        260
+      ],
+      "detail_count": 5000,
+      "truncated": true
+    },
+    {
+      "radius": 10000,
+      "database": [
+        33391,
+        248392,
+        294
+      ],
+      "api": [
+        33391,
+        248392,
+        294
+      ],
+      "detail_count": 5000,
+      "truncated": true
+    }
+  ]
+}

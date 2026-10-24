@@ -1,0 +1,38 @@
+[
+  {
+    "name": "preview and complete requested",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "bounded points painted before full response",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "complete footprint and batched render",
+    "passed": true,
+    "detail": {
+      "locations": 107,
+      "records": 93032,
+      "stats": 93032,
+      "rendered": 287,
+      "groups": 287
+    }
+  },
+  {
+    "name": "preview failure still completes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "latest filter wins across both stages",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "no JS or SuperMap requests",
+    "passed": true,
+    "detail": []
+  }
+]

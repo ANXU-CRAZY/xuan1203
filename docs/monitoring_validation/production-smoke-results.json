@@ -1,0 +1,131 @@
+[
+  {
+    "name": "live horizontal chart complete labels",
+    "passed": true,
+    "detail": {
+      "axis": "y",
+      "labels": [
+        "短嘴豆雁",
+        "树麻雀",
+        "豆雁",
+        "牛背鹭",
+        "普通鸬鹚",
+        "白头鹎"
+      ],
+      "ticks": [
+        "短嘴豆雁",
+        "树麻雀",
+        "豆雁",
+        "牛背鹭",
+        "普通鸬鹚",
+        "白头鹎"
+      ],
+      "rotation": 0,
+      "height": 130
+    }
+  },
+  {
+    "name": "six original colored capsules",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "bold correct affiliation and lab link",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "production Xiaozhou upstream response",
+    "passed": true,
+    "detail": {
+      "model": "deepseek-chat",
+      "error": null,
+      "answer_length": 76
+    }
+  },
+  {
+    "name": "key absent from HTML and AI JSON",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "configuration inaccessible /.env.local",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "configuration inaccessible /.git/config",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "configuration inaccessible /static/.env.local",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "configuration inaccessible /.monitoring-release.json",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "configuration inaccessible /etc/xuan1203/ai.env",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /species/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /articles/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /image-gallery/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /bird-guess/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /bird-runner/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /migration/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /wetland-restorer/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /wetland-detective/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /floating-island/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "preserved page /arklb-geoai/",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "no browser errors",
+    "passed": true,
+    "detail": []
+  }
+]
