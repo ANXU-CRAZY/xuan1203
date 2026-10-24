@@ -286,6 +286,8 @@
         }
         .chart-card-title i { color: var(--c-aqua); font-size: 12px; }
         .chart-card canvas { max-height: 80px; }
+        .species-bar-chart { position: relative; height: 130px; }
+        .chart-card .species-bar-chart canvas { max-height: none; }
 
         /* 底部统计条 */
         .bottom-stats-bar {
@@ -1106,7 +1108,7 @@
             <div class="chart-col">
                 <div class="chart-card">
                     <div class="chart-card-title"><i class="fas fa-chart-bar"></i> 物种数量 Top 6（只）</div>
-                    <canvas id="chart-bar"></canvas>
+                    <div class="species-bar-chart"><canvas id="chart-bar"></canvas></div>
                 </div>
             </div>
             <div class="chart-col">
@@ -2382,7 +2384,7 @@
             this.charts.bar = new Chart(document.getElementById('chart-bar'), {
                 type: 'bar',
                 data: {
-                    labels: barData.map(i => i.name.length > 4 ? i.name.slice(0,4)+'…' : i.name),
+                    labels: barData.map(i => i.name),
                     datasets: [{
                         data: barData.map(i => i.count),
                         backgroundColor: colors10.slice(0, barData.length),
@@ -2391,12 +2393,13 @@
                     }]
                 },
                 options: {
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' 只' } } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#999' } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1, font: { size: 9 }, color: '#999' } }
+                        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxTicksLimit: 3, maxRotation: 0, font: { size: 9 }, color: '#999', callback: value => value >= 10000 ? `${Number((value / 10000).toFixed(1))}万` : value } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, font: { size: 10 }, color: '#526770' } }
                     }
                 }
             });
