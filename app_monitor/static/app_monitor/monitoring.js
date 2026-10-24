@@ -12,6 +12,10 @@ function installMonitoringDashboard(app) {
         _heatSeq: 0,
 
         init: function() {
+            // Let the monitoring loader own the first map request. The legacy
+            // species loader still fills species metadata, but must not start
+            // a second request before the date range is ready.
+            this._monitoringInstalled = true;
             original.init.call(this);
             this.map.createPane('monitorHitPane');
             this.map.getPane('monitorHitPane').style.zIndex = 640;

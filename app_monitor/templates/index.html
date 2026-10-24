@@ -1277,7 +1277,7 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261024-6"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261024-7"></script>
 <script>
     const app = {
         api: '/api',
@@ -2136,7 +2136,7 @@
                     this.speciesById[String(s.id)] = s;
                     this.speciesByName[this.normalizeName(s.name_cn)] = s;
                 });
-                this.loadMapObservations();
+                if (!this._monitoringInstalled) this.loadMapObservations();
             }).fail(() => console.error("Species API Error"));
         },
 
