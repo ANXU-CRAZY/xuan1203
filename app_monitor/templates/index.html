@@ -971,7 +971,7 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-5">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261024-1">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261024-2">
 </head>
 <body data-ark-page="monitor">
 
@@ -1088,7 +1088,7 @@
                 <span class="ai-agent-person" aria-hidden="true"><span class="ai-agent-head"></span><span class="ai-agent-body"></span></span>
                 <span class="ai-agent-status" aria-hidden="true"></span>
             </button>
-            <span>监测分析 · 小舟</span>
+            <span>监测分析 · 小舟智能体</span>
         </span>
         <button type="button" id="dashboard-collapse" class="dashboard-collapse" aria-label="收起分析面板" aria-expanded="true" onclick="app.toggleDashboardPanel()"><i class="fas fa-minus"></i></button>
     </div>
@@ -1098,22 +1098,6 @@
     </div>
     <div id="dashboard-overview" class="dashboard-overview" role="tabpanel" aria-labelledby="dashboard-overview-tab">
         <div class="dashboard-charts">
-        <!-- 快速统计行 -->
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
-                <div style="font-size:22px; font-weight:800; color:var(--c-aqua); line-height:1;" id="stat-total">0</div>
-                <div style="font-size:10px; color:#999; margin-top:2px;">累计记录</div>
-            </div>
-            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
-                <div style="font-size:22px; font-weight:800; color:var(--c-green); line-height:1;" id="stat-species">0</div>
-                <div style="font-size:10px; color:#999; margin-top:2px;">物种数</div>
-            </div>
-            <div class="chart-card" style="flex:1; text-align:center; padding:10px 6px;">
-                <div style="font-size:22px; font-weight:800; color:var(--c-red); line-height:1;" id="stat-protected">0</div>
-                <div style="font-size:10px; color:#999; margin-top:2px;">受保护</div>
-            </div>
-        </div>
-
         <!-- 图表行1：物种与保护等级横向柱状图 -->
         <div class="chart-row">
             <div class="chart-col">
@@ -2267,9 +2251,6 @@
             $('#s-species').text(species);
             $('#s-protected').text(protectedCount);
             $('#s-approved').text(approved);
-            $('#stat-total').text(total);
-            $('#stat-species').text(species);
-            $('#stat-protected').text(protectedCount);
             app._statsData = { total, species, protected: protectedCount, protection_filter: this.protectionFilter };
         },
 

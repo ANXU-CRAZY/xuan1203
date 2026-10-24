@@ -8,7 +8,7 @@
 #detail-panel > .panel-head { flex:none; padding:13px 16px; cursor:move; }
 .dashboard-heading { display:inline-flex; align-items:center; gap:8px; }
 .dashboard-avatar { position:relative; border:1px solid #d8e9e3; background:linear-gradient(145deg,#eefdfa,#fff); border-radius:50%; width:36px; height:36px; display:grid; place-items:center; padding:0; cursor:pointer; flex:none; }
-.dashboard-avatar .ai-agent-person { transform:scale(.68); transform-origin:center; }
+.dashboard-avatar .ai-agent-person { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%) scale(.68); transform-origin:center; pointer-events:none; }
 .dashboard-avatar .ai-agent-status { width:7px; height:7px; right:-1px; top:0; border-width:2px; }
 .dashboard-avatar:hover { box-shadow:0 2px 10px #20909d33; }
 .dashboard-collapse { border:0; background:transparent; color:#73898c; cursor:pointer; padding:4px 6px; }
