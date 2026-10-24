@@ -969,7 +969,7 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
-<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-4">
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-5">
 {% include "app_monitor/site_theme.html" %}
 </head>
 <body data-ark-page="monitor">
@@ -1282,7 +1282,7 @@
     const app = {
         api: '/api',
         map: null,
-        layers: { region: L.layerGroup(), protectedArea: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
+        layers: { region: L.layerGroup(), protectedCore: L.layerGroup(), protectedBuffer: L.layerGroup(), protectedExperimental: L.layerGroup(), station: L.layerGroup(), line: L.layerGroup(), record: L.layerGroup() },
         charts: { pie: null, bar: null, level: null, trend: null, modalLevel: null, modalZone: null },
         data: [],
         serverStats: null,
@@ -1425,7 +1425,7 @@
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedArea, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedExperimental, this.layers.protectedBuffer, this.layers.protectedCore, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
             this.map.createPane('protectedAreaPane');
@@ -1441,7 +1441,11 @@
             this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img, "不显示底图": blank },
-                { "图层注记": labelLayer, "行政区界": this.layers.region, "保护区范围": this.layers.protectedArea, "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
+                { "图层注记": labelLayer, "行政区界": this.layers.region,
+                  '<span class="protected-layer-key protected-core-key">核心区</span>': this.layers.protectedCore,
+                  '<span class="protected-layer-key protected-buffer-key">缓冲区</span>': this.layers.protectedBuffer,
+                  '<span class="protected-layer-key protected-experimental-key">实验区</span>': this.layers.protectedExperimental,
+                  "监测点位": this.layers.station, "监测样线": this.layers.line, "观鸟记录": this.layers.record },
                 { position: 'topleft', collapsed: true }
             ).addTo(this.map);
             this.layerControl = layerControl;
@@ -1576,35 +1580,56 @@
         },
 
         loadProtectedAreas: async function() {
-            const style = { color:'#33865A', weight:2, opacity:0.95, fillColor:'#5EAF73', fillOpacity:0.18 };
+            const types = {
+                1: { key:'protectedCore', name:'核心区', style:{ color:'#9B1C20', fillColor:'#E53935', fillOpacity:0.65, weight:2, dashArray:'6,4' } },
+                2: { key:'protectedBuffer', name:'缓冲区', style:{ color:'#BF8B00', fillColor:'#FBC02D', fillOpacity:0.35, weight:1.5 } },
+                3: { key:'protectedExperimental', name:'实验区', style:{ color:'#2563EB', fillColor:'#2F80ED', fillOpacity:0.28, weight:1.5 } }
+            };
+            const popup = feature => {
+                const type = types[Number(feature.properties?.Num ?? feature.properties?.source_code)];
+                const name = this.escapeHtml(feature.properties?.name || `图斑 ${feature.id}`);
+                return `<div class="region-popup"><strong>保护区范围 · ${type.name}</strong><div>图斑名称：${name}</div><div>分区编号：${Number(feature.properties?.Num ?? feature.properties?.source_code)}</div></div>`;
+            };
             try {
-                const response = await fetch('/static/app_monitor/geo/protected_areas.geojson?v=20261024-1');
+                const response = await fetch('/static/app_monitor/geo/protected_areas.geojson?v=20261024-2');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                const boundaries = L.geoJSON(data, {
+                if (data.features.some(feature => !types[Number(feature.properties?.Num ?? feature.properties?.source_code)])) throw new Error('保护区 Num 分区编号无效');
+                this.protectedAreaBoundary = L.featureGroup();
+                this.protectedAreaOutlines = L.featureGroup();
+                // Draw experimental, buffer, then core. Each checkbox controls
+                // both the fill and the outline of exactly one Num class.
+                [3, 2, 1].forEach(code => {
+                const type = types[code];
+                const group = this.layers[type.key];
+                group.clearLayers();
+                const subset = { ...data, features:data.features.filter(feature => Number(feature.properties?.Num ?? feature.properties?.source_code) === code) };
+                const style = { ...type.style, opacity:0.95 };
+                L.geoJSON(subset, {
                     pane:'protectedAreaPane', bubblingMouseEvents:false, style,
                     onEachFeature:(feature, layer) => {
                         const name = this.escapeHtml(feature.properties?.name || `图斑 ${feature.id}`);
-                        layer.bindTooltip(`保护区范围 · ${name}`, { sticky:true });
+                        layer.options.protectedAreaKey = type.key;
+                        this.protectedAreaBoundary.addLayer(layer);
+                        layer.bindTooltip(`${type.name} · ${name}`, { sticky:true });
                         layer.on({
-                            mouseover:() => layer.setStyle({ weight:3, fillOpacity:0.28 }),
+                            mouseover:() => layer.setStyle({ weight:3, fillOpacity:Math.min(0.85, style.fillOpacity + 0.12) }),
                             mouseout:() => layer.setStyle(style),
                             click:event => {
                                 if (this.heatmap.active || this.bufferAnalysis?.picking) return;
-                                layer.bindPopup(`<div class="region-popup"><strong>保护区范围</strong><div>图斑名称：${name}</div></div>`).openPopup(event.latlng);
+                                layer.bindPopup(popup(feature)).openPopup(event.latlng);
                             }
                         });
                     }
-                });
-                this.layers.protectedArea.clearLayers();
-                boundaries.addTo(this.layers.protectedArea);
-                this.protectedAreaBoundary = boundaries;
+                }).addTo(group);
                 // Keep the outline visible above the heat canvas, without
                 // intercepting clicks on observation markers beneath it.
-                L.geoJSON(data, {
+                const outline = L.geoJSON(subset, {
                     pane:'protectedAreaOutlinePane', interactive:false,
-                    style:{ color:'#33865A', weight:2, opacity:0.95, fill:false }
-                }).addTo(this.layers.protectedArea);
+                    style:{ ...style, fill:false }
+                }).addTo(group);
+                outline.eachLayer(layer => this.protectedAreaOutlines.addLayer(layer));
+                });
                 // Leaflet's point canvases cover empty map space as well.
                 // A map click that did not hit a marker can select a polygon;
                 // check rings and holes instead of a bounding box alone.
@@ -1619,29 +1644,28 @@
                 };
                 if (this._protectedAreaClick) this.map.off('click', this._protectedAreaClick);
                 this._protectedAreaClick = event => {
-                    if (!this.map.hasLayer(this.layers.protectedArea) || this.heatmap.active || this.bufferAnalysis?.active) return;
+                    if (this.heatmap.active || this.bufferAnalysis?.active) return;
                     const point=[event.latlng.lng,event.latlng.lat];
-                    const hit=boundaries.getLayers().reverse().find(layer => {
+                    const hit=this.protectedAreaBoundary.getLayers().reverse().find(layer => {
+                        if (!this.map.hasLayer(this.layers[layer.options.protectedAreaKey])) return false;
                         if (!layer.getBounds().contains(event.latlng)) return false;
                         const geometry=layer.feature.geometry;
                         const polygons=geometry.type==='Polygon' ? [geometry.coordinates] : geometry.coordinates;
                         return polygons.some(rings => inRing(point,rings[0]) && !rings.slice(1).some(hole=>inRing(point,hole)));
                     });
                     if (hit) {
-                        const name=this.escapeHtml(hit.feature.properties?.name || `图斑 ${hit.feature.id}`);
-                        hit.bindPopup(`<div class="region-popup"><strong>保护区范围</strong><div>图斑名称：${name}</div></div>`).openPopup(event.latlng);
+                        hit.bindPopup(popup(hit.feature)).openPopup(event.latlng);
                     }
                 };
                 this.map.on('click', this._protectedAreaClick);
             } catch (error) {
                 const labels = this.layerControl.getContainer().querySelectorAll('label');
-                const label = [...labels].find(item => item.textContent.includes('保护区范围'));
-                if (label) {
+                [...labels].filter(item => ['核心区','缓冲区','实验区'].some(name => item.textContent.includes(name))).forEach(label => {
                     const status = document.createElement('span');
                     status.textContent = '（加载失败，请刷新）';
                     status.style.color = '#B85450';
                     label.append(status);
-                }
+                });
                 console.warn('保护区范围加载失败：', error);
             }
         },

@@ -1,6 +1,28 @@
 [
   {
-    "name": "31 valid polygons loaded and default visible",
+    "name": "31 valid polygons loaded and all zones default visible",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Num1 core red with dashed outline",
+    "passed": true,
+    "detail": {
+      "count": 12,
+      "nums": [
+        1
+      ],
+      "color": "#E53935",
+      "outline": "6,4"
+    }
+  },
+  {
+    "name": "Num2 buffer yellow",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Num3 experimental blue",
     "passed": true,
     "detail": null
   },
@@ -10,12 +32,32 @@
     "detail": null
   },
   {
-    "name": "layer off",
+    "name": "核心区 fill and outline off independently",
     "passed": true,
     "detail": null
   },
   {
-    "name": "layer on restores fill and outline exactly once",
+    "name": "核心区 fill and outline restore exactly once",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "缓冲区 fill and outline off independently",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "缓冲区 fill and outline restore exactly once",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "实验区 fill and outline off independently",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "实验区 fill and outline restore exactly once",
     "passed": true,
     "detail": null
   },
@@ -45,7 +87,7 @@
     }
   },
   {
-    "name": "protected polygon popup through empty point canvas",
+    "name": "protected polygon popup through empty point canvas with correct zone",
     "passed": true,
     "detail": null
   },

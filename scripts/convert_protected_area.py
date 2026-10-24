@@ -29,11 +29,15 @@ def convert(source, output):
     for index, (attributes, geometry) in enumerate(zip(attributes, geometries), 1):
         if not geometry['coordinates']:
             raise ValueError(f'第 {index} 个要素为空。')
+        code = int(attributes.get('Num', '0'))
+        if code not in (1, 2, 3):
+            raise ValueError(f'第 {index} 个要素的 Num 分区编号无效。')
         # The source description field contains truncated HTML. Only expose
         # plain identifiers; do not render embedded markup or infer area units.
         features.append({'type': 'Feature', 'id': index,
                          'properties': {'name': attributes.get('Name') or f'图斑 {index}',
-                                        'source_code': attributes.get('Num', '')},
+                                        'source_code': attributes.get('Num', ''), 'Num': code,
+                                        'zone_type': {1:'核心区', 2:'缓冲区', 3:'实验区'}[code]},
                          'geometry': geometry})
     data = {'type': 'FeatureCollection', 'name': 'protected_areas', 'features': features}
     output.parent.mkdir(parents=True, exist_ok=True)

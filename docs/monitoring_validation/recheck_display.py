@@ -31,7 +31,7 @@ with sync_playwright() as p:
     page.on('response',lambda r:api_errors.append([r.status,r.url]) if r.url.startswith(BASE+'/api/') and r.status>=400 else None)
     page.goto(BASE,wait_until='domcontentloaded');ready(page)
     page.wait_for_timeout(1500);ready(page)
-    check('static version actually served',page.locator('link[href*="monitoring.css"]').get_attribute('href').endswith('20261024-4'))
+    check('static version actually served',page.locator('link[href*="monitoring.css"]').get_attribute('href').endswith('20261024-5'))
     g=geometry(page)
     check('overview bottom right',abs(g['detail']['bottom']-(g['height']-20))<1 and abs(g['detail']['right']-(g['width']-20))<1,g)
     check('toolbar original compact proportions',990<g['bar']['w']<1030 and g['bar']['x']>450 and g['bar']['h']<60,g['bar'])
