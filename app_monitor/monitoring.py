@@ -23,7 +23,11 @@ from .models import MonitoringRoute, ObservationRecord, SpeciesInfo
 from .protection import get_protection_group
 
 LEVELS = ('国家一级', '国家二级', '三有动物', '无危/其他')
+# 地图首屏/高缩放明细采用 1 万条分段加载，恢复原版的快速首批点位体验。
+# 缓冲分析仍使用较小的通用分页上限，避免分析面板一次占用过多内存。
 PAGE_LIMIT = 5000
+MAP_PAGE_LIMIT = 10000
+MAP_PREVIEW_LIMIT = 10000
 
 
 def endpoint(func):
@@ -170,8 +174,8 @@ def record(row):
             'image': '/media/' + image.lstrip('/') if image else '', 'description': row['description'] or ''}
 
 
-def page(qs, request):
-    size = integer(request, 'page_size', PAGE_LIMIT, 1, PAGE_LIMIT)
+def page(qs, request, *, limit=PAGE_LIMIT):
+    size = integer(request, 'page_size', limit, 1, limit)
     after = integer(request, 'after', 0, 0, 9223372036854775807)
     rows = list(qs.filter(pk__gt=after).order_by('pk').values(*FIELDS)[:size + 1])
     more = len(rows) > size
@@ -222,13 +226,13 @@ def map_observations(request):
     if request.GET.get('stage') == 'preview':
         # A bounded, cheap first paint. Never label this sample as a full total;
         # the following normal request supplies all locations and statistics.
-        rows = list(qs.order_by('pk').values(*FIELDS)[:300])
+        rows = list(qs.order_by('-observation_time', '-pk').values(*FIELDS)[:MAP_PREVIEW_LIMIT])
         return JsonResponse({'stage': 'preview', 'mode': 'points',
                              'results': [record(row) for row in rows], 'stats': None,
                              'clusters': [], 'recent': [], 'count': len(rows)},
                             json_dumps_params={'ensure_ascii': False})
     mode = 'points' if zoom >= 14 else 'clusters'
-    payload = page(qs, request) if mode == 'points' else {
+    payload = page(qs, request, limit=MAP_PAGE_LIMIT) if mode == 'points' else {
         'results': [], 'has_more': False, 'truncated': False, 'next_after': None, 'page_size': PAGE_LIMIT}
     payload.update(mode=mode, bbox=bounds, viewport=totals(qs), clusters=clusters(qs, bounds, zoom),
                    stats=statistics(base) if request.GET.get('stats', '1') != '0' else None,

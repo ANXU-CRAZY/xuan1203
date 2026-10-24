@@ -197,7 +197,8 @@ function installMonitoringDashboard(app) {
             this._mapController?.abort();
             const controller = this._mapController = new AbortController();
             const params = this.getMapObservationParams({ includeStats: key !== this._statsKey || !this.serverStats });
-            params.zoom = this.map.getZoom(); params.page_size = 5000;
+            // 首批和高缩放明细恢复为 1 万条；缓冲分析仍单独使用 5,000 条分页。
+            params.zoom = this.map.getZoom(); params.page_size = 10000;
             if (options.after) params.after = options.after;
             $id('thematic-note').textContent = '正在加载当前视域…';
             $id('point-next').hidden = true;
