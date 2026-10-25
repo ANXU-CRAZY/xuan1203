@@ -79,6 +79,7 @@ body[data-ark-page="monitor"] .nav-btn {
 body[data-ark-page="monitor"] .nav-btn i { color:inherit; font-size:12px; }
 body[data-ark-page="monitor"] .nav-btn:hover { box-shadow:0 3px 10px rgba(0,173,181,.2); }
 body[data-ark-page="monitor"] .nav-games { --nav-start:#9B59B6; --nav-end:#8E44AD; }
+body[data-ark-page="monitor"] .nav-huiyan { --nav-start:#E67E22; --nav-end:#D35400; }
 body[data-ark-page="monitor"] .nav-articles { --nav-start:#2D9CDB; --nav-end:#1B6FA8; }
 body[data-ark-page="monitor"] .nav-gallery { --nav-start:#4A8C6F; --nav-end:#3A7055; }
 body[data-ark-page="monitor"] .nav-admin { --nav-start:#2C3E50; --nav-end:#1F2D3A; }

@@ -1,0 +1,3817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>方舟慧眼 · 物种识别器</title>
+<!-- 开源地图（Leaflet，本地分发以便离线使用） -->
+<link rel="stylesheet" href="/static/app_monitor/huiyan/leaflet/leaflet.css">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   设计令牌 —— 单一来源，所有尺度收敛到明确的比例
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  /* 中性色：冷灰基调，比纯灰略偏蓝，屏幕观感更干净 */
+  --c-bg:#0e1116;
+  --c-surface:#151a22;
+  --c-surface-2:#1b212b;
+  --c-surface-3:#222935;
+  --c-line:#2a323f;
+  --c-line-soft:#212936;
+
+  --c-text:#e9edf4;
+  --c-text-2:#9aa5b8;
+  --c-text-3:#5f6b7e;
+
+  /* 强调色：单一青绿，克制使用 */
+  --c-accent:#2dd4a7;
+  --c-accent-dim:#1a8f73;
+  --c-accent-glow:rgba(45,212,167,.12);
+
+  /* 语义色：仅用于状态，不做装饰 */
+  --c-ok:#34d399;
+  --c-warn:#fbbf24;
+  --c-err:#f87171;
+  --c-info:#60a5fa;
+
+  /* 尺度：8px 基准栅格 */
+  --s1:4px;  --s2:8px;  --s3:12px; --s4:16px;
+  --s5:20px; --s6:24px; --s8:32px; --s10:40px;
+
+  /* 圆角：只用 3 档 */
+  --r-sm:6px; --r-md:10px; --r-lg:14px;
+
+  /* 字号：6 档，字重与行高成体系 */
+  --t-micro:10px;  --l-micro:1.45;
+  --t-sm:11.5px;   --l-sm:1.5;
+  --t-base:13px;   --l-base:1.6;
+  --t-md:14px;     --l-md:1.55;
+  --t-lg:17px;     --l-lg:1.35;
+  --t-xl:22px;     --l-xl:1.25;
+
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI Variable","Segoe UI",
+         "PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"SF Mono","Cascadia Code",Consolas,"Liberation Mono",monospace;
+
+  --ease:cubic-bezier(.32,.72,.28,1);
+}
+
+/* 浅色主题：同一套 token，仅换值 */
+[data-theme=light]{
+  --c-bg:#f7f8fa;
+  --c-surface:#fff;
+  --c-surface-2:#fafbfc;
+  --c-surface-3:#f2f4f7;
+  --c-line:#e2e6ec;
+  --c-line-soft:#edf0f4;
+  --c-text:#141920;
+  --c-text-2:#5c6675;
+  --c-text-3:#8b95a5;
+  --c-accent:#0d9b7a;
+  --c-accent-dim:#0b7d63;
+  --c-accent-glow:rgba(13,155,122,.10);
+  --c-ok:#0f9d58; --c-warn:#b45309; --c-err:#d92d20; --c-info:#2563eb;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--c-bg)}
+body{
+  font-family:var(--font);
+  font-size:var(--t-base);
+  line-height:var(--l-base);
+  color:var(--c-text);
+  background:var(--c-bg);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  padding:var(--s5) var(--s4) var(--s10);
+  transition:background .25s var(--ease),color .25s var(--ease);
+}
+.wrap{max-width:1440px;margin:0 auto}
+
+/* ── 顶部栏 ────────────────────────────────────────────── */
+.top{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s3) var(--s4);
+  background:var(--c-surface);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-lg);
+  margin-bottom:var(--s4);
+  position:relative;overflow:hidden;
+}
+/* 顶部一条极细的强调线，作为品牌锚点 */
+.top::before{
+  content:"";position:absolute;top:0;left:var(--s5);right:var(--s5);height:1px;
+  background:linear-gradient(90deg,transparent,var(--c-accent),transparent);
+  opacity:.5;
+}
+.brand{display:flex;align-items:center;gap:var(--s3);flex:1;min-width:0}
+/* logo 已带白色底（源图半透明，合成后不透明）：
+   容器也用纯白 + 无边框，与图标边缘完全融合 */
+.mark{
+  width:36px;height:36px;border-radius:var(--r-md);
+  background:#ffffff;
+  display:grid;place-items:center;
+  overflow:hidden;flex-shrink:0;
+}
+.mark img{width:100%;height:100%;object-fit:contain;display:block}
+.brandtxt{flex:1;min-width:0}
+.brand h1{font-size:var(--t-md);font-weight:600;letter-spacing:-.01em;line-height:var(--l-md)}
+.brand .ver{
+  position:relative;
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);letter-spacing:.04em;
+}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:var(--s2)}
+.pill{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  font-size:var(--t-sm);color:var(--c-text-2);
+  padding:var(--s1) var(--s3);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  border-radius:99px;line-height:var(--l-sm);
+}
+.led{width:6px;height:6px;border-radius:50%;background:var(--c-warn);flex-shrink:0;
+     box-shadow:0 0 0 3px rgba(251,191,36,.14)}
+.led.on{background:var(--c-ok);box-shadow:0 0 0 3px rgba(52,211,153,.14)}
+.led.err{background:var(--c-err);box-shadow:0 0 0 3px rgba(248,113,113,.14)}
+
+.iconbtn{
+  width:32px;height:32px;border-radius:var(--r-sm);
+  background:transparent;border:1px solid var(--c-line);
+  color:var(--c-text-2);cursor:pointer;
+  display:grid;place-items:center;font-size:var(--t-md);
+  transition:all .16s var(--ease);
+}
+.iconbtn:hover{border-color:var(--c-accent);color:var(--c-accent);
+              background:var(--c-accent-glow)}
+
+/* ── 布局 ──────────────────────────────────────────────── */
+/* 三栏等高：grid 默认 stretch，各栏底部自然对齐 */
+.cols{
+  display:grid;
+  grid-template-columns:290px minmax(0,1fr) 308px;
+  gap:var(--s4);
+  align-items:stretch;
+  min-height:calc(100vh - 150px);
+}
+@media(max-width:1280px){
+  .cols{grid-template-columns:270px minmax(0,1fr)}
+  /* 窄屏下右栏并入中栏下方，此时右栏两块横向排布以保持整齐 */
+  .col-right{flex-direction:row;flex-wrap:wrap}
+  .col-right>.panel{flex:1 1 240px}
+}
+@media(max-width:920px){
+  .cols{grid-template-columns:1fr;min-height:0}
+  .col-right{flex-direction:column}
+}
+/* 每栏内部纵向弹性布局：首块按内容，其余块自然填充 */
+.col{
+  display:flex;flex-direction:column;gap:var(--s4);
+  min-width:0;
+}
+/* 撑高型面板：内部滚动区吃掉多余空间 */
+.panel.grow{flex:1;display:flex;flex-direction:column;min-height:0}
+.panel.grow>.body{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel.grow .list{flex:1;min-height:0}
+/* 目标物种栏：恢复原配置 —— 面板随左栏等高，列表吃掉多余空间
+   （旧版 max-height:150px 会把列表压矮；.list 的 288px 封顶一并放开） */
+.col-left{overflow-y:auto;overflow-x:hidden}
+.col-left>.panel{flex:0 0 auto}
+.col-left>.panel.grow{flex:1 1 auto;min-height:420px}
+.panel.grow #spList{
+  flex:1 1 auto;min-height:280px;max-height:none;
+  margin-bottom:0;padding-bottom:0;
+}
+.panel.grow .tabs{flex-shrink:0}
+/* 单图面板：拖放区吃掉多余高度 */
+#p-single{display:flex;flex-direction:column;gap:var(--s4);flex:1;min-height:0}
+/* 上下三框（图像区 / 结果区 / 目标物体区）按内容排布，左右边缘天然对齐 */
+#p-single>.subframe{flex:0 0 auto}
+/* 中栏底部预留一点空间，让目标物体框与页面底部不贴死 */
+#p-single{padding-bottom:var(--s2)}
+/* 目标物体框：与图像区 / 识别结果一样，按内容排在主界面下方 */
+#cropPane>.fbody{padding:var(--s2) var(--s3) var(--s3)}
+/* 目标物体框内的空态提示：与「识别结果」表的空态完全同款（⌕ + 文字，框内居中） */
+#cropPane .cropwin{position:relative}
+.crophint{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:var(--s8) var(--s4);text-align:center;
+  font-size:var(--t-sm);color:var(--c-text-3);pointer-events:none;
+}
+.crophint .icon{font-size:24px;opacity:.35;margin-bottom:var(--s2);line-height:1}
+/* 识别结果与目标物体框：内容区高度一致、左右严格对齐
+   —— 结果表用 .tblarea（--res-tbl-h），裁剪窗用同一个变量 */
+#cropPane .cropwin{
+  height:var(--res-tbl-h,clamp(190px,28vh,300px));
+  box-sizing:border-box;
+  padding:var(--s1);
+}
+#cropPane .crops{min-height:100%;align-content:start}
+#singlePane{display:flex;flex-direction:column;flex:0 0 auto;min-height:0}
+
+.panel{
+  background:var(--c-surface);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+}
+.panel > header{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s3) var(--s4);
+  border-bottom:1px solid var(--c-line-soft);
+  font-size:var(--t-sm);font-weight:600;
+  color:var(--c-text-2);
+  letter-spacing:.02em;
+}
+.panel > header .tag{
+  margin-left:auto;font-family:var(--mono);
+  font-size:var(--t-micro);font-weight:400;color:var(--c-text-3);
+}
+.panel .body{padding:var(--s4)}
+
+.num{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-accent);opacity:.7;
+  width:16px;flex-shrink:0;
+}
+
+/* ── 物种检索 ──────────────────────────────────────────── */
+.field{position:relative}
+.field input{
+  width:100%;font-family:var(--font);font-size:var(--t-base);
+  padding:var(--s2) var(--s3) var(--s2) var(--s6);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-sm);
+  color:var(--c-text);outline:none;
+  transition:border-color .16s var(--ease),box-shadow .16s var(--ease);
+}
+.field input::placeholder{color:var(--c-text-3)}
+.field input:focus{
+  border-color:var(--c-accent);
+  box-shadow:0 0 0 3px var(--c-accent-glow);
+}
+.field .icon{
+  position:absolute;left:var(--s3);top:50%;transform:translateY(-50%);
+  color:var(--c-text-3);font-size:var(--t-base);pointer-events:none;
+}
+
+.chips{display:flex;flex-wrap:wrap;gap:var(--s1);margin-top:var(--s3);min-height:22px}
+.chip{
+  display:inline-flex;align-items:center;gap:var(--s1);
+  font-size:var(--t-sm);font-weight:500;
+  padding:2px var(--s2) 2px var(--s3);
+  background:var(--c-accent-glow);
+  border:1px solid var(--c-accent-dim);
+  color:var(--c-accent);
+  border-radius:99px;line-height:var(--l-sm);
+  animation:pop .18s var(--ease);
+}
+@keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.chip button{
+  border:none;background:none;color:inherit;cursor:pointer;
+  font-size:var(--t-md);line-height:1;opacity:.55;padding:0 0 0 2px;
+}
+.chip button:hover{opacity:1}
+
+.meter{margin-top:var(--s3)}
+.meter-top{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:var(--t-sm);color:var(--c-text-2);margin-bottom:var(--s2);
+}
+.meter-top b{color:var(--c-text);font-family:var(--mono);font-weight:600}
+.bar{height:3px;background:var(--c-surface-3);border-radius:2px;overflow:hidden}
+.bar i{
+  display:block;height:100%;background:var(--c-accent);
+  transition:width .22s var(--ease);
+}
+.bar.warn i{background:var(--c-warn)}
+.hint{font-size:var(--t-sm);color:var(--c-text-3);line-height:var(--l-sm);margin-top:var(--s2)}
+
+.list{
+  max-height:288px;overflow-y:auto;
+  margin:var(--s3) calc(var(--s4)*-1) calc(var(--s4)*-1);
+  padding:0 var(--s4) var(--s4);
+}
+.list::-webkit-scrollbar{width:8px}
+.list::-webkit-scrollbar-track{background:transparent}
+.list::-webkit-scrollbar-thumb{
+  background:var(--c-surface-3);border-radius:4px;
+  border:2px solid var(--c-surface);
+}
+.list::-webkit-scrollbar-thumb:hover{background:var(--c-line)}
+.grp{
+  position:sticky;top:0;z-index:1;
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--c-text-3);
+  padding:var(--s3) 0 var(--s2);
+  background:var(--c-surface);
+  border-bottom:1px solid var(--c-line-soft);
+  margin-bottom:var(--s1);
+}
+/* ── 分类树：类群 → 目/科 → 物种 ── */
+.tree-g,.tree-o{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s2) var(--s2);
+  border-radius:var(--r-sm);
+  cursor:pointer;user-select:none;
+  transition:background .12s var(--ease);
+}
+.tree-g:hover,.tree-o:hover{background:var(--c-surface-2)}
+.tree-g .caret,.tree-o .caret{
+  font-size:9px;color:var(--c-text-3);
+  width:10px;flex-shrink:0;
+  transition:transform .18s var(--ease);
+  display:inline-block;
+}
+.tree-g.open .caret,.tree-o.open .caret{transform:rotate(90deg)}
+.tree-g .tname{
+  font-size:var(--t-sm);font-weight:600;color:var(--c-text);
+  letter-spacing:.02em;
+}
+.tree-o .tname{
+  font-size:var(--t-sm);font-weight:400;color:var(--c-text-2);
+  font-family:var(--mono);
+}
+.tree-g .cnt,.tree-o .cnt{
+  margin-left:auto;
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);
+  font-variant-numeric:tabular-nums;
+}
+.tree-g .badge,.tree-o .badge{
+  font-family:var(--mono);font-size:var(--t-micro);
+  background:var(--c-accent);color:var(--c-bg);
+  border-radius:99px;padding:0 5px;line-height:1.5;
+  font-weight:600;flex-shrink:0;
+}
+.tree-body{margin-left:var(--s4);border-left:1px solid var(--c-line-soft);
+           padding-left:var(--s2)}
+.tree-body > .tree-o:first-child{margin-top:var(--s1)}
+/* 单物种的目/科：与其他目同级，收起状态，标题略淡以示层级 */
+.tree-o.single{padding-bottom:var(--s2)}
+.tree-o.single .tname{color:var(--c-text-3)}
+/* 整组选入按钮：默认隐藏，悬停显示 */
+.addall{
+  width:18px;height:18px;flex-shrink:0;
+  border:1px solid var(--c-line);border-radius:4px;
+  background:transparent;color:var(--c-text-3);
+  font-size:11px;line-height:1;cursor:pointer;
+  display:none;place-items:center;
+  transition:all .14s var(--ease);
+}
+.tree-o:hover .addall{display:grid}
+.addall:hover{
+  background:var(--c-accent);border-color:var(--c-accent);
+  color:var(--c-bg);
+}
+.row{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s2);border-radius:var(--r-sm);
+  cursor:pointer;user-select:none;
+  transition:background .12s var(--ease);
+}
+.row:hover{background:var(--c-surface-2)}
+.row.on{background:var(--c-accent-glow)}
+.row .tick{
+  width:15px;height:15px;border-radius:4px;flex-shrink:0;
+  border:1.5px solid var(--c-line);
+  display:grid;place-items:center;
+  font-size:9px;color:transparent;
+  transition:all .16s var(--ease);
+}
+.row.on .tick{background:var(--c-accent);border-color:var(--c-accent);color:var(--c-bg)}
+.row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.row .zh{font-size:var(--t-base);line-height:1.35}
+.row.on .zh{color:var(--c-accent);font-weight:500}
+.row .en{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* 学名：斜体小字，排在英文名下方 */
+.row .sci{
+  font-size:var(--t-micro);font-style:italic;
+  color:var(--c-text-3);opacity:.85;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+.presets{display:flex;flex-wrap:wrap;gap:var(--s2)}
+/* 快捷场景的大类标题 */
+.pg{
+  display:flex;align-items:center;gap:var(--s2);
+  width:100%;
+  margin-top:var(--s3);margin-bottom:var(--s1);
+  padding-bottom:var(--s1);
+  border-bottom:1px solid var(--c-line-soft);
+}
+.pg:first-child{margin-top:0}
+.pg-t{
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;color:var(--c-text-2);font-weight:600;
+}
+.pg-c{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  border-radius:99px;padding:0 5px;line-height:1.5;
+}
+.presets + .pg{margin-top:var(--s3)}
+.pbtn{
+  font-family:var(--font);font-size:var(--t-sm);
+  padding:var(--s1) var(--s3);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line);
+  border-radius:99px;color:var(--c-text-2);
+  cursor:pointer;line-height:var(--l-sm);
+  transition:all .16s var(--ease);
+}
+.pbtn:hover{border-color:var(--c-accent);color:var(--c-accent)}
+.pbtn.on{background:var(--c-accent);border-color:var(--c-accent);color:var(--c-bg);font-weight:500}
+
+/* ── 生态类群专栏：卡片式大类选择 ── */
+/* 分组标题（兽类 / 鸟类） */
+.cat-group{
+  display:flex;align-items:center;gap:var(--s2);
+  width:100%;
+  margin-top:var(--s3);margin-bottom:var(--s2);
+  padding-bottom:var(--s1);
+  border-bottom:1px solid var(--c-line-soft);
+}
+.cat-group:first-child{margin-top:0}
+.cat-group-t{
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;color:var(--c-text-2);font-weight:600;
+}
+.cat-group-c{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  border-radius:99px;padding:0 5px;line-height:1.5;
+}
+.catgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s2)}
+.catcard{
+  display:flex;flex-direction:column;gap:2px;
+  padding:var(--s2) var(--s3);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-sm);
+  cursor:pointer;text-align:left;
+  font-family:var(--font);
+  transition:all .16s var(--ease);
+}
+.catcard:hover{border-color:var(--c-accent)}
+.catcard.on{background:var(--c-accent);border-color:var(--c-accent)}
+.catcard.on .cat-n,.catcard.on .cat-d{color:var(--c-bg)}
+.cat-n{font-size:var(--t-sm);font-weight:600;color:var(--c-text);line-height:1.4}
+.cat-d{font-size:var(--t-micro);color:var(--c-text-3);line-height:1.4}
+.catcard.on .cat-d{opacity:.8}
+
+/* 类群下方的细分组合区（原「预设组合」内容已并入此处） */
+.catsubs{
+  margin-top:var(--s2);
+  padding:var(--s2);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  border-radius:var(--r-sm);
+}
+.catsubs-t{
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;color:var(--c-text-3);font-weight:600;
+  margin-bottom:var(--s1);
+}
+
+/* 面板内二级区块分隔标题（如「预设组合」） */
+.sub-sep{
+  display:flex;align-items:center;gap:var(--s2);
+  margin:var(--s4) 0 var(--s2);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;color:var(--c-text-2);font-weight:600;
+}
+.sub-sep::after{content:'';flex:1;height:1px;background:var(--c-line-soft)}
+
+/* ── 标签页 ────────────────────────────────────────────── */
+.tabs{display:flex;padding:0 var(--s4);border-bottom:1px solid var(--c-line-soft);gap:var(--s1)}
+.tab{
+  padding:var(--s3) var(--s4);
+  font-size:var(--t-base);color:var(--c-text-3);
+  cursor:pointer;background:none;border:none;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  transition:all .16s var(--ease);
+}
+.tab:hover{color:var(--c-text-2)}
+.tab.on{color:var(--c-accent);border-bottom-color:var(--c-accent);font-weight:500}
+
+/* ── 按钮 ──────────────────────────────────────────────── */
+.btn{
+  font-family:var(--font);font-size:var(--t-base);font-weight:500;
+  padding:var(--s2) var(--s4);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-sm);
+  color:var(--c-text);cursor:pointer;
+  transition:all .16s var(--ease);
+  white-space:nowrap;
+}
+.btn:hover:not(:disabled){border-color:var(--c-accent);color:var(--c-accent);
+                            background:var(--c-accent-glow)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{
+  background:var(--c-accent);border-color:var(--c-accent);
+  color:#06281f;font-weight:600;
+}
+.btn.primary:hover:not(:disabled){
+  background:var(--c-accent-dim);border-color:var(--c-accent-dim);color:#06281f;
+}
+.btn.sm{padding:3px var(--s2);font-size:var(--t-sm)}
+
+/* ── 拖放区 ────────────────────────────────────────────── */
+.drop{
+  border:1.5px dashed var(--c-line);
+  border-radius:var(--r-md);
+  min-height:320px;
+  flex:1;
+  display:grid;place-items:center;
+  padding:var(--s6);cursor:pointer;text-align:center;
+  background:var(--c-surface-2);
+  transition:all .2s var(--ease);
+}
+.drop:hover,.drop.over{
+  border-color:var(--c-accent);
+  background:var(--c-accent-glow);
+}
+.drop .glyph{
+  width:56px;height:56px;margin:0 auto var(--s3);
+  border-radius:var(--r-md);
+  background:var(--c-surface-3);
+  border:1px solid var(--c-line);
+  display:grid;place-items:center;
+  font-size:22px;opacity:.5;
+}
+.drop h3{font-size:var(--t-md);font-weight:500;margin-bottom:var(--s1)}
+.drop p{font-size:var(--t-sm);color:var(--c-text-3);line-height:var(--l-sm)}
+.drop kbd{
+  font-family:var(--mono);font-size:var(--t-micro);
+  background:var(--c-surface-3);border:1px solid var(--c-line);
+  border-bottom-width:2px;border-radius:4px;padding:1px 4px;color:var(--c-text-2);
+}
+
+/* ── 中栏上下两段：图像区 / 结果区 ─────────────────────── */
+/* 两个框等宽、左右边缘对齐：上框放图像，下框放识别结果 */
+.subframe{
+  border:1px solid var(--c-line);
+  border-radius:var(--r-md);
+  background:var(--c-surface);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  min-height:0;
+}
+.subframe>header{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s2) var(--s3);
+  border-bottom:1px solid var(--c-line-soft);
+  background:var(--c-surface-2);
+  font-size:var(--t-sm);font-weight:600;color:var(--c-text-2);
+  flex-shrink:0;
+}
+.subframe>header .tag{font-family:var(--mono);font-size:var(--t-micro);
+  font-weight:400;color:var(--c-text-3)}
+.subframe>.fbody{padding:var(--s3);flex:0 0 auto}
+.subframe>.fbody.tight{padding:var(--s2)}
+/* 图像区内部：图像视图吃掉剩余高度；未载入图片时由拖放区占位 */
+.subframe>.fbody.fcol{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.subframe>.fbody.fcol .drop{flex:1 1 auto;min-height:260px}
+/* 图像区：高度贴合图像实际渲染高度（不设上限），
+   框内不产生滚动条，需要滚动时由整页滚动 */
+.subframe>.fbody.fcol .view{flex:0 0 auto;min-height:0;height:auto}
+.subframe>.fbody.fcol .actions{flex:0 0 auto}
+/* 两个坐标面板并排，压缩结果区整体高度 */
+.geo2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);align-items:start}
+.geo2 .geo{margin-bottom:0}
+@media(max-width:1180px){.geo2{grid-template-columns:1fr}}
+
+/* ── 结果表：固定高度的滑动窗口 + 右侧可拖拽竖向滚动条 ──
+   窗口高度由 --res-tbl-h 固定，不随结果条数增减而变化；
+   表格内容超出时在窗口内滚动，右侧滑块可拖拽。 */
+/* 结果表：滚动条浮在表格右缘内侧，表格本身占满整宽 → 列与框左右严格对齐 */
+.tblarea{position:relative;height:var(--res-tbl-h,clamp(190px,28vh,300px))}
+.tblview{
+  width:100%;height:100%;
+  overflow-y:auto;overflow-x:auto;
+  border:1px solid var(--c-line-soft);border-radius:var(--r-sm);
+  background:var(--c-surface);
+}
+.tblview::-webkit-scrollbar{width:0;height:8px}
+.tblview::-webkit-scrollbar-track{background:transparent}
+.tblview::-webkit-scrollbar-thumb{background:var(--c-line);border-radius:4px}
+/* 表头在窗口内吸顶 */
+.tblview thead th{position:sticky;top:0;z-index:2;background:var(--c-surface);
+  box-shadow:inset 0 -1px 0 var(--c-line)}
+/* 竖向滚动条：浮在表格右缘内侧（不占布局宽度，故表格能占满整宽） */
+.vscroll{
+  position:absolute;top:1px;right:1px;bottom:1px;width:10px;
+  background:var(--c-surface-3);border-radius:5px;
+  z-index:3;pointer-events:auto;
+}
+/* 表格内容不被滚动条压住：给倒数第二列留出等宽内边距
+   （最后一列是「操作」列，宽度固定 34px，不需要额外留白） */
+.tblview thead th:nth-last-child(2),.tblview tbody td:nth-last-child(2){
+  padding-right:calc(var(--s3) + 12px)}
+.vscroll.off{display:none}
+.vthumb{
+  position:absolute;left:1px;right:1px;top:0;height:34px;
+  background:var(--c-line);border-radius:4px;cursor:grab;
+  transition:background .15s var(--ease);
+}
+.vthumb:hover{background:var(--c-accent-dim)}
+.vthumb.drag{cursor:grabbing;background:var(--c-accent)}
+
+/* ── 图片展示 ──────────────────────────────────────────── */
+/* .view 是取景框；.vwrap 与原图像素 1:1 等大，
+   两层图片挂在同一基准上，标注图绝对定位精确覆盖原图。
+   取景框高度由图像实际渲染高度决定（贴合图像高度），
+   框内不产生竖向滚动条，需要时由整页滚动 */
+.view{
+  position:relative;overflow:auto;
+  display:flex;justify-content:safe center;align-items:safe flex-start;
+  background:var(--c-surface-2);border:1px solid var(--c-line-soft);
+  border-radius:var(--r-sm);
+  min-height:160px;max-height:none;
+}
+.vwrap{position:relative;width:max-content;margin:0 auto;flex:0 0 auto}
+.vwrap>img{display:block;max-width:none;height:auto}
+.view.fit .vwrap{width:100%}
+.view.fit .vwrap>img{width:100%;max-width:100%}
+.vwrap .ov{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+/* 可点击的目标热区层：让图像上的框也能与结果行 / 裁剪图相互定位 */
+.vwrap .hits{position:absolute;inset:0;pointer-events:none}
+.vwrap .hits .hit{
+  position:absolute;pointer-events:auto;cursor:pointer;
+  border:1px solid transparent;border-radius:2px;
+  transition:background .15s var(--ease),border-color .15s var(--ease);
+}
+.vwrap .hits .hit:hover{
+  border-color:var(--c-accent-dim);
+  background:rgba(120,190,255,.10);
+}
+.vwrap .hits .hit.on{
+  border-color:#ffb020;
+  background:rgba(255,196,0,.22);
+  box-shadow:0 0 0 2px rgba(255,196,0,.45);
+}
+.vwrap .ov img{
+  position:absolute;top:0;left:0;
+  width:100%;height:100%;
+  object-fit:fill;   /* 与底层同尺寸，拉伸对齐而非裁切 */
+}
+
+.actions{display:flex;gap:var(--s2);margin-top:var(--s3);flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+.meta{font-family:var(--mono);font-size:var(--t-sm);color:var(--c-text-3)}
+
+/* ── 表格 ──────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;font-size:var(--t-base)}
+th{
+  font-family:var(--mono);font-size:var(--t-micro);
+  font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--c-text-3);
+  text-align:left;padding:var(--s2) var(--s3);
+  border-bottom:1px solid var(--c-line);
+  white-space:nowrap;
+}
+td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--c-line-soft);
+    vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.idx{font-family:var(--mono);font-size:var(--t-sm);color:var(--c-text-3)}
+.zh{font-weight:500}
+.en{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3)}
+.score{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.coord{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3);white-space:nowrap}
+
+/* 物种名：输入框 + 候选下拉 */
+.namewrap{display:flex;align-items:center;gap:2px}
+.namewrap .name-edit{flex:1 1 auto;min-width:0;max-width:104px}
+.pick-btn{flex:none;width:20px;height:20px;display:grid;place-items:center;
+  border:1px solid transparent;border-radius:var(--r-sm);cursor:pointer;
+  color:var(--c-text-3);font-size:9px;line-height:1;background:transparent;
+  transition:border-color .16s var(--ease),color .16s var(--ease),background .16s var(--ease)}
+.pick-btn:hover{border-color:var(--c-line);background:var(--c-surface-2);color:var(--c-text)}
+.pick-btn.on{border-color:var(--c-accent);color:var(--c-accent);background:var(--c-accent-glow)}
+/* 删除该目标：清掉结果行、目标物体框、图像热区与统计明细 */
+.del-cell{padding-left:2px;padding-right:var(--s1);text-align:center;white-space:nowrap}
+.del-btn{display:inline-grid;place-items:center;
+  min-width:38px;height:20px;padding:0 var(--s1);
+  border:1px solid var(--c-line);border-radius:var(--r-sm);cursor:pointer;
+  color:var(--c-text-3);font-size:var(--t-micro);line-height:1;background:transparent;
+  transition:border-color .16s var(--ease),color .16s var(--ease),background .16s var(--ease)}
+.del-btn:hover{border-color:var(--c-err);color:var(--c-err);background:var(--c-accent-glow)}
+
+/* 物种检索下拉：fixed 浮层，锚定在按钮旁。
+   必须用 fixed —— 若用 absolute 挂在 body 末尾，
+   内部 scrollIntoView 会把整个页面滚到面板所在位置，
+   锚点随之滚出视口，面板被判定为「失去锚点」而关闭。 */
+.picker{position:fixed;z-index:40;width:288px;max-width:92vw;
+  border:1px solid var(--c-line);border-radius:var(--r-md);
+  background:var(--c-surface);box-shadow:var(--shadow-lg);overflow:hidden}
+.picker .ph{padding:var(--s2);border-bottom:1px solid var(--c-line-soft);display:flex;gap:6px}
+.picker .ph input{flex:1;min-width:0;font-family:var(--font);font-size:var(--t-sm);
+  color:var(--c-text);background:var(--c-surface-2);border:1px solid var(--c-line);
+  border-radius:var(--r-sm);padding:4px 7px;outline:none}
+.picker .ph input:focus{border-color:var(--c-accent);box-shadow:0 0 0 3px var(--c-accent-glow)}
+.picker .ptool{display:flex;align-items:center;gap:6px;padding:5px var(--s2);
+  border-bottom:1px solid var(--c-line-soft)}
+.picker .ptool .n{font-size:var(--t-micro);color:var(--c-text-3);margin-left:auto;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 类群筛选：全部 / 兽类 / 鸟类（175 种按类群分开浏览） */
+.picker .gfilter{display:inline-flex;border:1px solid var(--c-line);
+  border-radius:var(--r-sm);overflow:hidden}
+.picker .gfilter b{font-family:var(--font);font-size:var(--t-micro);font-weight:500;
+  padding:2px 7px;cursor:pointer;color:var(--c-text-3);
+  border-right:1px solid var(--c-line);white-space:nowrap}
+.picker .gfilter b:last-child{border-right:none}
+.picker .gfilter b:hover{background:var(--c-surface-2);color:var(--c-text-2)}
+.picker .gfilter b.on{background:var(--c-accent-glow);color:var(--c-accent);
+  font-weight:600}
+.picker .plist{max-height:212px;overflow-y:auto}
+.picker .opt{padding:5px var(--s2);cursor:pointer;display:flex;align-items:center;gap:6px;
+  border-bottom:1px solid var(--c-line-soft)}
+.picker .opt:last-child{border-bottom:none}
+.picker .opt:hover,.picker .opt.cur{background:var(--c-surface-2)}
+.picker .opt.cur{box-shadow:inset 2px 0 0 var(--c-accent)}
+.picker .opt .zn{font-size:var(--t-sm);font-weight:500;white-space:nowrap}
+.picker .opt .en{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.picker .opt .gg{margin-left:auto;font-size:var(--t-micro);color:var(--c-text-3);
+  white-space:nowrap;flex:none}
+.picker .opt mark{background:transparent;color:var(--c-accent);font-weight:700}
+.picker .empty{padding:var(--s3);font-size:var(--t-sm);color:var(--c-text-3);text-align:center}
+
+/* 图片空间坐标（WGS84 经纬度） */
+.geo{padding:var(--s2) var(--s3);border:1px solid var(--c-line);
+  border-radius:var(--r-md);background:var(--c-surface-2);margin-bottom:var(--s2)}
+.geo .ghead{display:flex;align-items:center;gap:7px;margin-bottom:var(--s2);flex-wrap:wrap}
+.geo .ghead .glb{font-size:var(--t-micro);font-weight:700;color:var(--c-text-2);
+  letter-spacing:.02em;display:flex;align-items:center;gap:5px}
+.geo .ghead .glb .tag{font-size:var(--t-micro);font-weight:600;padding:1px 5px;
+  border-radius:3px;background:var(--c-accent-glow);color:var(--c-accent);
+  border:1px solid var(--c-accent-dim);letter-spacing:0}
+.geo .grow{flex:1}
+.geo .grow2{flex:1 1 auto;min-width:0}
+.geo .gmrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.geo .kv{display:flex;align-items:center;gap:4px}
+.geo .kv > span{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3);
+  min-width:34px;letter-spacing:.02em}
+.geo input{width:128px;font-family:var(--mono);font-size:var(--t-sm);color:var(--c-text);
+  background:var(--c-surface);border:1px solid var(--c-line);border-radius:var(--r-sm);
+  padding:4px 7px;outline:none}
+.geo input:focus{border-color:var(--c-accent);box-shadow:0 0 0 3px var(--c-accent-glow)}
+.geo input.bad{border-color:var(--c-err,var(--c-warn))}
+/* 自定义物种：文本输入框（不用等宽数字字体） */
+.geo input.txt{width:200px;font-family:var(--font);font-size:var(--t-sm)}
+.geo input.txt::placeholder{color:var(--c-text-3)}
+/* 名称与英文名并排一行（用 id 精确定位，不受 :first-of-type 影响） */
+#cusNames{flex-wrap:nowrap}
+#cusNames .kv{flex:1 1 0;min-width:0}
+#cusNames .kv>span{flex-shrink:0;min-width:30px}
+#cusNames input.txt{width:100%;min-width:0}
+/* 名称输入框的物种库自动匹配候选列表 */
+.cusname-kv{position:relative}
+/* 名称输入框内嵌的检索图标（与左栏物种搜索框同款） */
+.searchwrap{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+.searchwrap .sicon{
+  position:absolute;left:6px;top:50%;transform:translateY(-50%);
+  font-size:var(--t-base);color:var(--c-text-3);pointer-events:none;line-height:1;
+}
+#cusName{padding-left:22px !important}
+.cuspop{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;
+  max-height:210px;overflow-y:auto;
+  background:var(--c-surface);border:1px solid var(--c-line);
+  border-radius:var(--r-sm);box-shadow:var(--shadow-lg);
+}
+.cuspop .row{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:5px 8px;cursor:pointer;border-bottom:1px solid var(--c-line-soft);
+}
+.cuspop .row:last-child{border-bottom:none}
+.cuspop .row:hover{background:var(--c-accent-glow)}
+.cuspop .row .nm{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;flex:1}
+.cuspop .row .zh{font-size:var(--t-sm);color:var(--c-text)}
+.cuspop .row .en{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cuspop .hint{padding:var(--s2) var(--s3);font-size:var(--t-micro);color:var(--c-text-3)}
+/* 物种名输入框：脱离本图统一名（单独指定）时高亮 */
+.name-edit.own{color:var(--c-accent);font-weight:600}
+.geo .fmt{font-size:var(--t-micro);color:var(--c-text-3)}
+.geo .meta{font-size:var(--t-micro);color:var(--c-text-3);margin-top:5px;line-height:1.5;
+  white-space:normal;overflow-wrap:anywhere}
+.geo .meta b{color:var(--c-text-2);font-weight:600}
+/* 两个面板的说明文字：完整展示，不加内部滚动条 */
+.geo2 .geo .meta{height:auto;overflow:visible;line-height:1.5}
+/* 面板内的长文本必须能正常换行，不能溢出到面板外 */
+.geo{min-width:0}
+.geo .gmrow{min-width:0}
+.geo .ghead{min-width:0}
+.geo .ghead .glb{min-width:0;flex-shrink:0}
+
+td.geo-cell{padding-right:var(--s1)}
+/* 空间坐标：纬度 + 经度 排成一行 */
+td.geo-cell{text-align:right;padding-left:2px;padding-right:4px}
+td.geo-cell input{width:100%;min-width:64px;font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text);
+  background:transparent;border:1px solid transparent;border-radius:var(--r-sm);
+  padding:2px 4px;outline:none;text-align:right}
+td.geo-cell input:hover{border-color:var(--c-line);background:var(--c-surface-2)}
+td.geo-cell input:focus{border-color:var(--c-accent);background:var(--c-surface-2);
+  box-shadow:0 0 0 3px var(--c-accent-glow)}
+td.geo-cell input.inh{color:var(--c-text-2)}
+td.geo-cell input.own{color:var(--c-accent);font-weight:600;border-color:var(--c-accent-dim)}
+/* 影像坐标（目标在图像中的像素框位置） */
+td.box-cell{padding-right:var(--s1)}
+/* 影像坐标：x1 y1 x2 y2 排成一行，不再 2×2 挤在一起 */
+td.box-cell{padding-left:2px;padding-right:2px;text-align:right}
+td.box-cell input{width:100%;min-width:38px;font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-2);background:var(--c-surface);border:1px solid transparent;
+  border-radius:3px;padding:1px 3px;text-align:right;
+  transition:border-color .16s var(--ease),color .16s var(--ease)}
+td.box-cell input:hover{border-color:var(--c-line);background:var(--c-surface-2)}
+td.box-cell input:focus{border-color:var(--c-accent);background:var(--c-surface-2);
+  outline:none;color:var(--c-text)}
+td.box-cell input.edit{color:var(--c-accent);font-weight:600;border-color:var(--c-accent-dim)}
+
+.empty{padding:var(--s8) var(--s4);text-align:center;color:var(--c-text-3)}
+.empty .g{font-size:24px;opacity:.35;margin-bottom:var(--s2)}
+.empty p{font-size:var(--t-sm)}
+/* 结果表空态：窗口高度较窄，压缩上下留白避免溢出 */
+.tblview .empty{padding:var(--s3) var(--s4)}
+
+/* ── 物种名可编辑 ──────────────────────────────────────── */
+.name-edit{
+  /* 物种名列字号缩小一档 */
+  font-family:var(--font);font-size:var(--t-sm);font-weight:500;
+  color:var(--c-text);background:transparent;
+  border:1px solid transparent;border-radius:var(--r-sm);
+  padding:2px 4px;width:100%;max-width:104px;
+  outline:none;
+  transition:border-color .16s var(--ease),background .16s var(--ease);
+}
+.name-edit:hover{border-color:var(--c-line);background:var(--c-surface-2)}
+.name-edit:focus{
+  border-color:var(--c-accent);background:var(--c-surface-2);
+  box-shadow:0 0 0 3px var(--c-accent-glow);
+}
+td.zh{padding-left:var(--s2)}
+/* 物种单元格：中文名 + 后面紧跟英文名（替代原独立「英文名」列） */
+td.zh .namewrap{gap:5px}
+/* 英文名单独一列：与表头「英文名」左对齐 */
+td.en-cell{vertical-align:middle}
+td.en-cell .en-inline{
+  display:block;font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--c-text-3);line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+td.en-cell .en-inline:empty{display:none}
+
+/* 数值列表头右对齐，与单元格内容对齐 */
+.c-num{text-align:right}
+/* 列宽固定 → 表头与内容严格对齐。
+   注意：fixed 布局下若列宽总和超过容器，浏览器会按比例压缩所有列
+   （曾导致「物种」列 132px 被压到 64px、中文名被截断），因此列宽总和必须 ≤ 容器宽。 */
+.tblview table{table-layout:fixed;width:100%;max-width:100%}
+
+/* ── 统计框（带边框） ──────────────────────────────────── */
+.sumbox{
+  border:1px solid var(--c-line);border-radius:var(--r-md);
+  overflow:hidden;background:var(--c-surface-2);
+}
+.sumbox .hd{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border-bottom:1px solid var(--c-line-soft);
+}
+.sumbox .hd>div{
+  padding:var(--s3) var(--s1);text-align:center;
+  border-right:1px solid var(--c-line-soft);
+}
+.sumbox .hd>div:last-child{border-right:none}
+.sumbox .hd .v{
+  font-family:var(--mono);font-size:var(--t-lg);font-weight:600;
+  line-height:var(--l-lg);letter-spacing:-.02em;
+}
+.sumbox .hd .l{
+  font-size:var(--t-micro);color:var(--c-text-3);
+  letter-spacing:.03em;text-transform:uppercase;margin-top:var(--s1);
+}
+.splist{display:flex;flex-direction:column;gap:var(--s3);margin-top:var(--s3)}
+.sprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px var(--s2);align-items:center}
+.sprow .n{font-size:var(--t-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sprow .c{font-family:var(--mono);font-size:var(--t-sm);font-weight:600;color:var(--c-accent)}
+.sprow .bar{
+  grid-column:1/-1;height:4px;border-radius:2px;
+  background:var(--c-surface);overflow:hidden;
+}
+.sprow .bar i{display:block;height:100%;background:var(--c-accent);border-radius:2px}
+.sprow .bar i.alt{background:var(--c-accent-dim)}
+
+/* ── 统计卡 ────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2);margin-bottom:var(--s4)}
+.stat{
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  border-radius:var(--r-md);
+  padding:var(--s3);
+}
+.stat .v{font-family:var(--mono);font-size:var(--t-lg);font-weight:600;
+         line-height:var(--l-lg);letter-spacing:-.02em}
+.stat .l{font-size:var(--t-micro);color:var(--c-text-3);letter-spacing:.03em;
+         text-transform:uppercase;margin-top:var(--s1)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:var(--s3)}
+.cell{
+  border:1px solid var(--c-line-soft);border-radius:var(--r-md);
+  overflow:hidden;background:var(--c-surface-2);
+  transition:border-color .16s var(--ease);
+}
+.cell:hover{border-color:var(--c-accent)}
+/* 缩略图：固定宽高比，避免原图尺寸撑破网格 */
+.cell img{
+  display:block;width:100%;
+  aspect-ratio:4/3;object-fit:cover;
+  background:var(--c-surface-3);
+}
+.cell .ph{
+  aspect-ratio:4/3;background:var(--c-surface-3);
+  display:grid;place-items:center;font-size:11px;color:var(--c-text-3);
+}
+.cell .m{padding:var(--s2) var(--s3)}
+.cell .m b{display:block;font-size:var(--t-sm);font-weight:500;
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .m span{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3)}
+
+/* 裁剪区：固定高度的滑动窗口，与结果表一致；条目可与结果行联动标亮 */
+.cropwin{
+  height:var(--crop-h,clamp(150px,22vh,230px));
+  overflow-y:auto;overflow-x:hidden;
+  border:1px solid var(--c-line-soft);border-radius:var(--r-sm);
+  background:var(--c-surface-2);
+  padding:var(--s2);
+}
+.cropwin::-webkit-scrollbar{width:8px;height:0}
+.cropwin::-webkit-scrollbar-track{background:transparent}
+.cropwin::-webkit-scrollbar-thumb{background:var(--c-line);border-radius:4px}
+.crops{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.crop{border:1px solid var(--c-line-soft);border-radius:var(--r-md);overflow:hidden;
+      background:var(--c-surface);
+      cursor:pointer;
+      transition:border-color .16s var(--ease),box-shadow .16s var(--ease),
+                 transform .16s var(--ease)}
+.crop:hover{border-color:var(--c-accent-dim)}
+/* 与结果行联动：被选中的裁剪个体高亮 */
+.crop.on{
+  border-color:#ffb020;
+  box-shadow:0 0 0 2px rgba(255,176,32,.55);
+  transform:translateY(-1px);
+}
+.crop img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.crop .m{padding:var(--s1) var(--s2);font-size:var(--t-micro);color:var(--c-text-2);
+         text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crop.on .m{color:#d98c00;font-weight:700}
+/* 结果行被联动选中时的标记 */
+tr.res-sel td{background:rgba(255,196,0,.16)}
+tr.res-sel td.zh .name-edit{color:#b87700;font-weight:700}
+tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
+
+/* ── 开源地图检索（Leaflet + OpenStreetMap） ───────────── */
+/* 地图容器固定高度，不随坐标行数变化 */
+.mapwrap{margin-top:var(--s3)}
+.mapbar{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2);flex-wrap:nowrap}
+.mapbar input.txt{flex:1 1 auto;min-width:0;font-family:var(--font);font-size:var(--t-sm);
+  background:var(--c-surface);border:1px solid var(--c-line);border-radius:var(--r-sm);
+  padding:5px 8px;outline:none;color:var(--c-text)}
+.mapbar input.txt:focus{border-color:var(--c-accent);box-shadow:0 0 0 2px var(--c-accent-glow)}
+.mapbox{
+  height:210px;border:1px solid var(--c-line);border-radius:var(--r-sm);
+  overflow:hidden;background:var(--c-surface-2);
+}
+/* 深色主题下轻微降低亮度即可，过度压暗会让瓦片看不清 */
+[data-theme=dark] .mapbox{filter:saturate(.9) brightness(.82) contrast(1.05)}
+.leaflet-container{background:var(--c-surface-2);font-family:var(--font)}
+.leaflet-control-attribution{
+  background:rgba(0,0,0,.55)!important;color:#c9d1dc!important;font-size:10px!important;
+}
+.leaflet-control-attribution a{color:#7fb4ff!important}
+.leaflet-bar a{background:var(--c-surface-2);color:var(--c-text-2);border-color:var(--c-line)}
+.leaflet-bar a:hover{background:var(--c-surface-3);color:var(--c-accent)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{
+  background:var(--c-surface);color:var(--c-text);box-shadow:var(--shadow-md);
+}
+.leaflet-popup-content{margin:8px 10px;font-size:var(--t-sm)}
+.maperr{
+  display:grid;place-items:center;height:100%;padding:var(--s4);text-align:center;
+  font-size:var(--t-sm);color:var(--c-text-3);
+}
+/* 地图下方的说明文字：完整换行显示，不被容器裁掉 */
+.mapwrap .meta{white-space:normal;line-height:1.55;margin-top:var(--s2)}
+.mapwrap .meta b{color:var(--c-accent)}
+/* 右栏地图：底部状态行 */
+.mapfoot{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s2);
+  padding-top:var(--s2);border-top:1px solid var(--c-line-soft)}
+/* 右栏较窄，地图给足高度 */
+.col-right .mapbox{height:250px}
+
+/* ── 参数 ──────────────────────────────────────────────── */
+.ctl{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s4)}
+.ctl:last-child{margin-bottom:0}
+/* 靠右的控件（如「显示英文名」开关）推到面板最右端
+   注意：.panel .body 是普通 block 布局，margin-left:auto 不生效，
+   改用「占满整行 + 内容右对齐」 */
+.ctl.ctl-right{
+  width:100%;margin-bottom:0;
+  justify-content:flex-end;
+}
+.ctl.ctl-right label{width:auto}
+/* 面板标题行内的开关：与标题同一行，靠右（保留 header 的右内边距） */
+.ctl-inline{
+  display:inline-flex;align-items:center;margin-left:auto;
+  vertical-align:middle;
+}
+.ctl-inline .switch{display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  font-size:var(--t-micro);color:var(--c-text-3);white-space:nowrap}
+.ctl-inline .switch .track{transform:scale(.86);transform-origin:left center}
+.ctl label{font-size:var(--t-sm);color:var(--c-text-2);white-space:nowrap;width:52px}
+.ctl input[type=range]{
+  flex:1;height:3px;-webkit-appearance:none;appearance:none;
+  background:var(--c-surface-3);border-radius:2px;outline:none;cursor:pointer;
+}
+.ctl input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--c-accent);cursor:pointer;
+  box-shadow:0 0 0 3px var(--c-accent-glow);
+  transition:box-shadow .16s var(--ease);
+}
+.ctl input[type=range]::-webkit-slider-thumb:hover{
+  box-shadow:0 0 0 5px var(--c-accent-glow);
+}
+.ctl .v{font-family:var(--mono);font-size:var(--t-sm);width:38px;text-align:right;
+        color:var(--c-text);font-variant-numeric:tabular-nums}
+/* 数值输入框：与滑块双向同步 */
+.num-in{
+  font-family:var(--mono);font-size:var(--t-sm);
+  width:56px;flex-shrink:0;text-align:right;
+  padding:3px 6px;
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line);
+  border-radius:var(--r-sm);
+  color:var(--c-text);
+  font-variant-numeric:tabular-nums;
+  outline:none;transition:border-color .16s var(--ease),box-shadow .16s var(--ease);
+  -moz-appearance:textfield;
+}
+.num-in::-webkit-outer-spin-button,
+.num-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.num-in:focus{
+  border-color:var(--c-accent);
+  box-shadow:0 0 0 3px var(--c-accent-glow);
+}
+.num-in::-webkit-outer-spin-button,
+.num-in::-webkit-inner-spin-button{-webkit-appearance:none}
+.switch{display:flex;align-items:center;gap:var(--s2);cursor:pointer;user-select:none}
+.switch input{display:none}
+.switch .track{
+  width:32px;height:18px;border-radius:99px;
+  background:var(--c-surface-3);border:1px solid var(--c-line);
+  position:relative;transition:all .18s var(--ease);flex-shrink:0;
+}
+.switch .track::after{
+  content:"";position:absolute;top:2px;left:2px;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--c-text-3);
+  transition:all .18s var(--ease);
+}
+.switch input:checked + .track{background:var(--c-accent-glow);border-color:var(--c-accent-dim)}
+.switch input:checked + .track::after{transform:translateX(14px);background:var(--c-accent)}
+.switch span{font-size:var(--t-sm);color:var(--c-text-2)}
+
+/* ── 说明块 ────────────────────────────────────────────── */
+.callout{
+  padding:var(--s3);
+  border-radius:var(--r-md);
+  font-size:var(--t-sm);line-height:var(--l-sm);
+  background:var(--c-surface-2);
+  border:1px solid var(--c-line-soft);
+  color:var(--c-text-2);
+}
+.callout + .callout{margin-top:var(--s2)}
+.callout.accent{background:var(--c-accent-glow);border-color:var(--c-accent-dim);color:var(--c-text)}
+.callout b{color:var(--c-text);font-weight:600;margin-bottom:2px}
+
+.callout kbd{
+  font-family:var(--mono);font-size:var(--t-micro);
+  background:var(--c-surface-3);border:1px solid var(--c-line);
+  border-radius:3px;padding:1px 4px;
+}
+
+/* 普通注释：说明框最下方的合作研发署名（非卡片样式） */
+.note{
+  margin-top:var(--s3);
+  font-size:var(--t-micro);
+  color:var(--c-text-3);
+  text-align:center;
+  letter-spacing:.01em;
+}
+/* 目标物体框下方的署名注释：另起一行，左侧内边距与框体一致 */
+#cropPane>.note{
+  padding:var(--s2) var(--s3) var(--s3);
+  line-height:1.7;
+}
+#cropPane>.note a{
+  color:var(--c-accent);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  word-break:break-all;
+}
+#cropPane>.note a:hover{color:var(--c-text)}
+
+/* ── 进度条 ────────────────────────────────────────────── */
+.prog{height:2px;background:var(--c-surface-3);border-radius:1px;overflow:hidden;
+      margin:var(--s3) 0}
+.prog i{display:block;height:100%;width:0;background:var(--c-accent);
+        transition:width .3s var(--ease)}
+
+/* ── 历史 ──────────────────────────────────────────────── */
+.hist{max-height:400px;overflow-y:auto}
+.hitem{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s2);border-radius:var(--r-sm);
+  cursor:pointer;transition:background .12s var(--ease);
+}
+.hitem:hover{background:var(--c-surface-2)}
+.hitem img{
+  width:36px;height:36px;border-radius:var(--r-sm);
+  object-fit:cover;flex-shrink:0;border:1px solid var(--c-line-soft);
+}
+.hitem .n{flex:1;min-width:0}
+.hitem .n b{font-size:var(--t-sm);font-weight:500}
+.hitem .n div{font-size:var(--t-micro);color:var(--c-text-3);
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hitem .t{font-family:var(--mono);font-size:var(--t-micro);color:var(--c-text-3);
+          white-space:nowrap}
+
+.foot{
+  text-align:center;font-size:var(--t-sm);color:var(--c-text-3);
+  margin-top:var(--s5);line-height:1.8;
+  padding-bottom:var(--s4);
+}
+
+.toast{
+  position:fixed;bottom:var(--s6);left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--c-surface-3);color:var(--c-text);
+  border:1px solid var(--c-line);
+  padding:var(--s3) var(--s5);
+  border-radius:99px;font-size:var(--t-base);
+  box-shadow:0 8px 28px rgba(0,0,0,.3);
+  opacity:0;transition:all .3s var(--ease);
+  z-index:99;pointer-events:none;
+}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+
+.spin{
+  display:inline-block;width:11px;height:11px;
+  border:1.5px solid currentColor;border-top-color:transparent;
+  border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:-1px;margin-right:var(--s1);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.hide{display:none!important}
+</style>
+<link rel="stylesheet" href="/static/app_monitor/site-theme.css?v=20261025-1">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/theme.css?v=20261025-4">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261025-2">
+</head>
+<body data-ark-page="huiyan">
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark"><img src="/static/app_monitor/huiyan/logo.png" alt="方舟实验室"></div>
+      <div class="brandtxt">
+        <h1>方舟慧眼</h1>
+        <div class="ver">方舟实验室 · 黄河生态方舟 · 鸟类与野生动物识别</div>
+      </div>
+    </div>
+    <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-species">选择物种</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://3.1415926.love/arklb-geoai/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
+      <div class="pill"><span class="led" id="led"></span><span id="stxt">加载中</span></div>
+      <button class="iconbtn" id="btnTheme" title="切换主题">◐</button>
+    </div>
+  </header>
+
+  <div class="cols">
+
+    <!-- 左栏 -->
+    <div class="col col-left" id="target-species" tabindex="0" aria-label="物种筛选与生态类群">
+      <section class="panel grow">
+        <header><span class="num">01</span>目标物种<span class="tag" id="spTag">0</span></header>
+        <div class="body">
+          <div class="field">
+            <span class="icon">⌕</span>
+            <input type="text" id="spSearch" placeholder="检索中文名 / 英文名 / 学名" autocomplete="off">
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="meter">
+            <div class="meter-top"><span>槽位占用</span><b id="slotTxt">0 / 12</b></div>
+            <div class="bar" id="bar"><i style="width:0"></i></div>
+            <div class="hint" id="tip">请先选择目标物种</div>
+          </div>
+          <div class="list" id="spList"></div>
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>词表设置：</b>展开类群可按<b>目 / 科</b>浏览；悬停分类名右侧的
+            <b style="color:var(--c-accent)">＋</b> 可整组加入词表。
+            请优先选择可能出现的物种，缩小候选范围。识别结果供辅助参考，数量及物种仍需人工复核。
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 生态类群（兽类 / 鸟类分组，含各组细分组合） -->
+      <section class="panel">
+        <header><span class="num">02</span>生态类群<span class="tag" id="catTag">0</span></header>
+        <div class="body">
+          <div id="catRow"></div>
+          <div class="hint" id="catInfo">只认大类、不细分到具体物种。</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 中栏 -->
+    <div class="col col-main">
+      <section class="panel grow">
+        <div class="tabs">
+          <button class="tab on" data-t="single">单图识别</button>
+          <button class="tab" data-t="batch">批量处理</button>
+          <button class="tab" data-t="hist">历史记录</button>
+        </div>
+        <div class="body workspace-scroll" tabindex="0" aria-label="图像识别工作区">
+
+          <!-- 单图 -->
+          <div id="p-single">
+            <!-- 上：图像区（图像按实际像素大小显示，与下方结果框左右对齐）
+                 未载入图片时由拖放区占位，页面一打开即是完整的上下两栏 -->
+            <section class="subframe" id="singlePane">
+              <header>
+                图像
+                <span class="tag" id="imgSizeTag">—</span>
+                <span class="grow"></span>
+                <button class="btn sm" id="btnZoom" title="在「原始大小」与「适应宽度」之间切换">原始大小</button>
+              </header>
+              <div class="fbody tight fcol">
+                <div class="drop" id="drop">
+                  <div>
+                    <div class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m-4 4 4-4 4 4M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></div>
+                    <h3>拖入图片，或点击选择</h3>
+                    <p>JPG · PNG · TIFF · BMP · WEBP　也可 <kbd>Ctrl</kbd>+<kbd>V</kbd> 直接粘贴</p>
+                  </div>
+                </div>
+                <div class="view hide" id="view">
+                  <div class="vwrap">
+                    <img id="imgOrig" alt="原图">
+                    <div class="ov hide" id="imgOv"><img id="imgMark" alt="标注"></div>
+                    <div class="hits" id="imgHits"></div>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="btn primary" id="btnRun">开始识别</button>
+                  <button class="btn" id="btnCompare">对比原图</button>
+                  <button class="btn" id="btnSave">下载标注图</button>
+                  <button class="btn" id="btnReset">换一张</button>
+                  <span class="grow"></span>
+                  <span class="meta" id="runMeta"></span>
+                </div>
+              </div>
+            </section>
+
+            <section class="subframe" id="examplePane">
+              <header>黄河湿地 · 例图体验<span class="tag">5 张实景</span></header>
+              <div class="fbody">
+                <p class="example-intro">点击例图，自动载入推荐词表并识别。也可以上传自己的照片。</p>
+                <div id="exampleGrid" class="example-grid" aria-label="鸟类例图"></div>
+                <p class="example-note">模型结果为辅助识别，受画面清晰度、遮挡及候选词表影响，请人工核对。</p>
+              </div>
+            </section>
+            <!-- 下：结果区（与上方图像框等宽、左右边缘对齐，页面一打开即存在） -->
+            <section class="subframe" id="resPane">
+              <header>
+                识别结果
+                <span class="tag" id="resTag">0 个目标</span>
+                <span class="grow"></span>
+                <button class="btn sm" id="btnXlsx">导出 Excel</button>
+              </header>
+              <div class="fbody">
+                <div class="geo2">
+                <div class="geo" id="cusPanel">
+                  <div class="ghead">
+                    <span class="glb">物种名称<span class="tag">批量改名</span></span>
+                    <span class="grow"></span>
+                    <span class="meta" id="cusReadonly" style="margin:0"></span>
+                  </div>
+                  <div class="gmrow" id="cusNames">
+                    <div class="kv cusname-kv"><span>物种</span>
+                      <span class="searchwrap">
+                        <span class="sicon">⌕</span>
+                        <input id="cusName" class="txt" type="text"
+                          placeholder="如：东方白鹳" value="" autocomplete="off">
+                        <div class="cuspop hide" id="cusPop"></div>
+                      </span>
+                    </div>
+                    <div class="kv"><span>英文</span><input id="cusEn" class="txt" type="text"
+                      placeholder="如：Suspected Domestic Cat" value=""></div>
+                  </div>
+                  <div class="gmrow" style="margin-top:var(--s2)">
+                    <button class="btn sm" id="btnCusApply">应用到本图目标</button>
+                    <button class="btn sm" id="btnCusAuto"
+                      title="统计本图各识别结果的中文名，把出现次数最多的那个及其英文名自动填入上面的输入框">匹配主要物种</button>
+                    <button class="btn sm" id="btnCusClear">清除名称</button>
+                    <button class="btn sm" id="btnCusUpdate"
+                      title="把结果表里当前编辑中的名称、影像坐标、经纬度全部应用，并按修改后的结果重画图像上的识别框">结果更新</button>
+                  </div>
+                  <div class="meta" id="cusMeta">
+                    填一个物种名，点「应用到本图目标」后本图所有目标都改成它。若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。英文名留空则沿用原名。
+                  </div>
+                </div>
+                <div class="geo" id="geoPanel">
+                  <div class="ghead">
+                    <span class="glb">地理坐标<span class="tag">WGS84</span></span>
+                    <span class="grow"></span>
+                    <span class="meta" id="geoReadonly" style="margin:0"></span>
+                  </div>
+                  <div class="gmrow">
+                    <div class="kv"><span>纬度</span><input id="geoLat" type="number" step="0.000001" placeholder="如：34.753400" value=""></div>
+                    <div class="kv"><span>经度</span><input id="geoLng" type="number" step="0.000001" placeholder="如：113.665300" value=""></div>
+                    <span class="grow"></span>
+                    <span class="fmt" id="geoDms"></span>
+                  </div>
+                  <div class="gmrow" style="margin-top:var(--s2)">
+                    <button class="btn sm" id="btnGeoApply">应用到本图目标</button>
+                    <button class="btn sm" id="btnGeoImport" title="把地图上当前的点导入到经纬度输入框">导入当前坐标</button>
+                    <button class="btn sm" id="btnGeoClear">清除坐标</button>
+                  </div>
+
+                  <div class="meta" id="geoMeta">
+                    填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。单独改某一行的经纬度即可为该目标定制坐标。可在右栏「位置检索」面板上点击取点。
+                  </div>
+                </div>
+                </div>
+                <div class="tblarea">
+                  <div class="tblview" id="tblView">
+                    <table>
+                      <thead><tr>
+                        <th style="width:38px">编号</th>
+                        <th style="width:116px">物种</th>
+                        <th style="width:120px">英文名</th>
+                        <th style="width:56px">置信度</th>
+                        <th class="c-num" style="width:48px">X1</th>
+                        <th class="c-num" style="width:48px">X2</th>
+                        <th class="c-num" style="width:48px">X3</th>
+                        <th class="c-num" style="width:48px">X4</th>
+                        <th class="c-num" style="width:78px">经度</th>
+                        <th class="c-num" style="width:78px">纬度</th>
+                        <th style="width:52px" title="删除该目标（同时移除目标物体框、图像标注与统计）">删除</th>
+                      </tr></thead>
+                      <tbody id="resBody"><tr><td colspan="11" class="empty">
+                        <div class="g">⌕</div><p>识别后在此显示每个目标的明细</p></td></tr></tbody>
+                    </table>
+                  </div>
+                  <div class="vscroll off" id="vScroll" title="拖动滑块滚动结果"><i class="vthumb" id="vThumb"></i></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="subframe" id="cropPane">
+              <header>
+                目标物体
+                <span class="tag" id="cropTag">0 个</span>
+                <span class="grow"></span>
+                <span class="meta" style="font-size:var(--t-micro)">点结果行可定位到对应个体</span>
+              </header>
+              <div class="fbody">
+                <div class="cropwin" id="cropWin">
+                  <div class="crops" id="cropBox"></div>
+                  <div class="crophint">
+                    <span class="icon">⌕</span>
+                    <span>识别后在此显示每个目标的裁剪图；点裁剪图可在结果表里定位到对应个体</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- 批量 -->
+          <div id="p-batch" class="hide">
+            <div class="actions" style="margin-bottom:var(--s4)">
+              <button class="btn primary" id="btnPick">选择图片</button>
+              <button class="btn" id="btnDir">选择文件夹</button>
+              <button class="btn" id="btnBatch">开始批量识别</button>
+              <button class="btn sm" id="btnCsv">CSV</button>
+              <button class="btn sm" id="btnJson">JSON</button>
+              <span class="grow"></span>
+              <span class="meta" id="batchMeta"></span>
+            </div>
+            <input type="file" id="fMulti" multiple hidden>
+            <input type="file" id="fDir" webkitdirectory hidden>
+            <div class="prog hide" id="prog"><i></i></div>
+
+            <div id="batchIdle" class="empty">
+              <div class="g">▦</div><p>选择多张图片或整个文件夹开始</p>
+            </div>
+
+            <div id="batchStats" class="stats hide">
+              <div class="stat"><div class="v" id="kImg">0</div><div class="l">处理图片</div></div>
+              <div class="stat"><div class="v" id="kHit">0</div><div class="l">有检出</div></div>
+              <div class="stat"><div class="v" id="kDet">0</div><div class="l">检出目标</div></div>
+              <div class="stat"><div class="v" id="kMs">0</div><div class="l">平均毫秒</div></div>
+            </div>
+            <div id="batchGrid" class="grid" style="margin-top:var(--s4)"></div>
+
+            <div id="batchTable" class="hide" style="margin-top:var(--s5)">
+              <table>
+                <thead><tr><th>文件名</th><th style="width:160px">检出物种</th>
+                  <th style="width:64px">数量</th><th style="width:76px">置信度</th></tr></thead>
+                <tbody id="batchBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 历史 -->
+          <div id="p-hist" class="hide">
+            <div class="actions" style="margin-bottom:var(--s3)">
+              <button class="btn sm" id="btnHistClr">清空</button>
+              <span class="grow"></span>
+              <span class="meta" id="histMeta"></span>
+            </div>
+            <div class="hist" id="histList"></div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+    <!-- 右栏 -->
+    <div class="col col-right" tabindex="0" aria-label="识别参数、统计与位置检索">
+      <section class="panel">
+        <header><span class="num">03</span>推理参数
+          <span class="grow"></span>
+          <span class="ctl-inline">
+            <label class="switch">
+              <input type="checkbox" id="swEn">
+              <span class="track"></span><span>显示英文名</span>
+            </label>
+          </span>
+        </header>
+        <div class="body">
+          <div class="ctl">
+            <label>置信度</label>
+            <input type="range" id="conf" min="0" max="0.80" step="0.01" value="0.05">
+            <input type="number" class="num-in" id="confN" min="0" max="1" step="0.01" value="0.05">
+          </div>
+          <div class="ctl">
+            <label>NMS IoU</label>
+            <input type="range" id="iou" min="0" max="0.95" step="0.01" value="0.50">
+            <input type="number" class="num-in" id="iouN" min="0" max="1" step="0.01" value="0.50">
+          </div>
+        </div>
+        <div class="meta" style="padding:0 var(--s3) var(--s3)">
+          图片仅发送至本站进行模型推理，不调用第三方识别服务，不保存原图。
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="num">04</span>物种统计<span class="tag" id="statTag">0</span></header>
+        <div class="body">
+          <div class="sumbox">
+            <div class="hd">
+              <div><div class="v" id="stTotal">0</div><div class="l">目标总数</div></div>
+              <div><div class="v" id="stKind">0</div><div class="l">物种总数</div></div>
+              <div><div class="v" id="stImg">0</div><div class="l">图像数量</div></div>
+            </div>
+          </div>
+          <div class="splist" id="stList"></div>
+          <div class="actions" style="margin-top:var(--s3)">
+            <button class="btn sm" id="btnStatClear">清空统计</button>
+            <span class="grow"></span>
+            <span class="meta" id="statMeta" style="margin:0">识别后自动统计各物种数量</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="num">05</span>位置检索<span class="tag">天地图</span></header>
+        <div class="body">
+          <div class="mapbar">
+            <input id="geoSearch" class="txt" type="text"
+              placeholder="如：郑州大学或34.7534,113.6653">
+            <button class="btn sm" id="btnGeoSearch">检索</button>
+            <button class="btn sm" id="btnGeoLocate" title="用浏览器定位">定位</button>
+          </div>
+          <div class="mapbox" id="geoMap"></div>
+          <div class="mapfoot">
+            <span class="meta" id="mapTip" style="margin:0">点地图取坐标</span>
+          </div>
+        </div>
+      </section>
+
+      <details class="panel huiyan-help" open>
+        <summary><span class="num">06</span>操作说明与模型信息<span class="help-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="body" style="justify-content:flex-start">
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>位置检索</b><br>
+            在地图上点击可自动提取该点经纬度，也可搜索地名或直接输入坐标定位。
+          </div>
+
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>识别结果</b><br>
+            点「物种」列改名或点 ▾ 检索替换；为照片填写 WGS84 经纬度后自动匹配到每个目标。
+          </div>
+
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>操作说明</b><br>
+            <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴　<kbd>Ctrl</kbd>+<kbd>Enter</kbd> 识别<br>
+            <kbd>Ctrl</kbd>+<kbd>O</kbd> 打开　<kbd>Ctrl</kbd>+<kbd>S</kbd> 更新结果<br>
+            <kbd>Delete</kbd> 删除结果中选中的目标
+          </div>
+
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>模型说明</b><br>
+            本项目所使用的基础算法为由腾讯 AI Lab 研发开源的 YOLO-World模型，遵循 GPL-3.0 许可。
+          </div>
+
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>模型微调</b><br>
+            推理算法由 ARK GeoAI Lab 结合 YOLO-World 和黄河湿地物种图像数据进行微调。
+          </div>
+
+          <div class="callout" style="margin-top:var(--s2)">
+            <b>物种数据</b><br>
+            模型微调所用的数据为由郑州市自然保护地事务中心提供的黄河湿地物种影像数据。
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <footer class="huiyan-footer" aria-label="平台署名">
+    <div><strong>方舟实验室</strong><span>黄河生态方舟 · 方舟慧眼</span></div>
+    <p>郑州大学地球科学与技术学院 · 郑州市自然保护地事务中心 联合研发</p>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 开源地图组件（Leaflet，本地分发） -->
+<script src="/static/app_monitor/huiyan/leaflet/leaflet.js"></script>
+{{ huiyan_tdt_key|json_script:"huiyan-tdt-key" }}
+<script>
+const HUIYAN_TDT_KEY=JSON.parse(document.getElementById("huiyan-tdt-key").textContent);
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const MAX=12;
+
+let SP=[], GRP=[], SCN={}, SLOT=MAX;
+let CATS={};                 // 生态类群专栏：{名称: {desc, words:[{en,zh}]}}
+let curCat='';               // 当前选中的生态类群（空=按物种识别）
+let curPhrase='';            // 当前细分组合的形态短语（辅助槽，只抬分不参与类名）
+let sel=new Set(), curImg=null, curFile='', curMark=null;
+let bFiles=[], bRows=[], HIST=[];
+let curRes=[];              // 当前单图识别结果（含用户改名后的 zh）
+let curOrigBoxes=[];        // 模型原始框坐标，用于「清空坐标」恢复
+let curCatMode=false;       // 当前是否为生态类群模式
+let statDetail=[];           // 统计+导出的明细源：[{file,en,zh,score,box}]，跨单图与批量
+let statImgs=new Set();      // 参与统计的图片数（按文件名去重）
+let renamed={};             // 改名映射：en -> 新中文名（跨图生效）
+/* ---------- 自定义物种（图片级批量改名） ---------- */
+/* imgSpecies：本图统一使用的自定义物种名（空=未设置）
+   speciesStore：按文件名记忆 {file:'家猫'}
+   语义与「图片空间坐标」一致：
+     1. 填一个名称 → 点「应用到本图目标」→ 本图所有识别目标都改成它
+     2. 之后单独改某一行的名称 → 该行标记为「自定义」，脱离本图统一名
+     3. 「清除名称」→ 取消统一名，全部回到模型原名（已单独改过的行保留） */
+let imgSpecies='';         // 本图自定义物种名（中文）
+let imgSpeciesEn='';       // 本图自定义物种英文名（可为空 = 沿用模型原名）
+let speciesStore={};       // 按文件名记忆：{file:{zh:'疑似家猫',en:'suspected cat'}}
+/* 分类树的展开状态：记住用户上次展开哪些类群/目 */
+let openGroups=new Set(JSON.parse(localStorage.getItem('openGroups')||'[]'));
+let openOrders=new Set(JSON.parse(localStorage.getItem('openOrders')||'[]'));
+
+const S={
+  get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+/* 主题 */
+const setTheme=t=>{
+  document.documentElement.setAttribute('data-theme',t);
+  S.set('huiyanTheme',t);
+};
+setTheme(S.get('huiyanTheme','light'));
+$('#btnTheme').onclick=()=>setTheme(
+  document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+
+/* 提示 */
+let tt;
+function toast(m){
+  const t=$('#toast');t.textContent=m;t.classList.add('on');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2000);
+}
+const fmt=v=>Number(v).toFixed(2);
+const zhOf=k=>{const p=SP.find(x=>x.en.toLowerCase()===k);return p?(p.zh||p.en):k};
+
+/* 初始化 */
+(async()=>{
+  try{
+    const r=await fetch('/huiyan/api/status'),s=await r.json();
+    if(s.error&&!s.species?.length){$('#led').className='led err';$('#stxt').textContent='物种库加载失败';return}
+    SP=s.species;GRP=s.groups;SCN=s.scenes||{};SLOT=s.slots||MAX;
+    // 物种库未显式给出类群分组时，从物种的 group 字段派生
+    // （否则树形列表「类群 → 目/科 → 物种」会整体不渲染）
+    if(!GRP||!GRP.length)GRP=[...new Set(SP.map(x=>x.group).filter(Boolean))];
+    CATS=s.categories||{};
+    $('#led').className=s.ready?'led on':'led err';
+    // 右上角：已经纳入 N 种（兽类 X 种 · 鸟类 Y 种）
+    const gc={};
+    SP.forEach(s=>{const g=s.group||'其他';gc[g]=(gc[g]||0)+1;});
+    const gTxt=Object.keys(gc).map(g=>`${g} ${gc[g]} 种`).join(' · ');
+    $('#stxt').textContent=s.ready
+      ? `已经纳入 ${SP.length} 种${gTxt?'（'+gTxt+'）':''}`
+      : `已经纳入 ${SP.length} 种（模型暂不可用）`;
+
+    cats();list('');
+
+    (S.get('sel',[])).forEach(x=>{if(SP.some(p=>p.en.toLowerCase()===x))sel.add(x)});
+    chips();
+
+    if(!sel.size){['grey heron','little egret','black stork','common crane','bean goose','eurasian spoonbill'].forEach(x=>sel.add(x));chips();list('');}
+    // 初始化天地图（页面一打开就能点图取坐标，不必先识别）
+    setTimeout(ensureGeoMap,120);
+
+    HIST=S.get('hist',[]).slice(0,30); hist();
+
+    $('#conf').value=S.get('conf',.05); $('#confN').value=Number(S.get('conf',.05)).toFixed(2);
+    $('#iou').value=S.get('iou',.5);  $('#iouN').value=Number(S.get('iou',.5)).toFixed(2);
+    if(typeof applyConf==='function')applyConf($('#conf').value);
+    if(typeof applyIou==='function')applyIou($('#iou').value);
+    $('#swEn').checked=S.get('showEn',false);
+  }catch(e){$('#led').className='led err';$('#stxt').textContent='无法连接'}
+})();
+
+/* 物种列表：两级折叠（类群 → 目/科 → 物种） */
+function list(f){
+  const q=f.trim().toLowerCase();
+  const box=$('#spList');
+  const match=s=>!q||(s.zh||'').toLowerCase().includes(q)
+    ||s.en.toLowerCase().includes(q)||(s.sci||'').toLowerCase().includes(q)
+    ||(s.group2||'').toLowerCase().includes(q);
+
+  if(q){
+    // 搜索模式：扁平展示
+    const hits=SP.filter(match);
+    box.innerHTML=(hits.length?`<div class="grp">${hits.length} 条匹配</div>`+hits.map(rowHTML).join('')
+      :'<div class="empty"><p>无匹配物种</p></div>');
+    bindRows(box);
+    return;
+  }
+
+  // 树模式：类群 → 目/科 → 物种
+  let html='';
+  for(const g of GRP){
+    const inGroup=SP.filter(s=>s.group===g);
+    if(!inGroup.length)continue;
+
+    // 该类群下的目/科
+    const orders=[];
+    for(const s of inGroup){
+      const o=s.group2||'未分类';
+      if(!orders.find(x=>x.name===o))orders.push({name:o,list:[]});
+      orders.find(x=>x.name===o).list.push(s);
+    }
+    // 只有一个目时直接展开，避免多余层级
+    const flat=orders.length===1;
+    const gOpen=openGroups.has(g);
+    const selInGroup=inGroup.filter(s=>sel.has(s.en.toLowerCase())).length;
+
+    html+=`<div class="tree-g${gOpen||flat?' open':''}" data-g="${g}">
+      <span class="caret">▸</span>
+      <span class="tname">${g}</span>
+      <span class="cnt">${inGroup.length}</span>
+      ${selInGroup?`<span class="badge">${selInGroup}</span>`:''}
+    </div>`;
+    if(gOpen||flat){
+      html+='<div class="tree-body">';
+      for(const o of orders){
+        // 单物种的目/科也保持收起（用户要求），只显示名称与计数
+        const tiny=o.list.length===1;
+        const oOpen=openOrders.has(o.name)||flat;
+        const selInOrder=o.list.filter(s=>sel.has(s.en.toLowerCase())).length;
+        html+=`<div class="tree-o${oOpen?' open':''}${tiny?' single':''}" data-o="${o.name}">
+          <span class="caret">▸</span>
+          <span class="tname">${o.name}</span>
+          <span class="cnt">${o.list.length}</span>
+          ${selInOrder?`<span class="badge">${selInOrder}</span>`:''}
+          <button class="addall" data-add="${o.name}" title="整组选入">＋</button>
+        </div>`;
+        if(oOpen) html+=`<div class="tree-body">${o.list.map(rowHTML).join('')}</div>`;
+      }
+      html+='</div>';
+    }
+  }
+  box.innerHTML=html||'<div class="empty"><p>无匹配物种</p></div>';
+
+  box.querySelectorAll('.tree-g').forEach(el=>{
+    el.onclick=()=>{
+      const g=el.dataset.g;
+      if(openGroups.has(g))openGroups.delete(g);else openGroups.add(g);
+      S.set('openGroups',[...openGroups]);
+      list($('#spSearch').value);
+    };
+  });
+  box.querySelectorAll('.tree-o').forEach(el=>{
+    el.onclick=e=>{
+      e.stopPropagation();
+      const o=el.dataset.o;
+      if(openOrders.has(o))openOrders.delete(o);else openOrders.add(o);
+      S.set('openOrders',[...openOrders]);
+      list($('#spSearch').value);
+    };
+  });
+  /* 整组选入按钮：＋ 一键把该目/科的所有物种加进词表 */
+  box.querySelectorAll('[data-add]').forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      // 手动改词表 → 原细分组合的短语不再适用
+      curPhrase='';
+      const o=btn.dataset.add;
+      const members=SP.filter(s=>(s.group2||'')===o);
+      const allOn=members.every(s=>sel.has(s.en.toLowerCase()));
+      if(allOn){
+        members.forEach(s=>sel.delete(s.en.toLowerCase()));
+      }else{
+        const room=SLOT-sel.size;
+        if(room<members.length){
+          toast(`槽位不足，仅选入前 ${room} 个`);
+          members.slice(0,room).forEach(s=>sel.add(s.en.toLowerCase()));
+        }else{
+          members.forEach(s=>sel.add(s.en.toLowerCase()));
+        }
+      }
+      S.set('sel',[...sel]);
+      chips(); list($('#spSearch').value);
+    };
+  });
+  bindRows(box);
+}
+function bindRows(box){
+  box.querySelectorAll('.row').forEach(el=>{
+    el.onclick=()=>pick(el.dataset.k);
+  });
+}
+function rowHTML(s){
+  const k=s.en.toLowerCase();
+  const sci=(s.sci||'').trim();
+  return `<div class="row${sel.has(k)?' on':''}" data-k="${k}">
+    <div class="tick">✓</div>
+    <div class="nm">
+      <div class="zh">${s.zh||s.en}</div>
+      <div class="en">${s.en}</div>
+      ${sci?`<div class="sci">${sci}</div>`:''}
+    </div>
+  </div>`;
+}
+$('#spSearch').oninput=e=>list(e.target.value);
+
+function pick(k){
+  // 手动选择物种 → 退出生态类群模式
+  if(curCat){curCat='';cats();$('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。'}
+  // 手动改词表 → 原细分组合的短语不再适用，清空（否则会抬不相干的分数）
+  curPhrase='';
+  if(sel.has(k))sel.delete(k);
+  else{
+    if(sel.size>=SLOT){toast(`最多选择 ${SLOT} 个`);return}
+    sel.add(k);
+    // 只剩 1 个物种时切到低阈值（单词表分数天然偏低）
+    if(sel.size===1&&typeof applyConf==='function')applyConf(0.02);
+  }
+  S.set('sel',[...sel]);chips();list($('#spSearch').value);
+}
+function chips(){
+  const b=$('#chips');b.innerHTML='';
+  for(const k of sel){
+    const el=document.createElement('span');
+    el.className='chip';
+    el.innerHTML=`${zhOf(k)}<button aria-label="移除">×</button>`;
+    el.querySelector('button').onclick=e=>{e.stopPropagation();pick(k)};
+    b.appendChild(el);
+  }
+  $('#spTag').textContent=sel.size;
+  $('#slotTxt').textContent=`${sel.size} / ${SLOT}`;
+  $('#bar').classList.toggle('warn',sel.size>6);
+  $('#bar').querySelector('i').style.width=Math.min(100,sel.size/SLOT*100)+'%';
+  $('#tip').textContent = sel.size===0 ? '请先选择目标物种'
+    : sel.size<=6   ? '当前词表较窄，识别率最佳'
+    : sel.size<=9   ? '词表偏大，建议精简'
+    :                 '词表过大，精度将明显下降';
+}
+/* 生态类群专栏：按 兽类 / 鸟类 分组；每个类群下挂目/科级细分组合 */
+const CAT_GROUPS=[['兽类','兽类'],['鸟类','鸟类']];
+function cats(){
+  const r=$('#catRow');
+  if(!r)return;
+  r.innerHTML='';
+  const items=Object.entries(CATS);
+  if(!items.length){
+    r.innerHTML='<div class="hint">暂无生态类群</div>';
+    $('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。';
+    return;
+  }
+  // 按 group 字段分组；缺 group 的归入「其他」
+  const groups={};
+  for(const [name,cfg] of items){
+    const g=cfg.group||'其他';
+    (groups[g]=groups[g]||[]).push([name,cfg]);
+  }
+  // 分组顺序：兽类 → 鸟类 → 其他
+  const order=CAT_GROUPS.map(g=>g[0]).filter(g=>groups[g]);
+  for(const g of order) if(!order.includes(g)) order.push(g);
+  for(const g of Object.keys(groups)) if(!order.includes(g)) order.push(g);
+
+  for(const g of order){
+    const list=groups[g];
+    if(!list||!list.length)continue;
+    // 分组标题
+    const head=document.createElement('div');
+    head.className='cat-group';
+    const ht=document.createElement('span');
+    ht.className='cat-group-t';ht.textContent=g;
+    const hc=document.createElement('span');
+    hc.className='cat-group-c';hc.textContent=list.length;
+    head.appendChild(ht);head.appendChild(hc);
+    r.appendChild(head);
+    // 类群卡片网格
+    const grid=document.createElement('div');
+    grid.className='catgrid';
+    for(const [name,cfg] of list){
+      const b=document.createElement('button');
+      b.className='catcard'+(curCat===name?' on':'');
+      b.dataset.cat=name;
+      const n=document.createElement('span');
+      n.className='cat-n';n.textContent=name;
+      const d=document.createElement('span');
+      d.className='cat-d';d.textContent=cfg.desc||'';
+      b.appendChild(n);b.appendChild(d);
+      b.onclick=()=>pickCat(name);
+      grid.appendChild(b);
+    }
+    r.appendChild(grid);
+  }
+  $('#catTag').textContent=curCat?1:0;
+}
+function pickCat(name){
+  if(curCat===name){          // 再点一次取消
+    curCat='';
+    cats();
+    $('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。';
+    toast('已切换回按物种识别');
+    return;
+  }
+  curCat=name;
+  cats();
+  const cfg=CATS[name]||{};
+  const words=(cfg.words||[]).length;
+  const subs=cfg.subs||[];
+  // 细分组合区（原「预设组合」内容已并入此处）
+  // 放在该类群所属分组的网格之后，标题写明归属，避免与其它类群混淆
+  let subBox=null;
+  const picked=[...document.querySelectorAll('#catRow .catcard')]
+    .find(x=>x.dataset.cat===name);
+  const ownerGrid=picked?.closest('.catgrid');
+  if(ownerGrid&&subs.length){
+    subBox=document.createElement('div');
+    subBox.className='catsubs';
+    const lab=document.createElement('div');
+    lab.className='catsubs-t';
+    lab.textContent=`${name} · 细分组合`;
+    subBox.appendChild(lab);
+    const wrap=document.createElement('div');
+    wrap.className='presets';
+    for(const s of subs){
+      const b=document.createElement('button');
+      b.className='pbtn';b.textContent=s.name;
+      b.title=(s.desc||'')+(s.orders&&s.orders.length?'\n涉及：'+s.orders.join('、'):'');
+      b.onclick=()=>loadSub(s);
+      wrap.appendChild(b);
+    }
+    subBox.appendChild(wrap);
+    ownerGrid.after(subBox);   // 紧跟该类群所在分组的网格
+  }
+  $('#catInfo').innerHTML=`当前按 <b style="color:var(--c-accent)">${name}</b> 识别 · `
+    +`${words} 个提示词 · 结果只标大类，不细分物种`
+    +(subs.length?` · ${subs.length} 个细分组合可选`:'');
+  toast(`已切换到「${name}」`);
+}
+/* 载入类群下的细分组合 → 写入目标物种词表（退出类群模式，按物种识别） */
+function loadSub(s){
+  if(!s||!s.classes||!s.classes.length)return;
+  if(curCat){curCat='';cats();$('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。'}
+  sel=new Set(s.classes.map(c=>c.toLowerCase()));
+  // 形态短语：作为「辅助槽」随识别请求下发 ——
+  // 只抬升召回分数，不参与类名归属（详见 app/main.py detect()）。
+  // 实测：短语槽分数常高于物种槽，若参与 argmax 会让结果名变成短语本身。
+  curPhrase=s.phrase||'';
+  S.set('sel',[...sel]);
+  chips();
+  list($('#spSearch').value);
+  // 单物种细分自动切到低阈值 —— 单词表时分数天然偏低
+  if(sel.size===1){
+    applyConf(0.02);
+    toast(`已载入 ${s.name} · 阈值自动调至 0.02`);
+  }else{
+    toast(`已载入 ${s.name}（${s.classes.length} 个物种）`);
+  }
+}
+
+/* 标签页 */
+$$('.tab').forEach(t=>t.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  ['single','batch','hist'].forEach(k=>$('#p-'+k).classList.toggle('hide',k!==t.dataset.t));
+});
+
+/* 图片输入 */
+const drop=$('#drop');
+drop.onclick=()=>open();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};
+drop.ondragleave=()=>drop.classList.remove('over');
+drop.ondrop=e=>{
+  e.preventDefault();drop.classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(!f)return;
+  // 浏览器只解 5 种格式；其余（TIFF/HEIC/AVIF）会交给后端 PIL 转码
+  if(!/^image\//i.test(f.type||'')){
+    toast('请选择图片文件');return;
+  }
+  load(f);
+};
+addEventListener('paste',e=>{
+  const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(it)load(it.getAsFile());
+});
+addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();open();return}
+  // Ctrl+S → 结果更新（把表格里的编辑应用并重画图像）
+  if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){
+    e.preventDefault();
+    if(typeof updateResults==='function')updateResults();
+    return;
+  }
+  // Delete → 删除当前选中的目标
+  // 输入框/下拉聚焦时按 Delete 应当是正常删字符，不触发删除
+  if(e.key==='Delete'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    const tag=(e.target&&e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||tag==='select'||(e.target&&e.target.isContentEditable))return;
+    if(picker){closePicker();return}
+    if(selCropIdx>=0&&curRes.length){
+      e.preventDefault();
+      deleteResult(selCropIdx);
+    }
+  }
+});
+function open(){
+  const i=document.createElement('input');
+  // 不限制 accept：部分系统对 .tif 返回空 type，但后端 PIL 能读
+  i.type='file';
+  i.onchange=()=>{if(i.files[0])load(i.files[0])};
+  i.click();
+}
+function load(f){
+  if(!f)return;
+  // 记录文件名：坐标/自定义物种按文件名记忆、导出明细的文件名列都依赖它。
+  // 必须在任何分支之前赋值 —— 浏览器能解的格式走 show()，不会经过 sendToServer。
+  curFile=f.name||'';
+  // 浏览器原生只解 JPEG/PNG/GIF/WEBP/BMP；
+  // TIFF、HEIC、AVIF 等会被后端 PIL 认出，但浏览器会显示破图。
+  // 这里统一先在浏览器里转成 PNG 再显示。
+  const needsConvert = !/^image\/(jpeg|png|gif|webp|bmp)$/i.test(f.type||'');
+  const fr=new FileReader();
+  fr.onload=e=>{
+    const src=e.target.result;
+    if(!needsConvert){ show(src); return; }
+    const probe=new Image();
+    probe.onload=()=>{                       // 浏览器其实能解（少见）
+      const cv=document.createElement('canvas');
+      cv.width=probe.naturalWidth;cv.height=probe.naturalHeight;
+      cv.getContext('2d').drawImage(probe,0,0);
+      try{ show(cv.toDataURL('image/png')); }
+      catch(_){ show(src); }
+    };
+    probe.onerror=()=>{                      // 浏览器解不了 → 交给后端
+      sendToServer(f);
+    };
+    probe.src=src;
+  };
+  fr.onerror=()=>toast('文件读取失败，请换一张');
+  fr.readAsDataURL(f);
+}
+function show(dataUrl){
+  curImg=dataUrl;curMark=null;
+  // 记录原图像素尺寸（影像坐标以原图像素为单位）
+  curImgSize={w:0,h:0};
+  const probe=new Image();
+  probe.onload=()=>{
+    curImgSize={w:probe.naturalWidth,h:probe.naturalHeight};
+    // 图像区表头显示原始像素尺寸，与影像坐标同一坐标系
+    const tg=$('#imgSizeTag');
+    if(tg)tg.textContent=curImgSize.w?curImgSize.w+' x '+curImgSize.h+' px':'—';
+    // 尺寸就绪后重绘图像上的可点击热区
+    if(typeof renderImgHits==='function')renderImgHits(curRes);
+  };
+  probe.src=dataUrl;
+  // 恢复本文件此前填过的空间坐标与自定义物种（每个文件各记一份）
+  const g=geoStore[curFile];
+  imgGeo=g?{lat:g.lat,lng:g.lng}:{lat:0,lng:0};
+  // 坐标为 0（未设置）时保持输入框为空，这样「如：34.753400」的示例能显示出来
+  $('#geoLat').value=(imgGeo.lat||imgGeo.lng)?fmtNum(imgGeo.lat):'';
+  $('#geoLng').value=(imgGeo.lat||imgGeo.lng)?fmtNum(imgGeo.lng):'';
+  const cs=speciesStore[curFile];
+  imgSpecies=(cs&&typeof cs==='object')?(cs.zh||''):(cs||'');
+  imgSpeciesEn=(cs&&typeof cs==='object')?(cs.en||''):'';
+  $('#cusName').value=imgSpecies;
+  $('#cusEn').value=imgSpeciesEn;
+  $('#imgOrig').src=dataUrl;
+  $('#imgOv').classList.add('hide');
+  // 图像区内部切换：拖放区让位给图像视图（上下两框本身始终常驻）
+  drop.classList.add('hide');
+  $('#view').classList.remove('hide');
+  // 载入新图 → 清空上一张的裁剪与联动选中
+  renderCrops([]);
+  $('#runMeta').textContent=curFile;
+  curRes=[];curOrigBoxes=[];$('#resBody').innerHTML=RES_EMPTY_ROW;$('#resTag').textContent='0 个目标';
+  $('#btnRun').disabled=false;
+}
+/* 浏览器无法预览的格式（TIFF/HEIC/AVIF…）：交给后端 PIL 转码后再显示 */
+async function sendToServer(f){
+  toast('正在转换该格式…');
+  try{
+    const raw=await new Promise((ok,no)=>{
+      const r=new FileReader();
+      r.onload=()=>ok(r.result);
+      r.onerror=no;
+      r.readAsDataURL(f);
+    });
+    const r=await fetch('/huiyan/api/convert',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:raw,name:f.name})});
+    const j=await r.json();
+    if(j.error)throw new Error(j.error);
+    curFile=j.name||f.name;
+    // 空间坐标与自定义物种的恢复统一放在 show() 里，两条加载路径行为一致
+    show(j.image);
+  }catch(e){
+    toast('无法读取该图片：'+e.message);
+  }
+}
+/* 图像缩放：默认「原始大小」（1:1 像素，便于按影像坐标核对），
+   可切换为「适应宽度」（整图缩放到取景框宽度） */
+let imgFit=false;
+function applyZoom(){
+  const v=$('#view');
+  if(!v)return;
+  v.classList.toggle('fit',imgFit);
+  const b=$('#btnZoom');
+  if(b)b.textContent=imgFit?'适应宽度':'原始大小';
+  S.set('imgFit',imgFit);
+}
+$('#btnZoom').onclick=()=>{imgFit=!imgFit;applyZoom();};
+/* 恢复上次的缩放偏好 */
+imgFit=!!S.get('imgFit',true);
+applyZoom();
+
+/* ---------- 结果区：固定高度滑动窗口 + 右侧可拖拽滑块 ---------- */
+/* 结果表空态提示行（页面初始与「换一张」时显示） */
+const RES_EMPTY_ROW='<tr><td colspan="7" class="empty">'
+  +'<div class="g">⌕</div><p>识别后在此显示每个目标的明细</p></td></tr>';
+/* 表格内容超出窗口时，右侧出现一条竖向滚动条；
+   滑块高度与内容比例对应，可按住拖动滚动，也可直接拖动表格区域。
+   窗口高度固定（--res-tbl-h），不随结果条数增减而变化。 */
+function syncVScroll(){
+  const vw=$('#tblView'), sc=$('#vScroll'), th=$('#vThumb');
+  if(!vw||!sc||!th)return;
+  const sh=vw.scrollHeight, ch=vw.clientHeight;
+  const over=sh-ch>2;
+  sc.classList.toggle('off',!over);
+  if(!over){th.style.height='';th.style.top='';return}
+  const trackH=sc.clientHeight;
+  // 滑块高度 = 可视比例
+  const h=Math.max(28,Math.round(trackH*ch/sh));
+  th.style.height=h+'px';
+  // 滑块位置 = 滚动进度
+  const maxTop=trackH-h;
+  const p=Math.max(0,Math.min(1,(vw.scrollTop)/(sh-ch||1)));
+  th.style.top=Math.round(p*maxTop)+'px';
+}
+/* 拖动滑块 → 滚动表格 */
+(function bindVScroll(){
+  const sc=$('#vScroll'), th=$('#vThumb'), vw=$('#tblView');
+  if(!sc||!th||!vw)return;
+  let dragging=false,startY=0,startTop=0;
+  const onMove=e=>{
+    if(!dragging)return;
+    const trackH=sc.clientHeight, h=th.offsetHeight;
+    const maxTop=Math.max(1,trackH-h);
+    const dy=e.clientY-startY;
+    const ratio=(vw.scrollHeight-vw.clientHeight)/maxTop;
+    vw.scrollTop=Math.max(0,Math.min(vw.scrollHeight-vw.clientHeight,startTop+dy*ratio));
+    syncVScroll();
+  };
+  const onUp=()=>{
+    if(!dragging)return;
+    dragging=false;th.classList.remove('drag');
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+  };
+  th.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    dragging=true;startY=e.clientY;startTop=vw.scrollTop;
+    th.classList.add('drag');
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+  // 点击轨道空白处 → 按比例跳转
+  sc.addEventListener('mousedown',e=>{
+    if(e.target===th)return;
+    const b=sc.getBoundingClientRect();
+    const trackH=sc.clientHeight,h=th.offsetHeight;
+    const y=e.clientY-b.top-h/2;
+    const maxTop=Math.max(1,trackH-h);
+    const p=Math.max(0,Math.min(1,y/maxTop));
+    vw.scrollTop=p*(vw.scrollHeight-vw.clientHeight);
+    syncVScroll();
+  });
+  // 表格滚动 → 同步滑块
+  vw.addEventListener('scroll',syncVScroll);
+  // 窗口尺寸变化 → 重新计算
+  window.addEventListener('resize',syncVScroll);
+})();
+
+/* ---------- 目标物体框与结果表窗口等高 ---------- */
+/* 「识别结果」表窗口与「目标物体」裁剪窗保持同高：
+   两者都用 --res-tbl-h 固定高度，不随结果条数增减而变化 */
+/* 图片解码失败时给出明确提示，而不是留一块空白 */
+$('#imgOrig').onerror=function(){
+  toast('图片无法解码，可能格式不受支持');
+  this.removeAttribute('src');
+  drop.classList.remove('hide');
+  $('#view').classList.add('hide');
+};
+$('#btnReset').onclick=()=>{
+  curImg=null;curMark=null;curRes=[];
+  // 回到拖放区，但图像区/结果区两个框保留在页面上
+  drop.classList.remove('hide');
+  $('#view').classList.add('hide');
+  $('#resBody').innerHTML=RES_EMPTY_ROW;
+  $('#resTag').textContent='0 个目标';
+  renderCrops([]);
+  $('#btnCompare').disabled=true;
+  $('#btnCompare').textContent='对比原图';
+  syncVScroll();
+};
+/* 标注图 / 原图 切换：
+   识别完成后默认显示带框的标注图，点「对比原图」切回原图，再点切回标注图 */
+$('#btnCompare').onclick=()=>{
+  const ov=$('#imgOv');
+  if(ov.classList.contains('hide')){
+    if(!curMark){toast('请先识别');return}
+    $('#imgMark').src=curMark;ov.classList.remove('hide');
+    $('#btnCompare').textContent='看标注图';
+  }else{
+    ov.classList.add('hide');
+    $('#btnCompare').textContent='对比原图';
+  }
+};
+$('#btnSave').onclick=()=>{
+  if(!curMark){toast('请先识别');return}
+  const a=document.createElement('a');
+  a.href=curMark;a.download=(curFile||'r').replace(/\.[^.]+$/,'')+'_标注.jpg';
+  a.click();toast('已保存');
+};
+
+/* 参数：滑块 ↔ 数值框双向同步 */
+function syncParam(rangeSel, numSel, key, min, max, fixed){
+  const r=$(rangeSel), n=$(numSel);
+  const clamp=v=>Math.min(max,Math.max(min,v));
+  const apply=v=>{
+    v=clamp(parseFloat(v)||0);
+    r.value=v; n.value=Number(v.toFixed(fixed));
+    S.set(key,v);
+  };
+  r.oninput=e=>apply(e.target.value);
+  n.oninput=e=>{
+    const v=parseFloat(e.target.value);
+    if(!isNaN(v)){r.value=clamp(v);S.set(key,clamp(v));}
+  };
+  // 失焦时强制回写规范值（处理空串/越界）
+  n.onblur=()=>apply(n.value);
+  n.onkeydown=e=>{if(e.key==='Enter'){apply(n.value);n.blur();}};
+  return apply;
+}
+const applyConf=syncParam('#conf','#confN','conf',0,1,2);
+const applyIou=syncParam('#iou','#iouN','iou',0,1,2);
+$('#swEn').onchange=e=>S.set('showEn',e.target.checked);
+
+/* 识别 */
+$('#btnRun').onclick=run;
+async function run(){
+  if(!curImg){toast('请先选择图片');return}
+  if(!curCat&&!sel.size){toast('请先选择目标物种或生态类群');return}
+  const b=$('#btnRun');b.disabled=true;b.innerHTML='<span class="spin"></span>识别中';
+  try{
+    const r=await fetch('/huiyan/api/detect',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:curImg,targets:[...sel],category:curCat,
+        phrase:curPhrase,
+        conf:+$('#conf').value,iou:+$('#iou').value,show_en:$('#swEn').checked})});
+    const j=await r.json();
+    if(j.error)throw new Error(j.error);
+    curMark=j.image;
+    $('#led').className='led on';
+    curCatMode=!!j.category;
+    // 结果带上改名映射里的显示名
+    curRes=(j.results||[]).map(r=>({
+      ...r, zh:displayName(r.en,r.zh||(j.targets.find(t=>t.en===r.en)||{}).zh||r.en)
+    }));
+    // 记住模型原始坐标，供「清空坐标」恢复
+    curOrigBoxes=curRes.map(r=>(r.box||[]).slice());
+    // 目标坐标：默认继承本图空间坐标
+    curRes.forEach(r=>{r.lat=null;r.lng=null;r.ownLat=false;r.ownLng=false;});
+    // 物种名：记录基础名（供「清除名称」回退），并继承本图统一自定义名
+    curRes.forEach(r=>{
+      r.bzh=r.zh;
+      r.ben=r.en;          // 基础英文名（模型原名），供「清除名称」回退
+      r.cusOwn=false;
+      r.cusEn='';          // 自定义英文名（空 = 未单独指定）
+      if(imgSpecies){r.zh=imgSpecies;if(imgSpeciesEn)r.cusEn=imgSpeciesEn}
+    });
+    // 识别完成后直接显示带框的标注图
+    $('#imgMark').src=j.image;
+    $('#imgOv').classList.remove('hide');
+    $('#btnCompare').disabled=false;
+    $('#btnCompare').textContent='看标注图';
+    // 记录本次结果到统计明细（同名文件覆盖，不重复累计）
+    pushDetail(curFile, curRes, curCatMode, j.category);
+    render(j,curRes);
+    syncCusUI();
+    addHist({name:curFile,img:j.image,count:j.count,
+      tg:[...sel],zh:j.targets.map(t=>t.zh||t.en)});
+  }catch(e){toast('识别失败：'+e.message)}
+  b.disabled=false;b.textContent='开始识别';
+}
+/* 显示名：用户改名后用新名，否则用原始中文名 */
+function displayName(en,zh){
+  return renamed[en]||zh||en;
+}
+/* ---------- 自定义物种：本图统一名 + 行级覆盖 ---------- */
+/* 数据模型（与 WGS84 的 geoOf 同构，只是直接写回 r.zh）：
+   r.zh    —— 生效名：表格显示、统计、导出、标注图标签都用它
+   r.bzh   —— 基础名：模型/全局改名后的原名，用于「清除名称」回退
+   r.cusOwn—— 该行是否被单独指定（脱离本图统一名）
+   imgSpecies —— 本图统一物种名（空=未设置），speciesStore 按文件名记忆 */
+function render(j,res){
+  // 结果区显示出来了 → 此时地图容器才有正确尺寸，可以初始化
+  if(!geoMap)setTimeout(ensureGeoMap,0);
+  // 图像上的可点击热区（与结果行、裁剪图三方联动）
+  renderImgHits(res);
+  // 结果区表头显示目标数
+  const rt=$('#resTag');
+  if(rt)rt.textContent=res.length+' 个目标';
+  const tb=$('#resBody');
+  // 生态类群模式：结果只显示大类名，不暴露内部提示词
+  const catMode=!!j.category;
+  // 类群模式的英文名 = 该类群的英文名（如 食肉动物 → Carnivore）
+  // 而不是空 —— 空列会让用户以为英文名功能坏了
+  const catEn=catMode?((CATS[j.category]||{}).en||j.category):'';
+  if(!res.length){
+    tb.innerHTML=`<tr><td colspan="11" class="empty"><div class="g">⌕</div>
+      <p>未检测到目标，可尝试降低置信度阈值</p></td></tr>`;
+  }else{
+    tb.innerHTML=res.map((r,i)=>{
+      const c=r.score>=.5?'var(--c-ok)':r.score>=.3?'var(--c-accent)':'var(--c-warn)';
+      // 英文名：优先用户定义的自定义英文名，否则用模型原名；
+      // 类群模式用类群英文名（内部提示词不外泄）
+      const enTxt=capEn(catMode?catEn:(r.cusEn||r.en||''));
+      const key=catMode?j.category:r.en;
+      const bx=r.box||[0,0,0,0];
+      return `<tr data-idx="${i}">
+        <td class="idx">${String(i+1).padStart(2,'0')}</td>
+        <td class="zh"><div class="namewrap">
+          <input class="name-edit ${r.cusOwn?'own':''}" data-key="${escAttr(key)}" data-i="${i}"
+            value="${escAttr(r.zh)}" placeholder="如：东方白鹳" title="点击可修改名称，回车确认">
+          <button class="pick-btn" title="检索物种库替换">▾</button>
+        </div></td>
+        <td class="en-cell"><span class="en-inline" title="${escAttr(enTxt)}">${escHtml(enTxt)}</span></td>
+        <td><span class="score" style="color:${c}">${(r.score*100).toFixed(1)}%</span></td>
+        <td class="box-cell"><input type="number" step="1" data-i="${i}" data-k="0" value="${Math.round(bx[0])}" title="${boxNote(r,i)?`原 ${(curOrigBoxes[i]||[]).map(v=>Math.round(v)).join(' ')}`:'左上角 X'}"></td>
+        <td class="box-cell"><input type="number" step="1" data-i="${i}" data-k="1" value="${Math.round(bx[1])}" title="左上角 Y"></td>
+        <td class="box-cell"><input type="number" step="1" data-i="${i}" data-k="2" value="${Math.round(bx[2])}" title="右下角 X"></td>
+        <td class="box-cell"><input type="number" step="1" data-i="${i}" data-k="3" value="${Math.round(bx[3])}" title="右下角 Y"></td>
+        <td class="geo-cell"><input type="number" step="0.000001" data-i="${i}" data-k="lng"
+          class="${r.ownLng?'own':'inh'}" value="${fmtNum(geoOf(r).lng)}" title="经度 E（十进制度）"></td>
+        <td class="geo-cell"><input type="number" step="0.000001" data-i="${i}" data-k="lat"
+          class="${r.ownLat?'own':'inh'}" value="${fmtNum(geoOf(r).lat)}" title="纬度 N（十进制度）"></td>
+        <td class="del-cell"><button class="del-btn" data-del="${i}"
+          title="删除该目标（也可选中该行后按 Delete）">删除</button></td>
+      </tr>`;
+    }).join('');
+    // 绑定改名事件
+    $$('#resBody .name-edit').forEach(inp=>{
+      inp.onchange=()=>renameSpecies(inp);
+      inp.onkeydown=e=>{if(e.key==='Enter'){inp.blur()}};
+    });
+    // 绑定物种检索下拉
+    $$('#resBody .pick-btn').forEach(btn=>{
+      btn.onclick=e=>{togglePicker(btn)};
+    });
+    // 绑定删除按钮
+    $$('#resBody .del-btn').forEach(btn=>{
+      btn.onclick=e=>{e.stopPropagation();deleteResult(+btn.dataset.del)};
+    });
+    // 绑定经纬度输入
+    $$('#resBody .geo-cell input').forEach(inp=>{
+      inp.onchange=()=>geoChanged(inp);
+      inp.onkeydown=e=>{if(e.key==='Enter'){inp.blur()}};
+    });
+    // 绑定结果行点击（与裁剪个体联动标亮）
+    bindRowSelect();
+    // 绑定影像坐标（像素框）输入
+    $$('#resBody .box-cell input').forEach(inp=>{
+      inp.onchange=()=>boxChanged(inp);
+      inp.onkeydown=e=>{if(e.key==='Enter'){inp.blur()}};
+    });
+    syncGeoUI();
+  }
+  $('#runMeta').textContent=`${j.count??res.length} 目标 · ${j.elapsed_ms??0} ms`;
+  // 裁剪（目标物体）：
+  //   · 识别完成时 j.crops 由后端给出 → 换图，重置选中态
+  //   · 改名 / 删行等局部刷新时 j.crops 缺省 → 沿用当前裁剪列表，
+  //     否则 renderCrops([]) 会把「目标物体」框全部清空；
+  //     并保留选中态，便于连续按 Delete 批量删除
+  const isNewRun=Array.isArray(j.crops);
+  renderCrops(isNewRun?j.crops:curCrops,!isNewRun);
+  syncStats();
+  // 结果行数变化后同步右侧滑动窗口的滑块
+  syncVScroll();
+}
+/* ---------- 目标个体裁剪：与结果行一一对应、点击联动标亮 ---------- */
+/* crops 由后端按 results 顺序生成，每项带 idx（结果行下标）；
+   点结果行 → 对应裁剪个体高亮并滚动到可见处；点裁剪个体 → 反向高亮结果行。 */
+let curCrops=[];          // 当前裁剪列表（含 idx）
+let selCropIdx=-1;        // 当前选中的目标下标（-1=未选）
+
+function renderCrops(crops,keepSel){
+  curCrops=crops||[];
+  const pane=$('#cropPane'), box=$('#cropBox'), tag=$('#cropTag');
+  if(!curCrops.length){
+    // 目标物体框始终显示（没有识别结果时显示空态提示）
+    if(tag)tag.textContent='0 个';
+    // 同时清掉 DOM 与标亮状态，避免上一张图的裁剪残留
+    if(box)box.innerHTML='';
+    // 无结果 → 显示「⌕ 识别后在此显示每个目标的裁剪图」提示
+    const ch=$('.crophint'); if(ch)ch.style.display='';
+    $$('#resBody tr').forEach(tr=>tr.classList.remove('res-sel'));
+    selCropIdx=-1;
+    return;
+  }
+  pane.classList.remove('hide');
+  if(tag)tag.textContent=curCrops.length+' 个';
+  // 有裁剪结果 → 必须隐藏空态提示，避免文字压在裁剪图上
+  const ch2=$('.crophint'); if(ch2)ch2.style.display='none';
+  box.innerHTML=curCrops.map(c=>
+    `<div class="crop" data-idx="${c.idx}" title="${escAttr(displayName(c.en,c.zh||c.en))}">
+       <img src="${c.img}" alt="">
+       <div class="m">${escHtml(displayName(c.en,c.zh||c.en))}</div>
+     </div>`).join('');
+  // 裁剪条目点击 → 选中并反向高亮结果行
+  $$('#cropBox .crop').forEach(el=>{
+    el.onclick=()=>selectTarget(+el.dataset.idx,true);
+  });
+  // 换图后重置选中（局部刷新如改名/删行时保留当前选中项，
+  // 以便连续按 Delete 批量删除）
+  if(!keepSel)selCropIdx=-1;
+}
+/* 改名 / 应用自定义物种后，裁剪条目的名称要跟着更新 */
+function refreshCropNames(){
+  if(!curCrops.length)return;
+  $$('#cropBox .crop').forEach(el=>{
+    const c=curCrops.find(x=>x.idx===+el.dataset.idx);
+    if(!c)return;
+    // 优先用当前结果行的显示名（改名后立即生效），回退到裁剪自带的名称
+    const r=curRes[c.idx];
+    const nm=(r&&r.zh)?r.zh:displayName(c.en,c.zh||c.en);
+    const m=el.querySelector('.m');
+    if(m)m.textContent=nm;
+    el.title=nm;
+  });
+}
+/* 选中某个目标：结果行与裁剪个体同步标亮 */
+/* 英文名规范化：每个单词首字母大写（Snow Leopard / Red Fox） */
+function capEn(v){
+  return v?String(v).replace(/\b\w/g,c=>c.toUpperCase()):'';
+}
+
+/* 在图像上叠加每个目标的可点击热区（像素坐标 1:1 对应原图） */
+function renderImgHits(res){
+  const layer=$('#imgHits');
+  if(!layer)return;
+  if(!res||!res.length){layer.innerHTML='';return}
+  // 图片解码是异步的，curImgSize 可能还没就绪 → 用 <img> 的自然尺寸兜底
+  const io=$('#imgOrig');
+  const sw=curImgSize.w||(io?io.naturalWidth:0);
+  const sh=curImgSize.h||(io?io.naturalHeight:0);
+  if(!sw||!sh){layer.innerHTML='';return}
+  // 用百分比定位（而非像素）—— 这样在「适应宽度」缩放下热区会跟着图像一起缩放
+  layer.innerHTML=res.map((r,i)=>{
+    const b=r.box||[0,0,0,0];
+    const x=Math.min(b[0],b[2]), y=Math.min(b[1],b[3]);
+    const w=Math.abs(b[2]-b[0]), h=Math.abs(b[3]-b[1]);
+    if(!(w>0&&h>0))return '';
+    const lp=(x/sw*100).toFixed(4), tp=(y/sh*100).toFixed(4);
+    const wp=(w/sw*100).toFixed(4), hp=(h/sh*100).toFixed(4);
+    return `<div class="hit" data-idx="${i}" title="${escAttr((r.zh||r.en)+' · 点击定位')}"
+      style="left:${lp}%;top:${tp}%;width:${wp}%;height:${hp}%"></div>`;
+  }).join('');
+  // 点图像上的框 → 联动结果行与裁剪图
+  $$('#imgHits .hit').forEach(el=>{
+    el.onclick=e=>{e.stopPropagation();selectTarget(+el.dataset.idx,true);};
+  });
+  syncHitSel();
+}
+
+/* 热区高亮与当前选中项同步 */
+function syncHitSel(){
+  $$('#imgHits .hit').forEach(el=>{
+    el.classList.toggle('on',+el.dataset.idx===selCropIdx);
+  });
+}
+
+function selectTarget(idx,fromCrop){
+  if(idx==null||idx<0)return;
+  const same=selCropIdx===idx;
+  selCropIdx=same?-1:idx;
+  // 结果行
+  $$('#resBody tr').forEach(tr=>{
+    tr.classList.toggle('res-sel',!same&&+tr.dataset.idx===idx);
+  });
+  // 裁剪个体
+  $$('#cropBox .crop').forEach(el=>{
+    const on=!same&&+el.dataset.idx===idx;
+    el.classList.toggle('on',on);
+    if(on){
+      // 滚动到可见处（裁剪区是独立滚动窗口）
+      const win=$('#cropWin');
+      if(win){
+        const r=el.getBoundingClientRect(), w=win.getBoundingClientRect();
+        if(r.top<w.top+4||r.bottom>w.bottom-4){
+          // 目标高于窗口时对齐顶部，否则居中
+          if(el.offsetHeight>=win.clientHeight)
+            win.scrollTop+=r.top-w.top-4;
+          else
+            win.scrollTop+=r.top-w.top-win.clientHeight/2+el.offsetHeight/2;
+        }
+      }
+    }
+  });
+  // 图像上的框同步高亮
+  syncHitSel();
+  // 从裁剪区点进来时，把对应结果行也滚到可见处
+  if(fromCrop&&!same){
+    const tr=$(`#resBody tr[data-idx="${idx}"]`);
+    if(tr){
+      const view=$('#tblView');
+      if(view){
+        const r=tr.getBoundingClientRect(), v=view.getBoundingClientRect();
+        if(r.top<v.top||r.bottom>v.bottom)
+          view.scrollTop+=r.top-v.top-view.clientHeight/2+tr.offsetHeight/2;
+      }
+    }
+  }
+}
+/* 结果行点击 → 联动标亮裁剪个体 */
+function bindRowSelect(){
+  $$('#resBody tr').forEach(tr=>{
+    tr.onclick=e=>{
+      // 点在改名输入框 / 检索按钮上时不触发联动，避免干扰改名与下拉
+      if(e.target.closest('.name-edit,.pick-btn'))return;
+      selectTarget(+tr.dataset.idx,false);
+    };
+  });
+}
+
+/* ---------- 删除单个目标 ---------- */
+/* 删除后同步清理：结果行、目标物体裁剪框、图像热区、统计明细、标注图 */
+function deleteResult(i){
+  if(i==null||i<0||i>=curRes.length)return;
+  const r=curRes[i];
+  // 1) 结果列表
+  curRes.splice(i,1);
+  // 2) 模型原始框（与结果一一对应）
+  curOrigBoxes.splice(i,1);
+  // 3) 统计明细：本图记录与 curRes 按顺序一一对应
+  const rows=statDetail.filter(d=>d.file===curFile);
+  if(rows[i]){
+    const gi=statDetail.indexOf(rows[i]);
+    if(gi>=0)statDetail.splice(gi,1);
+  }
+  // 4) 选中态：移到相邻行，便于连续按 Delete 批量删除
+  //    （删除后原下标对应的是下一行；若删的是最后一行则取上一行）
+  const nextIdx=Math.min(i,curRes.length-1);
+  selCropIdx=curRes.length?nextIdx:-1;
+  // 5) 重绘结果表（renderImgHits 会按新 curRes 重建图像热区）
+  const j={results:curRes,category:curCatMode?curCat:'',targets:[]};
+  render(j,curRes);
+  // renderCrops 会把 selCropIdx 重置为 -1，这里补回选中态
+  // （不用 selectTarget —— 它对同一 index 是「取消选中」语义）
+  if(curRes.length){
+    selCropIdx=nextIdx;
+    $$('#resBody tr').forEach(tr=>{
+      tr.classList.toggle('res-sel',+tr.dataset.idx===nextIdx);
+    });
+    $$('#cropBox .crop').forEach(el=>{
+      el.classList.toggle('on',+el.dataset.idx===nextIdx);
+    });
+    syncHitSel();
+  }
+  // 6) 重新向服务端要裁剪图与标注图（删除后框与裁剪都要同步去掉）
+  redrawMark();
+  syncStats();
+  toast(`已删除目标：${r.zh||r.en}`);
+}
+
+/* 用户改名 → 立即重绘标注图（服务端按新名重新画框标签） */
+function renameSpecies(inp){
+  const key=inp.dataset.key;
+  const val=(inp.value||'').trim();
+  // 本图已设置统一自定义名时，行内编辑只作用于该行（脱离统一名），
+  // 不写入全局 renamed 映射 —— 否则会连带改掉其他图片里的同名物种。
+  if(imgSpecies){
+    const i=+inp.dataset.i;
+    const r=curRes[i];
+    if(!r)return;
+    if(!val){ // 清空 → 恢复跟随统一名
+      r.cusOwn=false;
+      r.cusOwnName='';
+      r.zh=imgSpecies;
+      r.cusEn=imgSpeciesEn||'';   // 英文名跟随统一名
+    }else{
+      r.cusOwn=true;
+      r.cusOwnName=val;
+      r.zh=val;
+      // 单独指定中文名时，英文名回到模型原名（脱离统一英文名）
+      r.cusEn=r.ben||r.en;
+    }
+    syncStatSpecies();
+    syncCusUI();
+    const j={results:curRes,category:curCatMode?curCat:'',targets:[]};
+    render(j,curRes);
+    // 裁剪名称要在 render 之后刷新（render 会重建裁剪 DOM）
+    refreshCropNames();
+    redrawMark();
+    return;
+  }
+  if(!val){inp.value=displayName(key,'');return}
+  if(val===displayName(key,'')){delete renamed[key];}
+  else renamed[key]=val;
+  // 更新当前结果与裁剪标签
+  curRes.forEach(r=>{if(r.en===key||key===r.en)r.zh=val});
+  applyRenameToStats(key,val,curFile);
+  const j={results:curRes,category:curCatMode?curCat:'',targets:[]};
+  render(j,curRes);
+  // 裁剪名称要在 render 之后刷新（render 会重建裁剪 DOM）
+  refreshCropNames();
+  // 让服务端重绘标注图（改名或坐标变动都会重新画框）
+  redrawMark();
+}
+/* HTML 转义 */
+function escHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s){return escHtml(s)}
+
+/* ---------- 物种名：检索下拉 + 自动匹配 ---------- */
+let picker=null;           // 当前打开的下拉 {row, input, q, items, cur, el, seq}
+let pickerOpenAt=0;        // 下拉打开序号：用于识别「打开的那一次点击」，避免误关
+const MATCH_HINT={          // 自动匹配：按检测框长宽比猜类群，作为候选排序加权
+  tall:'竖长形（涉禽/猛禽/鹤鹭）',sq:'方形（兽类/猫狗）',
+  wide:'横长形（猛禽展翅/水鸟）',small:'小目标（啮齿/小鸟）'
+};
+// 按框的长宽比与尺寸给候选排序：形状越贴合提示越靠前
+function shapeHint(box){
+  if(!box||box.length<4)return '';
+  const w=box[2]-box[0],h=box[3]-box[1];
+  if(w<=0||h<=0)return '';
+  const area=w*h;
+  // 先判体型：目标太小说明框可能没套准，或本就是小个体（小鼠/小鸟）
+  if(area<=3600)return MATCH_HINT.small;
+  const r=w/h;
+  if(r<0.62)return MATCH_HINT.tall;
+  if(r>1.7)return MATCH_HINT.wide;
+  return MATCH_HINT.sq;
+}
+// 检索物种库：中文名/英文名/学名/科属，命中片段高亮
+// 注意：不再截断条数 —— 词表里 175 种必须能全部浏览到，
+// 否则打开下拉只看得到前 60 种（全是兽类），鸟类完全找不到。
+function matchSpecies(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q)return SP.slice();
+  const hit=[];
+  for(const s of SP){
+    const hay=[s.zh,s.en,s.sci||'',s.group2||'',s.group||''];
+    let score=0,at=0;
+    for(let i=0;i<hay.length;i++){
+      const v=String(hay[i]||'').toLowerCase();
+      if(!v)continue;
+      if(v===q){score=Math.max(score,100-i);continue}
+      const p=v.indexOf(q);
+      if(p>=0)score=Math.max(score,(p===0?80:60)-i*4);
+    }
+    if(score>0)hit.push({s,score});
+  }
+  hit.sort((a,b)=>b.score-a.score);
+  return hit.map(h=>h.s);
+}
+// 打开物种检索下拉。
+// 注意：不能靠 stopPropagation —— 打开下拉的点击本身就落在按钮上，
+// 否则打开与关闭会互相打架（曾导致下拉一闪即消）
+function togglePicker(btn){
+  if(picker){closePicker();return}
+  // 打开即作废上一次打开的序号：下一次真实点击（落在空白处）就能正常关闭
+  const seq=pickerOpenAt+1;
+  const row=btn.closest('tr');
+  const inp=row.querySelector('.name-edit');
+  picker={btn,row,inp,q:'',items:matchSpecies(''),cur:0,el:null,seq};
+  btn.classList.add('on');
+  const box=document.createElement('div');
+  box.className='picker';
+  box.style.visibility='hidden';
+  document.body.appendChild(box);
+  box.innerHTML=`
+    <div class="ptool">
+      <button class="btn sm" data-a="auto">自动匹配</button>
+      <span class="gfilter" data-g=""><b class="on" data-g="">全部</b><b data-g="兽类">兽类</b><b data-g="鸟类">鸟类</b></span>
+      <span class="n"></span>
+    </div>
+    <div class="ph">
+      <input type="text" placeholder="检索中文名 / 英文名 / 学名 / 科属" autocomplete="off">
+    </div>
+    <div class="plist"></div>`;
+  picker.el=box;
+  picker.search=box.querySelector('.ph input');
+  picker.list=box.querySelector('.plist');
+  picker.info=box.querySelector('.n');
+  picker.gf='';
+  // 类群筛选：175 种按兽类 / 鸟类分开，浏览更快
+  $$('.picker .gfilter b').forEach(b=>{
+    b.onclick=e=>{
+      e.stopPropagation();
+      picker.gf=b.dataset.g||'';
+      $$('.picker .gfilter b').forEach(x=>x.classList.toggle('on',x===b));
+      picker.items=matchSpecies(picker.q).filter(s=>!picker.gf||s.group===picker.gf);
+      picker.cur=0;
+      drawPicker();
+    };
+  });
+  // 自动匹配：取当前名称做模糊命中 + 用框形状提示排序
+  box.querySelector('[data-a=auto]').onclick=e=>{
+    e.stopPropagation();
+    autoMatch();
+  };
+  picker.search.oninput=()=>{
+    picker.q=picker.search.value;
+    picker.items=matchSpecies(picker.q).filter(s=>!picker.gf||s.group===picker.gf);
+    picker.cur=0;
+    drawPicker();
+  };
+  picker.search.onkeydown=e=>{
+    if(e.key==='ArrowDown'){e.preventDefault();movePick(1)}
+    else if(e.key==='ArrowUp'){e.preventDefault();movePick(-1)}
+    else if(e.key==='Enter'){e.preventDefault();commitPick(picker.cur)}
+    else if(e.key==='Escape'){closePicker()}
+  };
+  // 打开时默认展示全部候选（Top60），而不是拿当前名称去过滤——
+// 否则点开只剩 1 条，用户会以为「只有这一个物种可选」
+  picker.q='';
+  picker.search.value='';
+  picker.items=matchSpecies('');
+  picker.cur=0;
+  drawPicker();
+  positionPicker();
+}
+// 用当前名称自动推荐：模糊命中优先，并按框形状重排
+function autoMatch(){
+  const q=picker.inp.value;
+  const idx=+(picker.row.dataset.idx||0);
+  const hint=shapeHint(curRes[idx]?.box);
+  // 从提示文字里取出形状类别（竖长形/方形/横长形/小目标）
+  const shape=hint.split('（')[0];
+  let items=matchSpecies(q);
+  let boosted=0;
+  if(shape){
+    // 把形态倾向与该形状一致的物种提到最前（形状只是排序提示，不做硬过滤）
+    const head=[],tail=[];
+    for(const s of items)(guessShape(s)===shape?head:tail).push(s);
+    boosted=head.length;
+    items=[...head,...tail];
+  }
+  picker.items=items;
+  picker.cur=0;
+  picker.search.value=q;
+  picker.q=q;
+  drawPicker();
+  toast(hint?`已按「${shape}」重排候选，形态相符 ${boosted} 种`
+             :`已自动匹配 ${items.length} 个候选`);
+}
+// 从物种所属类群粗判形状倾向（用于自动匹配排序）
+function guessShape(s){
+  const t=`${s.group2||''}${s.group||''}`;
+  if(/鹤|鹭|鹳|鹈|鹕|涉禽|鸥|燕鸥/.test(t))return '竖长形';
+  if(/鹰|隼|鸱|雕|鹞|枭|猛禽/.test(t))return '方形';
+  if(/雁|鸭|天鹅|鸥|水鸟|鸥/.test(t))return '方形';
+  if(/雀|山雀|莺|鸦|啄木|翠鸟|蜂鸟|鹦鹉/.test(t))return '小目标';
+  if(/鼠|鼬|鼯|兔|松鼠|花鼠|田鼠/.test(t))return '小目标';
+  if(/猫|犬|熊|獾|貉|豹|虎|狮|狼|狐|貂/.test(t))return '方形';
+  if(/鹿|羊|牛|马|猪|驼|羚|麋/.test(t))return '方形';
+  return '';
+}
+function movePick(d){
+  if(!picker||!picker.items.length)return;
+  picker.cur=(picker.cur+d+picker.items.length)%picker.items.length;
+  drawPicker();
+}
+function drawPicker(){
+  if(!picker)return;
+  const its=picker.items;
+  picker.info.textContent=its.length?`${its.length} 条候选`:'无匹配';
+  if(!its.length){
+    picker.list.innerHTML=`<div class="empty">没有匹配的物种，可直接在上方输入框自定义名称</div>`;
+    return;
+  }
+  picker.list.innerHTML=its.map((s,i)=>{
+    // 英文名首字母大写显示（Snow Leopard / Red Fox）
+    const raw=String(s.en||'');
+    const en=capEn(raw);
+    const q=picker.q.trim();
+    const hl=q&&raw.toLowerCase().includes(q.toLowerCase())
+      ?en.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),
+        '<mark>$1</mark>') : escHtml(en);
+    return `<div class="opt${i===picker.cur?' cur':''}" data-i="${i}">
+      <span class="zn">${escHtml(s.zh||s.en)}</span>
+      <span class="en">${hl}</span>
+      <span class="gg">${escHtml(s.group2||s.group||'')}</span></div>`;
+  }).join('');
+  $$('.picker .opt').forEach(o=>{
+    o.onclick=e=>{e.stopPropagation();commitPick(+o.dataset.i)};
+    o.onmouseenter=()=>{picker.cur=+o.dataset.i;
+      $$('.picker .opt').forEach(x=>x.classList.toggle('cur',x===o))};
+  });
+  // 让当前高亮项在列表内可见。
+  // 不用 scrollIntoView —— 它会连带滚动祖先容器（整个页面），
+  // 导致锚点按钮被滚出视口，面板随即被判定失去锚点而关闭。
+  const cur=picker.list.querySelector('.opt.cur');
+  if(cur&&picker.list.scrollHeight>picker.list.clientHeight){
+    const cr=cur.getBoundingClientRect(), lr=picker.list.getBoundingClientRect();
+    if(cr.top<lr.top)picker.list.scrollTop-=(lr.top-cr.top);
+    else if(cr.bottom>lr.bottom)picker.list.scrollTop+=(cr.bottom-lr.bottom);
+  }
+}
+function positionPicker(){
+  if(!picker||!picker.el)return;
+  const btn=picker.btn;
+  if(!btn||!btn.isConnected){closePicker();return}
+  const r=btn.getBoundingClientRect();
+  const el=picker.el;
+  // 视口可用区域（clientWidth/Height 已排除滚动条）
+  const vw=document.documentElement.clientWidth||innerWidth;
+  const vh=document.documentElement.clientHeight||innerHeight;
+  // 按钮已完全滚出视口 → 锚点没了，面板无处可依，直接收起
+  if(r.bottom<0||r.top>vh||r.right<0||r.left>vw){closePicker();return}
+  // 先解除visibility:hidden 再量尺寸，否则 offsetWidth/Height 全是 0，
+  // 定位会算错导致面板跑到屏幕外或挤成一团
+  el.style.visibility='visible';
+  el.style.position='fixed';
+  el.style.left='0px';el.style.top='0px';
+  const w=el.offsetWidth,h=el.offsetHeight;
+  // 水平：与按钮左对齐；右侧越界则左移；最后夹进视口
+  let left=r.left;
+  if(left+w>vw-8)left=vw-w-8;
+  if(left<8)left=8;
+  // 垂直：优先在按钮下方；下方放不下就翻到上方；
+  // 两边都放不下时贴着按钮并夹进视口，保证面板始终完整可见
+  const below=r.bottom+6;
+  const above=r.top-h-6;
+  let top;
+  if(below+h<=vh-8)top=below;
+  else if(above>=8)top=above;
+  else top=Math.max(8,Math.min(r.top,vh-h-8));
+  el.style.left=left+'px';
+  el.style.top=top+'px';
+}
+// 跟随窗口变化：页面滚动 / 容器滚动 / 窗口缩放时重新定位（不关闭面板）
+let pickerRaf=0;
+function repositionPicker(){
+  if(!picker)return;
+  if(pickerRaf)return;
+  pickerRaf=requestAnimationFrame(()=>{
+    pickerRaf=0;
+    if(picker)positionPicker();
+  });
+}
+function closePicker(){
+  if(!picker)return;
+  picker.el&&picker.el.remove();
+  picker.btn&&picker.btn.classList.remove('on');
+  pickerOpenAt=picker.seq+1;   // 让旧序号失效，下次打开的 seq 不会与本次相等
+  picker=null;
+}
+function commitPick(i){
+  if(!picker||!picker.items[i])return;
+  const s=picker.items[i];
+  const inp=picker.inp;
+  const oldKey=inp.dataset.key;
+  const newZh=s.zh||s.en;
+  inp.value=newZh;
+  // 英文名跟随所选物种同步，统计与导出都会跟着变
+  // 按行号定位（而不是按 en 找）：统一自定义名下多行可能同名，按 en 会命中错行
+  const ri=+(picker.row.dataset.idx||0);
+  const hit=curRes[ri]||curRes.find(r=>r.en===oldKey);
+  if(hit){hit.en=s.en;hit.zh=newZh}
+  // 改名映射要跟着换键：否则 render 里按新 en 去查 renamed 会查不到，
+  // 表格会被刷回旧名（表现为「选了没反应」）
+  delete renamed[oldKey];
+  renamed[s.en]=newZh;
+  inp.dataset.key=s.en;
+  closePicker();
+  // 本图统一自定义名生效时：下拉选中的只作用于该行（脱离统一名）
+  if(imgSpecies&&hit){
+    hit.cusOwn=true;
+    hit.cusOwnName=newZh;
+    // 下拉选中的是物种库里的物种，英文名即其英文名
+    hit.cusEn=s.en;
+    syncStatSpecies();
+    syncCusUI();
+  }
+  render({results:curRes,category:curCatMode?curCat:'',targets:[]},curRes);
+  applyRenameToStats(s.en,newZh,curFile);
+  refreshCropNames();
+  redrawMark();
+}
+// 点击别处关闭。
+// 两个坑（都曾导致「一点下拉就没」）：
+//  1) 不能靠 stopPropagation —— 打开下拉的点击本来就落在按钮上；
+//  2) 曾监听 scroll 来关闭，但浏览器为把按钮滚进视口而触发的滚动，
+//     会在面板刚打开的瞬间就把它关掉。现在面板是 fixed 浮层、滚动时跟随
+//     视口，不需要监听 scroll。
+document.addEventListener('click',e=>{
+  if(!picker)return;
+  if(e.target.closest('.picker')||e.target.closest('.pick-btn'))return;
+  if(pickerOpenAt===picker.seq)return;   // 跳过「打开的那一次点击」
+  closePicker();
+},false);
+// 键盘 Esc 关闭
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&picker)closePicker();
+});
+// 跟随窗口变化：
+// 面板是 position:fixed 浮层，锚定在按钮下方。
+// 页面滚动、面板内部滚动、窗口缩放都会让按钮的视口位置变化，
+// 因此这里做「重新定位」而不是「关闭」——
+// 早期版本用 scroll 关闭面板，导致浏览器为把按钮滚进视口而触发的滚动
+// 会在面板刚打开的瞬间就把它关掉（曾导致「一点就没」）。
+document.addEventListener('scroll',repositionPicker,true);
+window.addEventListener('resize',repositionPicker);
+window.addEventListener('orientationchange',repositionPicker);
+
+/* ---------- 图片空间坐标（WGS84 经纬度） ---------- */
+/* 语义：
+   1. imgGeo 是「这张图片」的空间坐标（十进制度），默认 0,0
+   2. 每个识别目标自动匹配图片坐标（继承态，标签显示「继承」）
+   3. 单独改某一行 → 该行该轴变为「自定义」，不再随图片坐标变化
+   4. 「应用到本图目标」→ 图片坐标写给本图全部目标（含覆盖已自定义的）
+   5. 「清除坐标」→ 图片坐标与所有目标坐标一起清空（回到 0,0 继承） */
+let imgGeo={lat:0,lng:0};     // 图片级 WGS84 坐标
+let geoStore={};             // 按文件名记忆每张图片的空间坐标：{file:{lat,lng}}
+
+// 十进制度 → 显示字符串（最多 6 位小数，去掉尾随 0）
+function fmtNum(v){
+  if(v==null||v===''||isNaN(v))return '';
+  const s=(+v).toFixed(6);
+  return s.replace(/0+$/,'').replace(/\.$/,'');
+}
+// 十进制度 → 度分秒字符串
+function toDMS(v,isLat){
+  if(v==null||isNaN(v))return '';
+  const av=Math.abs(+v);
+  const d=Math.floor(av);
+  const mFull=(av-d)*60;
+  const m=Math.floor(mFull);
+  const s=(mFull-m)*60;
+  const sec=(Math.abs(s)<0.0005?0:s).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+  return `${d}°${String(m).padStart(2,'0')}′${sec}″${(+v)<0?(isLat?'S':'W'):(isLat?'N':'E')}`;
+}
+// 范围校验：纬度 -90~90，经度 -180~180；空值视为不设置
+function geoValid(k,v){
+  if(v==null||v==='')return true;
+  const n=parseFloat(v);
+  if(isNaN(n))return false;
+  return k==='lat'?(n>=-90&&n<=90):(n>=-180&&n<=180);
+}
+// 读取图片级坐标输入
+function readImgGeo(){
+  const la=$('#geoLat').value, ln=$('#geoLng').value;
+  const laN=la===''?0:parseFloat(la);
+  const lnN=ln===''?0:parseFloat(ln);
+  return {lat:isNaN(laN)?0:laN,lng:isNaN(lnN)?0:lnN};
+}
+// 目标实际使用的坐标：自定义轴优先，否则继承图片坐标
+function geoOf(r){
+  return {
+    lat:r.ownLat?r.lat:imgGeo.lat,
+    lng:r.ownLng?r.lng:imgGeo.lng
+  };
+}
+// 某行经纬度输入变化 → 该轴标记为自定义
+function geoChanged(inp){
+  const i=+inp.dataset.i, k=inp.dataset.k;
+  const r=curRes[i];
+  if(!r)return;
+  const raw=inp.value.trim();
+  if(raw!==''&&!geoValid(k,raw)){
+    inp.classList.add('bad');
+    toast(k==='lat'?'纬度需在 -90 ~ 90 之间':'经度需在 -180 ~ 180 之间');
+    inp.value=fmtNum(geoOf(r)[k]);
+    setTimeout(()=>inp.classList.remove('bad'),1200);
+    return;
+  }
+  inp.classList.remove('bad');
+  r[k]=raw===''?null:parseFloat(raw);
+  r[k==='lat'?'ownLat':'ownLng']=true;   // 手动改过的轴脱离继承
+  // 刷新该行两列的样式与标签
+  const other=k==='lat'?'lng':'lat';
+  const oi=$(`#resBody .geo-cell input[data-i="${i}"][data-k="${other}"]`);
+  if(oi){
+    const oOwn=r[other==='lat'?'ownLat':'ownLng'];
+    oi.classList.toggle('own',!!oOwn);
+    oi.classList.toggle('inh',!oOwn);
+  }
+  inp.classList.add('own');inp.classList.remove('inh');
+  syncStatGeo();
+  syncGeoUI();
+}
+// 把当前坐标同步进统计/导出明细
+/* ---------- 影像坐标（目标在图像中的像素框位置） ---------- */
+/* 与 WGS84 地理坐标并存：
+   影像坐标 = 该目标在原图像素中的框位置（x1 y1 x2 y2），模型检测给出，可手工修正；
+   地理坐标 = WGS84 经纬度，由图片空间坐标自动匹配。 */
+let curImgSize={w:0,h:0};        // 当前原图像素尺寸
+
+
+// 该行影像坐标的小字说明：仅在手工改过之后显示「原 x1 y1 x2 y2」
+// （不再显示影像尺寸 —— 那是原图信息，与每行的目标无关）
+function boxNote(r,i){
+  const ob=curOrigBoxes[i];
+  const b=r.box||[0,0,0,0];
+  if(ob&&ob.length===4&&b.some((v,k)=>Math.round(v)!==Math.round(ob[k]))){
+    return `原 ${ob.map(v=>Math.round(v)).join(' ')}`;
+  }
+  return '';
+}
+// 某行影像坐标输入变化 → 写回结果、重绘标注图、同步统计明细
+function boxChanged(inp){
+  const i=+inp.dataset.i, k=+inp.dataset.k;
+  const r=curRes[i];
+  if(!r)return;
+  const v=parseFloat(inp.value);
+  const b=(r.box&&r.box.length===4)?r.box.slice():[0,0,0,0];
+  b[k]=isNaN(v)?0:v;
+  // 保证左上角不越到右下角之外
+  if(k===0&&b[0]>b[2])b[0]=b[2];
+  if(k===1&&b[1]>b[3])b[1]=b[3];
+  if(k===2&&b[2]<b[0])b[2]=b[0];
+  if(k===3&&b[3]<b[1])b[3]=b[1];
+  r.box=b;
+  inp.value=Math.round(b[k]);
+  // 刷新该行 4 个输入框与说明
+  [0,1,2,3].forEach(kk=>{
+    const el=$(`#resBody .box-cell input[data-i="${i}"][data-k="${kk}"]`);
+    if(el){el.value=Math.round(b[kk]);
+      el.classList.toggle('edit',!!curOrigBoxes[i]&&
+        b.some((vv,j)=>Math.round(vv)!==Math.round(curOrigBoxes[i][j])))}
+  });
+  // 原坐标提示：拆列后没有独立的备注格，改写进 X1 单元格的 title
+  const nt=boxNote(r,i);
+  const bcell=$(`#resBody tr[data-idx="${i}"] td.box-cell input[data-k="0"]`);
+  if(bcell)bcell.title=nt?`原 ${curOrigBoxes[i].map(v=>Math.round(v)).join(' ')}`:'左上角 X';
+  // 同步统计/导出明细
+  statDetail.filter(d=>d.file===curFile).forEach((d,di)=>{
+    if(di<curRes.length)d.box=curRes[di].box.slice();
+  });
+  redrawMark();
+}
+function syncStatGeo(){
+  statDetail.filter(d=>d.file===curFile).forEach((d,di)=>{
+    if(di<curRes.length){
+      const g=geoOf(curRes[di]);
+      d.lat=g.lat;d.lng=g.lng;
+    }
+  });
+}
+// 刷新坐标面板与表格内的坐标显示
+function syncGeoUI(){
+  const la=$('#geoLat'), ln=$('#geoLng');
+  if(la)la.classList.toggle('bad',!geoValid('lat',la.value));
+  if(ln)ln.classList.toggle('bad',!geoValid('lng',ln.value));
+  const g=readImgGeo();
+  // DMS 显示
+  const dm=$('#geoDms');
+  if(dm)dm.textContent='';
+  // 继承态的行刷新数值
+  curRes.forEach((r,i)=>{
+    const li=$(`#resBody .geo-cell input[data-i="${i}"][data-k="lat"]`);
+    const gi=$(`#resBody .geo-cell input[data-i="${i}"][data-k="lng"]`);
+    if(li&&!r.ownLat){li.value=fmtNum(g.lat);li.classList.remove('own');li.classList.add('inh');}
+    if(gi&&!r.ownLng){gi.value=fmtNum(g.lng);gi.classList.remove('own');gi.classList.add('inh');}
+  });
+  // 统计说明
+  const ownLat=curRes.filter(r=>r.ownLat).length;
+  const ownLng=curRes.filter(r=>r.ownLng).length;
+  const own=curRes.filter(r=>r.ownLat||r.ownLng).length;
+  const inh=curRes.length-own;
+  const ro=$('#geoReadonly'), meta=$('#geoMeta');
+  if(ro)ro.textContent=curRes.length?`${inh} 个继承 · ${own} 个自定义`:'';
+  if(meta){
+    // 面板内说明（只讲用法，不显示匹配数）
+    meta.innerHTML = '填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。'
+      + '单独改某一行的经纬度即可为该目标定制坐标。可在右栏「位置检索」面板上点击取点。';
+  }
+}
+/* ---------- 天地图检索：点地图取坐标 / 搜地名定位 ---------- */
+/* 地图用 Leaflet（本地分发）+ 项目已有天地图配置。
+   点击地图 → 读取该点经纬度写入地理坐标输入框并即时应用。 */
+let geoMap=null, geoMarker=null, geoTileErr=0;
+
+function mapTip(txt,isErr){
+  const el=$('#mapTip');
+  if(!el)return;
+  el.textContent=txt;
+  el.style.color=isErr?'var(--c-warn)':'';
+}
+
+function initGeoMap(){
+  const box=$('#geoMap');
+  if(!box||geoMap)return;
+  if(typeof L==='undefined'){
+    box.innerHTML='<div class="maperr">地图组件未加载<br>（Leaflet 资源缺失）</div>';
+    return;
+  }
+  // 与监测大屏使用同一套天地图矢量底图和中文注记
+  geoMap=L.map(box,{zoomControl:true,attributionControl:true})
+    .setView([34.9,113.6],8);
+  const tdt=layer=>`https://t{s}.tianditu.gov.cn/${layer}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${HUIYAN_TDT_KEY}`;
+  const tiles=L.tileLayer(tdt('vec'),{
+    subdomains:'01234567',
+    maxZoom:18,minZoom:2,attribution:'&copy; 天地图 · 国家地理信息公共服务平台'
+  }).addTo(geoMap);
+  const labels=L.tileLayer(tdt('cva'),{
+    subdomains:'01234567',
+    maxZoom:18,minZoom:2,pane:'overlayPane'
+  }).addTo(geoMap);
+  [tiles,labels].forEach(layer=>layer.on('tileerror',()=>{
+    if(++geoTileErr===1)mapTip('天地图加载失败，请检查网络或地图授权',true);
+  }));
+  // 点地图取坐标
+  geoMap.on('click',e=>{
+    const {lat,lng}=e.latlng;
+    setGeoFromMap(lat,lng);
+  });
+  // 尺寸在面板显示后才准，延迟刷新一次
+  setTimeout(()=>geoMap&&geoMap.invalidateSize(),80);
+  // 已有坐标 → 打点并居中
+  const g=readImgGeo();
+  if(g.lat||g.lng)setGeoFromMap(g.lat,g.lng,false);
+}
+
+/* 把地图上的点写回地理坐标输入框（apply=true 时立即应用到继承态目标） */
+function setGeoFromMap(lat,lng,apply=true){
+  lat=Math.round(lat*1e6)/1e6;
+  lng=Math.round(lng*1e6)/1e6;
+  $('#geoLat').value=fmtNum(lat);
+  $('#geoLng').value=fmtNum(lng);
+  // 打点
+  if(geoMap){
+    if(geoMarker)geoMarker.setLatLng([lat,lng]);
+    else geoMarker=L.marker([lat,lng],{draggable:false}).addTo(geoMap);
+    geoMarker.bindPopup(`纬度 ${fmtNum(lat)}<br>经度 ${fmtNum(lng)}`).openPopup();
+    geoMap.panTo([lat,lng]);
+  }
+  mapTip(`已取点 ${fmtNum(lat)}, ${fmtNum(lng)}`);
+  if(apply)imgGeoChanged();
+}
+
+/* 检索：天地图地名或直接输入坐标 */
+function geoSearch(){
+  const q=($('#geoSearch').value||'').trim();
+  if(!q){toast('请输入地名或坐标');return}
+  // 直接是坐标 → 直接打点
+  const mc=q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,，\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(mc){
+    const a=parseFloat(mc[1]),b=parseFloat(mc[2]);
+    // 支持 "lat,lng" 与 "lng,lat" 两种直觉写法：按数值范围判断
+    const isLatFirst=Math.abs(a)<=90&&Math.abs(b)>90;
+    const lat=isLatFirst?a:b, lng=isLatFirst?b:a;
+    if(!geoValid('lat',lat)||!geoValid('lng',lng)){toast('坐标超出范围');return}
+    setGeoFromMap(lat,lng);
+    return;
+  }
+  mapTip('检索中…');
+  const query={keyWord:q,level:12,mapBound:'73,18,135,54',queryType:1,start:0,count:5};
+  fetch('https://api.tianditu.gov.cn/v2/search?'+new URLSearchParams({postStr:JSON.stringify(query),type:'query',tk:HUIYAN_TDT_KEY}))
+    .then(r=>r.json())
+    .then(data=>{
+      const d=(data.pois||[]).map(p=>({name:p.name,lng:Number(p.lonlat.split(',')[0]),lat:Number(p.lonlat.split(',')[1])}));
+      if(!d.length&&data.area?.lonlat){const [lng,lat]=data.area.lonlat.split(',').map(Number);d.push({name:data.area.name||q,lng,lat});}
+      if(!d.length){
+        mapTip('未找到该地名',true);
+        toast('未找到该地名');
+        return;
+      }
+      const lat=parseFloat(d[0].lat), lng=parseFloat(d[0].lng);
+      setGeoFromMap(lat,lng);
+      if(geoMap)geoMap.setView([lat,lng],14);
+      mapTip(`已定位：${d[0].name.slice(0,28)}`);
+    })
+    .catch(()=>{
+      mapTip('检索失败，请检查网络',true);
+      toast('地名检索失败，请检查网络');
+    });
+}
+
+/* 浏览器定位 */
+function geoLocate(){
+  if(!navigator.geolocation){toast('当前环境不支持定位');return}
+  mapTip('定位中…');
+  navigator.geolocation.getCurrentPosition(
+    p=>{setGeoFromMap(p.coords.latitude,p.coords.longitude);
+        if(geoMap)geoMap.setView([p.coords.latitude,p.coords.longitude],14);},
+    ()=>{mapTip('定位失败，请检查权限',true);toast('定位失败，请检查浏览器权限');},
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+
+// 图片坐标输入变化 → 立即应用到继承态目标
+function imgGeoChanged(){
+  const la=$('#geoLat'), ln=$('#geoLng');
+  if(!geoValid('lat',la.value)||!geoValid('lng',ln.value)){
+    la.classList.toggle('bad',!geoValid('lat',la.value));
+    ln.classList.toggle('bad',!geoValid('lng',ln.value));
+    toast('坐标超出范围：纬度 -90~90，经度 -180~180');
+    return;
+  }
+  imgGeo=readImgGeo();
+  if(curFile)geoStore[curFile]={lat:imgGeo.lat,lng:imgGeo.lng};
+  syncGeoUI();
+  syncStatGeo();
+}
+$('#geoLat').onchange=()=>{imgGeoChanged();syncMapPoint()};
+$('#geoLng').onchange=()=>{imgGeoChanged();syncMapPoint()};
+$('#geoLat').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
+$('#geoLng').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
+$('#btnGeoSearch').onclick=geoSearch;
+$('#geoSearch').onkeydown=e=>{if(e.key==='Enter')geoSearch()};
+$('#btnGeoLocate').onclick=geoLocate;
+
+/* 手工改坐标后，地图上的点跟着走 */
+function syncMapPoint(){
+  if(!geoMap)return;
+  const g=readImgGeo();
+  if(!g.lat&&!g.lng)return;
+  if(geoMarker)geoMarker.setLatLng([g.lat,g.lng]);
+}
+
+/* 地图在面板可见时才初始化（隐藏时 Leaflet 量不准尺寸） */
+function ensureGeoMap(){
+  const box=$('#geoMap');
+  if(!box)return;
+  if(geoMap){geoMap.invalidateSize();return}
+  initGeoMap();
+  // 打开界面即尝试定位到当前位置（失败不影响其他功能）
+  // 由用户点击「定位」主动授予浏览器定位权限。
+}
+/* 自动定位：把地图中心移到当前 GPS 位置
+   —— 只移动视野，不写入坐标（避免误填拍摄地） */
+let autoLocateTried=false;
+function autoLocate(){
+  if(autoLocateTried||!geoMap)return;
+  autoLocateTried=true;
+  if(!navigator.geolocation){mapTip('无法自动定位',true);return}
+  navigator.geolocation.getCurrentPosition(
+    p=>{
+      const {latitude:lat,longitude:lng}=p.coords;
+      geoMap.setView([lat,lng],11);
+      mapTip(`已定位到当前位置 ${fmtNum(lat)}, ${fmtNum(lng)}`);
+    },
+    ()=>{mapTip('自动定位失败，可点「定位」重试',true)},
+    {enableHighAccuracy:false,timeout:8000,maximumAge:300000}
+  );
+}
+/* 导入当前坐标：把地图上当前的点（标记点，没有则取地图中心）写入经纬度输入框 */
+$('#btnGeoImport').onclick=()=>{
+  let lat,lng;
+  if(geoMarker)lat=geoMarker.getLatLng();
+  else if(geoMap)lat=geoMap.getCenter();
+  if(!lat){toast('请先在地图上点选一个位置');return}
+  $('#geoLat').value=fmtNum(lat.lat);
+  $('#geoLng').value=fmtNum(lat.lng);
+  imgGeoChanged();
+  mapTip(`已导入 ${fmtNum(lat.lat)}, ${fmtNum(lat.lng)}`);
+  toast(`已导入坐标 ${fmtNum(lat.lat)}, ${fmtNum(lat.lng)}`);
+};
+// 应用到本图目标：图片坐标写给本图全部目标
+$('#btnGeoApply').onclick=()=>{
+  if(!curRes.length){toast('请先识别');return}
+  if(!geoValid('lat',$('#geoLat').value)||!geoValid('lng',$('#geoLng').value)){
+    toast('坐标超出范围：纬度 -90~90，经度 -180~180');return;
+  }
+  imgGeo=readImgGeo();
+  if(curFile)geoStore[curFile]={lat:imgGeo.lat,lng:imgGeo.lng};
+  curRes.forEach(r=>{r.lat=imgGeo.lat;r.lng=imgGeo.lng;r.ownLat=false;r.ownLng=false});
+  syncGeoUI();
+  syncStatGeo();
+  toast(`已把图片坐标 ${fmtNum(imgGeo.lat)}, ${fmtNum(imgGeo.lng)} 匹配给全部 ${curRes.length} 个目标`);
+};
+// 清除坐标：图片级与所有目标级一起清空（回到 0,0）
+$('#btnGeoClear').onclick=()=>{
+  if(!curRes.length){toast('请先识别');return}
+  imgGeo={lat:0,lng:0};
+  if(curFile)delete geoStore[curFile];
+  curRes.forEach(r=>{r.lat=null;r.lng=null;r.ownLat=false;r.ownLng=false});
+  $('#geoLat').value='';$('#geoLng').value='';
+  syncGeoUI();
+  syncStatGeo();
+  toast('已清除图片坐标与全部目标坐标');
+};
+/* 重绘标注图（服务端按当前结果重画框与标签）
+   同时取回新的裁剪图，让「目标物体」框与结果保持一致（删除行后尤其需要） */
+function redrawMark(){
+  if(!curImg)return;
+  if(!curRes.length){
+    // 目标全部删除 → 清空标注图与裁剪框
+    renderCrops([]);
+    return;
+  }
+  fetch('/huiyan/api/relabel',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({image:curImg,results:curRes,show_en:$('#swEn').checked})})
+    .then(r=>r.json()).then(d=>{
+      if(d.error)throw new Error(d.error);
+      curMark=d.image;$('#imgMark').src=d.image;
+      if(Array.isArray(d.crops))renderCrops(d.crops,true);
+    }).catch(e=>toast('重绘失败：'+e.message));
+}
+
+/* ---------- 统计（右侧带边框面板） ---------- */
+// 把一次识别的结果写入统计明细；同名文件先清除旧记录，避免重复累计
+function pushDetail(file,res,catMode,catName){
+  statDetail=statDetail.filter(d=>d.file!==file);
+  // 类群模式的英文名用类群英文名（不暴露内部提示词）
+  const catEn=(CATS[catName]||{}).en||catName||'';
+  (res||[]).forEach(r=>{
+    const g=geoOf(r);
+    // 基础名与基础分组键：用于「清除名称」回退
+    const ben=catMode?(catName||'生态类群'):r.en;
+    const bzh=r.zh||r.en;
+    // 本图统一自定义名生效（该行未被单独指定）→ 分组键统一为自定义名
+    const u=!!(file===curFile&&imgSpecies&&!r.cusOwn);
+    // 英文名列：自定义英文名优先，否则用模型原名；类群模式用类群英文名
+    const cen=r.cusEn||(catMode?catEn:r.en);
+    statDetail.push({
+      file:file,
+      en:u?imgSpecies:ben,
+      sub:cen,
+      zh:u?imgSpecies:bzh,
+      ben:ben, bzh:bzh, oen:r.en,
+      score:+(r.score||0),
+      box:(r.box||[]).slice(),
+      lat:g.lat,
+      lng:g.lng,
+      img_w:curImgSize.w,
+      img_h:curImgSize.h
+    });
+  });
+  statImgs.add(file);
+  syncStats();
+}
+// 依据 statDetail 聚合出各物种数量并重绘面板
+function syncStats(){
+  const map=new Map();
+  statDetail.forEach(d=>{
+    const k=d.en||d.zh;
+    if(!map.has(k))map.set(k,{zh:d.zh,en:d.en,sub:d.sub,subs:new Set([d.sub]),count:0});
+    map.get(k).count++;
+    map.get(k).subs.add(d.sub);
+  });
+  const rows=[...map.values()].sort((a,b)=>b.count-a.count||a.zh.localeCompare(b.zh));
+  const total=statDetail.length;
+  $('#stTotal').textContent=total;
+  $('#stKind').textContent=rows.length;
+  $('#stImg').textContent=statImgs.size;
+  $('#statTag').textContent=rows.length;
+  $('#stList').innerHTML=rows.length?rows.map((r,i)=>{
+    const pct=total?r.count/total*100:0;
+    // 副标题：原始英文提示词。自定义物种把多个物种并成一组时，
+    // 全部列出来（而不是只显示第一个），避免误导。
+    const subs=[...r.subs].filter(Boolean);
+    const en=(subs.length&&!(subs.length===1&&subs[0]===r.en))
+      ?`<div style="font-size:var(--t-micro);color:var(--c-text-3);
+        font-family:var(--mono);margin-top:1px">${escHtml(subs.map(capEn).join('、'))}</div>`:'';
+    return `<div class="sprow">
+      <div style="min-width:0">
+        <div style="font-size:var(--t-base);font-weight:500;overflow:hidden;
+          text-overflow:ellipsis;white-space:nowrap">${escHtml(r.zh)}</div>${en}
+      </div>
+      <div style="font-family:var(--mono);font-size:var(--t-sm);color:var(--c-text-2);
+        font-weight:600;white-space:nowrap">${r.count}
+        <span style="color:var(--c-text-3);font-weight:400">· ${pct.toFixed(0)}%</span></div>
+      <div class="bar"><i class="${i%2?'alt':''}" style="width:${pct.toFixed(1)}%"></i></div>
+    </div>`;
+  }).join('') : '';
+}
+// 改名后把统计明细里的名称一并更新
+// key 可能是英文物种名，也可能是生态类群的中文类群名（此时按文件匹配）
+function applyRenameToStats(key,val,file){
+  let hit=0;
+  statDetail.forEach(d=>{
+    // 本图统一自定义名生效时，该行的显示名由自定义名决定，不被改名覆盖
+    if(d.file===curFile&&imgSpecies&&d.en===imgSpecies)return;
+    if(d.en===key){d.zh=val;hit++}
+    else if(file&&d.file===file&&d.renamed!==1&&d.sub!==key){d.zh=val;d.renamed=1;hit++}
+  });
+  syncStats();
+  return hit;
+}
+$('#btnStatClear').onclick=()=>{
+  if(!statDetail.length){toast('统计已是空的');return}
+  const n=statDetail.length;
+  statDetail=[];statImgs=new Set();syncStats();
+  toast(`已清空 ${n} 条统计记录`);
+};
+
+/* ---------- 自定义物种：应用到本图目标 / 清除 ---------- */
+/* 名称解析：中文名、英文名都能识别，并自动补全另一项。
+   之前只把输入框里的中文名当成「物种名」，英文名一律沿用模型原名，
+   于是「填英文名 → 点应用到本图目标」看起来毫无效果。 */
+function hasCJK(s){return /[\u3400-\u9fff\uf900-\ufaff]/.test(s||'')}
+function findByEn(s){return SP.find(x=>x.en&&x.en.toLowerCase()===String(s).toLowerCase())||null}
+function findByZh(s){return SP.find(x=>x.zh&&x.zh.toLowerCase()===String(s).toLowerCase())||null}
+function resolveSpeciesInput(rawName,rawEn){
+  const nm=(rawName||'').trim(), en0=(rawEn||'').trim();
+  const hEn=nm?findByEn(nm):null;      // 输入框里填的是库内英文名
+  const hZh=nm?findByZh(nm):null;      // 输入框里填的是库内中文名
+  if(hEn){
+    // 输入的是英文名 → 中文名自动补成库内标准名
+    return {zh:hEn.zh||nm, en:en0||capEn(hEn.en)};
+  }
+  if(hZh){
+    // 输入的是中文名 → 英文名留空则沿用模型原名（原语义不变）
+    return {zh:hZh.zh||nm, en:en0};
+  }
+  if(nm){
+    // 自定义名：不含中文 → 当作英文名；含中文 → 当作中文名
+    if(!hasCJK(nm))return {zh:nm, en:en0||nm};
+    return {zh:nm, en:en0};
+  }
+  // 只填了英文框
+  if(en0){
+    const e=findByEn(en0)||findByZh(en0);
+    return {zh:(e&&e.zh)||en0, en:en0};
+  }
+  return {zh:'',en:''};
+}
+/* 把本图统一名写进所有目标（已单独指定的行不受影响） */
+function applySpeciesToAll(name,enArg){
+  if(!curRes.length){toast('请先识别');return}
+  const rawName=name==null?$('#cusName').value:name;
+  const rawEn=enArg!=null?enArg:(name==null?($('#cusEn')?$('#cusEn').value:''):'');
+  const r=resolveSpeciesInput(rawName,rawEn);
+  const v=r.zh, en=r.en;
+  if(!v&&!en){toast('请填写自定义物种名');return}
+  imgSpecies=v;
+  imgSpeciesEn=en;
+  if(curFile)speciesStore[curFile]={zh:v,en:en};
+  $('#cusName').value=v;
+  if($('#cusEn'))$('#cusEn').value=en;
+  let n=0;
+  curRes.forEach(r=>{
+    if(r.cusOwn)return;      // 该行已单独指定，保持不变
+    // 兜底记录基础名：正常流程在识别完成时已赋值，
+    // 这里再确认一次，避免「清除名称」时回退不到原名
+    if(r.bzh==null)r.bzh=r.zh;
+    if(r.ben==null)r.ben=r.en;
+    r.zh=v;
+    r.cusEn=en;              // 自定义英文名（空 = 沿用模型原名）
+    n++;
+  });
+  syncStatSpecies();
+  render({results:curRes,category:curCatMode?curCat:'',targets:[]},curRes);
+  redrawMark();
+  syncCusUI();
+  toast(`已把本图 ${n} 个目标改为「${v}」`);
+}
+/* 清除本图统一名：全部目标回到基础名（模型原名 / 全局改名） */
+function clearSpeciesName(){
+  if(!curRes.length){toast('请先识别');return}
+  imgSpecies='';
+  imgSpeciesEn='';
+  if(curFile)delete speciesStore[curFile];
+  $('#cusName').value='';
+  if($('#cusEn'))$('#cusEn').value='';
+  let n=0;
+  curRes.forEach(r=>{
+    if(r.cusOwn){          // 单独指定过的行保留它自己的名字
+      r.zh=r.cusOwnName||r.zh;
+    }else{
+      r.zh=r.bzh!=null?r.bzh:r.zh;
+      r.cusEn='';          // 英文名回到模型原名
+      n++;
+    }
+  });
+  syncStatSpecies();
+  render({results:curRes,category:curCatMode?curCat:'',targets:[]},curRes);
+  redrawMark();
+  syncCusUI();
+  toast(`已清除本图统一物种名，${n} 个目标恢复原名`);
+}
+/* 把当前生效名同步进统计明细（导出与统计面板都读它） */
+function syncStatSpecies(){
+  const rows=statDetail.filter(d=>d.file===curFile);
+  curRes.forEach((r,i)=>{
+    const d=rows[i];
+    if(!d)return;
+    d.zh=r.zh;
+    // 分组键：统一名生效时统一用自定义名，否则沿用原分组键
+    d.en=(imgSpecies&&!r.cusOwn)?imgSpecies:(d.ben||d.en);
+    // 英文名列：自定义英文名优先，否则沿用模型原名
+    d.sub=r.cusEn||d.oen||d.sub;
+  });
+  syncStats();
+}
+/* 刷新自定义物种面板的状态显示 */
+function syncCusUI(){
+  const ro=$('#cusReadonly'), meta=$('#cusMeta');
+  const own=curRes.filter(r=>r.cusOwn).length;
+  if(ro)ro.textContent=curRes.length?`${curRes.length-own} 个统一 · ${own} 个单独`:'';
+  // 面板内说明 = 固定用法说明 + 动态状态
+  if (meta) {
+    const USAGE = '填一个物种名，点「应用到本图目标」后本图所有目标都改成它。'
+      + '若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。英文名留空则沿用原名。';
+    const st = curRes.length && imgSpecies
+      ? '统一名 <b>' + escHtml(imgSpecies) + '</b>'
+        + (own ? '，<b>' + own + '</b> 个目标单独指定' : '') + '。'
+      : '';
+    meta.innerHTML = st ? USAGE + '<br>' + st : USAGE;
+  }
+}
+/* ---------- 名称输入框的物种库自动匹配检索 ---------- */
+/* 输入名称时实时检索物种库，弹出候选；点选即填入中文名与英文名 */
+let cusPickLock=false;
+function cusNameSearch(q){
+  const pop=$('#cusPop');
+  if(!pop)return;
+  if(cusPickLock)return;
+  const s=q.trim().toLowerCase();
+  if(!s){pop.classList.add('hide');pop.innerHTML='';return}
+  const hit=sp=>(sp.zh||'').toLowerCase().includes(s)||sp.en.toLowerCase().includes(s)
+    ||(sp.sci||'').toLowerCase().includes(s)||(sp.group2||'').toLowerCase().includes(s);
+  const all=SP.filter(hit);
+  const hits=all.slice(0,40);
+  if(!hits.length){
+    pop.innerHTML='<div class="hint">物种库里没有匹配项 —— 可直接用自定义名称</div>';
+    pop.classList.remove('hide');
+    return;
+  }
+  // 候选同时显示中文名与英文名：只显示中文会让「按英文名检索」看起来没反应
+  pop.innerHTML=hits.map(x=>`<div class="row" data-en="${escAttr(x.en)}" data-zh="${escAttr(x.zh)}">
+      <div class="nm"><span class="zh">${escHtml(x.zh||x.en)}</span>
+        <span class="en">${escHtml(capEn(x.en))}</span></div>
+    </div>`).join('')+(all.length>hits.length
+      ? `<div class="hint">共 ${all.length} 条匹配，已显示前 ${hits.length} 条，继续输入可缩小范围</div>`:'');
+  pop.classList.remove('hide');
+  // 点候选 → 填入名称与英文名
+  $$('#cusPop .row').forEach(el=>{
+    el.onmousedown=e=>{
+      e.preventDefault();
+      $('#cusName').value=el.dataset.zh;
+      // 英文名跟随所选物种同步更新（首字母大写）
+      $('#cusEn').value=capEn(el.dataset.en);
+      // 收起并清空（focus 事件会重新展开，用标记位抑制一次）
+      cusPickLock=true;
+      pop.classList.add('hide');
+      pop.innerHTML='';
+      $('#cusName').focus();
+      setTimeout(()=>{cusPickLock=false;},60);
+    };
+  });
+}
+$('#cusName').addEventListener('input',e=>cusNameSearch(e.target.value));
+$('#cusName').addEventListener('focus',e=>cusNameSearch(e.target.value));
+// 点其他地方时收起候选
+document.addEventListener('click',e=>{
+  const pop=$('#cusPop');
+  if(pop&&!e.target.closest('.cusname-kv')){pop.classList.add('hide');pop.innerHTML='';}
+});
+
+/* 物种名称自动匹配：统计本图各识别结果的中文名，
+   把出现次数最多的那个（及其英文名）自动填进输入框 */
+/* 匹配主要物种：统计本图各识别结果的中文名，
+   把出现次数最多的那个连同英文名填入输入框，并立即应用到本图目标
+   （这样结果表的中文名与英文名会同步更新，不需要再点「应用到本图目标」）。 */
+$('#btnCusAuto').onclick=()=>{
+  if(!curRes.length){toast('请先识别');return}
+  // 只统计「非单独指定」的行，避免被单行改名带偏
+  const pool=curRes.filter(r=>!r.cusOwn);
+  const cnt={}, enOf={}, best1={};
+  pool.forEach(r=>{
+    const z=(r.zh||r.en||'').trim();
+    if(!z)return;
+    cnt[z]=(cnt[z]||0)+1;
+    // 英文名取当前生效值（cusEn 优先），首字母大写
+    const en=r.cusEn||r.en||'';
+    if(en&&!enOf[z])enOf[z]=en;
+    // 记录每个名字的最高分，用于并列时破平
+    if(!best1[z]||(r.score||0)>best1[z])best1[z]=r.score||0;
+  });
+  const names=Object.keys(cnt);
+  if(!names.length){toast('本图没有可用的识别名称');return}
+  // 次数最多；并列时取分数最高的一个
+  let best=names[0];
+  names.forEach(z=>{
+    if(cnt[z]>cnt[best])best=z;
+    else if(cnt[z]===cnt[best]&&best1[z]>best1[best])best=z;
+  });
+  const en=capEn(enOf[best]||'');
+  // 立即应用：物种名与英文名一起写入本图目标，
+  // 结果表的中文名与英文名会同步更新（英文名作为第 2 参数传入，
+  // 不能依赖输入框——applySpeciesToAll(name) 时它读不到输入框的英文）
+  applySpeciesToAll(best,en);
+  const n=cnt[best], total=pool.length;
+  toast(`已匹配主要物种「${best}」${en?'（'+en+'）':''}，本图 ${n}/${total} 个目标`);
+};
+$('#btnCusApply').onclick=()=>applySpeciesToAll();
+$('#btnCusClear').onclick=()=>clearSpeciesName();
+$('#btnCusUpdate').onclick=()=>updateResults();
+$('#cusName').onchange=()=>applySpeciesToAll();
+$('#cusName').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
+// 英文名：留空则沿用模型原名，失焦/回车即应用
+$('#cusEn').onchange=()=>{if(imgSpecies)applySpeciesToAll()};
+$('#cusEn').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
+
+/* ---------- 结果更新：把表格里的编辑全部应用，并重画图像 ---------- */
+/* 输入框只在失焦/回车时才触发 onchange，所以点「结果更新」时
+   要先把还停在编辑状态的输入框的值读出来（不依赖 blur 事件顺序）。 */
+function updateResults(){
+  if(!curRes.length){toast('当前没有识别结果');return}
+  let changed=0;
+  // 1) 名称：读输入框当前值，写回结果行
+  $$('#resBody .name-edit').forEach(inp=>{
+    const i=+inp.dataset.i, r=curRes[i];
+    if(!r)return;
+    const v=(inp.value||'').trim();
+    if(v===r.zh)return;
+    r.zh=v||r.zh;
+    r.cusOwn=true;r.cusOwnName=r.zh;
+    if(!r.cusEn)r.cusEn=r.ben||r.en;
+    inp.value=r.zh;
+    changed++;
+  });
+  // 2) 影像坐标 X1~X4
+  $$('#resBody .box-cell input').forEach(inp=>{
+    const i=+inp.dataset.i, k=+inp.dataset.k, r=curRes[i];
+    if(!r)return;
+    const v=parseFloat(inp.value);
+    if(isNaN(v))return;
+    const b=(r.box&&r.box.length===4)?r.box.slice():[0,0,0,0];
+    if(Math.round(b[k])===Math.round(v))return;
+    b[k]=v;
+    if(k===0&&b[0]>b[2])b[0]=b[2];
+    if(k===1&&b[1]>b[3])b[1]=b[3];
+    if(k===2&&b[2]<b[0])b[2]=b[0];
+    if(k===3&&b[3]<b[1])b[3]=b[1];
+    r.box=b;
+    changed++;
+  });
+  // 3) 经纬度
+  $$('#resBody .geo-cell input').forEach(inp=>{
+    const i=+inp.dataset.i, k=inp.dataset.k, r=curRes[i];
+    if(!r)return;
+    const v=parseFloat(inp.value);
+    if(isNaN(v))return;
+    if(k==='lat'){if(r.lat===v)return;r.lat=v;r.ownLat=true}
+    else{if(r.lng===v)return;r.lng=v;r.ownLng=true}
+    changed++;
+  });
+  // 4) 同步统计明细与面板状态
+  syncStatSpecies();
+  syncCusUI();
+  syncGeoUI();
+  refreshCropNames();
+  // 5) 重画结果表与图像上的识别框（裁剪图一并更新）
+  const j={results:curRes,category:curCatMode?curCat:'',targets:[]};
+  render(j,curRes);
+  redrawMark();
+  toast(changed?`已按修改后的结果更新（${changed} 处）`:'结果无改动，已重新绘制');
+}
+
+/* ---------- 导出 Excel ---------- */
+$('#btnXlsx').onclick=async()=>{
+  if(!statDetail.length){toast('还没有可导出的识别结果');return}
+  const b=$('#btnXlsx');b.disabled=true;b.textContent='生成中…';
+  try{
+    const map=new Map();
+    statDetail.forEach(d=>{
+      const k=d.en||d.zh;
+      if(!map.has(k))map.set(k,{zh:d.zh,en:d.en,subs:new Set([d.sub]),count:0});
+      map.get(k).count++;
+      map.get(k).subs.add(d.sub);
+    });
+    // 统计表的「英文名」列：自定义物种把多个物种并成一组时，列出全部原始提示词
+    const summary=[...map.values()]
+      .sort((x,y)=>y.count-x.count||x.zh.localeCompare(y.zh))
+      .map(x=>({zh:x.zh,en:[...x.subs].filter(Boolean).map(capEn).join('、')||capEn(x.sub||x.en),count:x.count}));
+    const rows=statDetail.map(d=>{
+      const bx=d.box||[];
+      return {file:d.file,zh:d.zh,en:d.sub||d.en,score:d.score,
+        x1:bx[0]||0,y1:bx[1]||0,x2:bx[2]||0,y2:bx[3]||0,
+        lat:d.lat==null?'':d.lat,lng:d.lng==null?'':d.lng,
+        img_w:curImgSize.w,img_h:curImgSize.h};
+    });
+    const tg=[...sel].map(en=>({en,zh:displayName(en,en)}));
+    const now=new Date();
+    const pad=v=>String(v).padStart(2,'0');
+    const meta={
+      at:`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      targets:curCatMode?`生态类群：${curCat}`:(tg.length?tg.map(t=>t.zh).join('、'):'（自定义）'),
+      images:statImgs.size,detections:statDetail.length,
+      conf:(+$('#conf').value).toFixed(2)
+    };
+    const r=await fetch('/huiyan/api/export_xlsx',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rows,summary,meta})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const blob=await r.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`识别结果_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.xlsx`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast(`已导出 ${rows.length} 条明细`);
+  }catch(e){toast('导出失败：'+e.message)}
+  b.disabled=false;b.textContent='导出 Excel';
+};
+
+/* 批量 */
+$('#btnPick').onclick=()=>$('#fMulti').click();
+$('#btnDir').onclick=()=>$('#fDir').click();
+$('#fMulti').onchange=e=>{add([...e.target.files]);e.target.value=''};
+$('#fDir').onchange=e=>{add([...e.target.files]);e.target.value=''};
+function add(fs){
+  const imgs=fs.filter(f=>f.type.startsWith('image/'));
+  bFiles=bFiles.concat(imgs);
+  $('#batchMeta').textContent=`已选 ${bFiles.length} 张`;
+  if(bFiles.length)$('#batchIdle').classList.add('hide');
+  toast(`加入 ${imgs.length} 张`);
+}
+$('#btnBatch').onclick=batchRun;
+async function batchRun(){
+  if(!bFiles.length){toast('请先选择图片');return}
+  if(!sel.size){toast('请先选择目标物种');return}
+  const b=$('#btnBatch');b.disabled=true;b.innerHTML='<span class="spin"></span>处理中';
+  $('#prog').classList.remove('hide');
+  try{
+    const items=[];
+    for(let i=0;i<bFiles.length;i++){
+      $('#prog').querySelector('i').style.width=(i/bFiles.length*100)+'%';
+      items.push({name:bFiles[i].name,image:await toURL(bFiles[i])});
+    }
+    const r=await fetch('/huiyan/api/detect_batch',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({images:items,targets:[...sel],conf:+$('#conf').value})});
+    const j=await r.json();
+    if(j.error)throw new Error(j.error);
+    bRows=j.rows;showBatch(j);
+  }catch(e){toast('批量失败：'+e.message)}
+  $('#prog').classList.add('hide');
+  b.disabled=false;b.textContent='开始批量识别';
+}
+function toURL(f){return new Promise((ok,no)=>{const fr=new FileReader();
+  fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(f)})}
+
+function showBatch(j){
+  const s=j.summary;
+  $('#batchStats').classList.remove('hide');
+  $('#kImg').textContent=s.images;
+  $('#kHit').textContent=s.with_detection;
+  $('#kDet').textContent=s.detections;
+  $('#kMs').textContent=s.avg_ms;
+  $('#batchMeta').textContent=`${s.images} 张 · ${s.elapsed_ms} ms`;
+  $('#batchGrid').innerHTML=j.rows.map(r=>{
+    const t=r.results?.[0];
+    return `<div class="cell">
+      ${r.image?`<img src="${r.image}" alt="">`:`<div class="ph">无图</div>`}
+      <div class="m"><b>${t?t.en:(r.error?'失败':'无检出')}</b>
+        <span>${r.name}</span></div></div>`;
+  }).join('');
+  $('#batchTable').classList.remove('hide');
+  $('#batchBody').innerHTML=j.rows.map(r=>{
+    const t=r.results?.[0];
+    const names=[...new Set((r.results||[]).map(x=>x.en))].map(en=>displayName(en,en)).join('、')||'—';
+    return `<tr><td style="font-size:var(--t-sm)">${escHtml(r.name)}</td>
+      <td class="en">${escHtml(names)}</td><td class="idx">${r.results?r.results.length:0}</td>
+      <td>${t?`<span class="score">${(t.score*100).toFixed(0)}%</span>`:'—'}</td></tr>`;
+  }).join('');
+  // 批量结果并入统计明细（同名文件覆盖）
+  j.rows.forEach(r=>{
+    statDetail=statDetail.filter(d=>d.file!==r.name);
+    if(r.error||!r.results||!r.results.length)return;
+    statImgs.add(r.name);
+    (r.results||[]).forEach(x=>statDetail.push({
+      file:r.name,en:x.en,sub:x.en,zh:displayName(x.en,x.zh||x.en),
+      score:+(x.score||0),box:(x.box||[]).slice()
+    }));
+  });
+  syncStats();
+}
+function dl(name,text,mime){
+  const b=new Blob([text],{type:mime});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('#btnCsv').onclick=()=>{
+  if(!bRows.length){toast('请先批量识别');return}
+  const L=['file,zh,en,score,x1,y1,x2,y2'];
+  bRows.forEach(r=>(r.results||[]).forEach(x=>
+    L.push([r.name,zhOf(x.en.toLowerCase()),x.en,x.score,...x.box.map(Math.round)].join(','))));
+  dl('results.csv','﻿'+L.join('\n'),'text/csv;charset=utf-8');
+  toast('CSV 已导出');
+};
+$('#btnJson').onclick=()=>{
+  if(!bRows.length){toast('请先批量识别');return}
+  dl('results.json',JSON.stringify({
+    targets:[...sel],at:new Date().toISOString(),
+    rows:bRows.map(r=>({file:r.name,n:r.results.length,det:r.results}))
+  },null,2),'application/json');
+  toast('JSON 已导出');
+};
+
+/* 历史 */
+function addHist(h){HIST.unshift(h);HIST=HIST.slice(0,30);S.set('hist',HIST);hist()}
+function hist(){
+  $('#histMeta').textContent=`${HIST.length} 条`;
+  if(!HIST.length){
+    $('#histList').innerHTML='<div class="empty"><div class="g">◷</div><p>暂无记录</p></div>';
+    return;
+  }
+  $('#histList').innerHTML=HIST.map((h,i)=>
+    `<div class="hitem" data-i="${i}">
+      <img src="${h.img}" alt="">
+      <div class="n"><b>${h.count} 个目标</b><div>${(h.zh||[]).join('、')}</div></div>
+      <span class="t">${(h.name||'').slice(0,14)}</span></div>`).join('');
+  $$('#histList .hitem').forEach(el=>el.onclick=()=>{
+    const h=HIST[+el.dataset.i];
+    sel=new Set(h.tg||sel);
+    curImg=h.img;curMark=h.img;
+    $('#imgOrig').src=h.img;$('#imgMark').src=h.img;
+    // 历史记录走的是另一条载入路径，同样要刷新图像区表头的像素尺寸
+    curImgSize={w:0,h:0};
+    const hp=new Image();
+    hp.onload=()=>{
+      curImgSize={w:hp.naturalWidth,h:hp.naturalHeight};
+      const tg=$('#imgSizeTag');
+      if(tg)tg.textContent=curImgSize.w?curImgSize.w+' x '+curImgSize.h+' px':'—';
+    };
+    hp.src=h.img;
+    chips();drop.classList.add('hide');
+    $('#view').classList.remove('hide');
+    $$('.tab')[0].click();
+  });
+}
+$('#btnHistClr').onclick=()=>{HIST=[];S.set('hist',[]);hist();toast('已清空')};
+</script>
+<script src="/static/app_monitor/huiyan/examples.js?v=20261025-2"></script>
+</body>
+</html>

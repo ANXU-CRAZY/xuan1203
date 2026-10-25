@@ -1,0 +1,1370 @@
+{
+ "species": [
+  {
+   "en": "snow leopard",
+   "zh": "雪豹",
+   "group": "兽类",
+   "sci": "Panthera uncia",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "tiger",
+   "zh": "虎",
+   "group": "兽类",
+   "sci": "Panthera tigris",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "leopard",
+   "zh": "豹",
+   "group": "兽类",
+   "sci": "Panthera pardus",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "clouded leopard",
+   "zh": "云豹",
+   "group": "兽类",
+   "sci": "Neofelis nebulosa",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "asian golden cat",
+   "zh": "亚洲金猫",
+   "group": "兽类",
+   "sci": "Catopuma temminckii",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "leopard cat",
+   "zh": "豹猫",
+   "group": "兽类",
+   "sci": "Prionailurus bengalensis",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "lynx",
+   "zh": "猞猁",
+   "group": "兽类",
+   "sci": "Lynx lynx",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "civet",
+   "zh": "灵猫",
+   "group": "兽类",
+   "sci": "Viverra civetta",
+   "group2": "食肉目·灵猫科"
+  },
+  {
+   "en": "fishing cat",
+   "zh": "渔猫",
+   "group": "兽类",
+   "sci": "Prionailurus viverrinus",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "sand cat",
+   "zh": "沙猫",
+   "group": "兽类",
+   "sci": "Felis margarita",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "wildcat",
+   "zh": "野猫",
+   "group": "兽类",
+   "sci": "Felis silvestris",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "caracal",
+   "zh": "狞猫",
+   "group": "兽类",
+   "sci": "Caracal caracal",
+   "group2": "食肉目·猫科"
+  },
+  {
+   "en": "giant panda",
+   "zh": "大熊猫",
+   "group": "兽类",
+   "sci": "Ailuropoda melanoleuca",
+   "group2": "食肉目·大熊猫科"
+  },
+  {
+   "en": "red panda",
+   "zh": "小熊猫",
+   "group": "兽类",
+   "sci": "Ailurus fulgens",
+   "group2": "食肉目·小熊猫科"
+  },
+  {
+   "en": "asian black bear",
+   "zh": "黑熊",
+   "group": "兽类",
+   "sci": "Ursus thibetanus",
+   "group2": "食肉目·熊科"
+  },
+  {
+   "en": "brown bear",
+   "zh": "棕熊",
+   "group": "兽类",
+   "sci": "Ursus arctos",
+   "group2": "食肉目·熊科"
+  },
+  {
+   "en": "raccoon",
+   "zh": "浣熊",
+   "group": "兽类",
+   "sci": "Procyon lotor",
+   "group2": "食肉目·浣熊科"
+  },
+  {
+   "en": "red fox",
+   "zh": "赤狐",
+   "group": "兽类",
+   "sci": "Vulpes vulpes",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "tibetan fox",
+   "zh": "藏狐",
+   "group": "兽类",
+   "sci": "Vulpes ferruna",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "gray wolf",
+   "zh": "狼",
+   "group": "兽类",
+   "sci": "Canis lupus",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "raccoon dog",
+   "zh": "貉",
+   "group": "兽类",
+   "sci": "Nyctereutes procyonoides",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "golden jackal",
+   "zh": "胡狼",
+   "group": "兽类",
+   "sci": "Canis aureus",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "arctic fox",
+   "zh": "北极狐",
+   "group": "兽类",
+   "sci": "Vulpes lagopus",
+   "group2": "食肉目·犬科"
+  },
+  {
+   "en": "wild boar",
+   "zh": "野猪",
+   "group": "兽类",
+   "sci": "Sus scrofa",
+   "group2": "偶蹄目·猪科"
+  },
+  {
+   "en": "musk deer",
+   "zh": "林麝",
+   "group": "兽类",
+   "sci": "Moschus moschiferus",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "sika deer",
+   "zh": "梅花鹿",
+   "group": "兽类",
+   "sci": "Cervus nippon",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "red deer",
+   "zh": "马鹿",
+   "group": "兽类",
+   "sci": "Cervus elaphus",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "roe deer",
+   "zh": "狍",
+   "group": "兽类",
+   "sci": "Capreolus capreolus",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "muntjac",
+   "zh": "赤麂",
+   "group": "兽类",
+   "sci": "Muntiacus muntjak",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "water deer",
+   "zh": "獐",
+   "group": "兽类",
+   "sci": "Hydropotes inermis",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "reindeer",
+   "zh": "驯鹿",
+   "group": "兽类",
+   "sci": "Rangifer tarandus",
+   "group2": "偶蹄目·鹿科"
+  },
+  {
+   "en": "chiru",
+   "zh": "藏羚羊",
+   "group": "兽类",
+   "sci": "Pantholops hodgsonii",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "takin",
+   "zh": "羚牛",
+   "group": "兽类",
+   "sci": "Budorcas taxicolor",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "serow",
+   "zh": "鬣羚",
+   "group": "兽类",
+   "sci": "Capricornis sumatraeus",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "argali",
+   "zh": "盘羊",
+   "group": "兽类",
+   "sci": "Ovis ammon",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "blue sheep",
+   "zh": "岩羊",
+   "group": "兽类",
+   "sci": "Pseudois nayaur",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "ibex",
+   "zh": "北山羊",
+   "group": "兽类",
+   "sci": "Capra ibex",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "wild yak",
+   "zh": "野牦牛",
+   "group": "兽类",
+   "sci": "Bos mutus",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "wild water buffalo",
+   "zh": "野水牛",
+   "group": "兽类",
+   "sci": "Bubalus arnee",
+   "group2": "偶蹄目·牛科"
+  },
+  {
+   "en": "elephant",
+   "zh": "亚洲象",
+   "group": "兽类",
+   "sci": "Elephas maximus",
+   "group2": "长鼻目·象科"
+  },
+  {
+   "en": "rhinoceros",
+   "zh": "犀牛",
+   "group": "兽类",
+   "sci": "Rhinoceros unicornis",
+   "group2": "奇蹄目·犀科"
+  },
+  {
+   "en": "przewalski's horse",
+   "zh": "普氏野马",
+   "group": "兽类",
+   "sci": "Equus ferus przewalskii",
+   "group2": "偶蹄目·马科"
+  },
+  {
+   "en": "wild donkey",
+   "zh": "野驴",
+   "group": "兽类",
+   "sci": "Equus asinus",
+   "group2": "偶蹄目·马科"
+  },
+  {
+   "en": "yellow-throated marten",
+   "zh": "黄喉貂",
+   "group": "兽类",
+   "sci": "Martes flavigula",
+   "group2": "食肉目·貂科"
+  },
+  {
+   "en": "sable",
+   "zh": "紫貂",
+   "group": "兽类",
+   "sci": "Martes zibellina",
+   "group2": "食肉目·貂科"
+  },
+  {
+   "en": "stoat",
+   "zh": "白鼬",
+   "group": "兽类",
+   "sci": "Mustela nivalis",
+   "group2": "食肉目·貂科"
+  },
+  {
+   "en": "weasel",
+   "zh": "黄鼬",
+   "group": "兽类",
+   "sci": "Mustela nivalis",
+   "group2": "食肉目·貂科"
+  },
+  {
+   "en": "badger",
+   "zh": "獾",
+   "group": "兽类",
+   "sci": "Meles meles",
+   "group2": "食肉目·獾科"
+  },
+  {
+   "en": "honey badger",
+   "zh": "蜜獾",
+   "group": "兽类",
+   "sci": "Mellivora capensis",
+   "group2": "食肉目·獾科"
+  },
+  {
+   "en": "wolverine",
+   "zh": "狼獾",
+   "group": "兽类",
+   "sci": "Gulo gulo",
+   "group2": "食肉目·獾科"
+  },
+  {
+   "en": "eurasian otter",
+   "zh": "水獭",
+   "group": "兽类",
+   "sci": "Lutra lutra",
+   "group2": "食肉目·水獭科"
+  },
+  {
+   "en": "marten",
+   "zh": "貂",
+   "group": "兽类",
+   "sci": "Martes martes",
+   "group2": "食肉目·貂科"
+  },
+  {
+   "en": "rhesus macaque",
+   "zh": "恒河猴",
+   "group": "兽类",
+   "sci": "Macaca mulatta",
+   "group2": "灵长目·猴科"
+  },
+  {
+   "en": "golden snub-nosed monkey",
+   "zh": "川金丝猴",
+   "group": "兽类",
+   "sci": "Rhinopithecus roxellana",
+   "group2": "灵长目·猴科"
+  },
+  {
+   "en": "black snub-nosed monkey",
+   "zh": "黑叶猴",
+   "group": "兽类",
+   "sci": "Rhinopithecus bieti",
+   "group2": "灵长目·猴科"
+  },
+  {
+   "en": "tibetan macaque",
+   "zh": "藏酋猴",
+   "group": "兽类",
+   "sci": "Macaca thibetana",
+   "group2": "灵长目·猴科"
+  },
+  {
+   "en": "white-handed gibbon",
+   "zh": "白掌长臂猿",
+   "group": "兽类",
+   "sci": "Hylobates lar",
+   "group2": "灵长目·长臂猿科"
+  },
+  {
+   "en": "proboscis monkey",
+   "zh": "长鼻猴",
+   "group": "兽类",
+   "sci": "Nasalis larvatus",
+   "group2": "灵长目·猴科"
+  },
+  {
+   "en": "orangutan",
+   "zh": "猩猩",
+   "group": "兽类",
+   "sci": "Pongo pygmaeus",
+   "group2": "灵长目·人科"
+  },
+  {
+   "en": "european hare",
+   "zh": "野兔",
+   "group": "兽类",
+   "sci": "Lepus europaeus",
+   "group2": "兔形目·兔科"
+  },
+  {
+   "en": "eurasian red squirrel",
+   "zh": "红松鼠",
+   "group": "兽类",
+   "sci": "Sciurus vulgaris",
+   "group2": "啮齿目·松鼠科"
+  },
+  {
+   "en": "chipmunk",
+   "zh": "花栗鼠",
+   "group": "兽类",
+   "sci": "Tamias sibiricus",
+   "group2": "啮齿目·松鼠科"
+  },
+  {
+   "en": "groundhog",
+   "zh": "旱獭",
+   "group": "兽类",
+   "sci": "Marmota himalayana",
+   "group2": "啮齿目·旱獭科"
+  },
+  {
+   "en": "beaver",
+   "zh": "河狸",
+   "group": "兽类",
+   "sci": "Castor fiber",
+   "group2": "啮齿目·河狸科"
+  },
+  {
+   "en": "crested porcupine",
+   "zh": "冕豪猪",
+   "group": "兽类",
+   "sci": "Hystrix cristata",
+   "group2": "啮齿目·豪猪科"
+  },
+  {
+   "en": "pika",
+   "zh": "鼠兔",
+   "group": "兽类",
+   "sci": "Ochotona curzoniae",
+   "group2": "啮齿目·鼠兔科"
+  },
+  {
+   "en": "mole",
+   "zh": "鼹",
+   "group": "兽类",
+   "sci": "Talpa europaea",
+   "group2": "鼩形目·鼩鼱科"
+  },
+  {
+   "en": "grey squirrel",
+   "zh": "灰松鼠",
+   "group": "兽类",
+   "sci": "Sciurus vulgaris",
+   "group2": "啮齿目·松鼠科"
+  },
+  {
+   "en": "golden eagle",
+   "zh": "金雕",
+   "group": "鸟类",
+   "sci": "Aquila chrysaetos",
+   "group2": "隼形目"
+  },
+  {
+   "en": "white-tailed eagle",
+   "zh": "白尾海雕",
+   "group": "鸟类",
+   "sci": "Haliaeetus albicilla",
+   "group2": "隼形目"
+  },
+  {
+   "en": "black kite",
+   "zh": "黑鸢",
+   "group": "鸟类",
+   "sci": "Milvus migrans",
+   "group2": "隼形目"
+  },
+  {
+   "en": "eagle owl",
+   "zh": "雕鸮",
+   "group": "鸟类",
+   "sci": "Bubo bubo",
+   "group2": "鸮形目"
+  },
+  {
+   "en": "snowy owl",
+   "zh": "雪鸮",
+   "group": "鸟类",
+   "sci": "Bubo scandiacus",
+   "group2": "鸮形目"
+  },
+  {
+   "en": "common kestrel",
+   "zh": "红隼",
+   "group": "鸟类",
+   "sci": "Falco tinnunculus",
+   "group2": "隼形目"
+  },
+  {
+   "en": "peregrine falcon",
+   "zh": "游隼",
+   "group": "鸟类",
+   "sci": "Falco peregrinus",
+   "group2": "隼形目"
+  },
+  {
+   "en": "eurasian sparrowhawk",
+   "zh": "雀鹰",
+   "group": "鸟类",
+   "sci": "Accipiter nisus",
+   "group2": "隼形目"
+  },
+  {
+   "en": "crested serpent eagle",
+   "zh": "黑翅鸢",
+   "group": "鸟类",
+   "sci": "Spilornis cheela",
+   "group2": "隼形目"
+  },
+  {
+   "en": "grey heron",
+   "zh": "苍鹭",
+   "group": "鸟类",
+   "sci": "Ardea cinerea",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "little egret",
+   "zh": "白鹭",
+   "group": "鸟类",
+   "sci": "Egretta garzetta",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "great egret",
+   "zh": "大白鹭",
+   "group": "鸟类",
+   "sci": "Ardea alba",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "cattle egret",
+   "zh": "牛背鹭",
+   "group": "鸟类",
+   "sci": "Bubulcus ibis",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "black-crowned night heron",
+   "zh": "夜鹭",
+   "group": "鸟类",
+   "sci": "Nycticorax nycticorax",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "oriental stork",
+   "zh": "东方白鹳",
+   "group": "鸟类",
+   "sci": "Ciconia boyciana",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "black stork",
+   "zh": "黑鹳",
+   "group": "鸟类",
+   "sci": "Ciconia nigra",
+   "group2": "鹳形目"
+  },
+  {
+   "en": "red-crowned crane",
+   "zh": "丹顶鹤",
+   "group": "鸟类",
+   "sci": "Grus japonensis",
+   "group2": "鹤形目"
+  },
+  {
+   "en": "white-naped crane",
+   "zh": "白枕鹤",
+   "group": "鸟类",
+   "sci": "Antigone vipio",
+   "group2": "鹤形目"
+  },
+  {
+   "en": "common crane",
+   "zh": "灰鹤",
+   "group": "鸟类",
+   "sci": "Grus grus",
+   "group2": "鹤形目"
+  },
+  {
+   "en": "black-necked crane",
+   "zh": "黑颈鹤",
+   "group": "鸟类",
+   "sci": "Grus nigricollis",
+   "group2": "鹤形目"
+  },
+  {
+   "en": "whooper swan",
+   "zh": "大天鹅",
+   "group": "鸟类",
+   "sci": "Cygnus cygnus",
+   "group2": "雁形目"
+  },
+  {
+   "en": "mute swan",
+   "zh": "疣鼻天鹅",
+   "group": "鸟类",
+   "sci": "Cygnus olor",
+   "group2": "雁形目"
+  },
+  {
+   "en": "tundra swan",
+   "zh": "小天鹅",
+   "group": "鸟类",
+   "sci": "Cygnus columbianus",
+   "group2": "雁形目"
+  },
+  {
+   "en": "greylag goose",
+   "zh": "灰雁",
+   "group": "鸟类",
+   "sci": "Anser anser",
+   "group2": "雁形目"
+  },
+  {
+   "en": "swan goose",
+   "zh": "鸿雁",
+   "group": "鸟类",
+   "sci": "Anser cygnoides",
+   "group2": "雁形目"
+  },
+  {
+   "en": "bean goose",
+   "zh": "豆雁",
+   "group": "鸟类",
+   "sci": "Anser fabalis",
+   "group2": "雁形目"
+  },
+  {
+   "en": "common shelduck",
+   "zh": "翘鼻麻鸭",
+   "group": "鸟类",
+   "sci": "Tadorna tadorna",
+   "group2": "雁形目"
+  },
+  {
+   "en": "mallard",
+   "zh": "绿头鸭",
+   "group": "鸟类",
+   "sci": "Anas platyrhynchos",
+   "group2": "雁形目"
+  },
+  {
+   "en": "common teal",
+   "zh": "绿翅鸭",
+   "group": "鸟类",
+   "sci": "Anas crecca",
+   "group2": "雁形目"
+  },
+  {
+   "en": "gadwall",
+   "zh": "斑嘴鸭",
+   "group": "鸟类",
+   "sci": "Mareca strepera",
+   "group2": "雁形目"
+  },
+  {
+   "en": "northern shoveler",
+   "zh": "针尾鸭",
+   "group": "鸟类",
+   "sci": "Spatula clypeata",
+   "group2": "雁形目"
+  },
+  {
+   "en": "common goldeneye",
+   "zh": "金眼鸭",
+   "group": "鸟类",
+   "sci": "Bucephala clangula",
+   "group2": "雁形目"
+  },
+  {
+   "en": "common merganser",
+   "zh": "普通秋沙鸭",
+   "group": "鸟类",
+   "sci": "Mergus merganser",
+   "group2": "雁形目"
+  },
+  {
+   "en": "common sandpiper",
+   "zh": "矶鹬",
+   "group": "鸟类",
+   "sci": "Calidris alpina",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "wood sandpiper",
+   "zh": "林鹬",
+   "group": "鸟类",
+   "sci": "Tringa glareola",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "common greenshank",
+   "zh": "青脚鹬",
+   "group": "鸟类",
+   "sci": "Tringa nebularia",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "spotted redshank",
+   "zh": "红脚鹬",
+   "group": "鸟类",
+   "sci": "Tringa erythropus",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "black-winged stilt",
+   "zh": "黑翅长脚鹬",
+   "group": "鸟类",
+   "sci": "Himantopus himantopus",
+   "group2": "鸻形目·鸻科与反嘴鹬科"
+  },
+  {
+   "en": "pied avocet",
+   "zh": "反嘴鹬",
+   "group": "鸟类",
+   "sci": "Recurvirostra avosetta",
+   "group2": "鸻形目·鸻科与反嘴鹬科"
+  },
+  {
+   "en": "kentish plover",
+   "zh": "环嘴鸻",
+   "group": "鸟类",
+   "sci": "Charadrius alexandrinus",
+   "group2": "鸻形目·鸻科与反嘴鹬科"
+  },
+  {
+   "en": "little ringed plover",
+   "zh": "金眶鸻",
+   "group": "鸟类",
+   "sci": "Charadrius dubius",
+   "group2": "鸻形目·鸻科与反嘴鹬科"
+  },
+  {
+   "en": "spoon-billed sandpiper",
+   "zh": "勺嘴鹬",
+   "group": "鸟类",
+   "sci": "Calidris pygmaea",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "sharp-tailed sandpiper",
+   "zh": "尖尾滨鹬",
+   "group": "鸟类",
+   "sci": "Calidris acuminata",
+   "group2": "鸻形目·鹬科"
+  },
+  {
+   "en": "rock dove",
+   "zh": "原鸽",
+   "group": "鸟类",
+   "sci": "Columba livia",
+   "group2": "鸠鸽目"
+  },
+  {
+   "en": "oriental turtle dove",
+   "zh": "山斑鸠",
+   "group": "鸟类",
+   "sci": "Streptopelia orientalis",
+   "group2": "鸠鸽目"
+  },
+  {
+   "en": "spotted dove",
+   "zh": "珠颈斑鸠",
+   "group": "鸟类",
+   "sci": "Spilopelia chinensis",
+   "group2": "鸠鸽目"
+  },
+  {
+   "en": "common pheasant",
+   "zh": "雉鸡",
+   "group": "鸟类",
+   "sci": "Phasianus colchicus",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "golden pheasant",
+   "zh": "红腹锦鸡",
+   "group": "鸟类",
+   "sci": "Chrysolophus pictus",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "silver pheasant",
+   "zh": "白鹇",
+   "group": "鸟类",
+   "sci": "Lophura nycthemera",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "lady amherst's pheasant",
+   "zh": "白冠长尾雉",
+   "group": "鸟类",
+   "sci": "Chrysolophus amherstiae",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "swinhoe's pheasant",
+   "zh": "黑鹇",
+   "group": "鸟类",
+   "sci": "Lophura swinhoii",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "rock partridge",
+   "zh": "石鸡",
+   "group": "鸟类",
+   "sci": "Alectoris graeca",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "grey partridge",
+   "zh": "灰雉",
+   "group": "鸟类",
+   "sci": "Perdix perdix",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "himalayan snowcock",
+   "zh": "藏雪鸡",
+   "group": "鸟类",
+   "sci": "Tetraogallus himalayensis",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "common quail",
+   "zh": "鹌鹑",
+   "group": "鸟类",
+   "sci": "Coturnix coturnix",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "chinese francolin",
+   "zh": "鹧鸪",
+   "group": "鸟类",
+   "sci": "Francolinus pintadeanus",
+   "group2": "鸡形目"
+  },
+  {
+   "en": "eurasian magpie",
+   "zh": "喜鹊",
+   "group": "鸟类",
+   "sci": "Pica pica",
+   "group2": "雀形目·鸦科"
+  },
+  {
+   "en": "large-billed crow",
+   "zh": "大嘴乌鸦",
+   "group": "鸟类",
+   "sci": "Corvus macrorhynchos",
+   "group2": "雀形目·鸦科"
+  },
+  {
+   "en": "northern raven",
+   "zh": "渡鸦",
+   "group": "鸟类",
+   "sci": "Corvus corax",
+   "group2": "雀形目·鸦科"
+  },
+  {
+   "en": "azure-winged magpie",
+   "zh": "灰喜鹊",
+   "group": "鸟类",
+   "sci": "Cyanopica cyanus",
+   "group2": "雀形目·鸦科"
+  },
+  {
+   "en": "eurasian jay",
+   "zh": "松鸦",
+   "group": "鸟类",
+   "sci": "Garrulus glandarius",
+   "group2": "雀形目·鸦科"
+  },
+  {
+   "en": "great tit",
+   "zh": "大山雀",
+   "group": "鸟类",
+   "sci": "Parus major",
+   "group2": "雀形目·山雀科"
+  },
+  {
+   "en": "coal tit",
+   "zh": "煤山雀",
+   "group": "鸟类",
+   "sci": "Periparus ater",
+   "group2": "雀形目·山雀科"
+  },
+  {
+   "en": "eurasian robin",
+   "zh": "欧亚鸲",
+   "group": "鸟类",
+   "sci": "Erithacus rubecula",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "eurasian tree sparrow",
+   "zh": "麻雀",
+   "group": "鸟类",
+   "sci": "Passer montanus",
+   "group2": "雀形目·雀科"
+  },
+  {
+   "en": "russet sparrow",
+   "zh": "山麻雀",
+   "group": "鸟类",
+   "sci": "Gymnoris xanthocollis",
+   "group2": "雀形目·雀科"
+  },
+  {
+   "en": "yellow-browed warbler",
+   "zh": "黄眉柳莺",
+   "group": "鸟类",
+   "sci": "Phylloscopus inornatus",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "dusky warbler",
+   "zh": "棕翅柳莺",
+   "group": "鸟类",
+   "sci": "Phylloscopus fuscatus",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "grey wagtail",
+   "zh": "灰鹡鸰",
+   "group": "鸟类",
+   "sci": "Motacilla cinerea",
+   "group2": "雀形目·鹡鸰科"
+  },
+  {
+   "en": "white wagtail",
+   "zh": "白鹡鸰",
+   "group": "鸟类",
+   "sci": "Motacilla alba",
+   "group2": "雀形目·鹡鸰科"
+  },
+  {
+   "en": "olive-backed pipit",
+   "zh": "树鹨",
+   "group": "鸟类",
+   "sci": "Anthus hodgsoni",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "common starling",
+   "zh": "紫翅椋鸟",
+   "group": "鸟类",
+   "sci": "Sturnus vulgaris",
+   "group2": "雀形目·椋鸟科"
+  },
+  {
+   "en": "common myna",
+   "zh": "八哥",
+   "group": "鸟类",
+   "sci": "Acridotheres tristis",
+   "group2": "雀形目·八哥科"
+  },
+  {
+   "en": "japanese white-eye",
+   "zh": "绣眼鸟",
+   "group": "鸟类",
+   "sci": "Zosterops japonicus",
+   "group2": "雀形目·绣眼鸟科"
+  },
+  {
+   "en": "grey-backed thrush",
+   "zh": "棕背鸫",
+   "group": "鸟类",
+   "sci": "Turdus eunomus",
+   "group2": "雀形目·鸫科"
+  },
+  {
+   "en": "scaly thrush",
+   "zh": "虎斑地鸫",
+   "group": "鸟类",
+   "sci": "Turdus dauma",
+   "group2": "雀形目·鸫科"
+  },
+  {
+   "en": "blackbird",
+   "zh": "乌鸫",
+   "group": "鸟类",
+   "sci": "Turdus merula",
+   "group2": "雀形目·鸫科"
+  },
+  {
+   "en": "common rosefinch",
+   "zh": "普通朱雀",
+   "group": "鸟类",
+   "sci": "Carpodacus roseus",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "hawfinch",
+   "zh": "锡嘴雀",
+   "group": "鸟类",
+   "sci": "Coccothraustes coccothraustes",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "brambling",
+   "zh": "燕雀",
+   "group": "鸟类",
+   "sci": "Fringilla montifringilla",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "eurasian bullfinch",
+   "zh": "灰腹灰雀",
+   "group": "鸟类",
+   "sci": "Pyrrhula pyrrhula",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "chaffinch",
+   "zh": "苍灰雀",
+   "group": "鸟类",
+   "sci": "Fringilla coelebs",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "common kingfisher",
+   "zh": "翠鸟",
+   "group": "鸟类",
+   "sci": "Alcedo atthis",
+   "group2": "佛法僧目"
+  },
+  {
+   "en": "hoopoe",
+   "zh": "戴胜",
+   "group": "鸟类",
+   "sci": "Upupa epops",
+   "group2": "佛法僧目"
+  },
+  {
+   "en": "great spotted woodpecker",
+   "zh": "大斑啄木鸟",
+   "group": "鸟类",
+   "sci": "Dendrocopos major",
+   "group2": "啄木鸟目"
+  },
+  {
+   "en": "common cuckoo",
+   "zh": "大杜鹃",
+   "group": "鸟类",
+   "sci": "Cuculus canorus",
+   "group2": "杜鹃目"
+  },
+  {
+   "en": "himalayan cuckoo",
+   "zh": "鹰鹃",
+   "group": "鸟类",
+   "sci": "Cuculus saturatus",
+   "group2": "杜鹃目"
+  },
+  {
+   "en": "red-billed leiothrix",
+   "zh": "红嘴相思鸟",
+   "group": "鸟类",
+   "sci": "Leiothrix lutea",
+   "group2": "雀形目·鹌鹟科"
+  },
+  {
+   "en": "white-browed laughingthrush",
+   "zh": "白眉噪鹛",
+   "group": "鸟类",
+   "sci": "Garrulax sannio",
+   "group2": "雀形目·噪鹛科"
+  },
+  {
+   "en": "olive-backed sunbird",
+   "zh": "太阳鸟",
+   "group": "鸟类",
+   "sci": "Cinnyris jugularis",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "oriental magpie",
+   "zh": "鹊鸲",
+   "group": "鸟类",
+   "sci": "Copsychus saularis",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "long-tailed rosefinch",
+   "zh": "长尾绯红雀",
+   "group": "鸟类",
+   "sci": "Carpodacus rubicilloides",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "yellow-browed bunting",
+   "zh": "黄眉鹀",
+   "group": "鸟类",
+   "sci": "Emberiza spodocephala",
+   "group2": "雀形目·鹀科"
+  },
+  {
+   "en": "little bunting",
+   "zh": "黄胸鹀",
+   "group": "鸟类",
+   "sci": "Emberiza pusilla",
+   "group2": "雀形目·鹀科"
+  },
+  {
+   "en": "chestnut bunting",
+   "zh": "栗鹀",
+   "group": "鸟类",
+   "sci": "Emberiza rutila",
+   "group2": "雀形目·鹀科"
+  },
+  {
+   "en": "reed bunting",
+   "zh": "芦鹀",
+   "group": "鸟类",
+   "sci": "Emberiza schoeniclus",
+   "group2": "雀形目·鹀科"
+  },
+  {
+   "en": "grey-capped greenfinch",
+   "zh": "灰头绿雀",
+   "group": "鸟类",
+   "sci": "Chloris sinica",
+   "group2": "雀形目·朱雀科"
+  },
+  {
+   "en": "white-browed bushchat",
+   "zh": "棕背伯劳",
+   "group": "鸟类",
+   "sci": "Saxicola torquatus",
+   "group2": "雀形目·伯劳科"
+  },
+  {
+   "en": "black-faced bunting",
+   "zh": "灰头鹀",
+   "group": "鸟类",
+   "sci": "Emberiza spodocephala",
+   "group2": "雀形目·鹀科"
+  },
+  {
+   "en": "yellow-bellied prinia",
+   "zh": "黄腹鹪莺",
+   "group": "鸟类",
+   "sci": "Prinia flavinucha",
+   "group2": "雀形目·莺科"
+  },
+  {
+   "en": "grey-cheeked thrush",
+   "zh": "灰颊鸫",
+   "group": "鸟类",
+   "sci": "Turdus obscurus",
+   "group2": "雀形目·鸫科"
+  },
+  {
+   "en": "pale thrush",
+   "zh": "淡背鸫",
+   "group": "鸟类",
+   "sci": "Turdus pallidus",
+   "group2": "雀形目·鸫科"
+  },
+  {
+   "en": "bluethroat",
+   "zh": "蓝喉歌鸲",
+   "group": "鸟类",
+   "sci": "Luscinia tschebaicus",
+   "group2": "雀形目·鹟科"
+  },
+  {
+   "en": "light-vented bulbul",
+   "zh": "白头鹎",
+   "group": "鸟类",
+   "sci": "Pycnonotus sinensis",
+   "group2": "雀形目·鹎科"
+  },
+  {
+   "en": "black bulbul",
+   "zh": "黑鹎",
+   "group": "鸟类",
+   "sci": "Hypsipetes leucocephalus",
+   "group2": "雀形目·鹎科"
+  },
+  {
+   "en": "streak-eared scimitar babbler",
+   "zh": "棕噪鹛",
+   "group": "鸟类",
+   "sci": "Garrulax cachinnans",
+   "group2": "雀形目·噪鹛科"
+  },
+  {
+   "en": "grey-capped pygmy woodpecker",
+   "zh": "灰头小啄木鸟",
+   "group": "鸟类",
+   "sci": "Yungipicus canicapillus",
+   "group2": "啄木鸟目"
+  },
+  {
+   "en": "eurasian spoonbill",
+   "zh": "白琵鹭",
+   "group": "鸟类",
+   "group2": "鹈鹕目·鹈鹕科",
+   "sci": "Platalea leucorodia"
+  },
+  {
+   "en": "great bustard",
+   "zh": "大鸨",
+   "group": "鸟类",
+   "group2": "鹤形目·鸨科",
+   "sci": "Otis tarda"
+  },
+  {
+   "en": "short-billed goose",
+   "zh": "短嘴豆雁",
+   "group": "鸟类",
+   "group2": "雁形目",
+   "sci": "Anser albifrons"
+  },
+  {
+   "en": "herring gull",
+   "zh": "银鸥",
+   "group": "鸟类",
+   "group2": "鸻形目·鸥科",
+   "sci": "Larus argentatus"
+  },
+  {
+   "en": "black-headed gull",
+   "zh": "红嘴鸥",
+   "group": "鸟类",
+   "group2": "鸻形目·鸥科",
+   "sci": "Chroicocephalus ridibundus"
+  },
+  {
+   "en": "saunders's gull",
+   "zh": "黑嘴鸥",
+   "group": "鸟类",
+   "group2": "鸻形目·鸥科",
+   "sci": "Saundersilarus saundersi"
+  },
+  {
+   "en": "common tern",
+   "zh": "普通燕鸥",
+   "group": "鸟类",
+   "group2": "鸻形目·燕鸥科",
+   "sci": "Sterna hirundo"
+  },
+  {
+   "en": "great cormorant",
+   "zh": "普通鸬鹚",
+   "group": "鸟类",
+   "group2": "鸬鹚目·鸬鹚科",
+   "sci": "Phalacrocorax carbo"
+  },
+  {
+   "en": "common swift",
+   "zh": "普通雨燕",
+   "group": "鸟类",
+   "group2": "雨燕目·雨燕科",
+   "sci": "Apus apus"
+  },
+  {
+   "en": "chinese nightjar",
+   "zh": "普通夜鹰",
+   "group": "鸟类",
+   "group2": "夜鹰目·夜鹰科",
+   "sci": "Caprimulgus indicus"
+  },
+  {
+   "en": "barn swallow",
+   "zh": "家燕",
+   "group": "鸟类",
+   "group2": "雀形目·燕科",
+   "sci": "Hirundo rustica"
+  }
+ ],
+ "orders": [
+  "佛法僧目",
+  "偶蹄目·牛科",
+  "偶蹄目·猪科",
+  "偶蹄目·马科",
+  "偶蹄目·鹿科",
+  "兔形目·兔科",
+  "啄木鸟目",
+  "啮齿目·旱獭科",
+  "啮齿目·松鼠科",
+  "啮齿目·河狸科",
+  "啮齿目·豪猪科",
+  "啮齿目·鼠兔科",
+  "夜鹰目·夜鹰科",
+  "奇蹄目·犀科",
+  "杜鹃目",
+  "灵长目·人科",
+  "灵长目·猴科",
+  "灵长目·长臂猿科",
+  "长鼻目·象科",
+  "隼形目",
+  "雀形目·伯劳科",
+  "雀形目·八哥科",
+  "雀形目·噪鹛科",
+  "雀形目·山雀科",
+  "雀形目·朱雀科",
+  "雀形目·椋鸟科",
+  "雀形目·燕科",
+  "雀形目·绣眼鸟科",
+  "雀形目·莺科",
+  "雀形目·雀科",
+  "雀形目·鸦科",
+  "雀形目·鸫科",
+  "雀形目·鹀科",
+  "雀形目·鹌鹟科",
+  "雀形目·鹎科",
+  "雀形目·鹟科",
+  "雀形目·鹡鸰科",
+  "雁形目",
+  "雨燕目·雨燕科",
+  "食肉目·大熊猫科",
+  "食肉目·小熊猫科",
+  "食肉目·水獭科",
+  "食肉目·浣熊科",
+  "食肉目·灵猫科",
+  "食肉目·熊科",
+  "食肉目·犬科",
+  "食肉目·猫科",
+  "食肉目·獾科",
+  "食肉目·貂科",
+  "鸠鸽目",
+  "鸡形目",
+  "鸬鹚目·鸬鹚科",
+  "鸮形目",
+  "鸻形目·燕鸥科",
+  "鸻形目·鸥科",
+  "鸻形目·鸻科与反嘴鹬科",
+  "鸻形目·鹬科",
+  "鹈鹕目·鹈鹕科",
+  "鹤形目",
+  "鹤形目·鸨科",
+  "鹳形目",
+  "鼩形目·鼩鼱科"
+ ]
+}

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "spoonbills",
+    "title": "白琵鹭",
+    "url": "/static/app_monitor/huiyan/examples/spoonbills.jpg",
+    "original": "/static/app_monitor/huiyan/examples/spoonbills.tif",
+    "targets": [
+      "eurasian spoonbill"
+    ]
+  },
+  {
+    "id": "cranes",
+    "title": "灰鹤群",
+    "url": "/static/app_monitor/huiyan/examples/cranes.jpg",
+    "targets": [
+      "common crane"
+    ]
+  },
+  {
+    "id": "storks",
+    "title": "黑鹳群",
+    "url": "/static/app_monitor/huiyan/examples/storks.jpg",
+    "targets": [
+      "black stork"
+    ]
+  },
+  {
+    "id": "geese",
+    "title": "雁群",
+    "url": "/static/app_monitor/huiyan/examples/geese.jpg",
+    "targets": [
+      "bean goose",
+      "greylag goose",
+      "swan goose"
+    ]
+  },
+  {
+    "id": "bustards",
+    "title": "大鸨群",
+    "url": "/static/app_monitor/huiyan/examples/bustards.jpg",
+    "targets": [
+      "great bustard"
+    ]
+  }
+]

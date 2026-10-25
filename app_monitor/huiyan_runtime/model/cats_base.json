@@ -1,0 +1,903 @@
+{
+ "食肉动物": {
+  "desc": "猫科 · 犬科 · 熊科 · 鼬科 · 浣熊科",
+  "words": [
+   {
+    "en": "carnivorous mammal",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "wild cat",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "wolverine",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "leopard",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "gray wolf",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "asian black bear",
+    "zh": "食肉动物"
+   },
+   {
+    "en": "raccoon",
+    "zh": "食肉动物"
+   }
+  ],
+  "n": 7,
+  "group": "兽类",
+  "subs": [
+   {
+    "name": "大型猫科",
+    "desc": "雪豹、豹、云豹、虎等组合",
+    "orders": [
+     "食肉目·猫科"
+    ],
+    "classes": [
+     "snow leopard",
+     "leopard",
+     "clouded leopard",
+     "tiger"
+    ]
+   },
+   {
+    "name": "中小型猫科",
+    "desc": "豹猫、猞猁、亚洲金猫、狞猫、野猫等组合",
+    "orders": [
+     "食肉目·猫科"
+    ],
+    "classes": [
+     "leopard cat",
+     "lynx",
+     "asian golden cat",
+     "caracal",
+     "wildcat"
+    ]
+   },
+   {
+    "name": "熊科",
+    "desc": "黑熊、棕熊等组合",
+    "orders": [
+     "食肉目·熊科"
+    ],
+    "classes": [
+     "asian black bear",
+     "brown bear"
+    ]
+   },
+   {
+    "name": "犬科",
+    "desc": "藏狐、狼、貉、胡狼等组合",
+    "orders": [
+     "食肉目·犬科"
+    ],
+    "classes": [
+     "tibetan fox",
+     "gray wolf",
+     "raccoon dog",
+     "golden jackal"
+    ]
+   },
+   {
+    "name": "貂鼬科",
+    "desc": "紫貂、白鼬、黄鼬、貂、獾等组合",
+    "orders": [
+     "食肉目·貂科",
+     "食肉目·獾科"
+    ],
+    "classes": [
+     "sable",
+     "stoat",
+     "weasel",
+     "marten",
+     "badger"
+    ]
+   }
+  ],
+  "en": "Carnivore"
+ },
+ "熊猫类": {
+  "desc": "大熊猫科 · 小熊猫科",
+  "words": [
+   {
+    "en": "black and white bear",
+    "zh": "熊猫类"
+   },
+   {
+    "en": "panda bear",
+    "zh": "熊猫类"
+   },
+   {
+    "en": "red panda",
+    "zh": "熊猫类"
+   }
+  ],
+  "n": 3,
+  "group": "兽类",
+  "subs": [],
+  "en": "Panda"
+ },
+ "大型有蹄": {
+  "desc": "鹿科 · 牛科 · 马科 · 猪科 · 犀科 · 象科",
+  "words": [
+   {
+    "en": "large hoofed animal",
+    "zh": "大型有蹄"
+   },
+   {
+    "en": "deer with antlers",
+    "zh": "大型有蹄"
+   },
+   {
+    "en": "sika deer",
+    "zh": "大型有蹄"
+   }
+  ],
+  "n": 3,
+  "group": "兽类",
+  "subs": [
+   {
+    "name": "鹿科",
+    "desc": "梅花鹿、马鹿、狍、赤麂、獐、林麝等组合",
+    "orders": [
+     "偶蹄目·鹿科"
+    ],
+    "classes": [
+     "sika deer",
+     "red deer",
+     "roe deer",
+     "muntjac",
+     "water deer",
+     "musk deer"
+    ]
+   },
+   {
+    "name": "牛科山羊类",
+    "desc": "藏羚羊、羚牛、鬣羚、盘羊、岩羊、北山羊等组合",
+    "orders": [
+     "偶蹄目·牛科"
+    ],
+    "classes": [
+     "chiru",
+     "takin",
+     "serow",
+     "argali",
+     "blue sheep",
+     "ibex"
+    ]
+   },
+   {
+    "name": "野猪与家畜型",
+    "desc": "野猪、野水牛、野牦牛、普氏野马、野驴等组合",
+    "orders": [
+     "偶蹄目·猪科",
+     "偶蹄目·牛科",
+     "偶蹄目·马科"
+    ],
+    "classes": [
+     "wild boar",
+     "wild water buffalo",
+     "wild yak",
+     "przewalski's horse",
+     "wild donkey"
+    ]
+   }
+  ],
+  "en": "Large Ungulate"
+ },
+ "灵长类": {
+  "desc": "猴科 · 长臂猿科 · 人科",
+  "words": [
+   {
+    "en": "ape on a tree",
+    "zh": "灵长类"
+   },
+   {
+    "en": "tibetan macaque",
+    "zh": "灵长类"
+   },
+   {
+    "en": "monkey with a long tail",
+    "zh": "灵长类"
+   }
+  ],
+  "n": 3,
+  "group": "兽类",
+  "subs": [
+   {
+    "name": "灵长类 · 精确到种",
+    "desc": "恒河猴、川金丝猴、黑叶猴、藏酋猴、白掌长臂猿等组合",
+    "orders": [
+     "灵长目·猴科",
+     "灵长目·长臂猿科"
+    ],
+    "classes": [
+     "rhesus macaque",
+     "golden snub-nosed monkey",
+     "black snub-nosed monkey",
+     "tibetan macaque",
+     "white-handed gibbon"
+    ]
+   }
+  ],
+  "en": "Primate"
+ },
+ "小型啮齿": {
+  "desc": "松鼠科 · 河狸科 · 旱獭科 · 鼠兔科",
+  "words": [
+   {
+    "en": "rodent on a tree",
+    "zh": "小型啮齿"
+   }
+  ],
+  "n": 1,
+  "group": "兽类",
+  "subs": [
+   {
+    "name": "小型啮齿 · 精确到种",
+    "desc": "红松鼠、花栗鼠、旱獭、鼠兔、河狸等组合",
+    "orders": [
+     "啮齿目·松鼠科",
+     "啮齿目·旱獭科",
+     "啮齿目·鼠兔科",
+     "啮齿目·河狸科"
+    ],
+    "classes": [
+     "eurasian red squirrel",
+     "chipmunk",
+     "groundhog",
+     "pika",
+     "beaver"
+    ]
+   }
+  ],
+  "en": "Small Rodent"
+ },
+ "猛禽": {
+  "desc": "鹰科 · 隼科 · 鸮科",
+  "words": [
+   {
+    "en": "snowy owl",
+    "zh": "猛禽"
+   },
+   {
+    "en": "white-tailed eagle",
+    "zh": "猛禽"
+   },
+   {
+    "en": "bird of prey",
+    "zh": "猛禽"
+   }
+  ],
+  "n": 3,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "猛禽 · 精确到种",
+    "desc": "金雕、白尾海雕、黑鸢、红隼、游隼、雀鹰等组合",
+    "orders": [
+     "隼形目"
+    ],
+    "classes": [
+     "golden eagle",
+     "white-tailed eagle",
+     "black kite",
+     "common kestrel",
+     "peregrine falcon",
+     "eurasian sparrowhawk"
+    ]
+   },
+   {
+    "name": "鸮形目夜行",
+    "desc": "雕鸮、雪鸮等组合",
+    "orders": [
+     "鸮形目"
+    ],
+    "classes": [
+     "eagle owl",
+     "snowy owl"
+    ]
+   }
+  ],
+  "en": "Raptor"
+ },
+ "涉禽": {
+  "desc": "鹤科 · 鹳科 · 鹭科 · 鹬科 · 鸻科",
+  "words": [
+   {
+    "en": "great egret",
+    "zh": "涉禽"
+   },
+   {
+    "en": "bird standing in shallow water",
+    "zh": "涉禽"
+   },
+   {
+    "en": "little egret",
+    "zh": "涉禽"
+   }
+  ],
+  "n": 3,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "鹤鹳涉禽",
+    "desc": "丹顶鹤、黑颈鹤、白枕鹤、黑鹇、东方白鹳等组合",
+    "orders": [
+     "鹤形目",
+     "鹳形目·鹳科"
+    ],
+    "classes": [
+     "red-crowned crane",
+     "black-necked crane",
+     "white-naped crane",
+     "black stork",
+     "oriental stork"
+    ]
+   },
+   {
+    "name": "鹭类",
+    "desc": "苍鹭、白鹭、大白鹭、牛背鹭、夜鹭等组合",
+    "orders": [
+     "鹳形目"
+    ],
+    "classes": [
+     "grey heron",
+     "little egret",
+     "great egret",
+     "cattle egret",
+     "black-crowned night heron"
+    ]
+   },
+   {
+    "name": "鸻鹬类",
+    "desc": "矶鹬、林鹬、青脚鹬、红脚鹬、黑翅长脚鹬、反嘴鹬、环嘴鸻、金眶鸻等组合",
+    "orders": [
+     "鸻形目"
+    ],
+    "classes": [
+     "common sandpiper",
+     "wood sandpiper",
+     "common greenshank",
+     "spotted redshank",
+     "black-winged stilt",
+     "pied avocet",
+     "kentish plover",
+     "little ringed plover"
+    ]
+   }
+  ],
+  "en": "Wading Bird"
+ },
+ "雁鸭": {
+  "desc": "雁形目 · 天鹅 · 雁 · 鸭",
+  "words": [
+   {
+    "en": "whooper swan",
+    "zh": "雁鸭"
+   },
+   {
+    "en": "tundra swan",
+    "zh": "雁鸭"
+   },
+   {
+    "en": "waterfowl",
+    "zh": "雁鸭"
+   },
+   {
+    "en": "swan goose",
+    "zh": "雁鸭"
+   },
+   {
+    "en": "mute swan",
+    "zh": "雁鸭"
+   },
+   {
+    "en": "bean goose",
+    "zh": "雁鸭"
+   }
+  ],
+  "n": 6,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "雁鸭天鹅",
+    "desc": "大天鹅、疣鼻天鹅、小天鹅、鸿雁、灰雁、绿头鸭、翘鼻麻鸭等组合",
+    "orders": [
+     "雁形目"
+    ],
+    "classes": [
+     "whooper swan",
+     "mute swan",
+     "tundra swan",
+     "swan goose",
+     "greylag goose",
+     "mallard",
+     "common shelduck"
+    ]
+   },
+   {
+    "name": "潜鸭与浮水鸭",
+    "desc": "绿头鸭、绿翅鸭、斑嘴鸭、针尾鸭、金眼鸭、秋沙鸭等组合",
+    "orders": [
+     "雁形目"
+    ],
+    "classes": [
+     "mallard",
+     "common teal",
+     "gadwall",
+     "northern shoveler",
+     "common goldeneye",
+     "common merganser"
+    ]
+   }
+  ],
+  "en": "Waterfowl"
+ },
+ "雉鸡": {
+  "desc": "雉科 · 石鸡 · 鹌鹑",
+  "words": [
+   {
+    "en": "lady amherst's pheasant",
+    "zh": "雉鸡"
+   },
+   {
+    "en": "bird foraging on the ground",
+    "zh": "雉鸡"
+   },
+   {
+    "en": "common pheasant",
+    "zh": "雉鸡"
+   }
+  ],
+  "n": 3,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "鸡形目",
+    "desc": "雉鸡、红腹锦鸡、白鹇、白鹇、石鸡、灰雉、藏雪鸡、鹌鹑、鹧鸪等组合",
+    "orders": [
+     "鸡形目"
+    ],
+    "classes": [
+     "common pheasant",
+     "golden pheasant",
+     "silver pheasant",
+     "swinhoe's pheasant",
+     "rock partridge",
+     "grey partridge",
+     "himalayan snowcock",
+     "common quail",
+     "chinese francolin"
+    ]
+   }
+  ],
+  "en": "Game Bird"
+ },
+ "鸠鸽类": {
+  "desc": "鸠鸽目 · 鸽 · 斑鸠",
+  "words": [
+   {
+    "en": "pigeon",
+    "zh": "鸠鸽类"
+   },
+   {
+    "en": "rock dove",
+    "zh": "鸠鸽类"
+   },
+   {
+    "en": "spotted dove",
+    "zh": "鸠鸽类"
+   }
+  ],
+  "n": 3,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "鸠鸽类 · 精确到种",
+    "desc": "原鸽、山斑鸠、珠颈斑鸠等组合",
+    "orders": [
+     "鸠鸽目"
+    ],
+    "classes": [
+     "rock dove",
+     "oriental turtle dove",
+     "spotted dove"
+    ]
+   }
+  ],
+  "en": "Pigeon and Dove"
+ },
+ "攀禽类": {
+  "desc": "佛法僧目 · 啄木鸟目 · 杜鹃目",
+  "words": [
+   {
+    "en": "bird clinging to a tree trunk",
+    "zh": "攀禽类"
+   },
+   {
+    "en": "colourful bird on a branch",
+    "zh": "攀禽类"
+   },
+   {
+    "en": "hoopoe",
+    "zh": "攀禽类"
+   },
+   {
+    "en": "himalayan cuckoo",
+    "zh": "攀禽类"
+   },
+   {
+    "en": "great spotted woodpecker",
+    "zh": "攀禽类"
+   },
+   {
+    "en": "common cuckoo",
+    "zh": "攀禽类"
+   }
+  ],
+  "n": 6,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "翠鸟与戴胜",
+    "desc": "翠鸟、戴胜等组合",
+    "orders": [
+     "佛法僧目"
+    ],
+    "classes": [
+     "common kingfisher",
+     "hoopoe"
+    ]
+   },
+   {
+    "name": "啄木鸟",
+    "desc": "大斑啄木鸟、灰头小啄木鸟等组合",
+    "orders": [
+     "啄木鸟目"
+    ],
+    "classes": [
+     "great spotted woodpecker",
+     "grey-capped pygmy woodpecker"
+    ]
+   },
+   {
+    "name": "杜鹃",
+    "desc": "大杜鹃、鹰鹃等组合",
+    "orders": [
+     "杜鹃目"
+    ],
+    "classes": [
+     "common cuckoo",
+     "himalayan cuckoo"
+    ]
+   }
+  ],
+  "en": "Climbing Bird"
+ },
+ "鸦类": {
+  "desc": "鸦科 · 喜鹊 · 乌鸦 · 渡鸦",
+  "words": [
+   {
+    "en": "black and white bird",
+    "zh": "鸦类"
+   },
+   {
+    "en": "large-billed crow",
+    "zh": "鸦类"
+   },
+   {
+    "en": "eurasian magpie",
+    "zh": "鸦类"
+   },
+   {
+    "en": "azure-winged magpie",
+    "zh": "鸦类"
+   },
+   {
+    "en": "northern raven",
+    "zh": "鸦类"
+   }
+  ],
+  "n": 5,
+  "group": "鸟类",
+  "subs": [],
+  "en": "Corvid"
+ },
+ "小型鸣禽": {
+  "desc": "雀形目 · 山雀 · 莺 · 雀 · 鸫 · 鹀",
+  "words": [
+   {
+    "en": "small songbird",
+    "zh": "小型鸣禽"
+   },
+   {
+    "en": "bird perched on a twig",
+    "zh": "小型鸣禽"
+   },
+   {
+    "en": "great tit",
+    "zh": "小型鸣禽"
+   },
+   {
+    "en": "eurasian tree sparrow",
+    "zh": "小型鸣禽"
+   },
+   {
+    "en": "yellow-browed warbler",
+    "zh": "小型鸣禽"
+   },
+   {
+    "en": "light-vented bulbul",
+    "zh": "小型鸣禽"
+   }
+  ],
+  "n": 6,
+  "group": "鸟类",
+  "subs": [
+   {
+    "name": "山雀与鸦科",
+    "desc": "大山雀、煤山雀、喜鹊、大嘴乌鸦、渡鸦、灰喜鹊、松鸦等组合",
+    "orders": [
+     "雀形目·山雀科",
+     "雀形目·鸦科"
+    ],
+    "classes": [
+     "great tit",
+     "coal tit",
+     "eurasian magpie",
+     "large-billed crow",
+     "northern raven",
+     "azure-winged magpie",
+     "eurasian jay"
+    ]
+   },
+   {
+    "name": "雀科与莺科",
+    "desc": "麻雀、山麻雀、黄眉柳莺、棕翅柳莺、欧亚鸲、蓝喉歌鸲等组合",
+    "orders": [
+     "雀形目·雀科",
+     "雀形目·鹟科"
+    ],
+    "classes": [
+     "eurasian tree sparrow",
+     "russet sparrow",
+     "yellow-browed warbler",
+     "dusky warbler",
+     "eurasian robin",
+     "bluethroat"
+    ]
+   }
+  ],
+  "en": "Songbird"
+ },
+ "_meta": {
+  "note": "生态类群专栏：只认生态类群，不细分到具体物种",
+  "source": "提示词由 YOLO-World 文本塔编码（与 species_emb 同源）",
+  "strategy": "类群专属词组 + 真实 ONNX 多槽推理评估（同类词同槽竞争，取组内覆盖与最低分最优组合）",
+  "coverage": "按物种库 22 个目重划为 13 个生态类群（兽类 5 + 鸟类 8）",
+  "n_cats": 13,
+  "report": {
+   "食肉动物": {
+    "n": 7,
+    "cover": 11,
+    "total": 11,
+    "min": 0.1409,
+    "avg": 0.7677,
+    "miss": [],
+    "words": [
+     "carnivorous mammal",
+     "wild cat",
+     "wolverine",
+     "leopard",
+     "gray wolf",
+     "asian black bear",
+     "raccoon"
+    ]
+   },
+   "熊猫类": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.876,
+    "avg": 0.9004,
+    "miss": [],
+    "words": [
+     "black and white bear",
+     "panda bear",
+     "red panda"
+    ]
+   },
+   "大型有蹄": {
+    "n": 3,
+    "cover": 3,
+    "total": 3,
+    "min": 0.8901,
+    "avg": 0.9193,
+    "miss": [],
+    "words": [
+     "large hoofed animal",
+     "deer with antlers",
+     "sika deer"
+    ]
+   },
+   "灵长类": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.689,
+    "avg": 0.7319,
+    "miss": [],
+    "words": [
+     "ape on a tree",
+     "tibetan macaque",
+     "monkey with a long tail"
+    ]
+   },
+   "小型啮齿": {
+    "n": 1,
+    "cover": 4,
+    "total": 4,
+    "min": 0.1205,
+    "avg": 0.694,
+    "miss": [],
+    "words": [
+     "rodent on a tree"
+    ]
+   },
+   "猛禽": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.9712,
+    "avg": 0.9807,
+    "miss": [],
+    "words": [
+     "snowy owl",
+     "white-tailed eagle",
+     "bird of prey"
+    ]
+   },
+   "涉禽": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.959,
+    "avg": 0.9678,
+    "miss": [],
+    "words": [
+     "great egret",
+     "bird standing in shallow water",
+     "little egret"
+    ]
+   },
+   "雁鸭": {
+    "n": 6,
+    "cover": 2,
+    "total": 2,
+    "min": 0.8379,
+    "avg": 0.8726,
+    "miss": [],
+    "words": [
+     "whooper swan",
+     "tundra swan",
+     "waterfowl",
+     "swan goose",
+     "mute swan",
+     "bean goose"
+    ]
+   },
+   "雉鸡": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.8872,
+    "avg": 0.9417,
+    "miss": [],
+    "words": [
+     "lady amherst's pheasant",
+     "bird foraging on the ground",
+     "common pheasant"
+    ]
+   },
+   "鸠鸽类": {
+    "n": 3,
+    "cover": 2,
+    "total": 2,
+    "min": 0.6807,
+    "avg": 0.7302,
+    "miss": [],
+    "words": [
+     "pigeon",
+     "rock dove",
+     "spotted dove"
+    ]
+   },
+   "攀禽类": {
+    "n": 6,
+    "cover": 4,
+    "total": 4,
+    "min": 0.73,
+    "avg": 0.8049,
+    "miss": [],
+    "words": [
+     "bird clinging to a tree trunk",
+     "colourful bird on a branch",
+     "hoopoe",
+     "himalayan cuckoo",
+     "great spotted woodpecker",
+     "common cuckoo"
+    ]
+   },
+   "鸦类": {
+    "n": 5,
+    "cover": 3,
+    "total": 3,
+    "min": 0.932,
+    "avg": 0.975,
+    "miss": [],
+    "words": [
+     "black and white bird",
+     "large-billed crow",
+     "eurasian magpie",
+     "azure-winged magpie",
+     "northern raven"
+    ]
+   },
+   "小型鸣禽": {
+    "n": 6,
+    "cover": 4,
+    "total": 4,
+    "min": 0.446,
+    "avg": 0.721,
+    "miss": [],
+    "words": [
+     "small songbird",
+     "bird perched on a twig",
+     "great tit",
+     "eurasian tree sparrow",
+     "yellow-browed warbler",
+     "light-vented bulbul"
+    ]
+   }
+  },
+  "groups": {
+   "兽类": [
+    "食肉动物",
+    "熊猫类",
+    "大型有蹄",
+    "灵长类",
+    "小型啮齿"
+   ],
+   "鸟类": [
+    "猛禽",
+    "涉禽",
+    "雁鸭",
+    "雉鸡",
+    "鸠鸽类",
+    "攀禽类",
+    "鸦类",
+    "小型鸣禽"
+   ]
+  },
+  "merged_presets": {
+   "note": "原「预设组合」独立模块已取消，内容按目/科归属并入各生态类群作为细分项",
+   "n_subs": 24,
+   "renamed_same_name": [
+    "灵长类",
+    "小型啮齿",
+    "猛禽",
+    "鸠鸽类"
+   ],
+   "rule": "预设与类群同名时降级为该类群的「精确到种」细分，不再并列"
+  },
+  "cat_en": "13 个生态类群的英文名（类群模式下的结果英文列显示此名，不暴露内部提示词）"
+ }
+}
