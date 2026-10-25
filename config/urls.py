@@ -14,7 +14,6 @@ from app_monitor.views import (
     ArticleViewSet, SpeciesImageViewSet,
     ai_chat, map_observations,
 )
-from app_monitor import huiyan
 
 # === 1. 注册 API 路由 ===
 router = DefaultRouter()
@@ -73,16 +72,7 @@ urlpatterns = [
     path('bird-page/', bird_recognition_page, name='bird_recognition'),
 
     # 方舟慧眼（同源封装：不再启动独立 8765 服务）
-    path('huiyan/', huiyan.page, name='huiyan'),
-    path('huiyan/api/status', huiyan.status, name='huiyan_status'),
-    path('huiyan/api/geosearch', huiyan.geosearch, name='huiyan_geosearch'),
-    path('huiyan/api/detect', huiyan.detect, name='huiyan_detect'),
-    path('huiyan/api/detect_batch', huiyan.detect_batch, name='huiyan_detect_batch'),
-    path('huiyan/api/convert', huiyan.convert, name='huiyan_convert'),
-    path('huiyan/api/relabel', huiyan.relabel, name='huiyan_relabel'),
-    path('huiyan/api/export_xlsx', huiyan.export_xlsx, name='huiyan_export_xlsx'),
-    path('huiyan/api/tile', huiyan.tile, name='huiyan_tile'),
-    re_path(r'^huiyan/api/tile/(?P<tile_path>.*)$', huiyan.tile, name='huiyan_tile_path'),
+    path('', include('config.huiyan_urls')),
 ]
 
 # === 3. 开发环境静态文件服务 ===

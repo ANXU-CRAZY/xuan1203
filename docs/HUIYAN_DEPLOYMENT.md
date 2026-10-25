@@ -10,7 +10,7 @@
 
 ## 生产进程
 
-主站已有 5 个 Gunicorn 工作进程。为避免每个进程都加载一份模型，`/huiyan/` 交给单独的 `fangzhou-huiyan.service`，仍运行同一份 Django 代码，只绑定 `/run/fangzhou-huiyan.sock`。公网没有新增端口。
+主站已有 5 个 Gunicorn 工作进程。为避免每个进程都加载一份模型，`/huiyan/` 交给单独的 `fangzhou-huiyan.service`，使用 `config.huiyan_wsgi:application`，仍运行同一份 Django 代码，只绑定 `/run/fangzhou-huiyan.sock`。该入口复用主站设置及慧眼路由，避免载入原有水鸟识别页面的 PyTorch 运行库。公网没有新增端口。
 
 - 识别进程：1 个工作进程、2 个线程、CPU 配额 150%、内存软限制 640MB、硬限制 900MB。
 - 主站 `gunicorn` 配置、数据库、天地图 key 与小舟密钥保持原值。
