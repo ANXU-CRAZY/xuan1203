@@ -300,6 +300,13 @@ def resolve_category(cat: str) -> list[tuple[str, str, np.ndarray]]:
     for w in cfg.get("words", []):
         en = w["en"]
         v = cemb.get(en)
+        # Updated groups also contain species prompts (e.g. muntjac, takin)
+        # absent from the separate category embeddings. Both catalogs use the
+        # same text encoder; reuse the exact species vector for those prompts.
+        if v is None:
+            row = SESSION["index"].get(en.lower())
+            if row is not None:
+                v = SESSION["emb"][row]
         if v is None:
             continue
         # 中文名统一用大类名 —— 结果只标大类，不暴露内部提示词
