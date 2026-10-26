@@ -1,0 +1,440 @@
+{
+  "sources": [
+    {
+      "source": "巩义监控塔坐标.ovobj",
+      "sha256": "39bf340c2b82c49b4bbb283fbdb0b6eb207a42606af7aaa5830556d5ff6b4b29",
+      "kind": "existing",
+      "count": 14,
+      "points": [
+        {
+          "name": "俩沟村",
+          "description": "3\n",
+          "longitude": 112.8289383,
+          "latitude": 34.808491599999996,
+          "coordinate_offset": 136,
+          "record_offset": 459
+        },
+        {
+          "name": "赵沟村",
+          "description": "3\n",
+          "longitude": 112.865405,
+          "latitude": 34.8288366,
+          "coordinate_offset": 136,
+          "record_offset": 643
+        },
+        {
+          "name": "井沟村",
+          "description": "3\n",
+          "longitude": 112.883265,
+          "latitude": 34.8405766,
+          "coordinate_offset": 136,
+          "record_offset": 827
+        },
+        {
+          "name": "扎峪村",
+          "description": "3\n",
+          "longitude": 112.9202333,
+          "latitude": 34.8329816,
+          "coordinate_offset": 136,
+          "record_offset": 1011
+        },
+        {
+          "name": "裴峪村西",
+          "description": "3\n",
+          "longitude": 112.9438816,
+          "latitude": 34.8335583,
+          "coordinate_offset": 136,
+          "record_offset": 1195
+        },
+        {
+          "name": "裴峪村",
+          "description": "3\n",
+          "longitude": 112.960065,
+          "latitude": 34.8408333,
+          "coordinate_offset": 136,
+          "record_offset": 1382
+        },
+        {
+          "name": "石板沟村",
+          "description": "3\n",
+          "longitude": 112.9814033,
+          "latitude": 34.8445983,
+          "coordinate_offset": 136,
+          "record_offset": 1566
+        },
+        {
+          "name": "康沟村",
+          "description": "3\n",
+          "longitude": 113.022579,
+          "latitude": 34.881376,
+          "coordinate_offset": 136,
+          "record_offset": 1753
+        },
+        {
+          "name": "神南村",
+          "description": "3\n",
+          "longitude": 113.033355,
+          "latitude": 34.8386933,
+          "coordinate_offset": 136,
+          "record_offset": 1937
+        },
+        {
+          "name": "马峪沟村",
+          "description": "3\n",
+          "longitude": 112.9039116,
+          "latitude": 34.84359,
+          "coordinate_offset": 136,
+          "record_offset": 2121
+        },
+        {
+          "name": "七里铺村",
+          "description": "3\n",
+          "longitude": 113.069885,
+          "latitude": 34.836625,
+          "coordinate_offset": 136,
+          "record_offset": 2308
+        },
+        {
+          "name": "滩小关村",
+          "description": "3\n",
+          "longitude": 113.0942149,
+          "latitude": 34.831865,
+          "coordinate_offset": 136,
+          "record_offset": 2495
+        },
+        {
+          "name": "沙鱼沟村",
+          "description": "3\n",
+          "longitude": 113.1129933,
+          "latitude": 34.8369633,
+          "coordinate_offset": 136,
+          "record_offset": 2682
+        },
+        {
+          "name": "金口村",
+          "description": "3\n",
+          "longitude": 113.1300299,
+          "latitude": 34.8370383,
+          "coordinate_offset": 136,
+          "record_offset": 2869
+        }
+      ]
+    },
+    {
+      "source": "中牟监控塔坐标位置.ovobj",
+      "sha256": "dd182a7a1391728ffef8911d3d0841ccec8cfab4bdf5cc93bc984b02238e71f9",
+      "kind": "existing",
+      "count": 8,
+      "points": [
+        {
+          "name": "东狼村1",
+          "description": "监控塔坐标",
+          "longitude": 114.203399,
+          "latitude": 34.89732,
+          "coordinate_offset": 136,
+          "record_offset": 465
+        },
+        {
+          "name": "东狼村2",
+          "description": "监控塔坐标",
+          "longitude": 114.199536,
+          "latitude": 34.903918,
+          "coordinate_offset": 136,
+          "record_offset": 663
+        },
+        {
+          "name": "东狼村3",
+          "description": "监控塔坐标",
+          "longitude": 114.198353,
+          "latitude": 34.898942,
+          "coordinate_offset": 136,
+          "record_offset": 861
+        },
+        {
+          "name": "西狼村",
+          "description": "监控塔坐标",
+          "longitude": 114.194247,
+          "latitude": 34.899945,
+          "coordinate_offset": 136,
+          "record_offset": 1059
+        },
+        {
+          "name": "韦滩村1",
+          "description": "监控塔坐标",
+          "longitude": 114.181038,
+          "latitude": 34.903195,
+          "coordinate_offset": 136,
+          "record_offset": 1256
+        },
+        {
+          "name": "韦滩村2",
+          "description": "监控塔坐标",
+          "longitude": 114.169726,
+          "latitude": 34.907598,
+          "coordinate_offset": 136,
+          "record_offset": 1454
+        },
+        {
+          "name": "韦滩村3",
+          "description": "监控塔坐标",
+          "longitude": 114.159145,
+          "latitude": 34.907503,
+          "coordinate_offset": 136,
+          "record_offset": 1652
+        },
+        {
+          "name": "韦滩村4",
+          "description": "监控塔坐标",
+          "longitude": 114.15499,
+          "latitude": 34.908787,
+          "coordinate_offset": 136,
+          "record_offset": 1850
+        }
+      ]
+    },
+    {
+      "source": "文件夹_拟新建监控塔.ovobj",
+      "sha256": "8a4a17336a90d65b66f6ab2371c1a06b253ffcdf2c489220aab288430c6bb472",
+      "kind": "planned",
+      "count": 29,
+      "points": [
+        {
+          "name": "拟新建1（保护区新边界）",
+          "description": "拟新建",
+          "longitude": 112.8241932,
+          "latitude": 34.81650308,
+          "coordinate_offset": 136,
+          "record_offset": 658
+        },
+        {
+          "name": "拟新建2（沁伊高速西）",
+          "description": "拟新建",
+          "longitude": 112.8836095,
+          "latitude": 34.83336908,
+          "coordinate_offset": 136,
+          "record_offset": 874
+        },
+        {
+          "name": "拟新建3（石板沟北）",
+          "description": "拟新建",
+          "longitude": 112.9982901,
+          "latitude": 34.84895934,
+          "coordinate_offset": 136,
+          "record_offset": 1087
+        },
+        {
+          "name": "拟新建4（河洛汇流西）",
+          "description": "拟新建",
+          "longitude": 113.0436301,
+          "latitude": 34.83449189,
+          "coordinate_offset": 136,
+          "record_offset": 1297
+        },
+        {
+          "name": "拟新建5（洛汭公园北）",
+          "description": "拟新建",
+          "longitude": 113.1008256,
+          "latitude": 34.8311102,
+          "coordinate_offset": 136,
+          "record_offset": 1510
+        },
+        {
+          "name": "拟新建6（水厂西）",
+          "description": "拟新建",
+          "longitude": 113.1363809,
+          "latitude": 34.83625312,
+          "coordinate_offset": 136,
+          "record_offset": 1723
+        },
+        {
+          "name": "拟新建7（饮马台）",
+          "description": "拟新建",
+          "longitude": 113.16891440837705,
+          "latitude": 34.83674546684542,
+          "coordinate_offset": 136,
+          "record_offset": 1930
+        },
+        {
+          "name": "拟新建8（焦平高速东）",
+          "description": "拟新建",
+          "longitude": 113.2257738,
+          "latitude": 34.87439217,
+          "coordinate_offset": 136,
+          "record_offset": 2137
+        },
+        {
+          "name": "拟新建9（王村鱼塘）",
+          "description": "拟新建",
+          "longitude": 113.2641506,
+          "latitude": 34.91412381,
+          "coordinate_offset": 136,
+          "record_offset": 2350
+        },
+        {
+          "name": "拟新建10 （g234西）",
+          "description": "拟新建",
+          "longitude": 113.2988584,
+          "latitude": 34.93980925,
+          "coordinate_offset": 136,
+          "record_offset": 2560
+        },
+        {
+          "name": "拟新建11 （刘沟北）",
+          "description": "拟新建",
+          "longitude": 113.3752598,
+          "latitude": 34.96589896,
+          "coordinate_offset": 136,
+          "record_offset": 2767
+        },
+        {
+          "name": "飞龙顶拟建监控塔 26",
+          "description": "",
+          "longitude": 113.37090253829956,
+          "latitude": 34.96490196616792,
+          "coordinate_offset": 372,
+          "record_offset": 2976
+        },
+        {
+          "name": "孤柏渡拟建监控塔 27",
+          "description": "",
+          "longitude": 113.22948575019836,
+          "latitude": 34.89818071616172,
+          "coordinate_offset": 136,
+          "record_offset": 3413
+        },
+        {
+          "name": "南裹头拟建监控塔 28",
+          "description": "",
+          "longitude": 113.60690474510193,
+          "latitude": 34.93062674936971,
+          "coordinate_offset": 136,
+          "record_offset": 3613
+        },
+        {
+          "name": "马渡拟建监控塔 29",
+          "description": "",
+          "longitude": 113.78280401229858,
+          "latitude": 34.8829210181663,
+          "coordinate_offset": 136,
+          "record_offset": 3813
+        },
+        {
+          "name": "拟新建12 （王沟北）",
+          "description": "拟新建",
+          "longitude": 113.4349135,
+          "latitude": 34.95600366,
+          "coordinate_offset": 136,
+          "record_offset": 4010
+        },
+        {
+          "name": "拟新建13 （桃花峪）",
+          "description": "拟新建",
+          "longitude": 113.4931898,
+          "latitude": 34.95690496,
+          "coordinate_offset": 136,
+          "record_offset": 4219
+        },
+        {
+          "name": "拟新建14  （浮桥广场）",
+          "description": "拟新建",
+          "longitude": 113.53917926768453,
+          "latitude": 34.954154732220154,
+          "coordinate_offset": 136,
+          "record_offset": 4428
+        },
+        {
+          "name": "拟新建15  （南裹头西）",
+          "description": "拟新建",
+          "longitude": 113.5837841,
+          "latitude": 34.93921119,
+          "coordinate_offset": 136,
+          "record_offset": 4641
+        },
+        {
+          "name": "拟新建16  （南裹头）",
+          "description": "拟新建",
+          "longitude": 113.6326647,
+          "latitude": 34.92383596,
+          "coordinate_offset": 136,
+          "record_offset": 4854
+        },
+        {
+          "name": "拟新建17  （湿地公园）",
+          "description": "拟新建",
+          "longitude": 113.6604416,
+          "latitude": 34.90827309,
+          "coordinate_offset": 136,
+          "record_offset": 5064
+        },
+        {
+          "name": "拟新建18  （南月堤北）",
+          "description": "拟新建",
+          "longitude": 113.6896509,
+          "latitude": 34.90469207,
+          "coordinate_offset": 136,
+          "record_offset": 5277
+        },
+        {
+          "name": "拟新建19  （京港澳西）",
+          "description": "拟新建",
+          "longitude": 113.81705,
+          "latitude": 34.87517437,
+          "coordinate_offset": 136,
+          "record_offset": 5490
+        },
+        {
+          "name": "拟新建20  （三刘寨）",
+          "description": "拟新建",
+          "longitude": 113.95430937827463,
+          "latitude": 34.88399571940035,
+          "coordinate_offset": 136,
+          "record_offset": 5703
+        },
+        {
+          "name": "拟新建21  （九堡北）",
+          "description": "拟新建",
+          "longitude": 114.0253708,
+          "latitude": 34.93077163,
+          "coordinate_offset": 136,
+          "record_offset": 5913
+        },
+        {
+          "name": "拟新建22  （张庄北）",
+          "description": "拟新建",
+          "longitude": 114.0526128,
+          "latitude": 34.94155064,
+          "coordinate_offset": 136,
+          "record_offset": 6123
+        },
+        {
+          "name": "拟新建23  （南仁西）",
+          "description": "拟新建",
+          "longitude": 114.096067,
+          "latitude": 34.92286033,
+          "coordinate_offset": 136,
+          "record_offset": 6333
+        },
+        {
+          "name": "拟新建24  （南仁北）",
+          "description": "拟新建",
+          "longitude": 114.1222397,
+          "latitude": 34.9219603,
+          "coordinate_offset": 136,
+          "record_offset": 6543
+        },
+        {
+          "name": "拟新建25  安罗东",
+          "description": "拟新建",
+          "longitude": 114.1517721,
+          "latitude": 34.91741935,
+          "coordinate_offset": 136,
+          "record_offset": 6753
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "existing": 22,
+    "planned": 29
+  }
+}

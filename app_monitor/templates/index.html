@@ -972,6 +972,7 @@
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-5">
 {% include "app_monitor/site_theme.html" %}
 <link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261024-2">
+<link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261026-7">
 </head>
 <body data-ark-page="monitor">
 
@@ -982,9 +983,9 @@
         <div class="brand-copy"><span class="brand-title">黄河生态方舟</span><small>方舟实验室 · 郑州大学地球科学与技术学院 · 郑州市自然保护地事务中心</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
-        <button id="games-toggle" class="nav-btn nav-games" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span><i class="fas fa-chevron-down games-chevron" aria-hidden="true"></i></button>
         <a href="/huiyan/" class="nav-btn nav-huiyan"><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
         <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus" aria-hidden="true"></i><span>上报</span></a>
+        <button id="games-toggle" class="nav-btn nav-games" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span><i class="fas fa-chevron-down games-chevron" aria-hidden="true"></i></button>
         <a href="/species/" class="nav-btn nav-species"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
         <a href="/articles/" class="nav-btn nav-articles"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
         <a href="/gallery/" class="nav-btn nav-gallery"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
@@ -1267,7 +1268,8 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261024-7"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261026-4"></script>
+<script src="/static/app_monitor/monitoring-towers.js?v=20261026-8"></script>
 <script>
     const app = {
         api: '/api',
@@ -1441,11 +1443,73 @@
             this.layerControl = layerControl;
             this.baseLayers = { vec, img, blank, labelLayer };
             setTimeout(() => {
-                if (innerWidth > 1024) layerControl.expand();
-                else layerControl.collapse();
+                layerControl.collapse();
                 const controlEl = layerControl.getContainer();
                 const toggleEl = controlEl ? controlEl.querySelector('.leaflet-control-layers-toggle') : null;
                 if (toggleEl) {
+                    // Use an explicit click popover on every screen size.
+                    // Leaflet's hover expansion otherwise opens it accidentally.
+                    L.DomEvent.off(controlEl, 'mouseenter mouseleave');
+                    L.DomEvent.off(toggleEl, 'focus click');
+                    toggleEl.title = '地图图层';
+                    toggleEl.setAttribute('aria-label', '展开地图图层');
+                    toggleEl.setAttribute('aria-expanded', 'false');
+                    toggleEl.setAttribute('aria-controls', 'map-layer-options');
+                    const list = controlEl.querySelector('.leaflet-control-layers-list');
+                    list.id = 'map-layer-options';
+                    const head = document.createElement('div');
+                    head.className = 'map-layer-menu-head';
+                    head.innerHTML = '<strong>地图图层</strong><button type="button" aria-label="收起地图图层" title="收起">×</button>';
+                    list.prepend(head);
+                    head.querySelector('button').onclick = () => { layerControl.collapse(); toggleEl.focus({preventScroll:true}); };
+                    controlEl.addEventListener('keydown', (event) => {
+                        if (event.key !== 'Escape') return;
+                        event.preventDefault(); event.stopPropagation();
+                        layerControl.collapse(); toggleEl.focus({preventScroll:true});
+                    });
+                    for (const [selector, text] of [['.leaflet-control-layers-base', '底图']]) {
+                        const title = document.createElement('div');
+                        title.className = 'map-layer-section-title';
+                        title.textContent = text;
+                        controlEl.querySelector(selector).before(title);
+                    }
+                    const overlayList = controlEl.querySelector('.leaflet-control-layers-overlays');
+                    const groupObserver = new MutationObserver(() => groupLayerOptions());
+                    const groupLayerOptions = () => {
+                        groupObserver.disconnect();
+                        const groups = [
+                            {key:'reference',name:'地图参考',labels:[]},
+                            {key:'protection',name:'保护区范围',labels:[]},
+                            {key:'birds',name:'鸟类监测',labels:[]},
+                            {key:'towers',name:'监控设施',labels:[]},
+                            {key:'other',name:'其他图层',labels:[]}
+                        ];
+                        for (const label of [...overlayList.querySelectorAll('label')]) {
+                            const text = label.textContent.trim();
+                            const key = label.querySelector('[data-tower-layer]') ? 'towers' :
+                                label.querySelector('.protected-layer-key') ? 'protection' :
+                                ['监测点位','监测样线','观鸟记录'].includes(text) ? 'birds' :
+                                ['图层注记','行政区界'].includes(text) ? 'reference' : 'other';
+                            groups.find(group => group.key === key).labels.push(label);
+                        }
+                        overlayList.replaceChildren();
+                        for (const group of groups.filter(item => item.labels.length)) {
+                            const section = document.createElement('div');
+                            section.className = 'map-layer-group';
+                            section.dataset.layerGroup = group.key;
+                            const title = document.createElement('div');
+                            title.className = 'map-layer-section-title';
+                            title.textContent = group.name;
+                            const options = document.createElement('div');
+                            options.className = 'map-layer-group-options';
+                            options.append(...group.labels);
+                            section.append(title, options);
+                            overlayList.append(section);
+                        }
+                        groupObserver.observe(overlayList, {childList:true});
+                        this.layoutMonitoring?.();
+                    };
+                    groupLayerOptions();
                     toggleEl.addEventListener('click', (event) => {
                         event.preventDefault();
                         event.stopImmediatePropagation();
@@ -1454,6 +1518,7 @@
                             layerControl.collapse();
                         } else {
                             layerControl.expand();
+                            head.querySelector('button').focus({preventScroll:true});
                         }
                     }, true);
                 }
@@ -2959,6 +3024,7 @@
     });
 
     installMonitoringDashboard(app);
+    installMonitoringTowers(app);
     app.init();
 </script>
 </body>

@@ -1,0 +1,876 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "raw_coordinates_preserved": true,
+    "coordinate_note": "保留附件原始经纬度，未做坐标偏移转换；坐标系尚待来源方确认。"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.8289383,
+          34.808491599999996
+        ]
+      },
+      "properties": {
+        "name": "俩沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.865405,
+          34.8288366
+        ]
+      },
+      "properties": {
+        "name": "赵沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.883265,
+          34.8405766
+        ]
+      },
+      "properties": {
+        "name": "井沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.9202333,
+          34.8329816
+        ]
+      },
+      "properties": {
+        "name": "扎峪村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.9438816,
+          34.8335583
+        ]
+      },
+      "properties": {
+        "name": "裴峪村西",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.960065,
+          34.8408333
+        ]
+      },
+      "properties": {
+        "name": "裴峪村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.9814033,
+          34.8445983
+        ]
+      },
+      "properties": {
+        "name": "石板沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.022579,
+          34.881376
+        ]
+      },
+      "properties": {
+        "name": "康沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.033355,
+          34.8386933
+        ]
+      },
+      "properties": {
+        "name": "神南村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.9039116,
+          34.84359
+        ]
+      },
+      "properties": {
+        "name": "马峪沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.069885,
+          34.836625
+        ]
+      },
+      "properties": {
+        "name": "七里铺村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-12",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.0942149,
+          34.831865
+        ]
+      },
+      "properties": {
+        "name": "滩小关村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-13",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.1129933,
+          34.8369633
+        ]
+      },
+      "properties": {
+        "name": "沙鱼沟村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-2b14c80f42-14",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.1300299,
+          34.8370383
+        ]
+      },
+      "properties": {
+        "name": "金口村",
+        "kind": "existing",
+        "source": "巩义监控塔坐标.ovobj",
+        "source_description": "3\n"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.203399,
+          34.89732
+        ]
+      },
+      "properties": {
+        "name": "东狼村1",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.199536,
+          34.903918
+        ]
+      },
+      "properties": {
+        "name": "东狼村2",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.198353,
+          34.898942
+        ]
+      },
+      "properties": {
+        "name": "东狼村3",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.194247,
+          34.899945
+        ]
+      },
+      "properties": {
+        "name": "西狼村",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.181038,
+          34.903195
+        ]
+      },
+      "properties": {
+        "name": "韦滩村1",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.169726,
+          34.907598
+        ]
+      },
+      "properties": {
+        "name": "韦滩村2",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.159145,
+          34.907503
+        ]
+      },
+      "properties": {
+        "name": "韦滩村3",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "existing-ed71d29603-8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.15499,
+          34.908787
+        ]
+      },
+      "properties": {
+        "name": "韦滩村4",
+        "kind": "existing",
+        "source": "中牟监控塔坐标位置.ovobj",
+        "source_description": "监控塔坐标"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.8241932,
+          34.81650308
+        ]
+      },
+      "properties": {
+        "name": "拟新建1（保护区新边界）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.8836095,
+          34.83336908
+        ]
+      },
+      "properties": {
+        "name": "拟新建2（沁伊高速西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.9982901,
+          34.84895934
+        ]
+      },
+      "properties": {
+        "name": "拟新建3（石板沟北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.0436301,
+          34.83449189
+        ]
+      },
+      "properties": {
+        "name": "拟新建4（河洛汇流西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.1008256,
+          34.8311102
+        ]
+      },
+      "properties": {
+        "name": "拟新建5（洛汭公园北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.1363809,
+          34.83625312
+        ]
+      },
+      "properties": {
+        "name": "拟新建6（水厂西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.16891440837705,
+          34.83674546684542
+        ]
+      },
+      "properties": {
+        "name": "拟新建7（饮马台）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.2257738,
+          34.87439217
+        ]
+      },
+      "properties": {
+        "name": "拟新建8（焦平高速东）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.2641506,
+          34.91412381
+        ]
+      },
+      "properties": {
+        "name": "拟新建9（王村鱼塘）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.2988584,
+          34.93980925
+        ]
+      },
+      "properties": {
+        "name": "拟新建10 （g234西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.3752598,
+          34.96589896
+        ]
+      },
+      "properties": {
+        "name": "拟新建11 （刘沟北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-12",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.37090253829956,
+          34.96490196616792
+        ]
+      },
+      "properties": {
+        "name": "飞龙顶拟建监控塔 26",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-13",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.22948575019836,
+          34.89818071616172
+        ]
+      },
+      "properties": {
+        "name": "孤柏渡拟建监控塔 27",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-14",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.60690474510193,
+          34.93062674936971
+        ]
+      },
+      "properties": {
+        "name": "南裹头拟建监控塔 28",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-15",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.78280401229858,
+          34.8829210181663
+        ]
+      },
+      "properties": {
+        "name": "马渡拟建监控塔 29",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-16",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.4349135,
+          34.95600366
+        ]
+      },
+      "properties": {
+        "name": "拟新建12 （王沟北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-17",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.4931898,
+          34.95690496
+        ]
+      },
+      "properties": {
+        "name": "拟新建13 （桃花峪）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-18",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.53917926768453,
+          34.954154732220154
+        ]
+      },
+      "properties": {
+        "name": "拟新建14  （浮桥广场）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-19",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.5837841,
+          34.93921119
+        ]
+      },
+      "properties": {
+        "name": "拟新建15  （南裹头西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-20",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.6326647,
+          34.92383596
+        ]
+      },
+      "properties": {
+        "name": "拟新建16  （南裹头）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-21",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.6604416,
+          34.90827309
+        ]
+      },
+      "properties": {
+        "name": "拟新建17  （湿地公园）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-22",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.6896509,
+          34.90469207
+        ]
+      },
+      "properties": {
+        "name": "拟新建18  （南月堤北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-23",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.81705,
+          34.87517437
+        ]
+      },
+      "properties": {
+        "name": "拟新建19  （京港澳西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-24",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.95430937827463,
+          34.88399571940035
+        ]
+      },
+      "properties": {
+        "name": "拟新建20  （三刘寨）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-25",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.0253708,
+          34.93077163
+        ]
+      },
+      "properties": {
+        "name": "拟新建21  （九堡北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-26",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.0526128,
+          34.94155064
+        ]
+      },
+      "properties": {
+        "name": "拟新建22  （张庄北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-27",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.096067,
+          34.92286033
+        ]
+      },
+      "properties": {
+        "name": "拟新建23  （南仁西）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-28",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.1222397,
+          34.9219603
+        ]
+      },
+      "properties": {
+        "name": "拟新建24  （南仁北）",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "planned-2669380c44-29",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.1517721,
+          34.91741935
+        ]
+      },
+      "properties": {
+        "name": "拟新建25  安罗东",
+        "kind": "planned",
+        "source": "文件夹_拟新建监控塔.ovobj",
+        "source_description": "拟新建"
+      }
+    }
+  ]
+}

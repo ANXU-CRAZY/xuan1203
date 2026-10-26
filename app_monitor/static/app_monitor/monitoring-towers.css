@@ -1,0 +1,107 @@
+/* A compact click-to-open layer popover, matching the dashboard palette. */
+body[data-ark-page="monitor"] .leaflet-control-layers {
+    border-radius:13px !important; background:#fffffffa !important;
+    box-shadow:0 4px 18px #173f4914 !important;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers:not(.leaflet-control-layers-expanded) {
+    padding:0; border:1px solid #dce8e7 !important;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers-expanded {
+    width:380px; max-width:calc(100vw - 40px); padding:9px 11px 11px; box-sizing:border-box;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers-list {
+    max-height:var(--map-layer-list-height,calc(100dvh - 240px)) !important;
+    overflow-y:auto; overflow-x:hidden; scrollbar-width:thin;
+}
+.map-layer-menu-head {
+    position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between;
+    padding:1px 0 8px; background:#fff; border-bottom:1px solid #edf2f1;
+}
+.map-layer-menu-head strong { color:#234950; font-size:14px; font-weight:700; }
+.map-layer-menu-head button {
+    width:25px; height:25px; border:0; border-radius:7px; background:#eff5f4;
+    color:#5d777a; cursor:pointer; font:20px/1 sans-serif;
+}
+.map-layer-menu-head button:hover { background:#e0eeec; color:#236a72; }
+.map-layer-section-title { padding:9px 1px 6px; color:#7c9093; font-size:11px; font-weight:600; }
+body[data-ark-page="monitor"] :is(.leaflet-control-layers-base,.map-layer-group-options) {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px 7px;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers-overlays { display:flex; flex-direction:column; gap:0; }
+body[data-ark-page="monitor"] :is([data-layer-group="protection"],[data-layer-group="birds"]) .map-layer-group-options {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+}
+body[data-ark-page="monitor"] .leaflet-control-layers-base { grid-template-columns:repeat(3,minmax(0,1fr)); }
+body[data-ark-page="monitor"] .leaflet-control-layers-base label { white-space:nowrap; padding:2px 4px; }
+body[data-ark-page="monitor"] .leaflet-control-layers label {
+    margin:0; min-width:0; padding:2px 5px; box-sizing:border-box;
+    border:1px solid #e6edec; border-radius:7px; background:#fafcfb; font-size:12px;
+    transition:background .12s,border-color .12s;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers label:has(input:checked) {
+    background:#eef7f5; border-color:#c3deda; color:#236a72;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers label:hover {
+    background:#e8f3f1; border-color:#a7cfc9;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers label > span {
+    display:flex; align-items:center; gap:5px; min-height:26px;
+}
+body[data-ark-page="monitor"] .leaflet-control-layers label > span > span { min-width:0; }
+body[data-ark-page="monitor"] .leaflet-control-layers input { flex:0 0 auto; width:12px; height:12px; margin:0; }
+body[data-ark-page="monitor"] .leaflet-control-layers-separator { display:none; }
+body[data-ark-page="monitor"] .tower-layer-label { flex-wrap:wrap; gap:2px; font-size:11.5px; }
+@media (max-width:1399px) {
+    body[data-ark-page="monitor"] .leaflet-top.leaflet-left { top:var(--monitor-sidebar-top,160px); }
+}
+@media (min-width:769px) {
+    body[data-ark-page="monitor"] #rank-panel { max-height:var(--map-live-max-height,none); }
+}
+@media (max-width:768px) {
+    body[data-ark-page="monitor"] .leaflet-control-layers { margin-left:0; }
+    body[data-ark-page="monitor"] .leaflet-control-layers-expanded { max-width:calc(100vw - 24px); }
+    body[data-ark-page="monitor"] .leaflet-control-layers label { font-size:12px; }
+    body[data-ark-page="monitor"] .leaflet-control-layers label > span { min-height:28px; }
+}
+@media (max-width:360px) {
+    body[data-ark-page="monitor"] .leaflet-control-layers-base label { font-size:11px; }
+}
+.monitoring-tower-marker {
+    --tower-color:#147d87;
+    background:none; border:0; color:var(--tower-color);
+}
+.monitoring-tower-marker.is-planned { --tower-color:#d88721; }
+.leaflet-pane.monitoring-towers-hidden { display:none; }
+.monitoring-tower-symbol {
+    display:block; width:100%; height:100%; transform-origin:50% 95%;
+    filter:drop-shadow(0 1px 1px #fff) drop-shadow(0 2px 2px #0003);
+    transition:transform .15s ease;
+}
+.monitoring-tower-marker:hover .monitoring-tower-symbol,
+.monitoring-tower-marker:focus-visible .monitoring-tower-symbol,
+.monitoring-tower-marker.is-selected .monitoring-tower-symbol { transform:scale(1.08); }
+.monitoring-tower-marker.is-selected { filter:drop-shadow(0 0 5px #00adb580); }
+.tower-layer-label { display:inline-flex; align-items:center; gap:5px; }
+.tower-layer-label svg { width:15px; height:20px; color:#147d87; flex-shrink:0; }
+.tower-layer-label.is-planned svg { color:#d88721; }
+.leaflet-tooltip.monitoring-tower-tooltip {
+    border:1px solid #d8e8e8; border-radius:7px; background:#fffffff2;
+    color:#24525b; font-family:inherit; font-size:12px; font-weight:600;
+    padding:4px 8px; box-shadow:0 2px 10px #133e4b17; pointer-events:none;
+    width:max-content; max-width:min(260px,calc(100vw - 48px));
+    white-space:nowrap; writing-mode:horizontal-tb; line-height:1.4;
+    overflow:hidden; text-overflow:ellipsis;
+}
+.leaflet-tooltip.monitoring-tower-tooltip.is-planned { color:#966014; border-color:#eedab8; }
+.monitoring-tower-popup .leaflet-popup-content-wrapper { border-radius:12px; }
+.monitoring-tower-popup .leaflet-popup-content { margin:15px 18px; max-width:calc(100vw - 76px); }
+.tower-popup-heading { display:flex; align-items:flex-start; gap:10px; padding-right:10px; }
+.tower-popup-heading svg { width:25px; height:34px; color:#147d87; flex-shrink:0; }
+.tower-popup.is-planned .tower-popup-heading svg { color:#d88721; }
+.tower-popup-heading strong { font-size:16px; line-height:1.5; margin:0 0 3px; overflow-wrap:anywhere; }
+.tower-popup-badge { display:inline-block; border-radius:99px; padding:2px 8px; background:#e8f5f3; color:#147d87; font-size:11px; }
+.tower-popup.is-planned .tower-popup-badge { background:#fff3df; color:#996314; }
+.tower-layer-error { color:#b54242; font-size:11px; font-weight:500; margin-left:5px; }
+body.heat-selecting .monitoring-tower-marker,
+body.analysis-selecting .monitoring-tower-marker { cursor:crosshair !important; }
+@media (prefers-reduced-motion:reduce) { .monitoring-tower-symbol { transition:none; } }

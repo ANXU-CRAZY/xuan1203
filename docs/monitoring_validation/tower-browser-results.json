@@ -1,0 +1,126 @@
+{
+  "checks": [
+    {
+      "name": "图层菜单默认收起",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "首页与两个默认图层",
+      "passed": true,
+      "detail": {
+        "existing": 22,
+        "planned": 29,
+        "visible": true
+      }
+    },
+    {
+      "name": "图层仅显示名称",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "塔位点击弹窗与高亮",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "弹窗只显示名称与类别",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "放大后名称横排并避让",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "关闭清除选中",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "再次打开和 ESC 关闭",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "键盘 Enter 打开塔位",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "拟新建图层关闭",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "拟新建图层恢复不重复",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "扩展格式点位名称",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "热力圈选优先，不打开塔详情",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "缓冲可选择塔位为中心",
+      "passed": true,
+      "detail": {
+        "lat": 34.96488877769285,
+        "lng": 113.37092399597168
+      }
+    },
+    {
+      "name": "原观鸟详情与高亮",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "筛选缩放保留全部塔位且无聚合",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "手机弹窗无横向溢出",
+      "passed": true,
+      "detail": {
+        "x": 70,
+        "y": 294.859375,
+        "width": 249,
+        "height": 82.140625
+      }
+    },
+    {
+      "name": "手机弹窗避让筛选栏",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "手机图层菜单保留两个开关",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "无新增浏览器错误与资源失败",
+      "passed": true,
+      "detail": {
+        "errors": [],
+        "bad": []
+      }
+    },
+    {
+      "name": "无超图请求",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "errors": [],
+  "resource_errors": []
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "source": "巩义监控塔坐标.ovobj",
+    "points": 14,
+    "all_names_coordinates_exact": true,
+    "source_unchanged": true,
+    "truncated_rejected": true
+  },
+  {
+    "source": "中牟监控塔坐标位置.ovobj",
+    "points": 8,
+    "all_names_coordinates_exact": true,
+    "source_unchanged": true,
+    "truncated_rejected": true
+  },
+  {
+    "source": "文件夹_拟新建监控塔.ovobj",
+    "points": 29,
+    "all_names_coordinates_exact": true,
+    "source_unchanged": true,
+    "truncated_rejected": true
+  }
+]

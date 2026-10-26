@@ -1,0 +1,35 @@
+[
+  {
+    "width": 1536,
+    "height": 960,
+    "initialZoom": 8.25,
+    "initialHidden": true,
+    "quarterStepShows": true,
+    "panKeepsThreshold": true,
+    "backToInitialHides": true,
+    "points": 51,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "initialZoom": 7.25,
+    "initialHidden": true,
+    "quarterStepShows": true,
+    "panKeepsThreshold": true,
+    "backToInitialHides": true,
+    "points": 51,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "initialZoom": 7.5,
+    "initialHidden": true,
+    "quarterStepShows": true,
+    "panKeepsThreshold": true,
+    "backToInitialHides": true,
+    "points": 51,
+    "errors": []
+  }
+]
