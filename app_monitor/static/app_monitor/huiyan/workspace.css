@@ -1,9 +1,9 @@
-/* The monitoring site's full-width header, bounded workspace and shared footer. */
+/* Shared local theme, with the standalone tool's panel order and presentation. */
 html[data-theme] body[data-ark-page="huiyan"] {
   height:100dvh; min-height:0; padding:0; overflow:hidden;
 }
 .wrap {
-  display:grid; grid-template-rows:auto minmax(0,1fr) auto;
+  display:grid; grid-template-rows:auto minmax(0,1fr);
   width:100%; max-width:none; height:100%; min-height:0; margin:0;
 }
 .top {
@@ -16,15 +16,16 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .brand { flex:1 1 auto; gap:10px; }
 .mark { width:40px; height:40px; border-radius:10px; background:transparent; }
 .brand h1 { font-size:20px; font-weight:600; line-height:1.25; letter-spacing:0; }
+.brand-tag { margin-left:6px; font-size:13px; font-weight:500; color:var(--c-text-3); white-space:nowrap; }
 .brand .ver { font-size:10px; margin-top:5px; font-weight:700; line-height:1.4; white-space:nowrap; }
 .top-right { flex:0 1 auto; flex-wrap:nowrap; gap:8px; margin-left:auto; }
 .huiyan-nav { height:34px; padding:6px 14px; line-height:1.4; }
 .huiyan-nav.lab { border-width:2px; }
 .pill { background:var(--c-surface); border-color:var(--c-line); white-space:nowrap; }
 .cols {
-  display:grid; grid-template-columns:260px minmax(0,1fr) 300px;
-  align-items:stretch; gap:16px; min-height:0; height:auto; margin:16px 20px 0;
-  overflow:hidden; --res-tbl-h:240px; --crop-h:170px;
+  display:grid; grid-template-columns:290px minmax(0,1fr) 308px;
+  align-items:stretch; gap:16px; min-height:0; height:auto; margin:16px 20px;
+  overflow:hidden; --res-tbl-h:200px;
 }
 .col {
   display:flex; flex-direction:column; flex-wrap:nowrap; align-items:stretch;
@@ -40,12 +41,22 @@ html[data-theme] body[data-ark-page="huiyan"] {
   border:0; border-radius:0; box-shadow:none; background:transparent;
 }
 .col>.panel+.panel { border-top:1px solid var(--c-line); }
-.panel>header,.huiyan-help>summary {
-  display:flex; align-items:center; gap:8px; min-height:46px;
-  padding:12px 14px; background:var(--c-surface-2); border-bottom:1px solid var(--c-line-soft);
+.panel>header {
+  display:flex; align-items:center; height:44px; min-height:44px; box-sizing:border-box;
+  padding:0 14px; background:var(--c-surface-2); border-bottom:1px solid var(--c-line-soft);
   font-size:13px; font-weight:700; color:var(--c-text);
 }
+.hrow { display:flex; align-items:baseline; gap:8px; width:100%; min-width:0; }
+.hrow>.num,.hrow>.ttl,.hrow>.tag { line-height:20px; }
+.hrow>.ttl { white-space:nowrap; }
+.hrow>.grow,.hrow>.ctl-inline { align-self:center; }
+.hrow>.tag.tag-near { margin-left:0; }
+.hrow>.btn.sm { min-height:26px; padding:2px 8px; line-height:20px; }
 .panel .body { padding:14px; }
+.cat-lead { margin:0 0 12px; font-size:12px; line-height:1.7; color:var(--c-text-3); }
+.hint:empty { display:none; }
+.cat-group-c { margin-left:auto; }
+.catalog-panel #catRow { max-height:clamp(260px,42dvh,520px); overflow-y:auto; padding-right:3px; scrollbar-width:thin; scrollbar-color:#BCD1D1 transparent; }
 .ctl input[type=range] { min-width:0; width:0; }
 .panel.grow #spList { flex:0 0 auto; min-height:90px; max-height:340px; }
 .col-main>.panel.grow {
@@ -58,19 +69,29 @@ html[data-theme] body[data-ark-page="huiyan"] {
 }
 #p-single { min-height:0; gap:14px; padding:0; }
 .subframe { border-radius:8px; }
-.subframe>header { min-height:42px; padding:10px 14px; background:var(--c-surface-2); font-size:13px; }
+.subframe>header { min-height:40px; padding:7px 14px; background:var(--c-surface-2); font-size:13px; }
+.subframe>header .ttl,.subframe>header .tag { line-height:18px; }
+.subframe>header .tag { white-space:nowrap; }
+.subframe>header .meta { min-width:0; text-align:right; }
 .subframe>.fbody { padding:12px; }
 .subframe>.fbody.tight { padding:10px; }
-.subframe>.fbody.fcol .drop { min-height:200px; }
+.subframe>.fbody.fcol .drop { flex:0 1 auto; width:100%; min-height:0; aspect-ratio:16/9; padding:20px; }
 .drop { border-radius:6px; }
-.drop .glyph { height:44px; width:44px; border-radius:10px; margin-bottom:12px; }
+.drop .glyph { height:44px; width:44px; border:0; background:transparent; border-radius:0; margin-bottom:12px; font-size:36px; line-height:1; }
 .drop h3 { font-size:18px; }
+.drop p { overflow-wrap:anywhere; }
+.tblview { position:relative; }
+.tblview .empty-overlay { position:absolute; top:34px; right:0; bottom:0; left:0; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:12px; text-align:center; color:var(--c-text-3); pointer-events:none; }
+.empty-overlay .g { font-size:24px; opacity:.35; margin-bottom:8px; }
+.empty-overlay p { font-size:12px; }
+#cropPane .cropwin { height:var(--res-tbl-h,200px); }
 .actions { padding:10px 0 0; }
 .actions .meta:empty { display:none; }
 .col-right .actions { align-items:flex-start; }
 .col-right .actions .meta { font-size:11px; line-height:1.7; padding:0; }
 .col-right .sumbox { border-radius:8px; }
 .col-right .mapbox { height:220px; border-radius:8px; }
+.geo-now { flex:0 1 auto; min-width:0; max-width:155px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--c-text-3); font-size:10px; font-weight:500; font-variant-numeric:tabular-nums; }
 .mapbar { flex-wrap:wrap; gap:6px; }
 .mapbar input.txt { flex:1 1 100%; width:100%; }
 .mapbar .btn { flex:1; }
@@ -81,33 +102,28 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .example-note { margin-top:10px; }
 .catcard { border-radius:7px; }
 .callout { border:0; border-radius:6px; padding:10px; }
-.huiyan-help>summary { cursor:pointer; list-style:none; user-select:none; }
-.huiyan-help>summary::-webkit-details-marker { display:none; }
-.help-chevron { margin-left:auto; font-size:18px; font-weight:400; line-height:1; }
-.huiyan-help[open] .help-chevron { transform:rotate(180deg); }
 .huiyan-help .body { display:grid; gap:0; }
 .huiyan-help .callout { margin:0!important; padding:12px 0; border-radius:0; background:transparent; }
 .huiyan-help .callout+.callout { border-top:1px solid var(--c-line-soft); }
-.huiyan-footer {
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-  min-height:44px; margin:0; padding:10px 20px; color:var(--c-text-3);
-  font-size:11px; line-height:1.6;
-}
-.huiyan-footer>div { display:flex; align-items:center; gap:12px; }
-.huiyan-footer strong { color:var(--c-accent-dim); font-weight:700; }
-.huiyan-footer p { margin:0; text-align:right; }
+.huiyan-help .example-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:10px; }
+.huiyan-help .example-card img { height:64px; }
+.huiyan-help .example-card strong { padding:6px 8px; font-size:11px; }
+.huiyan-help .example-intro { margin:4px 0 0; font-size:11px; }
+.huiyan-help .example-note { font-size:10px; margin-top:8px; }
+#cropPane>.huiyan-credit { padding:12px 14px; margin:0; text-align:center; border-top:1px solid var(--c-line-soft); color:var(--c-text-3); line-height:1.8; }
+#cropPane>.huiyan-credit a { color:var(--c-accent-dim); text-decoration:none; }
+#cropPane>.huiyan-credit a:hover { text-decoration:underline; }
 [data-theme=dark] .top { background:var(--c-surface); }
 @media(min-width:921px) and (max-width:1280px) {
   .top { padding:12px 16px; gap:12px; flex-wrap:wrap; }
   .brand { flex:1 1 auto; }
   .top-right { flex:0 1 auto; flex-wrap:wrap; justify-content:flex-end; }
   .top-right .pill { flex-basis:auto; }
-  .cols { grid-template-columns:224px minmax(0,1fr) 260px; gap:12px; margin:12px 14px 0; }
+  .cols { grid-template-columns:224px minmax(0,1fr) 260px; gap:12px; margin:12px 14px; }
   .col-right { display:flex; grid-column:auto; }
   .col-right>.panel.grow { grid-column:auto; }
   .example-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
   .brand .ver { white-space:normal; max-width:350px; }
-  .huiyan-footer { padding:8px 14px; }
 }
 @media(max-width:920px) {
   html[data-theme] body[data-ark-page="huiyan"] { height:auto; min-height:100dvh; overflow:auto; }
@@ -117,7 +133,7 @@ html[data-theme] body[data-ark-page="huiyan"] {
   .brand .ver { white-space:normal; }
   .top-right { width:100%; margin-left:0; flex-wrap:wrap; justify-content:flex-start; }
   .top-right .pill { order:4; flex-basis:auto; }
-  .cols { display:flex; flex-direction:column; height:auto; margin:14px 12px 0; overflow:visible; gap:14px; }
+  .cols { display:flex; flex-direction:column; height:auto; margin:14px 12px; overflow:visible; gap:14px; }
   .col { height:auto; overflow:visible; }
   .col-main { order:-1; }
   .col-main>.panel.grow { height:auto; }
@@ -126,8 +142,8 @@ html[data-theme] body[data-ark-page="huiyan"] {
   .col-right { grid-column:auto; }
   .col-right .mapbox { height:260px; }
   .huiyan-nav.mobile-targets { display:inline-flex; }
-  .huiyan-footer { flex-direction:column; align-items:center; gap:4px; padding:16px; text-align:center; }
-  .huiyan-footer p { text-align:center; }
+  .catalog-panel #catRow { max-height:none; overflow:visible; padding-right:0; }
+  .huiyan-help .example-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @media(max-width:480px) {
   .top { padding:12px; }
@@ -135,7 +151,7 @@ html[data-theme] body[data-ark-page="huiyan"] {
   .top-right { gap:6px; }
   .huiyan-nav { font-size:12px; padding:6px 11px; }
   .top-right .pill { flex-basis:100%; }
-  .cols { margin:12px 10px 0; }
+  .cols { margin:12px 10px; }
   .panel .body { padding:12px; }
   .subframe>.fbody { padding:10px; }
   .example-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }

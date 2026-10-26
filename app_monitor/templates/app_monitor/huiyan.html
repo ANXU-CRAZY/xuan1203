@@ -1191,7 +1191,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
 </style>
 <link rel="stylesheet" href="/static/app_monitor/site-theme.css?v=20261025-1">
 <link rel="stylesheet" href="/static/app_monitor/huiyan/theme.css?v=20261025-4">
-<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261025-2">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261026-ui1">
 </head>
 <body data-ark-page="huiyan">
 <div class="wrap">
@@ -1200,11 +1200,11 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
     <div class="brand">
       <div class="mark"><img src="/static/app_monitor/huiyan/logo.png" alt="方舟实验室"></div>
       <div class="brandtxt">
-        <h1>方舟慧眼</h1>
+        <h1>方舟慧眼<span class="brand-tag">·洞穿一切</span></h1>
         <div class="ver">方舟实验室 · 黄河生态方舟 · 鸟类与野生动物识别</div>
       </div>
     </div>
-    <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-species">选择物种</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://3.1415926.love/arklb-geoai/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
+    <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-species">选择物种</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
       <div class="pill"><span class="led" id="led"></span><span id="stxt">加载中</span></div>
       <button class="iconbtn" id="btnTheme" title="切换主题">◐</button>
     </div>
@@ -1213,9 +1213,18 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
   <div class="cols">
 
     <!-- 左栏 -->
-    <div class="col col-left" id="target-species" tabindex="0" aria-label="物种筛选与生态类群">
+    <div class="col col-left" tabindex="0" aria-label="生态类群与物种筛选">
+      <section class="panel catalog-panel">
+        <header><div class="hrow"><span class="num">01</span><span class="ttl">生态类群</span></div></header>
+        <div class="body">
+          <p class="cat-lead">请选择一个生态类群，生态类群只认大类，不细分到具体物种。</p>
+          <div id="catRow"></div>
+          <div class="hint" id="catInfo"></div>
+        </div>
+      </section>
+
       <section class="panel grow">
-        <header><span class="num">01</span>目标物种<span class="tag" id="spTag">0</span></header>
+        <header id="target-species" tabindex="-1"><div class="hrow"><span class="num">02</span><span class="ttl">目标物种</span><span class="tag" id="spTag">0</span></div></header>
         <div class="body">
           <div class="field">
             <span class="icon">⌕</span>
@@ -1236,14 +1245,6 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
         </div>
       </section>
 
-      <!-- 02 生态类群（兽类 / 鸟类分组，含各组细分组合） -->
-      <section class="panel">
-        <header><span class="num">02</span>生态类群<span class="tag" id="catTag">0</span></header>
-        <div class="body">
-          <div id="catRow"></div>
-          <div class="hint" id="catInfo">只认大类、不细分到具体物种。</div>
-        </div>
-      </section>
     </div>
 
     <!-- 中栏 -->
@@ -1261,16 +1262,16 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             <!-- 上：图像区（图像按实际像素大小显示，与下方结果框左右对齐）
                  未载入图片时由拖放区占位，页面一打开即是完整的上下两栏 -->
             <section class="subframe" id="singlePane">
-              <header>
-                图像
+              <header><div class="hrow">
+                <span class="ttl">图像</span>
                 <span class="tag" id="imgSizeTag">—</span>
                 <span class="grow"></span>
                 <button class="btn sm" id="btnZoom" title="在「原始大小」与「适应宽度」之间切换">原始大小</button>
-              </header>
+              </div></header>
               <div class="fbody tight fcol">
                 <div class="drop" id="drop">
                   <div>
-                    <div class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m-4 4 4-4 4 4M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></div>
+                    <div class="glyph" aria-hidden="true">⬓</div>
                     <h3>拖入图片，或点击选择</h3>
                     <p>JPG · PNG · TIFF · BMP · WEBP　也可 <kbd>Ctrl</kbd>+<kbd>V</kbd> 直接粘贴</p>
                   </div>
@@ -1287,28 +1288,21 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                   <button class="btn" id="btnCompare">对比原图</button>
                   <button class="btn" id="btnSave">下载标注图</button>
                   <button class="btn" id="btnReset">换一张</button>
+                  <button class="btn sm" id="btnExamples" type="button">试用例图</button>
                   <span class="grow"></span>
                   <span class="meta" id="runMeta"></span>
                 </div>
               </div>
             </section>
 
-            <section class="subframe" id="examplePane">
-              <header>黄河湿地 · 例图体验<span class="tag">5 张实景</span></header>
-              <div class="fbody">
-                <p class="example-intro">点击例图，自动载入推荐词表并识别。也可以上传自己的照片。</p>
-                <div id="exampleGrid" class="example-grid" aria-label="鸟类例图"></div>
-                <p class="example-note">模型结果为辅助识别，受画面清晰度、遮挡及候选词表影响，请人工核对。</p>
-              </div>
-            </section>
             <!-- 下：结果区（与上方图像框等宽、左右边缘对齐，页面一打开即存在） -->
             <section class="subframe" id="resPane">
-              <header>
-                识别结果
+              <header><div class="hrow">
+                <span class="ttl">识别结果</span>
                 <span class="tag" id="resTag">0 个目标</span>
                 <span class="grow"></span>
                 <button class="btn sm" id="btnXlsx">导出 Excel</button>
-              </header>
+              </div></header>
               <div class="fbody">
                 <div class="geo2">
                 <div class="geo" id="cusPanel">
@@ -1360,7 +1354,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                   </div>
 
                   <div class="meta" id="geoMeta">
-                    填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。单独改某一行的经纬度即可为该目标定制坐标。可在右栏「位置检索」面板上点击取点。
+                    填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。单独改某一行的经纬度即可为该目标定制坐标。可在右栏「空间定位」面板上点击取点。
                   </div>
                 </div>
                 </div>
@@ -1380,9 +1374,11 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                         <th class="c-num" style="width:78px">纬度</th>
                         <th style="width:52px" title="删除该目标（同时移除目标物体框、图像标注与统计）">删除</th>
                       </tr></thead>
-                      <tbody id="resBody"><tr><td colspan="11" class="empty">
-                        <div class="g">⌕</div><p>识别后在此显示每个目标的明细</p></td></tr></tbody>
+                      <tbody id="resBody"></tbody>
                     </table>
+                    <div class="empty-overlay" id="resEmpty" role="status">
+                      <div class="g">⌕</div><p>识别后在此显示每个目标的明细</p>
+                    </div>
                   </div>
                   <div class="vscroll off" id="vScroll" title="拖动滑块滚动结果"><i class="vthumb" id="vThumb"></i></div>
                 </div>
@@ -1390,12 +1386,12 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             </section>
 
             <section class="subframe" id="cropPane">
-              <header>
-                目标物体
+              <header><div class="hrow">
+                <span class="ttl">目标物体</span>
                 <span class="tag" id="cropTag">0 个</span>
                 <span class="grow"></span>
                 <span class="meta" style="font-size:var(--t-micro)">点结果行可定位到对应个体</span>
-              </header>
+              </div></header>
               <div class="fbody">
                 <div class="cropwin" id="cropWin">
                   <div class="crops" id="cropBox"></div>
@@ -1404,6 +1400,10 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                     <span>识别后在此显示每个目标的裁剪图；点裁剪图可在结果表里定位到对应个体</span>
                   </div>
                 </div>
+              </div>
+              <div class="note huiyan-credit">
+                <div>本项目由「郑州大学地球科学与技术学院」&amp;「郑州市自然保护地事务中心」合作研发</div>
+                <div><a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a> · 黄河生态方舟 · 方舟慧眼</div>
               </div>
             </section>
           </div>
@@ -1459,9 +1459,9 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
     </div>
 
     <!-- 右栏 -->
-    <div class="col col-right" tabindex="0" aria-label="识别参数、统计与位置检索">
+    <div class="col col-right" tabindex="0" aria-label="识别参数、统计与空间定位">
       <section class="panel">
-        <header><span class="num">03</span>推理参数
+        <header><div class="hrow"><span class="num">03</span><span class="ttl">推理参数</span>
           <span class="grow"></span>
           <span class="ctl-inline">
             <label class="switch">
@@ -1469,7 +1469,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
               <span class="track"></span><span>显示英文名</span>
             </label>
           </span>
-        </header>
+        </div></header>
         <div class="body">
           <div class="ctl">
             <label>置信度</label>
@@ -1488,7 +1488,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
       </section>
 
       <section class="panel">
-        <header><span class="num">04</span>物种统计<span class="tag" id="statTag">0</span></header>
+        <header><div class="hrow"><span class="num">04</span><span class="ttl">物种统计</span><span class="grow"></span><button class="btn sm" id="btnStatClear">清空统计</button></div></header>
         <div class="body">
           <div class="sumbox">
             <div class="hd">
@@ -1498,16 +1498,11 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             </div>
           </div>
           <div class="splist" id="stList"></div>
-          <div class="actions" style="margin-top:var(--s3)">
-            <button class="btn sm" id="btnStatClear">清空统计</button>
-            <span class="grow"></span>
-            <span class="meta" id="statMeta" style="margin:0">识别后自动统计各物种数量</span>
-          </div>
         </div>
       </section>
 
       <section class="panel">
-        <header><span class="num">05</span>位置检索<span class="tag">天地图</span></header>
+        <header><div class="hrow"><span class="num">05</span><span class="ttl">空间定位</span><span class="grow"></span><span class="geo-now" id="geoNow" title="浏览器定位尚未取得当前位置">未定位</span></div></header>
         <div class="body">
           <div class="mapbar">
             <input id="geoSearch" class="txt" type="text"
@@ -1522,11 +1517,17 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
         </div>
       </section>
 
-      <details class="panel huiyan-help" open>
-        <summary><span class="num">06</span>操作说明与模型信息<span class="help-chevron" aria-hidden="true">⌄</span></summary>
+      <section class="panel huiyan-help">
+        <header><div class="hrow"><span class="num">06</span><span class="ttl">操作说明与模型信息</span></div></header>
         <div class="body" style="justify-content:flex-start">
+          <div class="callout help-examples">
+            <b>例图体验</b>
+            <p class="example-intro">点击例图，载入推荐词表并识别。</p>
+            <div id="exampleGrid" class="example-grid" aria-label="鸟类例图"></div>
+            <p class="example-note">识别结果仅供辅助参考，请人工核对。</p>
+          </div>
           <div class="callout" style="margin-top:var(--s2)">
-            <b>位置检索</b><br>
+            <b>空间定位</b><br>
             在地图上点击可自动提取该点经纬度，也可搜索地名或直接输入坐标定位。
           </div>
 
@@ -1557,15 +1558,11 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             模型微调所用的数据为由郑州市自然保护地事务中心提供的黄河湿地物种影像数据。
           </div>
         </div>
-      </details>
+      </section>
     </div>
 
   </div>
 
-  <footer class="huiyan-footer" aria-label="平台署名">
-    <div><strong>方舟实验室</strong><span>黄河生态方舟 · 方舟慧眼</span></div>
-    <p>郑州大学地球科学与技术学院 · 郑州市自然保护地事务中心 联合研发</p>
-  </footer>
 
 </div>
 
@@ -1642,9 +1639,10 @@ const zhOf=k=>{const p=SP.find(x=>x.en.toLowerCase()===k);return p?(p.zh||p.en):
     // 右上角：已经纳入 N 种（兽类 X 种 · 鸟类 Y 种）
     const gc={};
     SP.forEach(s=>{const g=s.group||'其他';gc[g]=(gc[g]||0)+1;});
-    const gTxt=Object.keys(gc).map(g=>`${g} ${gc[g]} 种`).join(' · ');
+    const gOrder=['鸟类','兽类',...Object.keys(gc).filter(g=>!['鸟类','兽类'].includes(g))].filter(g=>gc[g]);
+    const gTxt=gOrder.map(g=>`${g} ${gc[g]} 种`).join(' · ');
     $('#stxt').textContent=s.ready
-      ? `已经纳入 ${SP.length} 种${gTxt?'（'+gTxt+'）':''}`
+      ? `已经纳入 ${SP.length} 种${gTxt?' · '+gTxt:''}`
       : `已经纳入 ${SP.length} 种（模型暂不可用）`;
 
     cats();list('');
@@ -1652,7 +1650,7 @@ const zhOf=k=>{const p=SP.find(x=>x.en.toLowerCase()===k);return p?(p.zh||p.en):
     (S.get('sel',[])).forEach(x=>{if(SP.some(p=>p.en.toLowerCase()===x))sel.add(x)});
     chips();
 
-    if(!sel.size){['grey heron','little egret','black stork','common crane','bean goose','eurasian spoonbill'].forEach(x=>sel.add(x));chips();list('');}
+    // 新用户保持空词表；已有的用户选择仍按本地偏好恢复。
     // 初始化天地图（页面一打开就能点图取坐标，不必先识别）
     setTimeout(ensureGeoMap,120);
 
@@ -1792,7 +1790,7 @@ $('#spSearch').oninput=e=>list(e.target.value);
 
 function pick(k){
   // 手动选择物种 → 退出生态类群模式
-  if(curCat){curCat='';cats();$('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。'}
+  if(curCat){curCat='';cats();$('#catInfo').textContent=''}
   // 手动改词表 → 原细分组合的短语不再适用，清空（否则会抬不相干的分数）
   curPhrase='';
   if(sel.has(k))sel.delete(k);
@@ -1823,7 +1821,7 @@ function chips(){
     :                 '词表过大，精度将明显下降';
 }
 /* 生态类群专栏：按 兽类 / 鸟类 分组；每个类群下挂目/科级细分组合 */
-const CAT_GROUPS=[['兽类','兽类'],['鸟类','鸟类']];
+const CAT_GROUPS=[['鸟类','鸟类'],['兽类','兽类']];
 function cats(){
   const r=$('#catRow');
   if(!r)return;
@@ -1831,7 +1829,7 @@ function cats(){
   const items=Object.entries(CATS);
   if(!items.length){
     r.innerHTML='<div class="hint">暂无生态类群</div>';
-    $('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。';
+    $('#catInfo').textContent='';
     return;
   }
   // 按 group 字段分组；缺 group 的归入「其他」
@@ -1874,13 +1872,12 @@ function cats(){
     }
     r.appendChild(grid);
   }
-  $('#catTag').textContent=curCat?1:0;
 }
 function pickCat(name){
   if(curCat===name){          // 再点一次取消
     curCat='';
     cats();
-    $('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。';
+    $('#catInfo').textContent='';
     toast('已切换回按物种识别');
     return;
   }
@@ -1913,6 +1910,9 @@ function pickCat(name){
     }
     subBox.appendChild(wrap);
     ownerGrid.after(subBox);   // 紧跟该类群所在分组的网格
+    if(matchMedia('(min-width:921px)').matches){
+      requestAnimationFrame(()=>subBox.scrollIntoView({block:'nearest'}));
+    }
   }
   $('#catInfo').innerHTML=`当前按 <b style="color:var(--c-accent)">${name}</b> 识别 · `
     +`${words} 个提示词 · 结果只标大类，不细分物种`
@@ -1922,7 +1922,7 @@ function pickCat(name){
 /* 载入类群下的细分组合 → 写入目标物种词表（退出类群模式，按物种识别） */
 function loadSub(s){
   if(!s||!s.classes||!s.classes.length)return;
-  if(curCat){curCat='';cats();$('#catInfo').textContent='只认大类、不细分到具体物种。点选一个类群开始识别。'}
+  if(curCat){curCat='';cats();$('#catInfo').textContent=''}
   sel=new Set(s.classes.map(c=>c.toLowerCase()));
   // 形态短语：作为「辅助槽」随识别请求下发 ——
   // 只抬升召回分数，不参与类名归属（详见 app/main.py detect()）。
@@ -2055,7 +2055,7 @@ function show(dataUrl){
   // 载入新图 → 清空上一张的裁剪与联动选中
   renderCrops([]);
   $('#runMeta').textContent=curFile;
-  curRes=[];curOrigBoxes=[];$('#resBody').innerHTML=RES_EMPTY_ROW;$('#resTag').textContent='0 个目标';
+  curRes=[];curOrigBoxes=[];$('#resBody').innerHTML='';setResEmpty(true);$('#resTag').textContent='0 个目标';
   $('#btnRun').disabled=false;
 }
 /* 浏览器无法预览的格式（TIFF/HEIC/AVIF…）：交给后端 PIL 转码后再显示 */
@@ -2093,13 +2093,17 @@ function applyZoom(){
 }
 $('#btnZoom').onclick=()=>{imgFit=!imgFit;applyZoom();};
 /* 恢复上次的缩放偏好 */
-imgFit=!!S.get('imgFit',true);
+imgFit=!!S.get('imgFit',false);
 applyZoom();
 
 /* ---------- 结果区：固定高度滑动窗口 + 右侧可拖拽滑块 ---------- */
-/* 结果表空态提示行（页面初始与「换一张」时显示） */
-const RES_EMPTY_ROW='<tr><td colspan="7" class="empty">'
-  +'<div class="g">⌕</div><p>识别后在此显示每个目标的明细</p></td></tr>';
+/* 空态提示留在结果窗口内部，不参与表格行高计算。 */
+function setResEmpty(on,msg='识别后在此显示每个目标的明细'){
+  const overlay=$('#resEmpty');
+  if(!overlay)return;
+  overlay.classList.toggle('hide',!on);
+  if(on)overlay.querySelector('p').textContent=msg;
+}
 /* 表格内容超出窗口时，右侧出现一条竖向滚动条；
    滑块高度与内容比例对应，可按住拖动滚动，也可直接拖动表格区域。
    窗口高度固定（--res-tbl-h），不随结果条数增减而变化。 */
@@ -2166,6 +2170,33 @@ function syncVScroll(){
 /* ---------- 目标物体框与结果表窗口等高 ---------- */
 /* 「识别结果」表窗口与「目标物体」裁剪窗保持同高：
    两者都用 --res-tbl-h 固定高度，不随结果条数增减而变化 */
+/* Recalculate from fixed overhead so available space never accumulates. */
+function fitMiddle(){
+  const pane=$('#p-single'), workspace=$('.workspace-scroll');
+  if(!pane||!workspace||pane.classList.contains('hide'))return;
+  if(matchMedia('(max-width:920px)').matches){pane.style.removeProperty('--res-tbl-h');return;}
+  const table=$('.tblarea'), crops=$('#cropWin');
+  if(!table||!crops||!pane.offsetHeight)return;
+  const style=getComputedStyle(workspace);
+  const available=workspace.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
+  const overhead=pane.scrollHeight-table.offsetHeight-crops.offsetHeight;
+  const target=Math.max(190,Math.floor((available-overhead)/2));
+  if(Math.abs(table.offsetHeight-target)>1)pane.style.setProperty('--res-tbl-h',target+'px');
+  syncVScroll();
+}
+let fitMiddleFrame=0;
+function scheduleFitMiddle(){
+  cancelAnimationFrame(fitMiddleFrame);
+  fitMiddleFrame=requestAnimationFrame(fitMiddle);
+}
+window.addEventListener('resize',scheduleFitMiddle);
+window.addEventListener('load',scheduleFitMiddle);
+if(window.ResizeObserver){
+  const observer=new ResizeObserver(scheduleFitMiddle);
+  ['.workspace-scroll','#singlePane','#resPane .geo2'].forEach(selector=>{
+    const el=$(selector);if(el)observer.observe(el);
+  });
+}
 /* 图片解码失败时给出明确提示，而不是留一块空白 */
 $('#imgOrig').onerror=function(){
   toast('图片无法解码，可能格式不受支持');
@@ -2178,7 +2209,7 @@ $('#btnReset').onclick=()=>{
   // 回到拖放区，但图像区/结果区两个框保留在页面上
   drop.classList.remove('hide');
   $('#view').classList.add('hide');
-  $('#resBody').innerHTML=RES_EMPTY_ROW;
+  $('#resBody').innerHTML='';setResEmpty(true);
   $('#resTag').textContent='0 个目标';
   renderCrops([]);
   $('#btnCompare').disabled=true;
@@ -2230,6 +2261,10 @@ $('#swEn').onchange=e=>S.set('showEn',e.target.checked);
 
 /* 识别 */
 $('#btnRun').onclick=run;
+$('#btnExamples').onclick=()=>{
+  $('#exampleGrid').scrollIntoView({block:'center'});
+  $('#exampleGrid button')?.focus({preventScroll:true});
+};
 async function run(){
   if(!curImg){toast('请先选择图片');return}
   if(!curCat&&!sel.size){toast('请先选择目标物种或生态类群');return}
@@ -2299,9 +2334,10 @@ function render(j,res){
   // 而不是空 —— 空列会让用户以为英文名功能坏了
   const catEn=catMode?((CATS[j.category]||{}).en||j.category):'';
   if(!res.length){
-    tb.innerHTML=`<tr><td colspan="11" class="empty"><div class="g">⌕</div>
-      <p>未检测到目标，可尝试降低置信度阈值</p></td></tr>`;
+    tb.innerHTML='';
+    setResEmpty(true,'未检测到目标，可尝试降低置信度阈值');
   }else{
+    setResEmpty(false);
     tb.innerHTML=res.map((r,i)=>{
       const c=r.score>=.5?'var(--c-ok)':r.score>=.3?'var(--c-accent)':'var(--c-warn)';
       // 英文名：优先用户定义的自定义英文名，否则用模型原名；
@@ -2665,7 +2701,7 @@ function togglePicker(btn){
   box.innerHTML=`
     <div class="ptool">
       <button class="btn sm" data-a="auto">自动匹配</button>
-      <span class="gfilter" data-g=""><b class="on" data-g="">全部</b><b data-g="兽类">兽类</b><b data-g="鸟类">鸟类</b></span>
+      <span class="gfilter" data-g=""><b class="on" data-g="">全部</b><b data-g="鸟类">鸟类</b><b data-g="兽类">兽类</b></span>
       <span class="n"></span>
     </div>
     <div class="ph">
@@ -3058,7 +3094,7 @@ function syncGeoUI(){
   if(meta){
     // 面板内说明（只讲用法，不显示匹配数）
     meta.innerHTML = '填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。'
-      + '单独改某一行的经纬度即可为该目标定制坐标。可在右栏「位置检索」面板上点击取点。';
+      + '单独改某一行的经纬度即可为该目标定制坐标。可在右栏「空间定位」面板上点击取点。';
   }
 }
 /* ---------- 天地图检索：点地图取坐标 / 搜地名定位 ---------- */
@@ -3073,6 +3109,12 @@ function mapTip(txt,isErr){
   el.style.color=isErr?'var(--c-warn)':'';
 }
 
+function geoNow(lat,lng){
+  const el=$('#geoNow');if(!el)return;
+  el.textContent=fmtNum(lat)+', '+fmtNum(lng);
+  el.title='浏览器当前位置：纬度 '+fmtNum(lat)+'，经度 '+fmtNum(lng);
+}
+
 function initGeoMap(){
   const box=$('#geoMap');
   if(!box||geoMap)return;
@@ -3082,7 +3124,7 @@ function initGeoMap(){
   }
   // 与监测大屏使用同一套天地图矢量底图和中文注记
   geoMap=L.map(box,{zoomControl:true,attributionControl:true})
-    .setView([34.9,113.6],8);
+    .setView([34.0,108.0],4);
   const tdt=layer=>`https://t{s}.tianditu.gov.cn/${layer}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${HUIYAN_TDT_KEY}`;
   const tiles=L.tileLayer(tdt('vec'),{
     subdomains:'01234567',
@@ -3168,6 +3210,7 @@ function geoLocate(){
   mapTip('定位中…');
   navigator.geolocation.getCurrentPosition(
     p=>{setGeoFromMap(p.coords.latitude,p.coords.longitude);
+        geoNow(p.coords.latitude,p.coords.longitude);
         if(geoMap)geoMap.setView([p.coords.latitude,p.coords.longitude],14);},
     ()=>{mapTip('定位失败，请检查权限',true);toast('定位失败，请检查浏览器权限');},
     {enableHighAccuracy:true,timeout:8000}
@@ -3210,8 +3253,8 @@ function ensureGeoMap(){
   if(!box)return;
   if(geoMap){geoMap.invalidateSize();return}
   initGeoMap();
-  // 打开界面即尝试定位到当前位置（失败不影响其他功能）
-  // 由用户点击「定位」主动授予浏览器定位权限。
+  // Try once; denial is non-fatal and never fills photograph coordinates.
+  setTimeout(autoLocate,300);
 }
 /* 自动定位：把地图中心移到当前 GPS 位置
    —— 只移动视野，不写入坐标（避免误填拍摄地） */
@@ -3224,6 +3267,7 @@ function autoLocate(){
     p=>{
       const {latitude:lat,longitude:lng}=p.coords;
       geoMap.setView([lat,lng],11);
+      geoNow(lat,lng);
       mapTip(`已定位到当前位置 ${fmtNum(lat)}, ${fmtNum(lng)}`);
     },
     ()=>{mapTip('自动定位失败，可点「定位」重试',true)},
@@ -3330,7 +3374,6 @@ function syncStats(){
   $('#stTotal').textContent=total;
   $('#stKind').textContent=rows.length;
   $('#stImg').textContent=statImgs.size;
-  $('#statTag').textContent=rows.length;
   $('#stList').innerHTML=rows.length?rows.map((r,i)=>{
     const pct=total?r.count/total*100:0;
     // 副标题：原始英文提示词。自定义物种把多个物种并成一组时，
