@@ -1204,7 +1204,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
         <div class="ver">方舟实验室 · 黄河生态方舟 · 鸟类与野生动物识别</div>
       </div>
     </div>
-    <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-species">选择物种</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
+    <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-categories">选择生态类群</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
       <div class="pill"><span class="led" id="led"></span><span id="stxt">加载中</span></div>
       <button class="iconbtn" id="btnTheme" title="切换主题">◐</button>
     </div>
@@ -1214,7 +1214,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
 
     <!-- 左栏 -->
     <div class="col col-left" tabindex="0" aria-label="生态类群与物种筛选">
-      <section class="panel catalog-panel">
+      <section class="panel catalog-panel" id="target-categories" tabindex="-1">
         <header><div class="hrow"><span class="num">01</span><span class="ttl">生态类群</span></div></header>
         <div class="body">
           <p class="cat-lead">请选择一个生态类群，生态类群只认大类，不细分到具体物种。</p>
@@ -1272,7 +1272,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                 <div class="drop" id="drop">
                   <div>
                     <div class="glyph" aria-hidden="true">⬓</div>
-                    <h3>拖入图片，或点击选择</h3>
+                    <h3>测试例图或载入图片</h3>
                     <p>JPG · PNG · TIFF · BMP · WEBP　也可 <kbd>Ctrl</kbd>+<kbd>V</kbd> 直接粘贴</p>
                   </div>
                 </div>
@@ -1287,8 +1287,9 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                   <button class="btn primary" id="btnRun">开始识别</button>
                   <button class="btn" id="btnCompare">对比原图</button>
                   <button class="btn" id="btnSave">下载标注图</button>
-                  <button class="btn" id="btnReset">换一张</button>
-                  <button class="btn sm" id="btnExamples" type="button">试用例图</button>
+                  <button class="btn" id="btnUpload" type="button">载入图片</button>
+                  <button class="btn" id="btnExamples" type="button">测试例图</button>
+                  <button class="btn" id="btnReset" type="button">换一张</button>
                   <span class="grow"></span>
                   <span class="meta" id="runMeta"></span>
                 </div>
@@ -1522,7 +1523,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
         <div class="body" style="justify-content:flex-start">
           <div class="callout help-examples">
             <b>例图体验</b>
-            <p class="example-intro">点击例图，载入推荐词表并识别。</p>
+            <p class="example-intro">点击例图载入图片和推荐词表，再点击开始识别。</p>
             <div id="exampleGrid" class="example-grid" aria-label="鸟类例图"></div>
             <p class="example-note">识别结果仅供辅助参考，请人工核对。</p>
           </div>
@@ -2076,8 +2077,10 @@ async function sendToServer(f){
     curFile=j.name||f.name;
     // 空间坐标与自定义物种的恢复统一放在 show() 里，两条加载路径行为一致
     show(j.image);
+    return true;
   }catch(e){
     toast('无法读取该图片：'+e.message);
+    return false;
   }
 }
 /* 图像缩放：默认「原始大小」（1:1 像素，便于按影像坐标核对），
@@ -2204,18 +2207,7 @@ $('#imgOrig').onerror=function(){
   drop.classList.remove('hide');
   $('#view').classList.add('hide');
 };
-$('#btnReset').onclick=()=>{
-  curImg=null;curMark=null;curRes=[];
-  // 回到拖放区，但图像区/结果区两个框保留在页面上
-  drop.classList.remove('hide');
-  $('#view').classList.add('hide');
-  $('#resBody').innerHTML='';setResEmpty(true);
-  $('#resTag').textContent='0 个目标';
-  renderCrops([]);
-  $('#btnCompare').disabled=true;
-  $('#btnCompare').textContent='对比原图';
-  syncVScroll();
-};
+$('#btnUpload').onclick=()=>open();
 /* 标注图 / 原图 切换：
    识别完成后默认显示带框的标注图，点「对比原图」切回原图，再点切回标注图 */
 $('#btnCompare').onclick=()=>{
@@ -2261,10 +2253,6 @@ $('#swEn').onchange=e=>S.set('showEn',e.target.checked);
 
 /* 识别 */
 $('#btnRun').onclick=run;
-$('#btnExamples').onclick=()=>{
-  $('#exampleGrid').scrollIntoView({block:'center'});
-  $('#exampleGrid button')?.focus({preventScroll:true});
-};
 async function run(){
   if(!curImg){toast('请先选择图片');return}
   if(!curCat&&!sel.size){toast('请先选择目标物种或生态类群');return}
@@ -3855,6 +3843,6 @@ function hist(){
 }
 $('#btnHistClr').onclick=()=>{HIST=[];S.set('hist',[]);hist();toast('已清空')};
 </script>
-<script src="/static/app_monitor/huiyan/examples.js?v=20261025-2"></script>
+<script src="/static/app_monitor/huiyan/examples.js?v=20261027-2"></script>
 </body>
 </html>
