@@ -1583,6 +1583,8 @@
                 this.layers.region.clearLayers();
                 const regionLayer = L.geoJSON(data, {
                     pane: 'regionPane',
+                    // 行政区界仅展示郑州市，保留原始边界数据供其他用途使用。
+                    filter: (feature) => String(feature.properties?.city_code) === '410100',
                     style: regionStyle,
                     onEachFeature: (feature, layer) => {
                         const props = feature.properties || {};

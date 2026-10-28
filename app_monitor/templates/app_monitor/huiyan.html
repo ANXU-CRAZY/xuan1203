@@ -1191,7 +1191,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
 </style>
 <link rel="stylesheet" href="/static/app_monitor/site-theme.css?v=20261025-1">
 <link rel="stylesheet" href="/static/app_monitor/huiyan/theme.css?v=20261025-4">
-<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261026-ui1">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261028-reference1">
 </head>
 <body data-ark-page="huiyan">
 <div class="wrap">
@@ -1201,7 +1201,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
       <div class="mark"><img src="/static/app_monitor/huiyan/logo.png" alt="方舟实验室"></div>
       <div class="brandtxt">
         <h1>方舟慧眼<span class="brand-tag">·洞穿一切</span></h1>
-        <div class="ver">方舟实验室 · 黄河生态方舟 · 鸟类与野生动物识别</div>
+        <div class="ver">ARK GEOAI LAB · YOLO-WORLD · ONLINE</div>
       </div>
     </div>
     <div class="top-right"><a class="huiyan-nav mobile-targets" href="#target-categories">选择生态类群</a><a class="huiyan-nav" href="/">返回监测大屏</a><a class="huiyan-nav lab" href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>
@@ -2173,7 +2173,7 @@ function syncVScroll(){
 /* ---------- 目标物体框与结果表窗口等高 ---------- */
 /* 「识别结果」表窗口与「目标物体」裁剪窗保持同高：
    两者都用 --res-tbl-h 固定高度，不随结果条数增减而变化 */
-/* Recalculate from fixed overhead so available space never accumulates. */
+/* 按参考版自然排布，等高窗口最多 324px，避免页面增高后反复撑大。 */
 function fitMiddle(){
   const pane=$('#p-single'), workspace=$('.workspace-scroll');
   if(!pane||!workspace||pane.classList.contains('hide'))return;
@@ -2183,7 +2183,7 @@ function fitMiddle(){
   const style=getComputedStyle(workspace);
   const available=workspace.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
   const overhead=pane.scrollHeight-table.offsetHeight-crops.offsetHeight;
-  const target=Math.max(190,Math.floor((available-overhead)/2));
+  const target=Math.min(324,Math.max(190,Math.floor((available-overhead)/2)));
   if(Math.abs(table.offsetHeight-target)>1)pane.style.setProperty('--res-tbl-h',target+'px');
   syncVScroll();
 }
