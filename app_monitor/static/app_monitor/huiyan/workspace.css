@@ -12,8 +12,8 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .brand { flex:1 1 240px; gap:12px; }
 .mark { width:36px; height:36px; border-radius:8px; background:transparent; }
 .brand h1 { font-size:16px; font-weight:700; line-height:1.35; letter-spacing:0; }
-.brand-tag { margin-left:6px; font-size:12px; font-weight:500; color:var(--c-text-3); white-space:nowrap; }
-.brand .ver { font-size:10px; margin-top:3px; font-weight:500; line-height:1.5; letter-spacing:.04em; white-space:nowrap; }
+.brand-tag { margin-left:6px; font-size:12px; font-weight:700; color:var(--c-text-3); white-space:nowrap; }
+.brand .ver { font-size:10px; margin-top:3px; font-weight:700; line-height:1.5; letter-spacing:.04em; white-space:nowrap; }
 .top-right { flex:0 1 auto; flex-wrap:wrap; gap:8px; margin-left:auto; justify-content:flex-end; }
 .huiyan-nav { min-height:32px; padding:6px 12px; line-height:1.4; font-size:12px; }
 .pill { background:var(--c-surface-2); border-color:var(--c-line-soft); white-space:nowrap; }

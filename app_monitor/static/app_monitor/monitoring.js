@@ -293,7 +293,7 @@ function installMonitoringDashboard(app) {
             const drawCluster = item => {
                 const color = this.getProtectionColor(item.species_protection);
                 const marker = L.circleMarker([item.lat, item.lng], {
-                    renderer: this.clusterRenderer, radius: 6,
+                    renderer: this.clusterRenderer, radius: 7, birdSymbol:true,
                     color: '#fff', weight: 1, fillColor: color, fillOpacity: raw ? 0.35 : 0.82,
                     bubblingMouseEvents: false, protectionGroup:item.species_protection, baseFillOpacity:raw ? 0.28 : 0.8
                 }).bindTooltip(`${this.escapeHtml(item.species_protection)}：${item.cluster_size} 条记录，${item.count} 只；${item.cluster_size === 1 ? '点击查看详情' : '点击放大查看记录'}`);

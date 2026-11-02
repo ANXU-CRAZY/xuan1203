@@ -1019,13 +1019,13 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
-<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-sidebar1">
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-filterleft3">
 {% include "app_monitor/site_theme.html" %}
 <link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261102-sidebar1">
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261026-7">
 <style>
-    .top-beam .brand .brand-tagline { margin-left:6px; font-size:12px; font-weight:500; color:var(--ark-muted); white-space:nowrap; }
-    .top-beam .brand-copy small { font-weight:500; letter-spacing:.04em; }
+    .top-beam .brand .brand-tagline { margin-left:6px; font-size:12px; font-weight:700; color:var(--ark-muted); white-space:nowrap; }
+    .top-beam .brand-copy small { font-weight:700; letter-spacing:.04em; }
 </style>
 </head>
 <body data-ark-page="monitor">
@@ -1066,14 +1066,14 @@
     </div>
 </section>
 
-<div id="filter-bar" class="glass-panel">
-    <div class="protection-filter" aria-label="保护等级筛选">
+<div id="protection-filter-panel" class="protection-filter glass-panel" aria-label="保护等级筛选">
         <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
         <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
         <button type="button" class="topic-btn" data-protection-filter="国家二级" onclick="app.setProtectionFilter('国家二级')" style="--topic-color:#F39C12">国家二级</button>
         <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有动物</button>
         <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危/其他</button>
-    </div>
+</div>
+<div id="filter-bar" class="glass-panel">
     <div id="monitor-filter-tools" class="filter-tools" aria-label="时间和热力图工具">
         <input type="date" aria-label="开始日期" id="d-start" class="date-inp">
         <span style="color:#999">-</span>
@@ -1312,9 +1312,43 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261102-sidebar1"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261102-birdstyle2"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261026-8"></script>
 <script>
+    // 在原有 Canvas 上绘制鸟形符号，保留大量点位的批量渲染和点击行为。
+    const BirdRecordCanvas = L.Canvas.extend({
+        _updateCircle(layer) {
+            if (!this._drawing || layer._empty() || !layer.options.birdSymbol) {
+                L.Canvas.prototype._updateCircle.call(this, layer);
+                return;
+            }
+            const ctx = this._ctx, point = layer._point, radius = layer._radius;
+            ctx.save();
+            ctx.globalAlpha = layer.options.fillOpacity;
+            ctx.fillStyle = layer.options.fillColor;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(point.x - radius * .5, point.y + radius * .5);
+            ctx.lineTo(point.x, point.y + radius * 1.4);
+            ctx.lineTo(point.x + radius * .5, point.y + radius * .5);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.restore();
+            L.Canvas.prototype._updateCircle.call(this, layer);
+            ctx.save();
+            ctx.translate(point.x, point.y);
+            ctx.scale(radius / 10, radius / 10);
+            ctx.globalAlpha = layer.options.fillOpacity;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(-7, 3); ctx.lineTo(-3, 1); ctx.lineTo(0, -4);
+            ctx.quadraticCurveTo(2, -6, 4, -4); ctx.lineTo(7, -3);
+            ctx.lineTo(4, -2); ctx.quadraticCurveTo(3, 3, -1, 4);
+            ctx.lineTo(-5, 4); ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+    });
     const app = {
         api: '/api',
         map: null,
@@ -1460,7 +1494,7 @@
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedExperimental, this.layers.protectedBuffer, this.layers.protectedCore, labelLayer, this.layers.record], zoomControl: false, attributionControl:false });
+            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedExperimental, this.layers.protectedBuffer, this.layers.protectedCore, this.layers.record], zoomControl: false, attributionControl:false });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
             this.map.createPane('protectedAreaPane');
@@ -1473,7 +1507,7 @@
             this.map.getPane('heatmapPane').style.pointerEvents = 'none';
             this.map.createPane('recordPane');
             this.map.getPane('recordPane').style.zIndex = 430;
-            this.recordRenderer = L.canvas({ padding: 0.45, pane: 'recordPane' });
+            this.recordRenderer = new BirdRecordCanvas({ padding: 0.45, pane: 'recordPane' });
             const layerControl = L.control.layers(
                 { "电子地图": vec, "卫星影像": img, "不显示底图": blank },
                 { "图层注记": labelLayer, "行政区界": this.layers.region,
@@ -1790,7 +1824,7 @@
             const size = this.map.getSize();
             const scale = Math.min(size.x / 1536, size.y / 850);
             const overviewZoom = 8.5 + Math.log2(scale);
-            this.map.setView([34.94, 113.735], overviewZoom, { animate: false });
+            this.map.setView([35.02, 114.05], overviewZoom, { animate: false });
             this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
         },
 
@@ -2024,9 +2058,9 @@
                 const color = this.getProtectionColor(group);
                 layer.setStyle({
                     fillColor: color,
-                    color: lowZoom ? 'rgba(255,255,255,0.45)' : '#fff',
+                    color: '#fff',
                     opacity: lowZoom ? 0.35 : 1,
-                    fillOpacity: lowZoom ? 0.18 : (midZoom ? Math.min(layer.options.baseFillOpacity || 0.8, 0.56) : (layer.options.baseFillOpacity || 0.8))
+                    fillOpacity: lowZoom ? 0.5 : (midZoom ? Math.min(layer.options.baseFillOpacity || 0.8, 0.78) : (layer.options.baseFillOpacity || 0.8))
                 });
             });
         },
@@ -2284,7 +2318,7 @@
 
             return L.circleMarker([pos.lat, pos.lng], {
                 renderer: this.recordRenderer,
-                radius: levelGroup === '国家一级' ? 7 : 6,
+                radius: levelGroup === '国家一级' ? 8 : 7,
                 fillColor: color,
                 color: '#fff',
                 weight: levelGroup === '国家一级' ? 2 : 1,
@@ -2292,6 +2326,7 @@
                 fillOpacity: fillOpacity,
                 dashArray: isApproved ? null : '4,3',
                 protectionGroup: levelGroup,
+                birdSymbol: true,
                 baseFillOpacity: fillOpacity,
                 bubblingMouseEvents: false
             }).on('click', () => this.openDetailModal(p, stats || this.currentStats || {}));
