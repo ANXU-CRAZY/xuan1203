@@ -88,27 +88,15 @@ function installMonitoringDashboard(app) {
             document.documentElement.style.setProperty('--monitor-filter-top', `${beam.bottom + 8}px`);
             const bar = $id('filter-bar').getBoundingClientRect();
             const bottom = document.querySelector('.bottom-stats-bar').getBoundingClientRect();
-            const rankElement = $id('rank-panel');
-            let rank = rankElement.getBoundingClientRect();
             const layerControl = this.layerControl.getContainer();
             const layerTop = layerControl.getBoundingClientRect().top;
             const zoom = this.map.getContainer().querySelector('.leaflet-control-zoom');
             const zoomHeight = zoom ? zoom.getBoundingClientRect().height : 0;
             const zoomSpace = zoomHeight ? zoomHeight + 18 : 0;
-            const layerList = layerControl.querySelector('.leaflet-control-layers-list');
-            if (!mobile && layerControl.classList.contains('leaflet-control-layers-expanded') &&
-                rank.height && (!rankElement.style.top || rankElement.style.top === 'auto')) {
-                const naturalHeight = layerList.scrollHeight + layerControl.getBoundingClientRect().height - layerList.clientHeight;
-                const liveHeight = Math.max(110, rank.bottom - layerTop - naturalHeight - zoomSpace - 20);
-                document.documentElement.style.setProperty('--map-live-max-height', liveHeight + 'px');
-            } else {
-                document.documentElement.style.removeProperty('--map-live-max-height');
-            }
-            rank = rankElement.getBoundingClientRect();
-            const layerBottom = rank.height && rank.top > layerTop ? Math.min(rank.top - 10, bottom.top - 10) : bottom.top - 10;
+            document.documentElement.style.removeProperty('--map-live-max-height');
+            const layerBottom = bottom.top - 10;
             layerControl.style.setProperty('--map-layer-list-height', Math.max(44, layerBottom - layerTop - 24 - zoomSpace) + 'px');
-            const expanded = document.body.classList.contains('tools-open') || this.bufferAnalysis.active;
-            const lowerEdge = mobile && !expanded ? Math.min(rank.top - 8, bottom.top - 8) : bottom.top - 8;
+            const lowerEdge = bottom.top - 8;
             document.documentElement.style.setProperty('--monitor-sidebar-top', `${bar.bottom + 8}px`);
             document.documentElement.style.setProperty('--monitor-sidebar-bottom', `${Math.max(8, innerHeight - lowerEdge)}px`);
             document.documentElement.style.setProperty('--point-pagination-bottom', `${innerHeight - bottom.top + 8}px`);

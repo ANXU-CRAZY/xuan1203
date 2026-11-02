@@ -18,7 +18,7 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .huiyan-nav { min-height:32px; padding:6px 12px; line-height:1.4; font-size:12px; }
 .pill { background:var(--c-surface-2); border-color:var(--c-line-soft); white-space:nowrap; }
 .cols {
-  display:grid; grid-template-columns:290px minmax(0,1fr) 308px;
+  display:grid; grid-template-columns:320px minmax(0,1fr) 308px;
   align-items:stretch; gap:16px; min-height:calc(100vh - 150px);
   height:auto; margin:0; overflow:visible;
   --res-tbl-h:clamp(190px,28vh,300px);
@@ -56,6 +56,8 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .cat-n { font-size:12.5px; line-height:1.4; }
 .cat-d { font-size:11px; line-height:1.4; }
 .ctl input[type=range] { min-width:0; width:0; }
+.ctl .num-in { font-family:"SF Mono","Cascadia Code",Consolas,"Liberation Mono",monospace; color:#141920; }
+[data-theme=dark] .ctl .num-in { color:#e9edf4; }
 .panel.grow #spList { flex:1 1 auto; min-height:280px; max-height:none; }
 .col-main .tabs { flex:0 0 auto; padding:10px 14px; border-bottom:1px solid var(--c-line-soft); }
 .col-main>.panel>.workspace-scroll {
@@ -80,6 +82,8 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .empty-overlay p { font-size:12px; }
 #cropPane .cropwin { height:var(--res-tbl-h,clamp(190px,28vh,300px)); }
 .actions { padding:10px 0 0; }
+.example-actions { display:flex; align-items:center; gap:var(--s2); margin-left:auto; }
+#singlePane .actions .btn, #resPane .geo2 .btn { border-radius:7px; }
 .actions .meta:empty { display:none; }
 .col-right .actions { align-items:flex-start; }
 .col-right .actions .meta { font-size:11px; line-height:1.7; padding:0; }
@@ -93,6 +97,9 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .example-card strong { padding:8px; font-size:11.5px; }
 .huiyan-help .body { display:block; }
 .huiyan-help .callout { margin:0; padding:12px; border:1px solid var(--c-line-soft); border-radius:8px; background:var(--c-surface-2); }
+[data-theme=light] .catcard:not(.on):not(:hover),
+[data-theme=light] #resPane .geo,
+[data-theme=light] .huiyan-help .callout { background:#fafbfc; }
 .huiyan-help .callout+.callout { margin-top:8px; }
 .huiyan-help .example-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:10px; }
 .huiyan-help .example-card img { height:64px; }
@@ -103,7 +110,7 @@ html[data-theme] body[data-ark-page="huiyan"] {
 #cropPane>.huiyan-credit a { color:var(--c-accent-dim); text-decoration:none; }
 #cropPane>.huiyan-credit a:hover { text-decoration:underline; }
 @media(min-width:921px) and (max-width:1280px) {
-  .cols { grid-template-columns:270px minmax(0,1fr); }
+  .cols { grid-template-columns:280px minmax(0,1fr); }
   .top-right { justify-content:flex-end; }
   .col-right { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:16px; }
   .col-right>.panel { min-width:0; }

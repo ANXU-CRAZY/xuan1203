@@ -1191,7 +1191,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
 </style>
 <link rel="stylesheet" href="/static/app_monitor/site-theme.css?v=20261025-1">
 <link rel="stylesheet" href="/static/app_monitor/huiyan/theme.css?v=20261025-4">
-<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261028-reference1">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261030-colors1">
 </head>
 <body data-ark-page="huiyan">
 <div class="wrap">
@@ -1240,7 +1240,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
           <div class="callout" style="margin-top:var(--s2)">
             <b>词表设置：</b>展开类群可按<b>目 / 科</b>浏览；悬停分类名右侧的
             <b style="color:var(--c-accent)">＋</b> 可整组加入词表。
-            请优先选择可能出现的物种，缩小候选范围。识别结果供辅助参考，数量及物种仍需人工复核。
+            词表越窄越准 —— 实测 4 类 75%、8 类 62%、12 类 50%。
           </div>
         </div>
       </section>
@@ -1288,9 +1288,10 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                   <button class="btn" id="btnCompare">对比原图</button>
                   <button class="btn" id="btnSave">下载标注图</button>
                   <button class="btn" id="btnUpload" type="button">载入图片</button>
-                  <button class="btn" id="btnExamples" type="button">测试例图</button>
-                  <button class="btn" id="btnReset" type="button">换一张</button>
-                  <span class="grow"></span>
+                  <div class="example-actions">
+                    <button class="btn primary" id="btnExamples" type="button">测试例图</button>
+                    <button class="btn" id="btnReset" type="button">换一张</button>
+                  </div>
                   <span class="meta" id="runMeta"></span>
                 </div>
               </div>
@@ -1325,7 +1326,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                       placeholder="如：Suspected Domestic Cat" value=""></div>
                   </div>
                   <div class="gmrow" style="margin-top:var(--s2)">
-                    <button class="btn sm" id="btnCusApply">应用到本图目标</button>
+                    <button class="btn sm" id="btnCusApply">应用到本图</button>
                     <button class="btn sm" id="btnCusAuto"
                       title="统计本图各识别结果的中文名，把出现次数最多的那个及其英文名自动填入上面的输入框">匹配主要物种</button>
                     <button class="btn sm" id="btnCusClear">清除名称</button>
@@ -1333,7 +1334,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                       title="把结果表里当前编辑中的名称、影像坐标、经纬度全部应用，并按修改后的结果重画图像上的识别框">结果更新</button>
                   </div>
                   <div class="meta" id="cusMeta">
-                    填一个物种名，点「应用到本图目标」后本图所有目标都改成它。若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。英文名留空则沿用原名。
+                    填一个物种名，点「应用到本图」后本图所有目标都改成它。若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。
                   </div>
                 </div>
                 <div class="geo" id="geoPanel">
@@ -1349,13 +1350,13 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                     <span class="fmt" id="geoDms"></span>
                   </div>
                   <div class="gmrow" style="margin-top:var(--s2)">
-                    <button class="btn sm" id="btnGeoApply">应用到本图目标</button>
+                    <button class="btn sm" id="btnGeoApply">应用到本图</button>
                     <button class="btn sm" id="btnGeoImport" title="把地图上当前的点导入到经纬度输入框">导入当前坐标</button>
                     <button class="btn sm" id="btnGeoClear">清除坐标</button>
                   </div>
 
                   <div class="meta" id="geoMeta">
-                    填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。单独改某一行的经纬度即可为该目标定制坐标。可在右栏「空间定位」面板上点击取点。
+                    填写地理坐标，点「应用到本图」后本图所有目标位置都改成它。单独改某一行的经纬度即可为该目标定制坐标。可在右栏「空间定位」面板上点击取点。
                   </div>
                 </div>
                 </div>
@@ -1404,7 +1405,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
               </div>
               <div class="note huiyan-credit">
                 <div>本项目由「郑州大学地球科学与技术学院」&amp;「郑州市自然保护地事务中心」合作研发</div>
-                <div><a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a> · 黄河生态方舟 · 方舟慧眼</div>
+                <div>访问<a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer">「方舟实验室」</a>了解更多方舟动态 · 黄河生态方舟 · 方舟慧眼</div>
               </div>
             </section>
           </div>
@@ -1525,7 +1526,6 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             <b>例图体验</b>
             <p class="example-intro">点击例图载入图片和推荐词表，再点击开始识别。</p>
             <div id="exampleGrid" class="example-grid" aria-label="鸟类例图"></div>
-            <p class="example-note">识别结果仅供辅助参考，请人工核对。</p>
           </div>
           <div class="callout" style="margin-top:var(--s2)">
             <b>空间定位</b><br>
@@ -1593,7 +1593,7 @@ let renamed={};             // 改名映射：en -> 新中文名（跨图生效�
 /* imgSpecies：本图统一使用的自定义物种名（空=未设置）
    speciesStore：按文件名记忆 {file:'家猫'}
    语义与「图片空间坐标」一致：
-     1. 填一个名称 → 点「应用到本图目标」→ 本图所有识别目标都改成它
+     1. 填一个名称 → 点「应用到本图」→ 本图所有识别目标都改成它
      2. 之后单独改某一行的名称 → 该行标记为「自定义」，脱离本图统一名
      3. 「清除名称」→ 取消统一名，全部回到模型原名（已单独改过的行保留） */
 let imgSpecies='';         // 本图自定义物种名（中文）
@@ -2173,17 +2173,16 @@ function syncVScroll(){
 /* ---------- 目标物体框与结果表窗口等高 ---------- */
 /* 「识别结果」表窗口与「目标物体」裁剪窗保持同高：
    两者都用 --res-tbl-h 固定高度，不随结果条数增减而变化 */
-/* 按参考版自然排布，等高窗口最多 324px，避免页面增高后反复撑大。 */
+/* 桌面按工作区剩余高度等分，保持结果表与裁剪窗等高。 */
 function fitMiddle(){
   const pane=$('#p-single'), workspace=$('.workspace-scroll');
   if(!pane||!workspace||pane.classList.contains('hide'))return;
   if(matchMedia('(max-width:920px)').matches){pane.style.removeProperty('--res-tbl-h');return;}
   const table=$('.tblarea'), crops=$('#cropWin');
   if(!table||!crops||!pane.offsetHeight)return;
-  const style=getComputedStyle(workspace);
-  const available=workspace.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
-  const overhead=pane.scrollHeight-table.offsetHeight-crops.offsetHeight;
-  const target=Math.min(324,Math.max(190,Math.floor((available-overhead)/2)));
+  const bottomSpace=pane.getBoundingClientRect().bottom-$('#cropPane').getBoundingClientRect().bottom
+    -parseFloat(getComputedStyle(pane).paddingBottom);
+  const target=Math.max(190,Math.floor(table.offsetHeight+bottomSpace/2));
   if(Math.abs(table.offsetHeight-target)>1)pane.style.setProperty('--res-tbl-h',target+'px');
   syncVScroll();
 }
@@ -2927,7 +2926,7 @@ window.addEventListener('orientationchange',repositionPicker);
    1. imgGeo 是「这张图片」的空间坐标（十进制度），默认 0,0
    2. 每个识别目标自动匹配图片坐标（继承态，标签显示「继承」）
    3. 单独改某一行 → 该行该轴变为「自定义」，不再随图片坐标变化
-   4. 「应用到本图目标」→ 图片坐标写给本图全部目标（含覆盖已自定义的）
+   4. 「应用到本图」→ 图片坐标写给本图全部目标（含覆盖已自定义的）
    5. 「清除坐标」→ 图片坐标与所有目标坐标一起清空（回到 0,0 继承） */
 let imgGeo={lat:0,lng:0};     // 图片级 WGS84 坐标
 let geoStore={};             // 按文件名记忆每张图片的空间坐标：{file:{lat,lng}}
@@ -3081,7 +3080,7 @@ function syncGeoUI(){
   if(ro)ro.textContent=curRes.length?`${inh} 个继承 · ${own} 个自定义`:'';
   if(meta){
     // 面板内说明（只讲用法，不显示匹配数）
-    meta.innerHTML = '填写地理坐标，点「应用到本图目标」后本图所有目标位置都改成它。'
+    meta.innerHTML = '填写地理坐标，点「应用到本图」后本图所有目标位置都改成它。'
       + '单独改某一行的经纬度即可为该目标定制坐标。可在右栏「空间定位」面板上点击取点。';
   }
 }
@@ -3274,7 +3273,7 @@ $('#btnGeoImport').onclick=()=>{
   mapTip(`已导入 ${fmtNum(lat.lat)}, ${fmtNum(lat.lng)}`);
   toast(`已导入坐标 ${fmtNum(lat.lat)}, ${fmtNum(lat.lng)}`);
 };
-// 应用到本图目标：图片坐标写给本图全部目标
+// 应用到本图：图片坐标写给本图全部目标
 $('#btnGeoApply').onclick=()=>{
   if(!curRes.length){toast('请先识别');return}
   if(!geoValid('lat',$('#geoLat').value)||!geoValid('lng',$('#geoLng').value)){
@@ -3402,10 +3401,10 @@ $('#btnStatClear').onclick=()=>{
   toast(`已清空 ${n} 条统计记录`);
 };
 
-/* ---------- 自定义物种：应用到本图目标 / 清除 ---------- */
+/* ---------- 自定义物种：应用到本图 / 清除 ---------- */
 /* 名称解析：中文名、英文名都能识别，并自动补全另一项。
    之前只把输入框里的中文名当成「物种名」，英文名一律沿用模型原名，
-   于是「填英文名 → 点应用到本图目标」看起来毫无效果。 */
+   于是「填英文名 → 点应用到本图」看起来毫无效果。 */
 function hasCJK(s){return /[\u3400-\u9fff\uf900-\ufaff]/.test(s||'')}
 function findByEn(s){return SP.find(x=>x.en&&x.en.toLowerCase()===String(s).toLowerCase())||null}
 function findByZh(s){return SP.find(x=>x.zh&&x.zh.toLowerCase()===String(s).toLowerCase())||null}
@@ -3508,8 +3507,8 @@ function syncCusUI(){
   if(ro)ro.textContent=curRes.length?`${curRes.length-own} 个统一 · ${own} 个单独`:'';
   // 面板内说明 = 固定用法说明 + 动态状态
   if (meta) {
-    const USAGE = '填一个物种名，点「应用到本图目标」后本图所有目标都改成它。'
-      + '若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。英文名留空则沿用原名。';
+    const USAGE = '填一个物种名，点「应用到本图」后本图所有目标都改成它。'
+      + '若只想改某一个目标，直接改那一行的物种名即可，会写入导出的 Excel。';
     const st = curRes.length && imgSpecies
       ? '统一名 <b>' + escHtml(imgSpecies) + '</b>'
         + (own ? '，<b>' + own + '</b> 个目标单独指定' : '') + '。'
@@ -3569,8 +3568,8 @@ document.addEventListener('click',e=>{
 /* 物种名称自动匹配：统计本图各识别结果的中文名，
    把出现次数最多的那个（及其英文名）自动填进输入框 */
 /* 匹配主要物种：统计本图各识别结果的中文名，
-   把出现次数最多的那个连同英文名填入输入框，并立即应用到本图目标
-   （这样结果表的中文名与英文名会同步更新，不需要再点「应用到本图目标」）。 */
+   把出现次数最多的那个连同英文名填入输入框，并立即应用到本图
+   （这样结果表的中文名与英文名会同步更新，不需要再点「应用到本图」）。 */
 $('#btnCusAuto').onclick=()=>{
   if(!curRes.length){toast('请先识别');return}
   // 只统计「非单独指定」的行，避免被单行改名带偏

@@ -98,6 +98,6 @@ body.heat-selecting .leaflet-pane canvas, body.analysis-selecting .leaflet-pane 
 .site-record-footer { box-sizing:border-box; }
 .protected-layer-key { display:inline-flex; align-items:center; gap:5px; }
 .protected-layer-key::before { content:''; display:inline-block; width:12px; height:9px; box-sizing:border-box; border:1px solid; flex-shrink:0; }
-.protected-core-key::before { background:#E539356B; border:1px dashed #9B1C20; }
-.protected-buffer-key::before { background:#FBC02D70; border-color:#BF8B00; }
-.protected-experimental-key::before { background:#2F80ED60; border-color:#2563EB; }
+.protected-core-key::before { background:#D30826E6; border:1px dashed #9B1C20; }
+.protected-buffer-key::before { background:#75A8D0E6; border-color:#568BB7; }
+.protected-experimental-key::before { background:#425A87E6; border-color:#30456C; }

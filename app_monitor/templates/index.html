@@ -295,8 +295,10 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(84px, 1fr)) 72px repeat(2, minmax(84px, 1fr));
+            align-items: center;
+            gap: 8px;
             z-index: 1000;
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
@@ -312,6 +314,44 @@
         .bottom-stat .b-num.orange { color: var(--c-orange); }
         .bottom-stat .b-num.green { color: var(--c-green); }
         .bottom-stat .b-label { font-size: 10px; color: #999; white-space: nowrap; }
+        .huiyan-quick-entry {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            justify-self: center;
+            box-sizing: border-box;
+            width: 72px;
+            height: 72px;
+            margin-top: -20px;
+            margin-bottom: -20px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            background: linear-gradient(140deg, #42e5ae, #19c7bc);
+            color: #124e50;
+            box-shadow: 0 5px 18px rgba(12, 133, 128, 0.25);
+            text-decoration: none;
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .huiyan-quick-entry > i { font-size: 24px; line-height: 1; }
+        .huiyan-quick-entry > span { margin-top: 4px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+        .huiyan-quick-entry::after {
+            content: 'AI';
+            position: absolute;
+            top: -3px;
+            right: -2px;
+            padding: 2px 5px;
+            border-radius: 7px 7px 7px 1px;
+            background: #234f56;
+            color: #6ff1d2;
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+        .huiyan-quick-entry:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(12, 133, 128, .32); }
+        .huiyan-quick-entry:focus-visible { outline: 3px solid #1f6f78; outline-offset: 3px; }
+        .huiyan-quick-entry + .bottom-stat { border-left: none; }
         .site-record-footer {
             position: fixed;
             left: 0;
@@ -655,6 +695,7 @@
 
             .bottom-stats-bar {
                 left: 12px; right: 12px; bottom: 38px; transform: none;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) 56px repeat(2, minmax(0, 1fr));
                 justify-content: space-between; gap: 0; padding: 8px 6px;
                 border-radius: 20px; background: rgba(255,255,255,0.94);
                 box-shadow: 0 12px 34px rgba(25,60,70,0.16);
@@ -662,6 +703,10 @@
             .bottom-stat { flex: 1; padding: 0 4px; }
             .bottom-stat .b-num { font-size: 17px; }
             .bottom-stat .b-label { font-size: 9px; }
+            .huiyan-quick-entry { width: 56px; height: 56px; margin-top: -16px; margin-bottom: -16px; }
+            .huiyan-quick-entry > i { font-size: 20px; }
+            .huiyan-quick-entry > span { font-size: 9px; margin-top: 2px; }
+            .huiyan-quick-entry::after { font-size: 9px; }
             .site-record-footer {
                 left: 50%;
                 bottom: 6px;
@@ -695,6 +740,11 @@
             .panel-head { font-size: 12px; }
             .bottom-stat .b-num { font-size: 16px; }
             .bottom-stat .b-label { font-size: 8px; }
+        }
+
+        @media (max-width: 360px) {
+            .bottom-stats-bar .bottom-stat { min-width: 0; padding: 0 1px; }
+            .bottom-stats-bar .bottom-stat .b-num { font-size: 14px; }
         }
 
         @media (min-width: 769px) {
@@ -969,10 +1019,14 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
-<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261024-5">
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-sidebar1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261024-2">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261102-sidebar1">
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261026-7">
+<style>
+    .top-beam .brand .brand-tagline { margin-left:6px; font-size:12px; font-weight:500; color:var(--ark-muted); white-space:nowrap; }
+    .top-beam .brand-copy small { font-weight:500; letter-spacing:.04em; }
+</style>
 </head>
 <body data-ark-page="monitor">
 
@@ -980,7 +1034,7 @@
     <div class="brand">
         <img src="/static/app_monitor/img/logo.png" alt="黄河生态方舟" class="brand-logo" onerror="this.hidden=true;this.style.display='none';this.nextElementSibling.classList.add('show')">
         <div class="brand-logo-fallback" aria-hidden="true">黄河</div>
-        <div class="brand-copy"><span class="brand-title">黄河生态方舟</span><small>方舟实验室 · 郑州大学地球科学与技术学院 · 郑州市自然保护地事务中心</small></div>
+        <div class="brand-copy"><span class="brand-title">黄河生态方舟<span class="brand-tagline">· 智感一切</span></span><small>ARK GEOAI LAB · ONLINE</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
         <a href="/huiyan/" class="nav-btn nav-huiyan"><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
@@ -1068,21 +1122,6 @@
     <button id="point-next" type="button" class="monitor-btn" onclick="app.loadMapObservations({after:app.nextPointAfter})" hidden>下一页</button>
 </div>
 
-<div id="rank-panel" class="glass-panel">
-    <div class="panel-head" id="drag-left">
-        <span><i class="fas fa-satellite-dish" style="color:var(--c-green)"></i> 实时数据接入</span>
-        <div style="font-size:10px; color:#999; display:flex; align-items:center; gap:4px">
-            <span class="status-dot active"></span> 监控中
-        </div>
-    </div>
-    <div class="log-container" id="realtime-log-box">
-        <div class="log-empty">
-            <i class="fas fa-seedling"></i>
-            <span>正在同步观鸟记录</span>
-        </div>
-        </div>
-</div>
-
 <div id="detail-panel" class="glass-panel">
     <div class="panel-head" id="drag-right">
         <span class="dashboard-heading">
@@ -1121,14 +1160,15 @@
             <div class="chart-card-title"><i class="fas fa-chart-line"></i> 近五年观测记录（当前筛选）</div>
             <div class="annual-bar-chart"><canvas id="chart-trend"></canvas></div>
         </div>
+        <div class="chart-card"><div class="chart-card-title"><i class="fas fa-list-ol"></i> 物种数量排行（只）</div><div id="species-list-box" class="species-list-container"></div></div>
 
         </div>
         <div class="dashboard-latest">
         <!-- 实时动态 -->
         <div style="font-size:11px; font-weight:700; color:var(--c-dark); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
-            <span class="live-dot"></span><i class="fas fa-bolt"></i> 最新动态
+            <span class="live-dot"></span><i class="fas fa-satellite-dish"></i> 最新动态 · 实时数据接入
         </div>
-        <div id="species-list-box" class="species-list-container" ></div>
+        <div class="log-container" id="realtime-log-box"><div class="log-empty"><i class="fas fa-seedling"></i><span>正在同步观鸟记录</span></div></div>
         </div>
     </div>
     <div id="ai-agent" class="dashboard-chat" hidden>
@@ -1250,6 +1290,10 @@
         <div class="b-num green" id="s-species">0</div>
         <div class="b-label">发现物种</div>
     </div>
+    <a href="/huiyan/" class="huiyan-quick-entry" title="进入方舟慧眼 · AI识别鸟兽" aria-label="打开方舟慧眼，AI识别鸟兽">
+        <i class="fas fa-dove" aria-hidden="true"></i>
+        <span>方舟慧眼</span>
+    </a>
     <div class="bottom-stat">
         <div class="b-num red" id="s-protected">0</div>
         <div class="b-label">受保护</div>
@@ -1268,7 +1312,7 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261026-4"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261102-sidebar1"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261026-8"></script>
 <script>
     const app = {
@@ -1314,7 +1358,6 @@
             this.initAIAssistant();
 
             // 启用拖拽
-            this.makeDraggable('rank-panel');
             this.makeDraggable('detail-panel');
         },
 
@@ -1480,7 +1523,7 @@
                         const groups = [
                             {key:'reference',name:'地图参考',labels:[]},
                             {key:'protection',name:'保护区范围',labels:[]},
-                            {key:'birds',name:'鸟类监测',labels:[]},
+                            {key:'birds',name:'人工巡护',labels:[]},
                             {key:'towers',name:'监控设施',labels:[]},
                             {key:'other',name:'其他图层',labels:[]}
                         ];
@@ -1638,9 +1681,9 @@
 
         loadProtectedAreas: async function() {
             const types = {
-                1: { key:'protectedCore', name:'核心区', style:{ color:'#9B1C20', fillColor:'#E53935', fillOpacity:0.65, weight:2, dashArray:'6,4' } },
-                2: { key:'protectedBuffer', name:'缓冲区', style:{ color:'#BF8B00', fillColor:'#FBC02D', fillOpacity:0.35, weight:1.5 } },
-                3: { key:'protectedExperimental', name:'实验区', style:{ color:'#2563EB', fillColor:'#2F80ED', fillOpacity:0.28, weight:1.5 } }
+                1: { key:'protectedCore', name:'核心区', style:{ color:'#9B1C20', fillColor:'#D30826', fillOpacity:0.90, weight:2, dashArray:'6,4' } },
+                2: { key:'protectedBuffer', name:'缓冲区', style:{ color:'#568BB7', fillColor:'#75A8D0', fillOpacity:0.90, weight:1.5 } },
+                3: { key:'protectedExperimental', name:'实验区', style:{ color:'#30456C', fillColor:'#425A87', fillOpacity:0.90, weight:1.5 } }
             };
             const popup = feature => {
                 const type = types[Number(feature.properties?.Num ?? feature.properties?.source_code)];
@@ -1670,7 +1713,7 @@
                         this.protectedAreaBoundary.addLayer(layer);
                         layer.bindTooltip(`${type.name} · ${name}`, { sticky:true });
                         layer.on({
-                            mouseover:() => layer.setStyle({ weight:3, fillOpacity:Math.min(0.85, style.fillOpacity + 0.12) }),
+                            mouseover:() => layer.setStyle({ weight:3, fillOpacity:Math.min(1, style.fillOpacity + 0.1) }),
                             mouseout:() => layer.setStyle(style),
                             click:event => {
                                 if (this.heatmap.active || this.bufferAnalysis?.picking) return;
@@ -1743,14 +1786,11 @@
                 this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
                 return;
             }
-            this.map.fitBounds(regionBounds.pad(0.002), {
-                animate: false,
-                maxZoom: 10.75,
-                paddingTopLeft: [390, 96],
-                paddingBottomRight: [520, 108]
-            });
-            this.map.setZoom(Math.min(this.map.getZoom() + 1, 10.75), { animate: false });
-            shiftCenterDown();
+            // 桌面初始视野按参考图保留周边区域，避免只剩郑州边界后自动放得过大。
+            const size = this.map.getSize();
+            const scale = Math.min(size.x / 1536, size.y / 850);
+            const overviewZoom = 8.5 + Math.log2(scale);
+            this.map.setView([34.94, 113.735], overviewZoom, { animate: false });
             this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
         },
 

@@ -18,7 +18,8 @@
 .dashboard-tabs button:focus-visible, .dashboard-collapse:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
 .dashboard-overview { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; padding:12px 14px 0; gap:10px; }
 .dashboard-charts { flex:1; min-height:0; overflow:auto; scrollbar-width:thin; }
-.dashboard-latest { flex:none; border-top:1px solid #e5eeeb; padding-top:10px; }
+.dashboard-latest { flex:none; min-height:0; border-top:1px solid #e5eeeb; padding-top:10px; }
+#detail-panel .dashboard-latest .log-container { height:160px; overflow-y:auto; padding:0 5px; scrollbar-width:thin; }
 #detail-panel [hidden] { display:none !important; }
 #detail-panel .chart-row { gap:10px; margin-bottom:6px; }
 #detail-panel .chart-col > .chart-card { height:100%; box-sizing:border-box; }
