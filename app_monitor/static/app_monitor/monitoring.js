@@ -97,7 +97,7 @@ function installMonitoringDashboard(app) {
             const layerBottom = bottom.top - 10;
             layerControl.style.setProperty('--map-layer-list-height', Math.max(44, layerBottom - layerTop - 24 - zoomSpace) + 'px');
             const lowerEdge = bottom.top - 8;
-            document.documentElement.style.setProperty('--monitor-sidebar-top', `${bar.bottom + 8}px`);
+            document.documentElement.style.setProperty('--monitor-sidebar-top', `${Math.max(bar.bottom, beam.bottom) + 8}px`);
             document.documentElement.style.setProperty('--monitor-sidebar-bottom', `${Math.max(8, innerHeight - lowerEdge)}px`);
             document.documentElement.style.setProperty('--point-pagination-bottom', `${innerHeight - bottom.top + 8}px`);
         },

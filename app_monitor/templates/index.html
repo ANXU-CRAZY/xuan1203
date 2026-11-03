@@ -1021,11 +1021,50 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-filterleft3">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261102-sidebar1">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261103-spacing1">
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261026-7">
 <style>
+    .top-beam .brand { gap:12px; }
+    .top-beam .brand-logo { width:36px; height:36px; transform:none; }
+    .top-beam .brand-copy { gap:3px; }
+    .top-beam .brand .brand-title { font-size:16px; font-weight:700; line-height:1.35; letter-spacing:0; }
     .top-beam .brand .brand-tagline { margin-left:6px; font-size:12px; font-weight:700; color:var(--ark-muted); white-space:nowrap; }
-    .top-beam .brand-copy small { font-weight:700; letter-spacing:.04em; }
+    .top-beam .brand-copy small { font-size:10px; line-height:1.5; font-weight:700; letter-spacing:.04em; }
+    body[data-ark-page="monitor"] .nav-links { gap:6px; }
+    body[data-ark-page="monitor"] .nav-btn { height:30px; padding:5px 11px; font-size:12px; }
+    body[data-ark-page="monitor"] .nav-btn i { font-size:11px; }
+    body[data-ark-page="monitor"] .top-beam { gap:12px; }
+    body[data-ark-page="monitor"] #filter-bar { position:static; flex:0 1 auto; max-width:none; margin-left:auto; padding:0; border:0; box-shadow:none; background:transparent; backdrop-filter:none; }
+    body[data-ark-page="monitor"] #filter-bar .filter-tools { overflow-x:auto; scrollbar-width:none; }
+    body[data-ark-page="monitor"] #navArea { flex:0 1 auto; margin-left:0; }
+    .dashboard-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:8px 0; margin-bottom:8px; border:1px solid #e5eeeb; border-radius:10px; background:#f7faf8; }
+    .dashboard-summary .bottom-stat { min-width:0; padding:0 2px; }
+    .dashboard-summary .b-num { font-size:16px; }
+    .dashboard-summary .b-label { font-size:10px; }
+    .bottom-stats-bar.bottom-actions { grid-template-columns:repeat(2,minmax(64px,1fr)) 72px repeat(2,minmax(64px,1fr)); align-items:center; gap:8px; }
+    .bottom-action { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:42px; padding:3px 8px; border:0; background:transparent; color:#375d60; font-family:inherit; font-weight:600; font-size:11px; text-decoration:none; cursor:pointer; white-space:nowrap; }
+    .bottom-action i { color:#208995; font-size:17px; }
+    .bottom-actions .report-action { position:absolute; z-index:2; bottom:calc(100% - 2px); left:50%; transform:translateX(-50%); display:flex; flex-direction:row; gap:3px; min-width:0; min-height:22px; padding:3px 9px; border:2px solid #fff; border-radius:999px; background:#218b91; color:#fff; font-size:10px; box-shadow:0 2px 7px rgba(25,60,70,.16); }
+    .bottom-actions .report-action i { color:inherit; font-size:10px; }
+    .bottom-actions .report-action:hover, .bottom-actions .report-action:focus-visible { color:#fff; background:#176c73; border-radius:999px; }
+    .bottom-action:hover, .bottom-action:focus-visible { color:#14727b; background:#e8f5f2; border-radius:10px; }
+    #games-panel { top:auto !important; bottom:110px; max-height:calc(100vh - 140px) !important; }
+    @media (max-width:1200px) {
+        body[data-ark-page="monitor"] .top-beam { flex-wrap:wrap; }
+        body[data-ark-page="monitor"] #filter-bar { order:3; flex:1 1 100%; width:100%; }
+        body[data-ark-page="monitor"] #filter-bar .filter-tools { justify-content:flex-start; }
+    }
+    @media (max-width:768px) {
+        .top-beam .brand .brand-title { font-size:16px; }
+        .top-beam .brand-copy small { font-size:10px; }
+        body[data-ark-page="monitor"] .top-beam .nav-btn { height:30px; padding:0 9px !important; font-size:11px; }
+        body[data-ark-page="monitor"] .top-beam #navArea { width:100%; margin:0; order:2; }
+        body[data-ark-page="monitor"] #filter-bar { width:100%; order:3; }
+        .bottom-stats-bar.bottom-actions { grid-template-columns:repeat(2,minmax(0,1fr)) 56px repeat(2,minmax(0,1fr)); gap:0; }
+        .bottom-action { font-size:10px; padding:3px 2px; min-height:42px; }
+        .bottom-action i { font-size:15px; }
+        #games-panel { bottom:110px; }
+    }
 </style>
 </head>
 <body data-ark-page="monitor">
@@ -1037,13 +1076,6 @@
         <div class="brand-copy"><span class="brand-title">黄河生态方舟<span class="brand-tagline">· 智感一切</span></span><small>ARK GEOAI LAB · ONLINE</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
-        <a href="/huiyan/" class="nav-btn nav-huiyan"><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
-        <a href="/report/" class="nav-btn nav-btn-primary"><i class="fas fa-plus" aria-hidden="true"></i><span>上报</span></a>
-        <button id="games-toggle" class="nav-btn nav-games" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span><i class="fas fa-chevron-down games-chevron" aria-hidden="true"></i></button>
-        <a href="/species/" class="nav-btn nav-species"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
-        <a href="/articles/" class="nav-btn nav-articles"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
-        <a href="/gallery/" class="nav-btn nav-gallery"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
-        <a href="/admin/" class="nav-btn nav-admin"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>
         <a href="https://3.1415926.love/arklb-geoai/" class="nav-btn lab-visit" target="_blank" rel="noopener noreferrer"><span>访问方舟实验室</span><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
         <div id="navGuest" class="nav-auth" style="display:flex; align-items:center; gap:6px;">
             <a href="/login/" class="nav-btn nav-btn-outline"><i class="fas fa-user" aria-hidden="true"></i><span>个人登录</span></a>
@@ -1052,6 +1084,7 @@
             <span class="nav-score" id="navScore"><i class="fas fa-coins" aria-hidden="true"></i> <span>0</span> 分</span>
             <a href="/profile/" class="nav-btn nav-btn-outline"><i class="fas fa-user" aria-hidden="true"></i><span>个人</span></a>
         </div>
+        <a href="/admin/" class="nav-btn nav-admin"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>
     </nav>
 </div>
 <section id="games-panel" class="games-panel" aria-labelledby="games-title" hidden>
@@ -1070,8 +1103,8 @@
         <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
         <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
         <button type="button" class="topic-btn" data-protection-filter="国家二级" onclick="app.setProtectionFilter('国家二级')" style="--topic-color:#F39C12">国家二级</button>
-        <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有动物</button>
-        <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危/其他</button>
+        <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有物种</button>
+        <button type="button" class="topic-btn" data-protection-filter="无危/其他" onclick="app.setProtectionFilter('无危/其他')" style="--topic-color:#58C96D">无危物种</button>
 </div>
 <div id="filter-bar" class="glass-panel">
     <div id="monitor-filter-tools" class="filter-tools" aria-label="时间和热力图工具">
@@ -1139,6 +1172,12 @@
     </div>
     <div id="dashboard-overview" class="dashboard-overview" role="tabpanel" aria-labelledby="dashboard-overview-tab">
         <div class="dashboard-charts">
+        <div class="dashboard-summary" aria-label="监测数据统计">
+            <div class="bottom-stat"><div class="b-num" id="s-records">0</div><div class="b-label">总观测记录</div></div>
+            <div class="bottom-stat"><div class="b-num green" id="s-species">0</div><div class="b-label">发现物种</div></div>
+            <div class="bottom-stat"><div class="b-num red" id="s-protected">0</div><div class="b-label">受保护</div></div>
+            <div class="bottom-stat"><div class="b-num orange" id="s-approved">0</div><div class="b-label">已核验</div></div>
+        </div>
         <!-- 图表行1：物种与保护等级横向柱状图 -->
         <div class="chart-row">
             <div class="chart-col">
@@ -1154,13 +1193,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 图表行2：年度趋势 -->
-        <div class="chart-card">
-            <div class="chart-card-title"><i class="fas fa-chart-line"></i> 近五年观测记录（当前筛选）</div>
-            <div class="annual-bar-chart"><canvas id="chart-trend"></canvas></div>
-        </div>
-        <div class="chart-card"><div class="chart-card-title"><i class="fas fa-list-ol"></i> 物种数量排行（只）</div><div id="species-list-box" class="species-list-container"></div></div>
 
         </div>
         <div class="dashboard-latest">
@@ -1281,27 +1313,16 @@
 <div id="map"></div>
 
 <!-- 底部统计条 -->
-<div class="bottom-stats-bar">
-    <div class="bottom-stat">
-        <div class="b-num" id="s-records">0</div>
-        <div class="b-label">总观测记录</div>
-    </div>
-    <div class="bottom-stat">
-        <div class="b-num green" id="s-species">0</div>
-        <div class="b-label">发现物种</div>
-    </div>
+<div class="bottom-stats-bar bottom-actions" role="navigation" aria-label="快捷功能">
+    <a href="/gallery/" class="bottom-action"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
+    <a href="/report/" class="bottom-action report-action"><i class="fas fa-plus-circle" aria-hidden="true"></i><span>上报</span></a>
+    <button id="games-toggle" class="bottom-action" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span></button>
     <a href="/huiyan/" class="huiyan-quick-entry" title="进入方舟慧眼 · AI识别鸟兽" aria-label="打开方舟慧眼，AI识别鸟兽">
         <i class="fas fa-dove" aria-hidden="true"></i>
-        <span>方舟慧眼</span>
+        <span>慧眼识鸟</span>
     </a>
-    <div class="bottom-stat">
-        <div class="b-num red" id="s-protected">0</div>
-        <div class="b-label">受保护</div>
-    </div>
-    <div class="bottom-stat">
-        <div class="b-num orange" id="s-approved">0</div>
-        <div class="b-label">已核验</div>
-    </div>
+    <a href="/species/" class="bottom-action"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
+    <a href="/articles/" class="bottom-action"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
 </div>
 
 <div class="site-record-footer">
@@ -1309,10 +1330,11 @@
     <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备15026986号-4</a>
 </div>
 
+<script>document.querySelector('.top-beam').insertBefore(document.getElementById('filter-bar'), document.getElementById('navArea'));</script>
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261102-birdstyle2"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261103-header1"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261026-8"></script>
 <script>
     // 在原有 Canvas 上绘制鸟形符号，保留大量点位的批量渲染和点击行为。
@@ -1616,7 +1638,6 @@
                     labelLayer.addTo(this.map);
                 }
             });
-            L.control.zoom({ position: 'topleft' }).addTo(this.map);
             this.map.on('moveend', () => this.scheduleVisibleRecordMarkers());
             this.map.on('zoomend', () => {
                 this.updateAutoHeatmapByZoom();
@@ -2578,35 +2599,6 @@
                 options: horizontalOptions('条')
             });
 
-            // Show the latest five calendar years of the selected observations.
-            // This affects only this chart, never the timeline or map filters.
-            const yearCounts = {};
-            if (Array.isArray(this.serverStats?.yearly_trend)) {
-                this.serverStats.yearly_trend.forEach(item => { yearCounts[Number(item.year)] = Number(item.count || 0); });
-            } else {
-                this.getDateFilteredObservations().forEach(item => {
-                    const year = Number(String(item.observation_time || '').slice(0, 4));
-                    if (year) yearCounts[year] = (yearCounts[year] || 0) + 1;
-                });
-            }
-            const availableYears = Object.keys(yearCounts).map(Number).filter(Number.isFinite);
-            const latestYear = availableYears.length ? Math.max(...availableYears) : new Date().getFullYear();
-            const years = Array.from({ length: 5 }, (_, i) => latestYear - 4 + i);
-            if (this.charts.trend) this.charts.trend.destroy();
-            this.charts.trend = new Chart(document.getElementById('chart-trend'), {
-                type: 'bar',
-                data: { labels: years.map(String), datasets: [{ data: years.map(year => yearCounts[year] || 0), backgroundColor: '#20909D', borderRadius: 4, borderSkipped: false, maxBarThickness: 18 }] },
-                options: horizontalOptions('条')
-            });
-
-            // === 4. 物种清单 ===
-            const listHtml = arr.map((item, i) => {
-                let badgeClass = 'bg-green'; let levelText = '';
-                if (item.level.includes('一') || item.level.includes('Ⅰ')) { badgeClass = 'bg-red'; levelText = `<span class="badge ${badgeClass}">${item.level}</span>`; }
-                else if (item.level.includes('二') || item.level.includes('Ⅱ')) { badgeClass = 'bg-orange'; levelText = `<span class="badge ${badgeClass}">${item.level}</span>`; }
-                return `<div class="species-row"><span class="sp-rank">#${i+1}</span><div class="sp-name">${item.name} ${levelText}</div><span class="sp-count">${item.count}</span></div>`;
-            }).join('');
-            $('#species-list-box').html(listHtml || '<div style="text-align:center;color:#ccc;margin-top:10px;font-size:12px;">暂无数据</div>');
         },
 
         // === 物种详情弹窗 ===

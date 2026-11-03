@@ -90,6 +90,11 @@ html[data-theme] body[data-ark-page="huiyan"] {
 .col-right .sumbox { border-radius:8px; }
 .col-right .mapbox { height:250px; border-radius:8px; }
 .geo-now { flex:0 1 auto; min-width:0; max-width:155px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--c-text-3); font-size:10px; font-weight:500; font-variant-numeric:tabular-nums; }
+.geo2 { align-items:stretch; }
+.geo .geo-coordinate-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.geo-coordinate-row .kv { min-width:0; }
+.geo-coordinate-row .kv > span { min-width:0; flex:none; }
+.geo-coordinate-row .kv input { width:100%; min-width:0; flex:1; }
 .mapbar { flex-wrap:nowrap; gap:6px; }
 .mapbar input.txt { flex:1 1 0; min-width:0; width:0; }
 .mapbar .btn { flex:0 0 auto; padding:4px 7px; min-height:29px; font-size:11.5px; }

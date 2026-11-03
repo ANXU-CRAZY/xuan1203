@@ -1191,7 +1191,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
 </style>
 <link rel="stylesheet" href="/static/app_monitor/site-theme.css?v=20261025-1">
 <link rel="stylesheet" href="/static/app_monitor/huiyan/theme.css?v=20261025-4">
-<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261102-brand1">
+<link rel="stylesheet" href="/static/app_monitor/huiyan/workspace.css?v=20261103-coordinates1">
 </head>
 <body data-ark-page="huiyan">
 <div class="wrap">
@@ -1343,7 +1343,7 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                     <span class="grow"></span>
                     <span class="meta" id="geoReadonly" style="margin:0"></span>
                   </div>
-                  <div class="gmrow">
+                  <div class="gmrow geo-coordinate-row">
                     <div class="kv"><span>纬度</span><input id="geoLat" type="number" step="0.000001" placeholder="如：34.753400" value=""></div>
                     <div class="kv"><span>经度</span><input id="geoLng" type="number" step="0.000001" placeholder="如：113.665300" value=""></div>
                     <span class="grow"></span>
@@ -3110,7 +3110,7 @@ function initGeoMap(){
     return;
   }
   // 与监测大屏使用同一套天地图矢量底图和中文注记
-  geoMap=L.map(box,{zoomControl:true,attributionControl:true})
+  geoMap=L.map(box,{zoomControl:false,attributionControl:true})
     .setView([34.0,108.0],4);
   const tdt=layer=>`https://t{s}.tianditu.gov.cn/${layer}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${HUIYAN_TDT_KEY}`;
   const tiles=L.tileLayer(tdt('vec'),{
