@@ -9,15 +9,10 @@ function installMonitoringTowers(app) {
         planned: { key:'plannedMonitoringTowers', name:'拟新建监控塔点位' }
     };
     const TOWER_LABEL_ZOOM=14;
-    const symbol = () => '<svg class="monitoring-tower-symbol" viewBox="0 0 36 44" aria-hidden="true">' +
-        '<path d="M13 21 7 40M23 21l6 19M6 40h24M11 29h14M9 36h18M12 29l13 7M24 29l-13 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="M7 12 18 5l11 7H7Z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>' +
-        '<path d="M10 13h16v10H10Z" fill="currentColor" stroke="#fff" stroke-width="1.3"/>' +
-        '<path d="M13 16h4v4h-4Zm6 0h4v4h-4Z" fill="#fff"/>' +
-        '<path d="M18 5V2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    const symbol = () => '<span class="monitoring-tower-symbol" aria-hidden="true"><span class="tower-logo-disc"><img src="/static/app_monitor/img/monitoring-tower-logo.png" alt="" draggable="false"></span></span>';
     const iconSize=zoom=>{
-        const width=zoom<13 ? 18 : zoom<15 ? 22 : 26;
-        return [width,Math.round(width*44/36)];
+        const width=zoom<13 ? 24 : zoom<15 ? 30 : 36;
+        return [width,Math.round(width*1.18)];
     };
     const towerIcon=(kind,zoom)=>{
         const [width,height]=iconSize(zoom);
