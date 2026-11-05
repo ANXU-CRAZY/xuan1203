@@ -1024,7 +1024,7 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-filterleft3">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261104-composer3">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261105-split3">
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1065,7 +1065,24 @@
     .dashboard-summary .ai-insight-entry { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:5px 2px; border:1px solid #a8d7d0; border-radius:9px; background:#e6f4f1; color:#177f86; font-family:inherit; font-size:10px; font-weight:700; line-height:1.2; cursor:pointer; white-space:nowrap; }
     .dashboard-summary .ai-insight-entry i { font-size:17px; }
     .dashboard-summary .ai-insight-entry:hover { background:#cdece5; border-color:#67bdb2; }
+    .dashboard-summary .ai-insight-entry { width:50px; height:50px; border-radius:50%; }
     .dashboard-summary .ai-insight-entry:focus-visible { outline:2px solid #20909d; outline-offset:1px; border-radius:6px; }
+    .ai-insight-wrap { position:relative; min-width:0; }
+    .monitor-date-field { position:relative; flex:none; display:inline-flex; width:136px; }
+    #filter-bar .monitor-date-field .date-inp { box-sizing:border-box; width:100%; min-width:0; flex:1 1 auto; color:transparent; }
+    .monitor-date-value { position:absolute; left:7px; top:50%; transform:translateY(-50%); color:#25434b; font-size:12px; line-height:1; pointer-events:none; white-space:nowrap; }
+    .monitor-date-field:focus-within .monitor-date-value { display:none; }
+    #filter-bar .monitor-date-field:focus-within .date-inp { color:#25434b; }
+    .ai-insight-wrap .ai-insight-entry { width:50px; }
+    .protection-menu-toggle { position:absolute; z-index:2; right:-12px; top:-9px; border:1px solid #fff; border-radius:10px; padding:2px 5px; background:#218b91; color:#fff; font-family:inherit; font-size:9px; font-weight:700; line-height:1.4; cursor:pointer; white-space:nowrap; }
+    .protection-menu-toggle:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
+    #protection-filter-panel { position:fixed; z-index:1600; width:160px; padding:6px; gap:3px; border:1px solid #dce9e5; border-radius:12px; background:#fff; box-shadow:0 8px 24px rgba(23,57,58,.2); }
+    #protection-filter-panel[hidden] { display:none !important; }
+    #protection-filter-panel .topic-btn { flex-direction:row; justify-content:flex-start; min-height:36px; height:auto; gap:8px; padding:5px 8px; border:0; border-radius:8px; box-shadow:none; background:transparent; font-size:12px; }
+    #protection-filter-panel .topic-btn::before { width:18px; height:21px; }
+    #protection-filter-panel .topic-btn::after { top:9px; left:17px; width:12px; height:11px; }
+    #protection-filter-panel .topic-btn.active { background:#e8f7f3; }
+    body:has(.leaflet-control-layers-expanded) #protection-filter-panel { visibility:visible; }
     #detail-panel .dashboard-return { margin-left:auto; border:1px solid #cee2dd; border-radius:8px; background:#fff; color:#187780; padding:5px 8px; font-family:inherit; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
     .bottom-stats-bar.bottom-actions { grid-template-columns:repeat(2,minmax(64px,1fr)) 72px repeat(2,minmax(64px,1fr)); align-items:center; gap:8px; padding-top:5px; padding-bottom:5px; }
     .bottom-actions .huiyan-entry-group { position:relative; width:72px; height:72px; justify-self:center; margin-top:-24px; margin-bottom:-24px; }
@@ -1080,6 +1097,7 @@
         body[data-ark-page="monitor"] #filter-bar .filter-tools { justify-content:flex-start; }
     }
     @media (max-width:768px) {
+        .monitor-date-field { width:136px; }
         .top-beam .brand .brand-title { font-size:16px; }
         .top-beam .brand-copy small { font-size:10px; }
         body[data-ark-page="monitor"] .top-beam .nav-btn { height:30px; padding:0 9px !important; font-size:11px; }
@@ -1101,7 +1119,7 @@
             <img src="/static/app_monitor/img/logo.png" alt="" class="brand-logo" onerror="this.hidden=true;this.style.display='none';this.nextElementSibling.classList.add('show')">
             <span class="brand-logo-fallback" aria-hidden="true">黄河</span>
         </a>
-        <div class="brand-copy"><span class="brand-title">黄河生态方舟<span class="brand-tagline">· 智感一切</span></span><small>ARK GEOAI LAB · ONLINE</small></div>
+        <div class="brand-copy"><span class="brand-title">黄河生态方舟<span class="brand-tagline">· 智绘一切</span></span><small>ARK GEOAI LAB · ONLINE</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
         <button type="button" class="apps-toggle" id="apps-toggle" aria-label="打开应用菜单" aria-expanded="false" aria-controls="apps-menu"><span class="apps-dots" aria-hidden="true"></span></button>
@@ -1134,7 +1152,7 @@
     </div>
 </section>
 
-<div id="protection-filter-panel" class="protection-filter glass-panel" aria-label="保护等级筛选">
+<div id="protection-filter-panel" class="protection-filter glass-panel" aria-label="保护等级筛选" hidden>
         <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
         <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
         <button type="button" class="topic-btn" data-protection-filter="国家二级" onclick="app.setProtectionFilter('国家二级')" style="--topic-color:#F39C12">国家二级</button>
@@ -1143,9 +1161,9 @@
 </div>
 <div id="filter-bar" class="glass-panel">
     <div id="monitor-filter-tools" class="filter-tools" aria-label="时间和热力图工具">
-        <input type="date" aria-label="开始日期" id="d-start" class="date-inp">
+        <span class="monitor-date-field"><input type="date" aria-label="开始日期" id="d-start" class="date-inp"><span class="monitor-date-value" aria-hidden="true"></span></span>
         <span style="color:#999">-</span>
-        <input type="date" aria-label="结束日期" id="d-end" class="date-inp">
+        <span class="monitor-date-field"><input type="date" aria-label="结束日期" id="d-end" class="date-inp"><span class="monitor-date-value" aria-hidden="true"></span></span>
         <button class="btn-go" title="应用筛选" aria-label="应用筛选" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
         <button id="timeline-toggle" type="button" class="monitor-btn timeline-play" onclick="app.toggleTimeline()" disabled title="年度播放" aria-label="年度播放"><i class="fas fa-play"></i></button>
         <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
@@ -1208,7 +1226,7 @@
         <div class="dashboard-summary" aria-label="监测数据统计">
             <div class="bottom-stat"><div class="b-num" id="s-records">0</div><div class="b-label">总观测记录</div></div>
             <div class="bottom-stat"><div class="b-num green" id="s-species">0</div><div class="b-label">发现物种</div></div>
-            <button type="button" class="ai-insight-entry" aria-label="打开小舟智析" onclick="app.showDashboardTab('chat')"><i class="fas fa-comment-dots" aria-hidden="true"></i><span>小舟智析</span></button>
+            <div class="ai-insight-wrap"><button type="button" class="ai-insight-entry" aria-label="打开AI智析" onclick="app.showDashboardTab('chat')"><i class="fas fa-comment-dots" aria-hidden="true"></i><span>AI智析</span></button><button type="button" id="protection-menu-toggle" class="protection-menu-toggle" aria-expanded="false" aria-controls="protection-filter-panel" aria-label="保护等级筛选，当前全部">+筛选</button></div>
             <div class="bottom-stat"><div class="b-num red" id="s-protected">0</div><div class="b-label">受保护</div></div>
             <div class="bottom-stat"><div class="b-num orange" id="s-approved">0</div><div class="b-label">已核验</div></div>
         </div>
@@ -1237,8 +1255,8 @@
         <div class="log-container" id="realtime-log-box"><div class="log-empty"><i class="fas fa-seedling"></i><span>正在同步观鸟记录</span></div></div>
         </div>
     </div>
-    <div id="ai-agent" class="dashboard-chat" hidden>
-    <section id="ai-agent-panel" class="ai-agent-panel" hidden aria-label="智能巡护助手">
+    <div id="ai-agent" class="dashboard-chat">
+    <section id="ai-agent-panel" class="ai-agent-panel" aria-label="智能巡护助手">
         <div id="ai-agent-messages" class="ai-agent-messages">
             <div class="ai-msg assistant">你好，我是小舟。你可以问我当前地图里的物种、区域热点、保护等级，或者让我生成一段汇报摘要。</div>
         </div>
@@ -1364,6 +1382,24 @@
 
 <script>document.querySelector('.top-beam').insertBefore(document.getElementById('filter-bar'), document.getElementById('navArea'));</script>
 <script>
+    window.syncMonitorDateLabels=()=>document.querySelectorAll('.monitor-date-field').forEach(field=>{const input=field.querySelector('input');const parts=input.value.split('-');field.querySelector('.monitor-date-value').textContent=parts.length===3?`${parts[0]}年${Number(parts[1])}月${Number(parts[2])}日`:'年/月/日';});
+    document.querySelectorAll('.monitor-date-field input').forEach(input=>input.addEventListener('change',window.syncMonitorDateLabels));
+    window.syncMonitorDateLabels();
+</script>
+<script>
+    (() => {
+        const toggle=document.getElementById('protection-menu-toggle'), menu=document.getElementById('protection-filter-panel');
+        const close=()=>{menu.hidden=true;toggle.setAttribute('aria-expanded','false');};
+        const position=()=>{const r=toggle.getBoundingClientRect(); menu.style.left=`${Math.max(8,Math.min(r.left,innerWidth-menu.offsetWidth-8))}px`; menu.style.top=`${Math.min(r.bottom+6,innerHeight-menu.offsetHeight-8)}px`;};
+        toggle.addEventListener('click',()=>{if(!menu.hidden){close();return;} menu.hidden=false;toggle.setAttribute('aria-expanded','true');position();});
+        menu.addEventListener('click',e=>{const option=e.target.closest('[data-protection-filter]');if(!option)return;const label=option.textContent.trim();toggle.textContent=label==='全部'?'+筛选':label;toggle.setAttribute('aria-label',`保护等级筛选，当前${label}`);close();});
+        document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!toggle.contains(e.target))close();});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){close();toggle.focus();}});
+        window.addEventListener('resize',()=>{if(!menu.hidden)position();});
+        document.addEventListener('scroll',()=>{if(!menu.hidden)close();},true);
+    })();
+</script>
+<script>
     (() => {
         const button = document.getElementById('apps-toggle'), menu = document.getElementById('apps-menu');
         const position = () => {
@@ -1384,7 +1420,7 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261103-header1"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261105-dates1"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261104-logo1"></script>
 <script>
     // 在原有 Canvas 上绘制鸟形符号，保留大量点位的批量渲染和点击行为。
@@ -2309,6 +2345,7 @@
             const localDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');
             document.getElementById('d-start').value = '2014-01-01';
             document.getElementById('d-end').value = localDate;
+            window.syncMonitorDateLabels?.();
         },
 
         loadStatic: function() {
@@ -2907,14 +2944,15 @@
 
         showDashboardTab: function(tab) {
             const chat = tab === 'chat';
-            document.getElementById('dashboard-overview').hidden = chat;
-            document.getElementById('ai-agent-panel').hidden = !chat;
-            document.getElementById('ai-agent').hidden = !chat;
-            document.getElementById('dashboard-return').hidden = !chat;
+            document.getElementById('dashboard-overview').hidden = false;
+            document.getElementById('ai-agent-panel').hidden = false;
+            document.getElementById('ai-agent').hidden = false;
+            document.getElementById('dashboard-return').hidden = true;
             this.toggleDashboardPanel(true);
             if (chat) {
                 const box = document.getElementById('ai-agent-messages');
                 box.scrollTop = box.scrollHeight;
+                document.getElementById('ai-agent-input').focus({preventScroll:true});
             }
         },
 

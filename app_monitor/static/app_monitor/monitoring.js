@@ -121,6 +121,7 @@ function installMonitoringDashboard(app) {
                 if (this.timeline.years.length && !$id('d-start').value && !$id('d-end').value) {
                     $id('d-start').value = `${this.timeline.years[0]}-01-01`;
                     $id('d-end').value = `${this.timeline.years.at(-1)}-12-31`;
+                    window.syncMonitorDateLabels?.();
                     this.loadMapObservations({ viewport: true });
                 }
                 const year = $id('timeline-year').value;
@@ -162,6 +163,7 @@ function installMonitoringDashboard(app) {
             const year = Number($id('timeline-year').value);
             if (!this.timeline.years.includes(year)) return;
             $id('d-start').value = `${year}-01-01`; $id('d-end').value = `${year}-12-31`;
+            window.syncMonitorDateLabels?.();
             this.loadMapObservations();
         },
 
@@ -179,6 +181,7 @@ function installMonitoringDashboard(app) {
                 const year = state.years[index];
                 $id('timeline-year').value = String(year);
                 $id('d-start').value = `${year}-01-01`; $id('d-end').value = `${year}-12-31`;
+                window.syncMonitorDateLabels?.();
                 // A frame waits for its data AND heat selection; no interval or
                 // unbounded overlapping requests. Pan requests supersede it.
                 await this.loadMapObservations({ playback: true });

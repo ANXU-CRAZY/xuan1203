@@ -33,6 +33,11 @@
 #detail-panel .species-list-container { height:160px; min-height:160px; max-height:none; overflow:auto; scrollbar-width:thin; }
 #detail-panel .species-row { min-height:32px; padding:8px 3px; box-sizing:border-box; }
 #detail-panel .dashboard-chat { position:static !important; display:flex; flex:1; min-height:0; touch-action:auto; width:100%; }
+/* 数据与对话各占可用空间的一半，输入区独立固定在底部。 */
+#detail-panel .dashboard-overview { flex:1 1 0; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+#detail-panel .dashboard-charts { flex:none; overflow:visible; }
+#detail-panel .dashboard-latest { flex:none; min-height:120px; height:150px; }
+#detail-panel .dashboard-chat { flex:1 1 0; border-top:1px solid #e5eeeb; }
 #detail-panel .ai-agent-panel {
     display:flex; position:static; inset:auto; width:100%; height:100%; max-height:none;
     border:0; border-radius:0; background:#fff; box-shadow:none; transform:none; opacity:1;
@@ -42,19 +47,21 @@
 #detail-panel .ai-agent-title small { font-size:11px; font-weight:400; }
 .chat-context-badge { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; color:#60857a; font-size:10px; }
 #detail-panel > .panel-head .chat-context-badge { margin-left:auto; }
-#detail-panel .ai-agent-quick { display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px; flex:none; }
-#detail-panel .ai-agent-quick button { padding:6px 9px; font-family:inherit; font-weight:600; font-size:11px; border-radius:20px; }
-#detail-panel .dashboard-composer .ai-agent-quick { position:absolute; left:12px; right:12px; bottom:100%; z-index:2; background:#fff; border:1px solid #dcebe6; border-radius:12px; box-shadow:0 5px 18px rgba(25,60,70,.15); }
+#detail-panel .ai-agent-quick { display:flex; flex-direction:column; align-items:stretch; gap:2px; padding:6px; flex:none; }
+#detail-panel .ai-agent-quick button { display:flex; align-items:center; gap:9px; width:100%; min-height:36px; padding:7px 10px; border:0; background:transparent; color:#28565b; font-family:inherit; font-weight:600; font-size:12px; line-height:1.4; border-radius:8px; white-space:nowrap; text-align:left; }
+#detail-panel .ai-agent-quick button i { width:17px; text-align:center; color:#208995; }
+#detail-panel .ai-agent-quick button:hover, #detail-panel .ai-agent-quick button:focus-visible { background:#eaf5f2; color:#14727b; }
+#detail-panel .dashboard-composer .ai-agent-quick { position:absolute; left:12px; right:auto; width:160px; max-width:calc(100% - 24px); box-sizing:border-box; bottom:100%; z-index:2; background:#fff; border:1px solid #dcebe6; border-radius:12px; box-shadow:0 5px 18px rgba(25,60,70,.15); }
 #detail-panel .ai-agent-messages { flex:1; min-height:0; padding:12px 16px 20px; overscroll-behavior:contain; scrollbar-width:thin; }
 #detail-panel .ai-msg { flex-shrink:0; max-width:92%; font-size:13px; line-height:1.8; }
 #detail-panel .ai-msg.assistant { background:#f4f8f6; }
 #detail-panel .ai-msg.user { background:#20909d; }
 #detail-panel .dashboard-composer { position:relative; flex:none; padding:10px 12px 12px; align-items:flex-end; background:#fff; }
 .dashboard-input-wrap { position:relative; flex:1; min-width:0; }
-.dashboard-composer textarea { display:block; width:100%; min-width:0; resize:vertical; min-height:82px; max-height:140px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:10px 12px 40px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
+.dashboard-composer textarea { display:block; width:100%; min-width:0; resize:vertical; min-height:60px; max-height:140px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:10px 12px 10px 45px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
 .dashboard-composer textarea:focus { border-color:#20909d; box-shadow:0 0 0 2px #20909d1a; }
 #detail-panel .dashboard-composer #ai-agent-send { width:36px; height:36px; border-radius:12px; background:#20909d; flex:none; }
-#detail-panel .dashboard-composer .ai-suggestions-btn { position:absolute; left:8px; bottom:6px; width:30px; height:30px; background:transparent; color:#1f7881; border:0; }
+#detail-panel .dashboard-composer .ai-suggestions-btn { position:absolute; left:8px; top:5px; width:30px; height:30px; background:transparent; color:#1f7881; border:0; }
 #detail-panel .dashboard-composer .ai-suggestions-btn:hover { background:#dcefeb; }
 #detail-panel .dashboard-composer .ai-suggestions-btn:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
 #detail-panel .dashboard-composer button:disabled { opacity:.45; cursor:wait; }
@@ -69,8 +76,8 @@
     #detail-panel > .panel-head { padding:11px 14px; cursor:default; }
     #detail-panel .dashboard-tabs { padding:4px 10px; }
     #detail-panel .dashboard-tabs button { padding:7px 4px; }
-    #detail-panel .dashboard-overview { padding:10px 10px 0; overflow:hidden; }
-    #detail-panel .dashboard-charts { flex:0 1 auto; overflow:auto; }
+    #detail-panel .dashboard-overview { padding:10px 10px 0; overflow-y:auto; }
+    #detail-panel .dashboard-charts { flex:none; overflow:visible; }
     #detail-panel .chart-row { flex-direction:column; }
     #detail-panel .chart-col > .chart-card { height:auto; }
     #detail-panel .species-list-container { height:170px; min-height:170px; }
