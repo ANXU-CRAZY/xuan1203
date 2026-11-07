@@ -1022,9 +1022,9 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
-<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261102-filterleft3">
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261107-spatial2">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261105-split3">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261107-composer1">
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1058,22 +1058,24 @@
     .apps-menu-grid a { min-width:0; display:flex; flex-direction:column; align-items:center; gap:9px; padding:13px 2px; border-radius:12px; color:#284c50; font-size:12px; font-weight:600; text-align:center; text-decoration:none; }
     .apps-menu-grid a:hover, .apps-menu-grid a:focus-visible { background:#eaf5f2; outline:none; }
     .apps-menu-grid i { width:44px; height:44px; display:grid; place-items:center; border-radius:14px; background:#e8f5f2; color:#208995; font-size:20px; }
-    .dashboard-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) 50px repeat(2,minmax(0,1fr)); align-items:center; gap:0; padding:8px 0; margin-bottom:8px; border:1px solid #e5eeeb; border-radius:10px; background:#f7faf8; }
+    .dashboard-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) 60px repeat(2,minmax(0,1fr)); align-items:center; gap:0; padding:8px 0; margin-bottom:8px; border:1px solid #e5eeeb; border-radius:10px; background:#f7faf8; }
     .dashboard-summary .bottom-stat { min-width:0; padding:0 2px; }
     .dashboard-summary .b-num { font-size:16px; }
     .dashboard-summary .b-label { font-size:10px; }
-    .dashboard-summary .ai-insight-entry { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:5px 2px; border:1px solid #a8d7d0; border-radius:9px; background:#e6f4f1; color:#177f86; font-family:inherit; font-size:10px; font-weight:700; line-height:1.2; cursor:pointer; white-space:nowrap; }
+    .dashboard-summary .ai-insight-entry { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:5px 2px; box-sizing:border-box; border:3px solid #fff; border-radius:50%; background:linear-gradient(140deg,#42e5ae,#19c7bc); color:#124e50; box-shadow:0 5px 18px rgba(12,133,128,.25); font-family:inherit; font-size:10px; font-weight:800; line-height:1.2; cursor:pointer; white-space:nowrap; }
     .dashboard-summary .ai-insight-entry i { font-size:17px; }
-    .dashboard-summary .ai-insight-entry:hover { background:#cdece5; border-color:#67bdb2; }
-    .dashboard-summary .ai-insight-entry { width:50px; height:50px; border-radius:50%; }
-    .dashboard-summary .ai-insight-entry:focus-visible { outline:2px solid #20909d; outline-offset:1px; border-radius:6px; }
+    .dashboard-summary .ai-insight-entry:hover { box-shadow:0 8px 22px rgba(12,133,128,.32); }
+    .dashboard-summary .ai-insight-entry { width:60px; height:60px; }
+    .dashboard-summary .ai-insight-entry:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
     .ai-insight-wrap { position:relative; min-width:0; }
     .monitor-date-field { position:relative; flex:none; display:inline-flex; width:136px; }
     #filter-bar .monitor-date-field .date-inp { box-sizing:border-box; width:100%; min-width:0; flex:1 1 auto; color:transparent; }
+    #filter-bar .monitor-date-field .date-inp::-webkit-datetime-edit { opacity:0; }
     .monitor-date-value { position:absolute; left:7px; top:50%; transform:translateY(-50%); color:#25434b; font-size:12px; line-height:1; pointer-events:none; white-space:nowrap; }
     .monitor-date-field:focus-within .monitor-date-value { display:none; }
     #filter-bar .monitor-date-field:focus-within .date-inp { color:#25434b; }
-    .ai-insight-wrap .ai-insight-entry { width:50px; }
+    #filter-bar .monitor-date-field:focus-within .date-inp::-webkit-datetime-edit { opacity:1; }
+    .ai-insight-wrap .ai-insight-entry { width:60px; }
     .protection-menu-toggle { position:absolute; z-index:2; right:-12px; top:-9px; border:1px solid #fff; border-radius:10px; padding:2px 5px; background:#218b91; color:#fff; font-family:inherit; font-size:9px; font-weight:700; line-height:1.4; cursor:pointer; white-space:nowrap; }
     .protection-menu-toggle:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
     #protection-filter-panel { position:fixed; z-index:1600; width:160px; padding:6px; gap:3px; border:1px solid #dce9e5; border-radius:12px; background:#fff; box-shadow:0 8px 24px rgba(23,57,58,.2); }
@@ -1088,9 +1090,24 @@
     .bottom-actions .huiyan-entry-group { position:relative; width:72px; height:72px; justify-self:center; margin-top:-24px; margin-bottom:-24px; }
     .bottom-actions .huiyan-quick-entry { margin:0; }
     .bottom-action { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:42px; padding:3px 8px; border:0; background:transparent; color:#375d60; font-family:inherit; font-weight:600; font-size:11px; text-decoration:none; cursor:pointer; white-space:nowrap; }
-    .bottom-action i { color:#208995; font-size:17px; }
-    .bottom-action:hover, .bottom-action:focus-visible { color:#14727b; background:#e8f5f2; border-radius:10px; }
-    #games-panel { top:auto !important; bottom:110px; max-height:calc(100vh - 140px) !important; }
+    .bottom-action i { color:var(--action-color,#208995); font-size:17px; }
+    .bottom-action span { color:var(--action-color,#375d60); }
+    .bottom-action:hover, .bottom-action:focus-visible { background:var(--action-bg,#e8f5f2); border-radius:10px; }
+    .bottom-action.gallery-action { --action-color:#287db8; --action-bg:#eaf4fb; }
+    .bottom-action.games-action { --action-color:#9252af; --action-bg:#f5edf9; }
+    .bottom-action.species-action { --action-color:#15856d; --action-bg:#e8f6f0; }
+    .bottom-action.articles-action { --action-color:#c26c27; --action-bg:#fff2e6; }
+    #games-panel { top:auto !important; bottom:110px; width:430px; max-height:calc(100vh - 140px) !important; padding:18px; border-radius:18px; }
+    #games-panel .games-panel-head { margin-bottom:14px; }
+    #games-panel .games-panel-head h2 { font-family:inherit; font-size:18px; font-weight:700; }
+    #games-panel .games-panel-head small { font-size:11px; letter-spacing:.08em; }
+    #games-panel .games-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    #games-panel .games-grid a { justify-content:flex-start; gap:10px; height:auto; min-height:61px; padding:10px; border:1px solid #e1ece9; border-radius:12px; color:#254950; background:#f7fbfa; box-shadow:none; }
+    #games-panel .games-grid a:hover, #games-panel .games-grid a:focus-visible { background:#eaf6f3; border-color:#abd8ce; outline:none; }
+    #games-panel .games-grid a > i { flex:none; display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--game-start),var(--game-end)); color:#fff; font-size:15px; }
+    #games-panel .game-copy { display:flex; min-width:0; flex-direction:column; gap:3px; }
+    #games-panel .games-grid strong { font-size:13px; line-height:1.25; }
+    #games-panel .game-copy small { color:#71898b; font-size:10px; line-height:1.35; }
     @media (max-width:1200px) {
         body[data-ark-page="monitor"] .top-beam { flex-wrap:wrap; }
         body[data-ark-page="monitor"] #filter-bar { order:3; flex:1 1 100%; width:100%; }
@@ -1143,17 +1160,17 @@
 <section id="games-panel" class="games-panel" aria-labelledby="games-title" hidden>
     <div class="games-panel-head"><div><small>探索 · 学习 · 守护</small><h2 id="games-title">生态互动</h2></div><button id="games-close" type="button" aria-label="关闭生态互动"><i class="fas fa-times" aria-hidden="true"></i></button></div>
     <div class="games-grid">
-        <a href="/bird-guess/" title="认识湿地中的鸟类"><i class="fas fa-feather" aria-hidden="true"></i><strong>识鸟</strong></a>
-        <a href="/bird-runner/" title="开启鸟类知识挑战"><i class="fas fa-dove" aria-hidden="true"></i><strong>闯关</strong></a>
-        <a href="/wetland-restorer/" title="探索湿地生态修复"><i class="fas fa-leaf" aria-hidden="true"></i><strong>修复</strong></a>
-        <a href="/migration/" title="跟随候鸟的迁徙旅程"><i class="fas fa-feather-alt" aria-hidden="true"></i><strong>迁徙</strong></a>
-        <a href="/wetland-detective/" title="寻找湿地中的生态线索"><i class="fas fa-search" aria-hidden="true"></i><strong>侦探</strong></a>
-        <a href="/floating-island/" title="体验生态浮岛建设"><i class="fas fa-water" aria-hidden="true"></i><strong>浮岛</strong></a>
+        <a href="/bird-guess/" title="认识湿地中的鸟类"><i class="fas fa-feather" aria-hidden="true"></i><span class="game-copy"><strong>看图识鸟</strong><small>认识湿地鸟类</small></span></a>
+        <a href="/bird-runner/" title="开启鸟类知识挑战"><i class="fas fa-dove" aria-hidden="true"></i><span class="game-copy"><strong>小鸟闯关</strong><small>开启知识挑战</small></span></a>
+        <a href="/wetland-restorer/" title="探索湿地生态修复"><i class="fas fa-leaf" aria-hidden="true"></i><span class="game-copy"><strong>湿地修复师</strong><small>探索生态修复</small></span></a>
+        <a href="/migration/" title="跟随候鸟的迁徙旅程"><i class="fas fa-feather-alt" aria-hidden="true"></i><span class="game-copy"><strong>候鸟迁徙记</strong><small>跟随候鸟迁徙</small></span></a>
+        <a href="/wetland-detective/" title="寻找湿地中的生态线索"><i class="fas fa-search" aria-hidden="true"></i><span class="game-copy"><strong>湿地侦探</strong><small>寻找生态线索</small></span></a>
+        <a href="/floating-island/" title="体验生态浮岛建设"><i class="fas fa-water" aria-hidden="true"></i><span class="game-copy"><strong>生态浮岛</strong><small>体验浮岛建设</small></span></a>
     </div>
 </section>
 
 <div id="protection-filter-panel" class="protection-filter glass-panel" aria-label="保护等级筛选" hidden>
-        <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部</button>
+        <button type="button" class="topic-btn active" data-protection-filter="all" onclick="app.setProtectionFilter('all')" style="--topic-color:#607D8B">全部物种</button>
         <button type="button" class="topic-btn" data-protection-filter="国家一级" onclick="app.setProtectionFilter('国家一级')" style="--topic-color:#E84B43">国家一级</button>
         <button type="button" class="topic-btn" data-protection-filter="国家二级" onclick="app.setProtectionFilter('国家二级')" style="--topic-color:#F39C12">国家二级</button>
         <button type="button" class="topic-btn" data-protection-filter="三有动物" onclick="app.setProtectionFilter('三有动物')" style="--topic-color:#4A9BE0">三有物种</button>
@@ -1166,9 +1183,9 @@
         <span class="monitor-date-field"><input type="date" aria-label="结束日期" id="d-end" class="date-inp"><span class="monitor-date-value" aria-hidden="true"></span></span>
         <button class="btn-go" title="应用筛选" aria-label="应用筛选" onclick="app.loadMapObservations()"><i class="fas fa-search"></i></button>
         <button id="timeline-toggle" type="button" class="monitor-btn timeline-play" onclick="app.toggleTimeline()" disabled title="年度播放" aria-label="年度播放"><i class="fas fa-play"></i></button>
-        <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()"><i class="fas fa-fire"></i> 热力圈选</button>
-        <button id="buffer-analysis-toggle" type="button" class="monitor-btn" onclick="app.toggleBufferAnalysis()"><i class="fas fa-draw-polygon"></i> 缓冲分析</button>
-        <button class="btn-clear" title="清除热力圈选" aria-label="清除热力圈选" onclick="app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
+        <button id="heat-toggle" class="btn-heat" onclick="app.toggleHeatSelection()" hidden style="display:none"><i class="fas fa-fire"></i> 热力圈选</button>
+        <button id="buffer-analysis-toggle" type="button" class="monitor-btn" onclick="app.toggleBufferAnalysis()"><i class="fas fa-draw-polygon"></i> 空间分析</button>
+        <button class="btn-clear" title="清除分析结果" aria-label="清除分析结果" onclick="app.bufferAnalysis?.active ? app.clearBufferAnalysis() : app.clearHeatmap()"><i class="fas fa-eraser"></i></button>
     </div>
     <select id="timeline-year" aria-label="选择观测年份" hidden disabled><option value="">加载年份…</option></select>
 </div>
@@ -1183,9 +1200,11 @@
     <div id="thematic-note">正在加载当前视域…</div>
 </div>
 <div id="analysis-panel" class="glass-panel" aria-live="polite">
-    <div class="panel-head"><span>观测缓冲分析</span><button type="button" class="monitor-btn" title="关闭缓冲分析" onclick="app.toggleBufferAnalysis(false)">关闭</button></div>
-    <div class="analysis-row"><label for="buffer-radius">缓冲半径</label><input id="buffer-radius" type="number" min="50" max="10000" step="50" value="500"><span>米</span></div>
-    <div class="analysis-row"><button id="buffer-pick" type="button" class="monitor-btn" onclick="app.pickBufferCenter()">重选中心</button><span>沿用上方日期与保护等级筛选</span></div>
+    <div class="panel-head"><span>空间分析</span><button type="button" class="monitor-btn" title="关闭空间分析" onclick="app.toggleBufferAnalysis(false)">关闭</button></div>
+    <div class="analysis-row"><label for="analysis-mode">分析类型</label><select id="analysis-mode" aria-label="分析类型"><option value="buffer">缓冲分析</option><option value="heat">热力图圈选</option></select></div>
+    <div class="analysis-row" id="buffer-radius-row"><label for="buffer-radius">缓冲半径</label><input id="buffer-radius" type="number" min="50" max="100000" step="50" value="500"><span>米（最大 100 公里）</span></div>
+    <div class="analysis-row" id="buffer-pick-row"><button id="buffer-pick" type="button" class="monitor-btn" onclick="app.pickBufferCenter()">重选中心</button><span>沿用上方日期与保护等级筛选</span></div>
+    <div class="analysis-row" id="heat-pick-row" hidden><button id="heat-pick" type="button" class="monitor-btn" onclick="app.startHeatAreaSelection()">开始圈选</button><span>在地图上拖出矩形范围</span></div>
     <div id="analysis-status">点击地图选择中心点。</div>
     <div id="analysis-scope">统计覆盖完整命中结果，明细每页最多 5,000 条。</div>
     <div class="analysis-actions">
@@ -1270,10 +1289,10 @@
             <button type="button" data-ai-prompt="请给普通巡护人员提出下一步巡护建议，语言简洁可执行。"><i class="fas fa-route"></i> 巡护建议</button>
         </div>
             <div class="dashboard-input-wrap">
-                <textarea id="ai-agent-input" rows="2" maxlength="800" aria-label="向小舟提问" placeholder="问问小舟：当前哪些区域值得关注？"></textarea>
+                <textarea id="ai-agent-input" rows="1" maxlength="800" aria-label="询问小舟智能体" placeholder="询问小舟智能体"></textarea>
                 <button type="button" id="ai-agent-suggestions" class="ai-suggestions-btn" title="快捷提问" aria-label="快捷提问" aria-expanded="false" aria-controls="ai-agent-quick"><i class="fas fa-plus"></i></button>
+                <button type="button" id="ai-agent-send" title="发送" aria-label="发送给小舟"><i class="fas fa-paper-plane"></i></button>
             </div>
-            <button type="button" id="ai-agent-send" title="发送" aria-label="发送给小舟"><i class="fas fa-paper-plane"></i></button>
         </div>
 </div>
 
@@ -1362,8 +1381,8 @@
 
 <!-- 底部统计条 -->
 <div class="bottom-stats-bar bottom-actions" role="navigation" aria-label="快捷功能">
-    <a href="/gallery/" class="bottom-action"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
-    <button id="games-toggle" class="bottom-action" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span></button>
+    <a href="/gallery/" class="bottom-action gallery-action"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
+    <button id="games-toggle" class="bottom-action games-action" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span></button>
     <div class="huiyan-entry-group">
     <a href="/huiyan/" class="huiyan-quick-entry" title="进入方舟慧眼 · AI识别鸟兽" aria-label="打开方舟慧眼，AI识别鸟兽">
         <i class="fas fa-dove" aria-hidden="true"></i>
@@ -1371,8 +1390,8 @@
     </a>
     <a href="/report/" class="huiyan-report-badge" title="上报观鸟记录" aria-label="上报观鸟记录">上报</a>
     </div>
-    <a href="/species/" class="bottom-action"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
-    <a href="/articles/" class="bottom-action"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
+    <a href="/species/" class="bottom-action species-action"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
+    <a href="/articles/" class="bottom-action articles-action"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
 </div>
 
 <div class="site-record-footer">
@@ -1392,7 +1411,7 @@
         const close=()=>{menu.hidden=true;toggle.setAttribute('aria-expanded','false');};
         const position=()=>{const r=toggle.getBoundingClientRect(); menu.style.left=`${Math.max(8,Math.min(r.left,innerWidth-menu.offsetWidth-8))}px`; menu.style.top=`${Math.min(r.bottom+6,innerHeight-menu.offsetHeight-8)}px`;};
         toggle.addEventListener('click',()=>{if(!menu.hidden){close();return;} menu.hidden=false;toggle.setAttribute('aria-expanded','true');position();});
-        menu.addEventListener('click',e=>{const option=e.target.closest('[data-protection-filter]');if(!option)return;const label=option.textContent.trim();toggle.textContent=label==='全部'?'+筛选':label;toggle.setAttribute('aria-label',`保护等级筛选，当前${label}`);close();});
+        menu.addEventListener('click',e=>{const option=e.target.closest('[data-protection-filter]');if(!option)return;const label=option.textContent.trim();toggle.textContent=option.dataset.protectionFilter==='all'?'+筛选':label;toggle.setAttribute('aria-label',`保护等级筛选，当前${label}`);close();});
         document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!toggle.contains(e.target))close();});
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){close();toggle.focus();}});
         window.addEventListener('resize',()=>{if(!menu.hidden)position();});
@@ -1420,7 +1439,7 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261105-dates1"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261107-spatial2"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261104-logo1"></script>
 <script>
     // 在原有 Canvas 上绘制鸟形符号，保留大量点位的批量渲染和点击行为。

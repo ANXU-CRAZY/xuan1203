@@ -58,10 +58,10 @@
 #detail-panel .ai-msg.user { background:#20909d; }
 #detail-panel .dashboard-composer { position:relative; flex:none; padding:10px 12px 12px; align-items:flex-end; background:#fff; }
 .dashboard-input-wrap { position:relative; flex:1; min-width:0; }
-.dashboard-composer textarea { display:block; width:100%; min-width:0; resize:vertical; min-height:60px; max-height:140px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:10px 12px 10px 45px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
+.dashboard-composer textarea { display:block; width:100%; min-width:0; resize:vertical; min-height:44px; max-height:140px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:11px 46px 10px 45px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
 .dashboard-composer textarea:focus { border-color:#20909d; box-shadow:0 0 0 2px #20909d1a; }
-#detail-panel .dashboard-composer #ai-agent-send { width:36px; height:36px; border-radius:12px; background:#20909d; flex:none; }
-#detail-panel .dashboard-composer .ai-suggestions-btn { position:absolute; left:8px; top:5px; width:30px; height:30px; background:transparent; color:#1f7881; border:0; }
+#detail-panel .dashboard-composer #ai-agent-send { position:absolute; right:5px; bottom:4px; width:36px; height:36px; border-radius:10px; background:#20909d; }
+#detail-panel .dashboard-composer .ai-suggestions-btn { position:absolute; left:8px; bottom:7px; width:30px; height:30px; background:transparent; color:#1f7881; border:0; }
 #detail-panel .dashboard-composer .ai-suggestions-btn:hover { background:#dcefeb; }
 #detail-panel .dashboard-composer .ai-suggestions-btn:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
 #detail-panel .dashboard-composer button:disabled { opacity:.45; cursor:wait; }

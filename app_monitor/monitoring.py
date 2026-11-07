@@ -306,7 +306,7 @@ def heatmap(request):
 def buffer_query(request):
     lng = number(request, 'lng', lower=-180, upper=180)
     lat = number(request, 'lat', lower=-90, upper=90)
-    radius = number(request, 'radius', 500, 50, 10000)
+    radius = number(request, 'radius', 500, 50, 100000)
     center = Point(lng, lat, srid=4326)
     # geography uses spheroidal metres, including at high latitudes.
     qs = observations(request)

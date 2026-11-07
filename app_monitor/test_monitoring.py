@@ -154,9 +154,19 @@ class MonitoringTests(TestCase):
                        {'start':'2020-02-30'},{'start':'2022-01-01','end':'2020-01-01'},
                        {'bbox':'nan,0,1,1'},{'bbox':'0,1,0,2'},{'protection':'无效'}):
             self.assertEqual(self.client.get('/api/map-observations/',params).status_code,400,params)
-        for params in ({'lng':114,'lat':35,'radius':49},{'lng':114,'lat':35,'radius':10001},
+        for params in ({'lng':114,'lat':35,'radius':49},{'lng':114,'lat':35,'radius':100001},
                        {'lng':'inf','lat':35},{'lng':114,'lat':'nan'},{}):
             self.assertEqual(self.client.get('/api/monitoring/buffer/',params).status_code,400,params)
+
+    def test_rectangular_heat_and_buffer_use_distinct_spatial_scopes(self):
+        ObservationRecord.objects.create(species=self.first, zone=self.zone, observation_time='2020-12-31',
+            count=11, status='approved', location=Point(114.01, 35.01, srid=4326))
+        heat = self.get('/api/monitoring/heatmap/', bbox='113.9,34.9,114.1,35.1')
+        buffer = self.get('/api/monitoring/buffer/', lng=114, lat=35, radius=500)
+        self.assertEqual(heat['summary']['total_records'], 5004)
+        self.assertEqual(buffer['summary']['total_records'], 5003)
+        self.assertEqual(sum(point['count'] for point in heat['points']), 15024)
+        self.assertEqual(self.client.get('/api/monitoring/buffer/', {'lng':114,'lat':35,'radius':100000,'page_size':1}).status_code, 200)
 
     def test_empty_buffer_and_filtered_csv(self):
         result=self.get('/api/monitoring/buffer/',lng=0,lat=0,radius=50)

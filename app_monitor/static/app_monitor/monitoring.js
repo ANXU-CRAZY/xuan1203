@@ -43,6 +43,7 @@ function installMonitoringDashboard(app) {
                 this.pauseTimeline(); this.invalidateBuffer(); this.closeDetailModal(); this.loadMapObservations();
             }));
             $id('buffer-radius').addEventListener('input', () => { this.invalidateBuffer(); this.drawBufferPreview(); });
+            $id('analysis-mode').addEventListener('change', () => this.setSpatialAnalysisMode());
             $id('timeline-year')?.addEventListener('change', () => this.selectMonitoringYear());
             window.addEventListener('resize', () => this.layoutMonitoring());
             document.addEventListener('visibilitychange', () => { if (document.hidden) this.pauseTimeline(); });
@@ -372,7 +373,7 @@ function installMonitoringDashboard(app) {
 
         buildHeatmapForBounds: async function(bounds) {
             const key = `${filterKey()}|${bounds.toBBoxString()}`;
-            if (key === this._heatKey && this.heatmap.layer) return;
+            if (key === this._heatKey) return;
             const seq = this._heatSeq = (this._heatSeq || 0) + 1;
             this._heatController?.abort();
             const controller = this._heatController = new AbortController();
@@ -380,7 +381,13 @@ function installMonitoringDashboard(app) {
             if (this.heatmap.layer) { this.map.removeLayer(this.heatmap.layer); this.heatmap.layer = null; }
             if (this.heatmap.boundsRect) this.map.removeLayer(this.heatmap.boundsRect);
             this.heatmap.boundsRect = L.rectangle(bounds, { color:'#2c3e50', weight:2, fill:false, dashArray:'8,5', interactive:false }).addTo(this.map);
+            if (this.bufferAnalysis.active && $id('analysis-mode').value === 'heat' && this._heatFocusBounds !== bounds.toBBoxString()) {
+                this._heatFocusBounds = bounds.toBBoxString();
+                $id('analysis-status').textContent = '正在统计矩形范围…';
+                this.map.flyToBounds(bounds, { padding:[32,32], maxZoom:16, duration:1.25, animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+            }
             $('#heat-info').show(); $id('heat-info-text').textContent = '正在统计圈选范围…';
+            if (this.bufferAnalysis.active) $('#heat-info').hide();
             this.layoutMonitoring();
             const params = this.getMapObservationParams();
             ['west','south','east','north'].forEach(k => delete params[k]);
@@ -395,26 +402,52 @@ function installMonitoringDashboard(app) {
                 if (points.length) this.heatmap.layer = this.createCanvasHeatLayer(points, bounds).addTo(this.map);
                 const s = payload.summary;
                 $id('heat-info-text').textContent = `圈选完整统计：${s.total_records} 条记录，${s.bird_count} 只，${s.species_count} 个物种。热力按鸟类数量聚合。`;
+                if (this.bufferAnalysis.active && $id('analysis-mode').value === 'heat') {
+                    $id('analysis-status').textContent = $id('heat-info-text').textContent;
+                    $id('analysis-scope').textContent = '热力图按矩形范围内符合日期与保护等级的已审核记录生成。';
+                }
             } catch (error) {
-                if (error.name !== 'AbortError' && seq === this._heatSeq) $id('heat-info-text').textContent = error.message;
+                if (error.name !== 'AbortError' && seq === this._heatSeq) { $id('heat-info-text').textContent = error.message; if (this.bufferAnalysis.active) $id('analysis-status').textContent = error.message; }
             }
         },
 
         clearHeatmap: function() {
-            ++this._heatSeq; this._heatKey = null; this._heatController?.abort();
+            ++this._heatSeq; this._heatKey = null; this._heatFocusBounds = null; this._heatController?.abort();
             original.clearHeatmap.call(this);
         },
 
         toggleHeatSelection: function(force) {
             const show = typeof force === 'boolean' ? force : !this.heatmap.active;
-            if (show) { this.pauseTimeline(); this.toggleBufferAnalysis(false); this.toggleMonitoringTools(true); }
+            if (show) { this.pauseTimeline(); this.toggleMonitoringTools(true); }
             original.toggleHeatSelection.call(this, show);
+            if (this.bufferAnalysis.active) $('#heat-info').hide();
             this.layoutMonitoring();
+        },
+
+        setSpatialAnalysisMode: function() {
+            const heat = $id('analysis-mode').value === 'heat';
+            this.toggleHeatSelection(false); this.clearHeatmap(); this.invalidateBuffer();
+            this.bufferAnalysis.center = null;
+            this.bufferAnalysis.picking = this.bufferAnalysis.active && !heat;
+            document.body.classList.toggle('analysis-selecting', this.bufferAnalysis.picking);
+            ['buffer-radius-row','buffer-pick-row','analysis-export','analysis-run'].forEach(id => { $id(id).hidden = heat; });
+            $id('heat-pick-row').hidden = !heat;
+            $('#heat-info').hide();
+            $id('analysis-status').textContent = heat ? '点击“开始圈选”，在地图上拖出矩形范围。' : '点击地图选择中心点，默认半径 500 米。';
+            $id('analysis-scope').textContent = heat ? '沿用日期与保护等级筛选；热力图按矩形范围统计鸟类数量。' : '沿用日期与保护等级筛选；统计覆盖完整命中结果，明细每页最多 5,000 条。';
+        },
+
+        startHeatAreaSelection: function() {
+            this.clearHeatmap(); this.bufferAnalysis.picking = false;
+            document.body.classList.remove('analysis-selecting');
+            this.toggleHeatSelection(true);
+            $id('analysis-status').textContent = '按住鼠标拖出矩形；手机上用手指拖出范围。';
         },
 
         invalidateBuffer: function() {
             const state = this.bufferAnalysis;
             ++state.seq; state.controller?.abort(); state.payload = null; state.params = null;
+            if (state.heatLayer) { this.map.removeLayer(state.heatLayer); state.heatLayer = null; }
             state.layer.clearLayers(); $id('analysis-export').disabled = true;
             $id('analysis-run').disabled = false; $id('buffer-next').hidden = true;
             $id('analysis-results').replaceChildren();
@@ -434,8 +467,8 @@ function installMonitoringDashboard(app) {
             $id('buffer-analysis-toggle').classList.toggle('active', show);
             document.body.classList.toggle('analysis-open', show);
             document.body.classList.toggle('analysis-selecting', state.picking);
-            if (!show) { this.invalidateBuffer(); state.center = null; }
-            else { this.drawBufferPreview(); $id('analysis-status').textContent = state.center ? '中心已选择，点击“运行分析”。' : '点击地图选择中心点，默认半径 500 米。'; }
+            if (!show) { this.toggleHeatSelection(false); this.clearHeatmap(); $('#heat-info').hide(); this.invalidateBuffer(); state.center = null; }
+            else { this.setSpatialAnalysisMode(); }
             this.layoutMonitoring();
         },
 
@@ -450,11 +483,16 @@ function installMonitoringDashboard(app) {
             state.layer.clearLayers();
             if (!state.center || !state.active) return;
             const radius = Number($id('buffer-radius').value);
-            if (radius >= 50 && radius <= 10000) L.circle(state.center, { radius, color:'#1f6f78', weight:2, fillOpacity:0.08, interactive:false }).addTo(state.layer);
+            if (radius >= 50 && radius <= 100000) L.circle(state.center, { radius, color:'#1f6f78', weight:2, fillOpacity:0.08, interactive:false }).addTo(state.layer);
             L.circleMarker(state.center, { radius:6, color:'#fff', weight:2, fillColor:'#1f6f78', fillOpacity:1, interactive:false }).addTo(state.layer);
         },
 
         clearBufferAnalysis: function() {
+            if ($id('analysis-mode').value === 'heat') {
+                this.toggleHeatSelection(false); this.clearHeatmap(); $('#heat-info').hide();
+                $id('analysis-status').textContent = '已清除。点击“开始圈选”重新选择矩形范围。';
+                return;
+            }
             this.invalidateBuffer(); this.bufferAnalysis.center = null; this.bufferAnalysis.picking = true;
             document.body.classList.add('analysis-selecting');
             $id('analysis-status').textContent = '已清除。点击地图选择新的中心点。';
@@ -464,13 +502,18 @@ function installMonitoringDashboard(app) {
             const state = this.bufferAnalysis;
             if (!state.center) { $id('analysis-status').textContent = '请先点击地图选择中心点。'; return; }
             const radius = Number($id('buffer-radius').value);
-            if (!Number.isFinite(radius) || radius < 50 || radius > 10000) { $id('analysis-status').textContent = '半径请输入 50—10,000 米。'; return; }
+            if (!Number.isFinite(radius) || radius < 50 || radius > 100000) { $id('analysis-status').textContent = '半径请输入 50—100,000 米。'; return; }
             const seq = ++state.seq;
             state.controller?.abort();
+            if (state.heatLayer) { this.map.removeLayer(state.heatLayer); state.heatLayer = null; }
             const controller = state.controller = new AbortController();
             const params = { lng:state.center.lng, lat:state.center.lat, radius,
                 start:$id('d-start').value, end:$id('d-end').value, protection:this.protectionFilter, page_size:5000 };
             if (after) params.after = after;
+            const boundsCircle = L.circle(state.center, { radius, interactive:false }).addTo(state.layer);
+            const bounds = boundsCircle.getBounds();
+            state.layer.removeLayer(boundsCircle);
+            if (!after) this.map.flyToBounds(bounds, { padding:[32,32], maxZoom:16, duration:1.25, animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches });
             state.payload = null; state.params = null;
             $id('analysis-export').disabled = true; $id('analysis-run').disabled = true;
             $id('buffer-next').hidden = true; $id('analysis-results').replaceChildren();
