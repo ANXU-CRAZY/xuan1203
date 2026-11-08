@@ -232,6 +232,10 @@ def _workbench_html(data, request):
     base = reverse("huiyan_land_proxy", kwargs={"upstream_path": ""})
     text = ROOT_URLS.sub(lambda match: match[1] + base + match[2], data.decode("utf-8"))
     text = re.sub(r"<title>.*?</title>", "<title>方舟慧眼 · 地物识别器</title>", text, count=1, flags=re.S)
+    navigation = ('<a class="land-nav" href="/" target="_top">返回监测大屏</a>'
+                  '<a class="land-nav land-nav-lab" href="https://arklab-geoai.org.cn/" '
+                  'target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>')
+    text = text.replace('<div class="top-right">', '<div class="top-right">' + navigation, 1)
     # Replace just the native canvas location block, keeping its panel and all
     # other workbench controls. Install before native initialization starts.
     map_start = text.find('<div class="gpsmap">')
@@ -257,7 +261,7 @@ if(url.origin===location.origin&&url.pathname.startsWith(cfg.base)&&!['GET','HEA
 const headers=new Headers(opts.headers||(input instanceof Request?input.headers:undefined));headers.set('X-CSRFToken',cfg.csrf);
 return send(input,Object.assign({},opts,{headers:headers}));}return send(input,opts);};})();</script>""".replace("__WORKBENCH_OPTIONS__", config)
     assets = ('<link rel="stylesheet" href="/static/app_monitor/huiyan/leaflet/leaflet.css">'
-              '<link rel="stylesheet" href="/static/app_monitor/huiyan/land-theme.css?v=20261108-2">'
+              '<link rel="stylesheet" href="/static/app_monitor/huiyan/land-theme.css?v=20261108-3">'
               '<script src="/static/app_monitor/huiyan/leaflet/leaflet.js"></script>'
               '<script src="/static/app_monitor/huiyan/land-map.js?v=20261108-1"></script>')
     return text.replace("</head>", assets + transport + "</head>", 1)
