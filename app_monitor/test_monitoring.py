@@ -105,6 +105,7 @@ class MonitoringTests(TestCase):
         self.assertEqual(result['summary']['matched_routes'],1)
         self.assertEqual(len(result['results']),5000)
         self.assertTrue(result['has_more'])
+        self.assertEqual(sum(point['count'] for point in result['heat_points']), 15013)
         self.assertEqual(result['buffer']['geometry']['type'],'Polygon')
 
     def test_buffer_filters_before_limit(self):
@@ -166,6 +167,7 @@ class MonitoringTests(TestCase):
         self.assertEqual(heat['summary']['total_records'], 5004)
         self.assertEqual(buffer['summary']['total_records'], 5003)
         self.assertEqual(sum(point['count'] for point in heat['points']), 15024)
+        self.assertEqual(sum(point['count'] for point in buffer['heat_points']), 15013)
         self.assertEqual(self.client.get('/api/monitoring/buffer/', {'lng':114,'lat':35,'radius':100000,'page_size':1}).status_code, 200)
 
     def test_empty_buffer_and_filtered_csv(self):

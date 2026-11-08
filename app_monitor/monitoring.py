@@ -322,6 +322,7 @@ def buffer_analysis(request):
     qs, lng, lat, radius = buffer_query(request)
     payload = page(qs, request)
     summary = totals(qs)
+    heat_points = list(qs.order_by().values('lat', 'lng').annotate(count=Sum('count')))
     with connection.cursor() as cursor:
         cursor.execute('SELECT ST_AsGeoJSON(ST_Buffer(ST_SetSRID(ST_Point(%s,%s),4326)::geography,%s)::geometry)',
                        [lng, lat, radius])
@@ -335,7 +336,7 @@ def buffer_analysis(request):
     features = [{'type': 'Feature', 'geometry': json.loads(r.path_geom.geojson),
                  'properties': {'id': r.pk, 'name': r.name}} for r in routes.order_by('pk')[:100]]
     summary['matched_routes'] = route_total
-    payload.update(summary=summary, buffer={'type': 'Feature', 'geometry': geometry,
+    payload.update(summary=summary, heat_points=heat_points, buffer={'type': 'Feature', 'geometry': geometry,
                    'properties': {'lng': lng, 'lat': lat, 'radius_m': radius}},
                    routes={'type': 'FeatureCollection', 'features': features},
                    routes_truncated=route_total > len(features),

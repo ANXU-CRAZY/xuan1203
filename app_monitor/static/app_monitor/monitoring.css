@@ -18,6 +18,8 @@
 #analysis-panel .panel-head { padding:0 0 8px; cursor:default; }
 .analysis-row, .analysis-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .analysis-row label { flex:0 0 60px; }
+#buffer-heat-row label {display:inline-flex; align-items:center; gap:6px; flex:none; cursor:pointer}
+#buffer-heat-toggle {flex:none; width:16px; height:16px; margin:0; accent-color:#20909d}
 .analysis-row input { min-width:0; flex:1; width:100px; padding:7px; border:1px solid #b4d6d3; border-radius:6px; }
 .analysis-row select { min-width:0; flex:1; padding:7px; border:1px solid #b4d6d3; border-radius:6px; color:#31565a; background:#fff; font:inherit; }
 .analysis-actions button { flex:1; }

@@ -31,7 +31,7 @@ class LandSegmentationTests(SimpleTestCase):
         self.assertEqual(resolve('/huiyan/').func.__module__, 'app_monitor.huiyan')
         self.assertEqual(resolve('/huiyan/land/').func.__module__, 'app_monitor.land_segmentation')
         response = self.client.get('/huiyan/choose/')
-        self.assertContains(response, '识别地物')
+        self.assertContains(response, '识物')
         self.assertContains(response, 'href="/huiyan/"')
         self.assertContains(response, 'href="/huiyan/land/"')
 

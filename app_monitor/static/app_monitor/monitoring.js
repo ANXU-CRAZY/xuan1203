@@ -20,6 +20,9 @@ function installMonitoringDashboard(app) {
             this.map.createPane('monitorHitPane');
             this.map.getPane('monitorHitPane').style.zIndex = 640;
             this.map.getPane('monitorHitPane').style.pointerEvents = 'none';
+            const bufferHeatPane = this.map.createPane('bufferHeatPane');
+            bufferHeatPane.style.zIndex = 390;
+            bufferHeatPane.style.pointerEvents = 'none';
             this.hitLayer = L.layerGroup().addTo(this.map);
             // Preview points, clusters, and records must share hit testing.
             // An empty upper Canvas still intercepts the lower Canvas's events.
@@ -43,6 +46,7 @@ function installMonitoringDashboard(app) {
                 this.pauseTimeline(); this.invalidateBuffer(); this.closeDetailModal(); this.loadMapObservations();
             }));
             $id('buffer-radius').addEventListener('input', () => { this.invalidateBuffer(); this.drawBufferPreview(); });
+            $id('buffer-heat-toggle').addEventListener('change', () => this.updateBufferHeatLayer());
             $id('analysis-mode').addEventListener('change', () => this.setSpatialAnalysisMode());
             $id('timeline-year')?.addEventListener('change', () => this.selectMonitoringYear());
             window.addEventListener('resize', () => this.layoutMonitoring());
@@ -366,6 +370,7 @@ function installMonitoringDashboard(app) {
 
         buildAutoHeatmap: function() {
             this.clearAutoHeatmap();
+            if (this.bufferAnalysis.active && $id('analysis-mode').value === 'buffer') return;
             if (!this.mapClusters.length) return;
             const points = this.mapClusters.map(item => ({ lat:item.lat, lng:item.lng, weight:Math.max(0, item.count) }));
             this.heatmap.autoLayer = this.createCanvasHeatLayer(points, this.map.getBounds().pad(0.16)).addTo(this.map);
@@ -430,7 +435,7 @@ function installMonitoringDashboard(app) {
             this.bufferAnalysis.center = null;
             this.bufferAnalysis.picking = this.bufferAnalysis.active && !heat;
             document.body.classList.toggle('analysis-selecting', this.bufferAnalysis.picking);
-            ['buffer-radius-row','buffer-pick-row','analysis-export','analysis-run'].forEach(id => { $id(id).hidden = heat; });
+            ['buffer-radius-row','buffer-pick-row','buffer-heat-row','analysis-export','analysis-run'].forEach(id => { $id(id).hidden = heat; });
             $id('heat-pick-row').hidden = !heat;
             $('#heat-info').hide();
             $id('analysis-status').textContent = heat ? '点击“开始圈选”，在地图上拖出矩形范围。' : '点击地图选择中心点，默认半径 500 米。';
@@ -447,12 +452,27 @@ function installMonitoringDashboard(app) {
         invalidateBuffer: function() {
             const state = this.bufferAnalysis;
             ++state.seq; state.controller?.abort(); state.payload = null; state.params = null;
-            if (state.heatLayer) { this.map.removeLayer(state.heatLayer); state.heatLayer = null; }
+            this.updateBufferHeatLayer();
             state.layer.clearLayers(); $id('analysis-export').disabled = true;
             $id('analysis-run').disabled = false; $id('buffer-next').hidden = true;
             $id('analysis-results').replaceChildren();
             $id('analysis-scope').textContent = '沿用上方日期与保护等级；CSV 导出全部命中记录。';
             if (state.active) $id('analysis-status').textContent = '条件已变化，请重新运行分析。';
+        },
+
+        updateBufferHeatLayer: function() {
+            const state = this.bufferAnalysis;
+            if (state.heatLayer) {
+                this.map.removeLayer(state.heatLayer);
+                state.heatLayer = null;
+            }
+            const points = state.payload?.heat_points;
+            if (!$id('buffer-heat-toggle').checked || !points?.length) return;
+            const feature = state.payload.buffer;
+            const bounds = L.geoJSON(feature).getBounds();
+            state.heatLayer = this.createCanvasHeatLayer(
+                points.map(({lat, lng, count}) => ({lat, lng, weight:count})), bounds, feature.geometry
+            ).addTo(this.map);
         },
 
         toggleBufferAnalysis: function(force) {
@@ -467,7 +487,7 @@ function installMonitoringDashboard(app) {
             $id('buffer-analysis-toggle').classList.toggle('active', show);
             document.body.classList.toggle('analysis-open', show);
             document.body.classList.toggle('analysis-selecting', state.picking);
-            if (!show) { this.toggleHeatSelection(false); this.clearHeatmap(); $('#heat-info').hide(); this.invalidateBuffer(); state.center = null; }
+            if (!show) { this.toggleHeatSelection(false); this.clearHeatmap(); $('#heat-info').hide(); this.invalidateBuffer(); state.center = null; this.updateAutoHeatmapByZoom(); }
             else { this.setSpatialAnalysisMode(); }
             this.layoutMonitoring();
         },
@@ -527,6 +547,7 @@ function installMonitoringDashboard(app) {
                 document.body.classList.remove('analysis-selecting');
                 state.layer.clearLayers();
                 L.geoJSON(payload.buffer, { style:{ color:'#168f8c', weight:2.5, fillColor:'#24b5a6', fillOpacity:0.12, dashArray:'8 6', className:'buffer-scan-boundary' }, interactive:false }).addTo(state.layer);
+                this.updateBufferHeatLayer();
                 L.circleMarker(state.center, { radius:7, color:'#fff', weight:2, fillColor:'#168f8c', fillOpacity:1, interactive:false, className:'buffer-scan-center' }).addTo(state.layer);
                 L.geoJSON(payload.routes, { style:{ color:'#F39C12', weight:5 }, onEachFeature:(f,l) => l.bindTooltip(this.escapeHtml(f.properties.name)) }).addTo(state.layer);
                 payload.results.forEach(item => {
