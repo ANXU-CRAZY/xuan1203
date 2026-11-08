@@ -2,8 +2,13 @@
 
 from django.urls import path, re_path
 from app_monitor import huiyan
+from app_monitor import land_segmentation
 
 urlpatterns = [
+    path('huiyan/choose/', land_segmentation.choice_page, name='huiyan_choose'),
+    path('huiyan/land/', land_segmentation.page, name='huiyan_land'),
+    path('huiyan/land/release/', land_segmentation.release, name='huiyan_land_release'),
+    re_path(r'^huiyan/land/workbench/(?P<upstream_path>.*)$', land_segmentation.proxy, name='huiyan_land_proxy'),
     path('huiyan/', huiyan.page, name='huiyan'),
     path('huiyan/api/status', huiyan.status, name='huiyan_status'),
     path('huiyan/api/geosearch', huiyan.geosearch, name='huiyan_geosearch'),

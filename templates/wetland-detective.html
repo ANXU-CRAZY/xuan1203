@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>湿地侦探 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <style>
         :root {
             --g-primary: #5d4037;
@@ -247,8 +245,9 @@
         }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-wetland-detective">
     <header class="gh">
         <a href="/" class="gh-logo">
             <div class="gh-icon"><i class="fas fa-search"></i></div>
@@ -327,7 +326,7 @@
                     <div class="dtc-start-info-item">
                         <div class="dtc-start-info-icon" style="color:#e9c46a"><i class="fas fa-stopwatch"></i></div>
                         <div class="dtc-start-info-label">时间限制</div>
-                        <div class="dtc-start-info-val">60秒</div>
+                        <div class="dtc-start-info-val">90秒</div>
                     </div>
                     <div class="dtc-start-info-item">
                         <div class="dtc-start-info-icon" style="color:#4CAF50"><i class="fas fa-microscope"></i></div>
@@ -400,7 +399,7 @@
         /* ================================================================
            物种数据：优先从 API 加载，回退使用内置数据
            ================================================================ */
-        const BIRD_API_URL = '/api/species/';
+        const BIRD_API_URL = '/api/games/birds/';
         let BIRD_DATA = [];
 
         const FALLBACK_DATA = [
@@ -1136,8 +1135,10 @@
 
         /* 加载物种数据：API 字段名是 name_cn / name_latin / cover_image_url */
         async function loadSpeciesData() {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
             try {
-                const res = await fetch(BIRD_API_URL);
+                const res = await fetch(BIRD_API_URL, {signal: controller.signal});
                 if (!res.ok) throw new Error('API not available');
                 const data = await res.json();
                 const arr = Array.isArray(data) ? data : (data.results || []);
@@ -1156,6 +1157,8 @@
                 }
             } catch {
                 BIRD_DATA = FALLBACK_DATA;
+            } finally {
+                clearTimeout(timeout);
             }
         }
 
@@ -1504,7 +1507,7 @@
             },
 
             _updateUserScore(earned) {
-                const token = localStorage.getItem('yb_token');
+                const token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 $.ajax({
                     url: '/api/profiles/me/', method: 'GET',

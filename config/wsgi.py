@@ -13,4 +13,7 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-application = get_wsgi_application()
+from config.path_mount import PlatformMount, configure_domain_mount
+
+configure_domain_mount()
+application = PlatformMount(get_wsgi_application())

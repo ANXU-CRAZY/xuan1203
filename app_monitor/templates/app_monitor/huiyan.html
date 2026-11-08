@@ -1329,7 +1329,6 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
                     <button class="btn sm" id="btnCusApply">应用到本图</button>
                     <button class="btn sm" id="btnCusAuto"
                       title="统计本图各识别结果的中文名，把出现次数最多的那个及其英文名自动填入上面的输入框">匹配主要物种</button>
-                    <button class="btn sm" id="btnCusClear">清除名称</button>
                     <button class="btn sm" id="btnCusUpdate"
                       title="把结果表里当前编辑中的名称、影像坐标、经纬度全部应用，并按修改后的结果重画图像上的识别框">结果更新</button>
                   </div>
@@ -1484,9 +1483,6 @@ tr.res-sel td:first-child{box-shadow:inset 3px 0 0 #ffb020}
             <input type="number" class="num-in" id="iouN" min="0" max="1" step="0.01" value="0.50">
           </div>
         </div>
-        <div class="meta" style="padding:0 var(--s3) var(--s3)">
-          图片仅发送至本站进行模型推理，不调用第三方识别服务，不保存原图。
-        </div>
       </section>
 
       <section class="panel">
@@ -1594,8 +1590,7 @@ let renamed={};             // 改名映射：en -> 新中文名（跨图生效�
    speciesStore：按文件名记忆 {file:'家猫'}
    语义与「图片空间坐标」一致：
      1. 填一个名称 → 点「应用到本图」→ 本图所有识别目标都改成它
-     2. 之后单独改某一行的名称 → 该行标记为「自定义」，脱离本图统一名
-     3. 「清除名称」→ 取消统一名，全部回到模型原名（已单独改过的行保留） */
+     2. 之后单独改某一行的名称 → 该行标记为「自定义」，脱离本图统一名 */
 let imgSpecies='';         // 本图自定义物种名（中文）
 let imgSpeciesEn='';       // 本图自定义物种英文名（可为空 = 沿用模型原名）
 let speciesStore={};       // 按文件名记忆：{file:{zh:'疑似家猫',en:'suspected cat'}}
@@ -2274,10 +2269,10 @@ async function run(){
     curOrigBoxes=curRes.map(r=>(r.box||[]).slice());
     // 目标坐标：默认继承本图空间坐标
     curRes.forEach(r=>{r.lat=null;r.lng=null;r.ownLat=false;r.ownLng=false;});
-    // 物种名：记录基础名（供「清除名称」回退），并继承本图统一自定义名
+    // 物种名：记录基础名，并继承本图统一自定义名
     curRes.forEach(r=>{
       r.bzh=r.zh;
-      r.ben=r.en;          // 基础英文名（模型原名），供「清除名称」回退
+      r.ben=r.en;          // 基础英文名（模型原名）
       r.cusOwn=false;
       r.cusEn='';          // 自定义英文名（空 = 未单独指定）
       if(imgSpecies){r.zh=imgSpecies;if(imgSpeciesEn)r.cusEn=imgSpeciesEn}
@@ -2303,7 +2298,7 @@ function displayName(en,zh){
 /* ---------- 自定义物种：本图统一名 + 行级覆盖 ---------- */
 /* 数据模型（与 WGS84 的 geoOf 同构，只是直接写回 r.zh）：
    r.zh    —— 生效名：表格显示、统计、导出、标注图标签都用它
-   r.bzh   —— 基础名：模型/全局改名后的原名，用于「清除名称」回退
+   r.bzh   —— 基础名：模型/全局改名后的原名
    r.cusOwn—— 该行是否被单独指定（脱离本图统一名）
    imgSpecies —— 本图统一物种名（空=未设置），speciesStore 按文件名记忆 */
 function render(j,res){
@@ -3323,7 +3318,7 @@ function pushDetail(file,res,catMode,catName){
   const catEn=(CATS[catName]||{}).en||catName||'';
   (res||[]).forEach(r=>{
     const g=geoOf(r);
-    // 基础名与基础分组键：用于「清除名称」回退
+    // 基础名与基础分组键
     const ben=catMode?(catName||'生态类群'):r.en;
     const bzh=r.zh||r.en;
     // 本图统一自定义名生效（该行未被单独指定）→ 分组键统一为自定义名
@@ -3448,8 +3443,7 @@ function applySpeciesToAll(name,enArg){
   let n=0;
   curRes.forEach(r=>{
     if(r.cusOwn)return;      // 该行已单独指定，保持不变
-    // 兜底记录基础名：正常流程在识别完成时已赋值，
-    // 这里再确认一次，避免「清除名称」时回退不到原名
+    // 兜底记录基础名：正常流程在识别完成时已赋值
     if(r.bzh==null)r.bzh=r.zh;
     if(r.ben==null)r.ben=r.en;
     r.zh=v;
@@ -3461,30 +3455,6 @@ function applySpeciesToAll(name,enArg){
   redrawMark();
   syncCusUI();
   toast(`已把本图 ${n} 个目标改为「${v}」`);
-}
-/* 清除本图统一名：全部目标回到基础名（模型原名 / 全局改名） */
-function clearSpeciesName(){
-  if(!curRes.length){toast('请先识别');return}
-  imgSpecies='';
-  imgSpeciesEn='';
-  if(curFile)delete speciesStore[curFile];
-  $('#cusName').value='';
-  if($('#cusEn'))$('#cusEn').value='';
-  let n=0;
-  curRes.forEach(r=>{
-    if(r.cusOwn){          // 单独指定过的行保留它自己的名字
-      r.zh=r.cusOwnName||r.zh;
-    }else{
-      r.zh=r.bzh!=null?r.bzh:r.zh;
-      r.cusEn='';          // 英文名回到模型原名
-      n++;
-    }
-  });
-  syncStatSpecies();
-  render({results:curRes,category:curCatMode?curCat:'',targets:[]},curRes);
-  redrawMark();
-  syncCusUI();
-  toast(`已清除本图统一物种名，${n} 个目标恢复原名`);
 }
 /* 把当前生效名同步进统计明细（导出与统计面板都读它） */
 function syncStatSpecies(){
@@ -3602,7 +3572,6 @@ $('#btnCusAuto').onclick=()=>{
   toast(`已匹配主要物种「${best}」${en?'（'+en+'）':''}，本图 ${n}/${total} 个目标`);
 };
 $('#btnCusApply').onclick=()=>applySpeciesToAll();
-$('#btnCusClear').onclick=()=>clearSpeciesName();
 $('#btnCusUpdate').onclick=()=>updateResults();
 $('#cusName').onchange=()=>applySpeciesToAll();
 $('#cusName').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};

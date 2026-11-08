@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>候鸟迁徙记 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <style>
         :root {
             --g-primary: #5C6BC0;
@@ -234,8 +232,9 @@
         #winOverlay > div, #gameOverOverlay > div { margin: auto; }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-migration">
     <header class="gh">
         <a href="/" class="gh-logo">
             <div class="gh-icon"><i class="fas fa-feather"></i></div>
@@ -328,11 +327,11 @@
                     <div style="color:#6b7c6b;line-height:1.4;">飞行高度可达8000米，每年迁徙超5000公里</div>
                 </div>
                 <div style="background:rgba(136,14,79,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
-                    <div style="font-weight:700;color:#880E4F;margin-bottom:3px;"><i class="fas fa-crane"></i> 丹顶鹤</div>
+                    <div style="font-weight:700;color:#880E4F;margin-bottom:3px;"><i class="fas fa-feather-alt"></i> 丹顶鹤</div>
                     <div style="color:#6b7c6b;line-height:1.4;">国家一级保护动物，全球野生不足3000只</div>
                 </div>
                 <div style="background:rgba(27,94,32,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
-                    <div style="font-weight:700;color:#1B5E20;margin-bottom:3px;"><i class="fas fa-bird"></i> 大雁</div>
+                    <div style="font-weight:700;color:#1B5E20;margin-bottom:3px;"><i class="fas fa-dove"></i> 大雁</div>
                     <div style="color:#6b7c6b;line-height:1.4;">"人"字飞行可省30%体力，速度达70-90km/h</div>
                 </div>
                 <div style="background:rgba(0,105,92,0.08);padding:8px 10px;border-radius:10px;font-size:12px;">
@@ -359,14 +358,14 @@
                 crane: {
                     title: '丹顶鹤',
                     badge: '国家一级保护',
-                    icon: 'fa-crane',
+                    icon: 'fa-feather-alt',
                     color: '#F5F5F5',
                     content: '丹顶鹤是中国一级保护动物，因头顶红色肉冠而得名。它们拥有优美的求偶舞蹈，鸣声可传播 500 米以外。丹顶鹤每年在东北繁殖，黄河三角洲是其重要越冬地，目前全球野生种群不足 3000 只。'
                 },
                 goose: {
                     title: '大雁',
                     badge: '迁徙冠军',
-                    icon: 'fa-bird',
+                    icon: 'fa-dove',
                     color: '#8B7355',
                     content: '大雁是最守纪律的迁徙者，飞行时排成"人"字形，利用气流减少 30% 的体力消耗。领头雁最为辛苦，需要不断变换位置让其他成员轮流领飞。大雁的飞行速度可达每小时 70-90 公里。'
                 },
@@ -422,8 +421,8 @@
 
         var birdTypes = [
             {id:'swan',  name:'白天鹅', icon:'fa-feather-alt', color:'#FFFFFF', bg:'#1565C0', speed:2.5, maxSpeed:5, energy:120, agility:0.4, boostCost:8, desc:'速度中等，体力充足'},
-            {id:'crane', name:'丹顶鹤', icon:'fa-crane',      color:'#F5F5F5', bg:'#880E4F', speed:3,   maxSpeed:6.5, energy:90,  agility:0.55, boostCost:6, desc:'速度快，灵活敏捷'},
-            {id:'goose', name:'大雁',   icon:'fa-bird',       color:'#8B7355', bg:'#1B5E20', speed:2.8, maxSpeed:4.5, energy:150, agility:0.25, boostCost:10,desc:'体力充沛，适合长途'},
+            {id:'crane', name:'丹顶鹤', icon:'fa-feather-alt',      color:'#F5F5F5', bg:'#880E4F', speed:3,   maxSpeed:6.5, energy:90,  agility:0.55, boostCost:6, desc:'速度快，灵活敏捷'},
+            {id:'goose', name:'大雁',   icon:'fa-dove',       color:'#8B7355', bg:'#1B5E20', speed:2.8, maxSpeed:4.5, energy:150, agility:0.25, boostCost:10,desc:'体力充沛，适合长途'},
             {id:'gull',  name:'海鸥',   icon:'fa-wind',       color:'#E8E8E8', bg:'#00695C', speed:3.5, maxSpeed:7,   energy:70,  agility:0.65, boostCost:5, desc:'速度最快，但体力较低'},
         ];
 
@@ -468,8 +467,9 @@
                 for (var i = 0; i < birdTypes.length; i++) {
                     var b = birdTypes[i];
                     var sel = i === this.selectedBirdIndex;
-                    var fact = MIGRATION_FACTS.birdTypes[b.id];
-                    var card = document.createElement('div');
+                    var card = document.createElement('button');
+                    card.type = 'button';
+                    card.setAttribute('aria-pressed', String(sel));
                     card.className = 'mg-bird-card' + (sel ? ' selected' : '');
                     card.setAttribute('data-idx', i);
                     card.innerHTML =
@@ -480,13 +480,24 @@
                         '<div class="mg-stat-row"><i class="fas fa-bolt" style="color:#FFCA28"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.energy/1.5) + '%;background:#FFCA28"></div></div>体力</div>' +
                         '<div class="mg-stat-row"><i class="fas fa-running" style="color:#7986CB"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.speed*20) + '%;background:#7986CB"></div></div>速度</div>' +
                         '<div class="mg-stat-row"><i class="fas fa-sync" style="color:#90CAF9"></i><div class="mg-stat-bar"><div class="mg-stat-fill" style="width:' + (b.agility*100) + '%;background:#90CAF9"></div></div>灵活</div>' +
-                        '</div>' +
-                        '<div class="mg-bird-card-fact"><i class="fas fa-graduation-cap" style="color:#FFCA28;margin-right:4px"></i>' + (fact ? fact.content.substring(0, 60) + '...' : '') + '</div>';
+                        '</div>';
                     var self = this;
                     card.addEventListener('click', function(idx){ return function(){ self.selectBird(idx); }; }(i));
                     grid.appendChild(card);
                     var canvas = card.querySelector('.mg-bird-canvas');
                     this.drawCardBird(canvas.getContext('2d'), b);
+                }
+                var selected = birdTypes[this.selectedBirdIndex];
+                var selectedFact = MIGRATION_FACTS.birdTypes[selected.id];
+                if (selectedFact) {
+                    var details = document.createElement('details');
+                    details.className = 'mg-selection-fact';
+                    var summary = document.createElement('summary');
+                    summary.textContent = selected.name + ' · 鸟类科普';
+                    var paragraph = document.createElement('p');
+                    paragraph.textContent = selectedFact.content;
+                    details.append(summary, paragraph);
+                    grid.appendChild(details);
                 }
             },
 
@@ -971,7 +982,7 @@
             },
 
             updateUserScore:function() {
-                var token=localStorage.getItem('yb_token');
+                var token=ArkGameStorage.getItem('yb_token');
                 if(!token) return;
                 var self=this;
                 $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){

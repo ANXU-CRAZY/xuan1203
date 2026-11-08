@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生态浮岛 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <style>
         :root {
             --g-primary: #00695C;
@@ -278,8 +276,9 @@
         .fi-island-card { margin-bottom: 18px; }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-floating-island">
     <header class="gh">
         <a href="/" class="gh-logo">
             <div class="gh-icon"><i class="fas fa-water"></i></div>
@@ -337,8 +336,21 @@
 
                 <div class="fi-island-card">
                     <div class="fi-island-preview">
-                        <div class="fi-preview-water"></div>
-                        <div class="fi-preview-island" id="fiPreviewIsland"></div>
+                        <svg class="fi-preview-scene" viewBox="0 0 440 112" role="img" aria-label="种有湿地植物的生态浮岛">
+                            <path d="M0 63Q70 51 145 65T290 62T440 62V112H0Z" fill="#b9deda"/>
+                            <path d="M0 84Q80 72 160 86T320 83T440 82" fill="none" stroke="#7fbab5" stroke-width="2"/>
+                            <ellipse cx="221" cy="91" rx="99" ry="12" fill="#80b5a8" opacity=".3"/>
+                            <path d="m126 72 93-21 98 19-93 28z" fill="#a7895a"/>
+                            <path d="m126 72 98 19 93-21v8l-93 28-98-25z" fill="#776746"/>
+                            <path d="m140 70 83 16 79-18M164 65l85 16M188 59l85 15" fill="none" stroke="#d5c193" stroke-width="2"/>
+                            <path d="M174 76V27m9 51V15m10 61V36m54 46V31m12 49V20m11 57V40" stroke="#4d8054" stroke-width="3" stroke-linecap="round"/>
+                            <path d="m174 54-13-13m22 4 11-16m53 35-14-13m26-3 12-15m-78 28 14-11" fill="none" stroke="#639d61" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M183 14v14m76-8v13" stroke="#8a6841" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M208 82q-5-23-16-27 17-1 23 24 4-24 20-28-4 21-16 33z" fill="#3e936e"/>
+                            <path d="M298 56q10-7 17 0l5-3-3 7q-10 9-22 2z" fill="#f9fcf8"/>
+                            <path d="m315 56 7 2-7 2z" fill="#cf983d"/>
+                            <circle cx="314" cy="55" r="1.2" fill="#294d48"/>
+                        </svg>
                     </div>
                     <div class="fi-stats-grid">
                         <div class="fi-stat-item">
@@ -346,7 +358,7 @@
                             <div class="fi-stat-label">岛屿容量</div>
                         </div>
                         <div class="fi-stat-item">
-                            <div class="fi-stat-val">5</div>
+                            <div class="fi-stat-val" id="fiIslandCountStat">3</div>
                             <div class="fi-stat-label">岛屿数量</div>
                         </div>
                         <div class="fi-stat-item">
@@ -474,7 +486,7 @@
                 {id:'flower',   name:'野花',       category:'plant',  icon:'fa-spa',          weight:0.2, stability:0.02,  diversity:2,  color:'#e91e63'},
                 {id:'grass',    name:'草坪',       category:'plant',  icon:'fa-leaf',         weight:0.4, stability:0.08,  diversity:1,  color:'#66bb6a'},
                 {id:'bush',     name:'灌木',       category:'plant',  icon:'fa-tree',         weight:1.0, stability:0.15,  diversity:1,  color:'#388e3c'},
-                {id:'tree',     name:'乔木',       category:'plant',  icon:'fa-pine',         weight:1.8, stability:0.1,   diversity:1,  color:'#2e7d32'},
+                {id:'tree',     name:'乔木',       category:'plant',  icon:'fa-tree',         weight:1.8, stability:0.1,   diversity:1,  color:'#2e7d32'},
                 {id:'moss',     name:'苔藓',       category:'plant',  icon:'fa-circle',       weight:0.2, stability:0.12,  diversity:0,  color:'#558b2f'},
                 {id:'stone',    name:'卵石',       category:'mineral',icon:'fa-circle-notch', weight:2.5, stability:0.25,  diversity:0,  color:'#9e9e9e'},
                 {id:'boulder',  name:'巨石',       category:'mineral',icon:'fa-mountain',     weight:4.0, stability:0.3,   diversity:0,  color:'#757575'},
@@ -496,6 +508,7 @@
                 $('#fiIslandCountSlider').on('input', function(){
                     var v = $(this).val();
                     $('#fiIslandCountLabel').text(v+'座');
+                    $('#fiIslandCountStat').text(v);
                     floatingGame.islandCount = parseInt(v);
                 });
 
@@ -533,7 +546,8 @@
                     label.textContent = cat.label;
                     catDiv.appendChild(label);
                     items.forEach(function(it) {
-                        var btn = document.createElement('div');
+                        var btn = document.createElement('button');
+                        btn.type = 'button';
                         btn.className = 'fi-inv-btn' + (it.id === self.selectedItem ? ' selected' : '');
                         btn.id = 'fiInv' + it.id;
                         var fact = FLOATING_ISLAND_FACTS.items[it.id] || '';
@@ -729,7 +743,7 @@
             },
 
             updateUserScore:function() {
-                var token = localStorage.getItem('yb_token');
+                var token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 var self = this;
                 $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){

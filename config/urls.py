@@ -7,6 +7,7 @@ from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from app_monitor import monitoring
+from app_monitor import games
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
     index_view, UserProfileViewSet, bird_recognition_page,
@@ -53,6 +54,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # API 接口
+    path('api/games/birds/', games.birds, name='game_birds'),
     path('api/map-observations/', map_observations, name='map_observations'),
     path('api/monitoring/years/', monitoring.years, name='monitoring_years'),
     path('api/monitoring/heatmap/', monitoring.heatmap, name='monitoring_heatmap'),

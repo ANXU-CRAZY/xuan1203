@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>方舟慧眼 · 地物识别器</title><link rel="stylesheet" href="/static/app_monitor/recognition.css?v=20261108-4"></head>
+<body class="land-host">
+<p class="land-host-loading" id="land-loading">正在打开智能分割工作台，首次加载模型可能需要稍等片刻…</p>
+<iframe class="land-host-frame" id="land-workbench" title="地物智能分割工作台" src="{% url 'huiyan_land_proxy' upstream_path='' %}" allow="geolocation 'self'"></iframe>
+<form hidden>{% csrf_token %}</form>
+<script>
+document.getElementById('land-workbench').addEventListener('load',()=>{document.getElementById('land-loading').hidden=true;});
+window.addEventListener('pagehide',()=>{
+  const body=new FormData();
+  body.set('csrfmiddlewaretoken',document.querySelector('[name=csrfmiddlewaretoken]').value);
+  body.set('preserve','1');
+  navigator.sendBeacon("{% url 'huiyan_land_release' %}",body);
+});
+</script></body></html>

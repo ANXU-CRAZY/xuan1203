@@ -1,0 +1,217 @@
+/* Ecology game workbench. Design audit follows unslop by Damir Sokolovsky
+   (@heydamir), https://heydamir.design/unslop, CC BY 4.0. */
+body.ark-game {
+    --game-accent:#2d6a4f; --game-accent-light:#40916c; --game-accent-hover:#245740;
+    --game-bg:#f2f7f1; --game-intro:#f6fbf3; --game-soft:#eaf3e9; --game-selection:#e8f2e6;
+    --game-intro-ink:var(--game-ink); --game-intro-muted:var(--game-muted);
+    --game-card-bg:#fff; --game-card-ink:var(--game-ink); --game-card-muted:var(--game-muted);
+    --game-card-line:var(--game-line); --game-card-selection:var(--game-selection);
+    --game-hud-bg:rgba(255,255,255,.95); --game-hud-ink:var(--game-ink);
+    --g-primary:var(--game-accent); --g-primary-light:var(--game-accent-light); --g-primary-dark:var(--game-ink);
+    --g-primary-lt:var(--game-accent-light); --g-primary-dk:var(--game-ink); --g-accent:#876019;
+    --g-btn-gradient:var(--game-accent); --g-font:"Microsoft YaHei","PingFang SC",sans-serif;
+    --game-ink:#243830; --game-muted:#64736b; --game-line:#dce4df;
+    --primary:var(--game-accent); --primary-dark:var(--game-ink); --primary-light:var(--game-accent-light);
+    --text-dark:#243830; --text-muted:#64736b;
+    background:var(--game-bg); color:var(--game-ink); font-family:var(--g-font);
+    font-size:14px; line-height:1.6;
+}
+/* Keep the original worlds: grassland, wetland restoration, night migration,
+   a paper field dossier, and an aqua floating-island workshop. */
+body.game-bird-runner{--game-accent:#3d6b4f;--game-accent-hover:#2c5039;--game-bg:#f1f6eb;--game-intro:rgba(246,251,236,.9);--game-soft:#edf5e5;--game-selection:#e4efda}
+body.game-wetland-restorer{--game-accent:#246b99;--game-accent-hover:#19577f;--game-accent-light:#3b83af;--game-bg:#eef5f7;--game-intro:#e2f1df;--game-soft:#e4f0f5;--game-selection:#dcecf3;--game-ink:#254c55;--game-muted:#5b787b;--game-line:#d1e1e3}
+body.game-migration{--game-accent:#d7b346;--game-accent-hover:#e6c45b;--game-accent-light:#e2c567;--game-bg:#edf1f7;--game-intro:rgba(14,32,52,.94);--game-intro-ink:#f1f4f8;--game-intro-muted:#c1cddd;--game-ink:#233b56;--game-muted:#66788c;--game-line:#d6dfe9;--game-soft:#edf2f8;--game-selection:#243f5c;--game-card-bg:#1b344e;--game-card-ink:#f0f4fa;--game-card-muted:#bdcbdb;--game-card-line:#39526b;--game-card-selection:#284663;--game-hud-bg:rgba(20,41,63,.94);--game-hud-ink:#edf2f8}
+body.game-wetland-detective{--game-accent:#735145;--game-accent-hover:#5c3e34;--game-accent-light:#946e5a;--game-bg:#f1ece4;--game-intro:#f8f2e7;--game-soft:#f1e7d7;--game-selection:#eddfcc;--game-ink:#443b31;--game-muted:#7c7163;--game-line:#e3d7c7}
+body.game-floating-island{--game-accent:#147a77;--game-accent-hover:#09625d;--game-accent-light:#29928c;--game-bg:#edf7f6;--game-intro:#e0f2ef;--game-soft:#e0f1ed;--game-selection:#d1e9e1;--game-ink:#214c4c;--game-muted:#607e7b;--game-line:#cbe0dc}
+body.ark-game :is(button,input,select,textarea){font-family:var(--g-font)}
+body.ark-game :is(a,button,[tabindex]):focus-visible{outline:2px solid var(--game-accent);outline-offset:3px}
+body.ark-game :is(button,a){-webkit-tap-highlight-color:transparent}
+body.ark-game .gh,body.ark-game .game-header{
+    width:min(1120px,calc(100% - 48px));max-width:none;margin:0 auto;padding:20px 0;
+    min-height:76px;display:flex;align-items:center;justify-content:space-between;
+    background:transparent;box-shadow:none;border:0;gap:16px;backdrop-filter:none;
+}
+body.ark-game :is(.gh-logo,.game-logo){gap:12px;color:var(--game-ink);text-decoration:none}
+body.ark-game :is(.gh-icon,.logo-icon){width:32px;height:32px;background:transparent;color:var(--g-primary);box-shadow:none;border-radius:0;font-size:22px}
+body.ark-game :is(.gh-icon,.logo-icon) img{width:32px;height:32px;object-fit:contain}
+body.ark-game :is(.gh-title,.logo-text){font-size:18px;font-weight:600;color:var(--game-ink)}
+body.ark-game .gh-nav a{padding:8px 12px;border:1px solid var(--game-line);border-radius:8px;box-shadow:none;background:#fff;color:var(--game-muted);font-size:13px;text-decoration:none}
+body.ark-game .gh-nav a:hover{color:var(--g-primary);border-color:#a6bcb0}
+body.ark-game .gw,body.ark-game .game-wrapper{width:min(1120px,calc(100% - 48px));max-width:none;padding:0 0 32px;margin:0 auto}
+body.ark-game .g-canvas-wrap{height:clamp(560px,72vh,680px);min-height:0;border:1px solid var(--game-line);border-radius:16px;box-shadow:0 4px 20px var(--game-ink)08;background:#e8efe9}
+body.ark-game :is(.g-overlay,.wr-start-screen,.wr-level-select){padding:32px;background:var(--game-intro)!important;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
+body.ark-game :is(.g-overlay h2,.wr-start-title){font-size:28px!important;line-height:1.4;margin:0 0 8px;color:var(--game-intro-ink)!important;font-weight:600;text-shadow:none!important;letter-spacing:0;animation:none}
+body.ark-game :is(.g-overlay h2,.wr-start-title)>i{display:none}
+body.ark-game :is(.g-subtitle,.wr-start-subtitle){max-width:520px;font-size:14px;line-height:24px;color:var(--game-intro-muted)!important;margin:0 0 24px}
+body.ark-game :is(.g-btn,.wr-start-btn,.wr-lw-btn,.btn-primary,.btn-next,.dtc-next-btn){
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;
+    padding:12px 24px;border:1px solid transparent;border-radius:8px;
+    background:var(--game-accent)!important;color:#fff!important;font-size:14px;font-weight:500!important;
+    line-height:20px;box-shadow:none!important;text-decoration:none;
+    transition:background .16s ease,border-color .16s ease;cursor:pointer;animation:none;
+}
+body.ark-game :is(.g-btn,.wr-start-btn,.wr-lw-btn,.btn-primary,.btn-next,.dtc-next-btn):hover{background:var(--game-accent-hover)!important;transform:none;box-shadow:none}
+body.ark-game :is(.g-btn-ghost,.g-btn-secondary,.btn-secondary,.wr-lw-btn-quit){background:#fff!important;border:1px solid var(--game-line);border-radius:8px;box-shadow:none!important;color:var(--game-muted)!important;min-height:40px;padding:8px 16px;text-decoration:none;transform:none}
+body.ark-game button:disabled{opacity:.5;cursor:wait}
+body.ark-game [hidden]{display:none!important}
+body.ark-game :is(.g-info-panel,.result-card,.bird-card,.mode-modal-box){background:#fff;border:1px solid var(--game-line);border-radius:12px;box-shadow:none}
+body.ark-game .g-info-panel{padding:20px 24px;margin-top:16px;font-size:13px;color:var(--game-muted)}
+body.ark-game .g-info-panel h4{font-size:14px;font-weight:600;margin:0 0 8px;color:var(--game-ink)}
+body.ark-game .g-info-panel i{color:var(--g-primary)!important}
+body.ark-game .g-hint-row{gap:24px;margin-top:12px}
+body.ark-game .g-hint-row p{flex:1}
+body.ark-game .g-info-panel>div[style*="grid"]>div{background:#f6f8f5!important;border-radius:8px!important;padding:12px!important}
+body.ark-game .g-info-panel>div[style*="grid"]>div>div:first-child{color:var(--game-ink)!important;font-weight:500!important}
+/* The bird previews and the live wetland scene carry the colour. */
+body.ark-game :is(.br-skin-grid,.mg-bird-grid){width:min(680px,100%);max-width:none;gap:12px;margin:0 0 24px}
+body.ark-game .br-skin-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-width:560px}
+body.ark-game :is(.br-skin-card,.mg-bird-card,.wr-level-card){background:var(--game-card-bg);border:1px solid var(--game-card-line);border-radius:12px;padding:16px;box-shadow:none;color:var(--game-card-ink);font-size:13px;line-height:1.5;transition:background .16s,border-color .16s;cursor:pointer;transform:none;text-align:center}
+body.ark-game :is(.br-skin-card,.mg-bird-card,.wr-level-card):hover{border-color:#89aa96;transform:none;box-shadow:none;background:var(--game-soft)}
+body.ark-game :is(.br-skin-card,.mg-bird-card).selected{border-color:var(--game-accent);background:var(--game-card-selection);box-shadow:inset 0 0 0 1px var(--game-accent)}
+body.ark-game .br-skin-card{min-height:108px}
+body.ark-game .br-skin-card canvas{display:block;width:78px;height:54px;margin:0 auto 8px}
+body.ark-game :is(.skin-name,.mg-bird-name){font-size:14px;font-weight:600;color:var(--game-card-ink)}
+body.ark-game :is(.skin-desc,.mg-bird-desc){font-size:12px;color:var(--game-card-muted);margin-top:4px}
+body.ark-game :is(.br-controls-hint,.mg-rules,.fi-rules,.dtc-rule-list){width:min(680px,100%);gap:8px;margin:0 0 24px}
+body.ark-game :is(.br-hint-chip,.mg-rule-item,.fi-rule-item,.dtc-rule-item){padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--game-intro-muted);font-size:13px;line-height:20px;box-shadow:none}
+body.ark-game :is(.mg-rule-item,.fi-rule-item,.dtc-rule-item)>i{width:18px;flex:none;color:var(--g-primary)}
+body.ark-game .br-controls-hint{justify-content:center;gap:24px}
+body.ark-game .br-sky .cloud{animation:none}
+body.ark-game .mg-bird-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+body.ark-game .mg-bird-icon{width:56px;height:56px;margin:0 auto 8px;background:var(--game-soft)!important;box-shadow:none}
+body.ark-game .mg-bird-card-fact{display:none}
+body.ark-game .mg-selection-fact{grid-column:1/-1;color:var(--game-intro-muted);font-size:12px;text-align:left;border:1px solid #39526b;border-radius:8px;padding:8px 12px;background:#19334c}
+body.ark-game .mg-selection-fact summary{cursor:pointer;color:#d7b346}
+body.ark-game .mg-selection-fact p{margin:8px 0 0;line-height:20px}
+body.ark-game .mg-bird-card-fact i{color:var(--g-primary)!important}
+body.ark-game .mg-stat-row{color:var(--game-card-muted);font-size:11px}
+body.ark-game .mg-stat-bar{background:#e1e8e2}
+body.ark-game .mg-stat-fill{background:#6b9581!important}
+body.ark-game .wr-start-screen{justify-content:center}
+body.ark-game .wr-start-icon{width:48px;height:48px;border-radius:0;background:transparent;color:var(--g-primary);box-shadow:none;margin-bottom:16px;font-size:32px;animation:none}
+body.ark-game :is(.wr-start-info-card,.dtc-start-info-card){width:min(640px,100%);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0 0 24px;padding:16px 0;border:1px solid var(--game-line);border-radius:12px;background:#fff;box-shadow:none}
+body.ark-game :is(.wr-start-info-item,.dtc-start-info-item){padding:0 12px;border:0;border-right:1px solid var(--game-line);border-radius:0;background:transparent}
+body.ark-game :is(.wr-start-info-item,.dtc-start-info-item):last-child{border-right:0}
+body.ark-game :is(.wr-start-info-val,.dtc-start-info-icon){font-size:18px;color:var(--g-primary)!important;line-height:24px;margin-bottom:8px}
+body.ark-game :is(.wr-start-info-label,.dtc-start-info-label){font-size:12px;color:var(--game-muted);line-height:20px}
+body.ark-game .dtc-start-info-val{font-size:18px;color:var(--game-ink);font-weight:600;margin-top:4px}
+body.ark-game .wr-start-rules{width:min(520px,100%);margin:20px 0 0}
+body.ark-game .wr-start-rule-item{padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--game-muted);font-size:13px;line-height:24px}
+body.ark-game .wr-start-rule-item i{color:var(--g-primary);width:20px}
+body.ark-game .wr-start-hint{margin-top:16px;color:var(--game-muted);font-size:12px}
+body.ark-game .wr-ls-header h2{font-size:24px;font-weight:600;color:var(--game-ink)}
+body.ark-game .wr-level-grid{max-width:880px;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+body.ark-game .wr-level-card{text-align:left}
+body.ark-game .wr-level-card.locked{opacity:.6;cursor:default}
+body.ark-game :is(.wr-level-card h3,.wr-level-card-title){color:var(--game-ink);font-size:16px;font-weight:600}
+body.ark-game :is(.wr-level-win,.wr-gameover){background:var(--game-intro)!important;color:var(--game-ink);overflow-y:auto}
+body.ark-game :is(.wr-lw-title,.wr-go-title){font-size:28px;font-weight:600;color:var(--game-ink)}
+body.ark-game :is(.wr-lw-score,.wr-go-score){font-size:40px;font-weight:600;color:var(--g-primary);font-variant-numeric:tabular-nums}
+body.ark-game :is(.wr-lw-subtitle,.wr-go-msg,.wr-lw-score-label){color:var(--game-muted)}
+body.ark-game :is(.wr-ls-fact-panel,.wr-fact-card,.fi-fact-card,.mg-fact-card){max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--game-line);box-shadow:0 8px 24px #20342c14;border-radius:12px;animation:none}
+body.ark-game .fi-island-card{width:min(480px,100%);max-width:none;background:#fff;border:1px solid var(--game-line);border-radius:12px;box-shadow:none;padding:16px;margin:0 0 20px}
+body.ark-game .fi-island-preview{height:100px;border-radius:8px;background:#e6f0e9}
+body.ark-game .fi-stats-grid{gap:8px;margin-top:12px}
+body.ark-game .fi-stat-val{font-size:20px;font-weight:600;color:var(--game-ink);font-variant-numeric:tabular-nums}
+body.ark-game :is(.fi-stat-label,.fi-stat-bar-row){font-size:12px;color:var(--game-muted)}
+body.ark-game .fi-stat-bar-row{margin-top:12px}
+body.ark-game input[type=range]{accent-color:var(--g-primary)}
+/* Quiet, readable instruments around each canvas. Visibility remains owned by the game. */
+body.ark-game :is(.br-hud-panel,.mg-hud-panel,.fi-hud-panel,.wr-hud-left,.wr-hud-right,.wr-eco-panel,.dtc-hud-timer,.dtc-hud-case){background:var(--game-hud-bg);border:1px solid var(--game-line);color:var(--game-hud-ink);border-radius:10px;box-shadow:0 2px 8px #1c342c0a;backdrop-filter:none}
+body.ark-game :is(.br-hud-panel,.mg-hud-panel,.fi-hud-panel,.wr-hud-left,.wr-hud-right,.wr-eco-panel,.dtc-hud-timer,.dtc-hud-case) :is(h4,strong,span,.mg-stat-line,.fi-hud-row,.dtc-timer-row){color:var(--game-hud-ink)!important;font-variant-numeric:tabular-nums}
+body.ark-game :is(.wr-fact-btn,.fi-fact-btn,.mg-fact-btn,.dtc-magnifier){background:var(--game-accent);color:#fff;border-radius:8px;box-shadow:none;transition:background .16s;animation:none}
+body.ark-game :is(.wr-fact-btn,.fi-fact-btn,.mg-fact-btn,.dtc-magnifier):hover{transform:none;box-shadow:none;background:var(--game-accent-hover)}
+body.ark-game .wr-eco-title,body.ark-game #wrHudRight>div:first-child{color:var(--game-accent)!important;font-weight:600}
+body.ark-game #wrToolbar>div:last-child{color:var(--game-muted)!important}
+body.ark-game :is(.fi-inventory,.wr-toolbar){background:#fff;border:1px solid var(--game-line);box-shadow:0 4px 16px #20342c12;border-radius:10px;color:var(--game-muted)}
+body.ark-game :is(.fi-inv-btn,.wr-tool-btn){background:var(--game-soft);border:1px solid var(--game-line);border-radius:8px;color:var(--game-ink);box-shadow:none}
+body.ark-game :is(.fi-inv-btn,.wr-tool-btn).selected,body.ark-game .wr-tool-btn.active{background:var(--game-selection);border-color:var(--game-accent);color:var(--game-accent-hover);box-shadow:none}
+body.ark-game :is(.dtc-science-card,.dtc-final-card){background:#fff;box-shadow:0 12px 40px #20342c20;border-radius:16px;border:1px solid var(--game-line)}
+body.ark-game :is(.dtc-final-header,.dtc-science-header){background:#eef4ed;color:var(--game-ink)}
+body.ark-game :is(.dtc-final-header h2,.dtc-final-score){color:var(--game-ink);font-weight:600}
+body.ark-game :is(.dtc-clue-panel,.dtc-options-panel){background:#fff;border:1px solid var(--game-line);box-shadow:0 4px 16px #20342c12;border-radius:10px;color:var(--game-ink)}
+body.ark-game .dtc-option-btn{border-radius:8px;background:#fff;border:1px solid var(--game-line);color:var(--game-ink)}
+body.ark-game :is(#winOverlay,#gameOverOverlay) :is(h2,p,strong,span){color:var(--game-intro-ink)!important;text-shadow:none!important}
+body.game-migration .mg-bird-card:hover{background:#243e59;border-color:#d7b346}
+body.game-migration :is(.g-btn,.mg-fact-btn){color:#172b3e!important}
+body.game-migration :is(.gh-icon,.g-info-panel i){color:#44618c!important}
+body.game-migration :is(.mg-stat-bar,.mg-energy-bar,.mg-distance-bar){background:#42556a}
+body.game-migration .mg-stat-fill{background:#c5a04a!important}
+body.game-wetland-detective .dtc-start-info-card{border-style:dashed;background:#fffcf6}
+body.game-wetland-detective .dtc-rule-item>i{color:#8a6b43}
+body.game-bird-runner .g-btn{border-radius:24px}
+body.game-wetland-restorer .wr-start-btn{border-radius:12px}
+body.game-floating-island .g-btn{border-radius:16px}
+body.game-floating-island .fi-preview-water,body.game-floating-island .fi-preview-island{display:none}
+body.game-floating-island .fi-preview-scene{display:block;width:100%;height:100%}
+body.ark-game :is(#brFinalScore,#mgWinScore,#mgFinalScore,#fiFinalScore){color:var(--g-primary)!important;font-variant-numeric:tabular-nums;font-weight:600!important}
+/* Photo quiz: photographs, rather than decoration, are the visual focus. */
+body.game-bird-guess .game-wrapper{max-width:840px;display:flex;flex-direction:column}
+body.game-bird-guess .bg-decoration{display:none}
+body.game-bird-guess .start-card{max-width:640px;margin:24px auto;padding:32px;background:#fff;border:1px solid var(--game-line);border-radius:16px;box-shadow:none}
+body.game-bird-guess .start-icon{width:48px;height:48px;margin:0 auto 16px;background:transparent;color:var(--g-primary);border:0;border-radius:0;box-shadow:none;font-size:32px;animation:none}
+body.game-bird-guess .start-title{font-size:28px;font-weight:600;color:var(--game-ink);margin:0 0 12px;text-shadow:none}
+body.game-bird-guess .start-subtitle{font-size:14px;line-height:24px;color:var(--game-muted)}
+body.game-bird-guess .quiz-preview-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0 0}
+body.game-bird-guess .quiz-preview-strip figure{margin:0;text-align:left}
+body.game-bird-guess .quiz-preview-strip img{display:block;width:100%;height:148px;object-fit:contain;object-position:center;padding:4px;border-radius:8px;background:var(--game-soft)}
+body.game-bird-guess .quiz-preview-strip figcaption{margin-top:4px;color:var(--game-muted);font-size:12px}
+body.game-bird-guess .start-stats{margin:24px 0;padding:16px;background:var(--game-soft);border:1px solid var(--game-line);border-radius:8px;box-shadow:none}
+body.game-bird-guess .start-stat .num{font-size:24px;font-weight:600;color:var(--g-primary);font-variant-numeric:tabular-nums}
+body.game-bird-guess .start-stat .desc{font-size:12px;color:var(--game-muted)}
+body.game-bird-guess .quiz-loading-status{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--game-muted);font-size:13px;margin-bottom:16px}
+body.game-bird-guess .quiz-loading-status .spinner-ring{width:16px;height:16px;border-width:2px;margin:0;border-color:#dce4df;border-top-color:var(--game-accent)}
+body.game-bird-guess #quizRetry{margin-bottom:16px}
+body.game-bird-guess .mode-modal{background:#172c2440;backdrop-filter:blur(3px)}
+body.game-bird-guess .mode-modal-box{padding:24px;max-width:680px}
+body.game-bird-guess .mode-modal-box h2{font-size:24px;font-weight:600;color:var(--game-ink)}
+body.game-bird-guess .mode-card{border:1px solid var(--game-line);border-radius:10px;box-shadow:none;background:var(--game-soft);transform:none;padding:20px 12px}
+body.game-bird-guess .mode-card:hover{border-color:#86a78d;background:var(--game-soft);transform:none;box-shadow:none}
+body.game-bird-guess .mode-icon{font-size:24px;color:var(--g-primary);margin-bottom:12px}
+body.game-bird-guess :is(.mode-name,.mode-score){color:var(--game-ink);font-weight:500}
+body.game-bird-guess .mode-desc{color:var(--game-muted)}
+body.game-bird-guess .bird-image-wrap{background:#e9efe7;height:360px}
+body.game-bird-guess .bird-image-wrap img{object-fit:contain}
+body.game-bird-guess .game-prompt{font-size:20px;font-weight:600;color:var(--game-ink);margin:20px 0 16px}
+body.game-bird-guess .option-btn{min-height:48px;border:1px solid var(--game-line);border-radius:8px;box-shadow:none;background:#fff;color:var(--game-ink);font-size:15px;transform:none}
+body.game-bird-guess .option-btn:hover:not(:disabled){background:var(--game-selection);border-color:#86a78d;transform:none}
+body.game-bird-guess .option-btn.correct{background:#e6f3e8;border-color:#3b8254;color:#245638}
+body.game-bird-guess .option-btn.wrong{background:#fbecea;border-color:#ba6b5f;color:#923d35}
+body.game-bird-guess :is(.bird-image-wrap.correct,.bird-image-wrap.wrong){box-shadow:none}
+body.game-bird-guess .score-bar{background:#fff;border:1px solid var(--game-line);border-radius:8px;box-shadow:none}
+body.game-bird-guess .score-item .value{color:var(--g-primary);font-variant-numeric:tabular-nums}
+body.game-bird-guess .result-score{font-weight:600;color:var(--g-primary);font-variant-numeric:tabular-nums}
+body.game-bird-guess .science-sheet{background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px #20342c1a}
+body.game-bird-guess :is(.science-img-wrap img,.review-item img){object-fit:contain;object-position:center}
+body.game-wetland-detective :is(.dtc-option-img img,.dtc-science-header img){object-fit:contain;object-position:center;background:var(--game-soft)}
+@media(max-width:760px){
+    body.ark-game .gh,body.ark-game .game-header{width:calc(100% - 32px);padding:16px 0;min-height:64px}
+    body.ark-game .gw,body.ark-game .game-wrapper{width:calc(100% - 32px)}
+    body.ark-game .g-canvas-wrap{height:min(740px,calc(100svh - 96px));min-height:520px}
+    body.ark-game :is(.g-overlay,.wr-start-screen,.wr-level-select){padding:24px;justify-content:flex-start}
+    body.ark-game :is(.g-overlay h2,.wr-start-title){font-size:24px!important}
+    body.ark-game :is(.g-subtitle,.wr-start-subtitle){font-size:13px;line-height:22px;margin-bottom:20px}
+    body.ark-game .mg-bird-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    body.ark-game .mg-bird-card{padding:12px}
+    body.ark-game .mg-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-bottom:16px}
+    body.ark-game .mg-selection-fact{font-size:12px}
+    body.ark-game :is(.wr-start-info-card,.dtc-start-info-card){grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 0;padding:16px}
+    body.ark-game :is(.wr-start-info-item,.dtc-start-info-item):nth-child(2){border-right:0}
+    body.ark-game .br-controls-hint{flex-direction:column;align-items:center;gap:4px;margin-bottom:16px}
+    body.ark-game :is(.br-skin-card,.wr-level-card){padding:12px}
+    body.ark-game .br-skin-card canvas{width:65px;height:45px}
+    body.ark-game .br-skin-grid{gap:8px}
+    body.ark-game .wr-level-grid{grid-template-columns:1fr}
+    body.ark-game .g-hint-row{flex-direction:column;gap:8px}
+    body.ark-game .g-info-panel{padding:16px}
+    body.ark-game .g-info-panel>div[style*="grid"]{grid-template-columns:1fr!important}
+    body.ark-game .gh-title,body.ark-game .logo-text{font-size:16px}
+    body.game-bird-guess .start-card{padding:24px;margin:16px 0;width:100%}
+    body.game-bird-guess .quiz-preview-strip{gap:8px;margin-top:20px}
+    body.game-bird-guess .quiz-preview-strip img{height:112px}
+    body.game-bird-guess .mode-cards{grid-template-columns:1fr}
+    body.game-bird-guess .mode-card{padding:12px}
+    body.game-bird-guess .bird-image-wrap{height:280px}
+    body.game-bird-guess .score-bar{gap:8px;padding:8px}
+}
+@media(prefers-reduced-motion:reduce){body.ark-game *,body.ark-game *::before,body.ark-game *::after{animation:none!important;transition:none!important}}

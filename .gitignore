@@ -39,6 +39,7 @@ bird_recognition/yolo_model/
 # Environment
 .env
 .env.local
+var/land-segmentation/
 
 # IDE and OS files
 .idea/

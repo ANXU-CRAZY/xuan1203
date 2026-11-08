@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>湿地修复师 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <style>
         :root {
             --g-primary: #1565C0;
@@ -474,8 +472,9 @@
         .wr-ls-fact-item p { font-size: 11px; color: #6b7c6b; line-height: 1.5; }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-wetland-restorer">
     <header class="gh">
         <a href="/" class="gh-logo">
             <div class="gh-icon"><i class="fas fa-leaf"></i></div>
@@ -523,19 +522,19 @@
             <div class="wr-eco-panel" id="wrEcoPanel">
                 <div class="wr-eco-title"><i class="fas fa-link"></i> 生态链状态</div>
                 <div class="wr-eco-row">
-                    <span class="wr-eco-icon">🌿</span><span style="flex:0 0 44px">植物</span>
+                    <span class="wr-eco-icon"><i class="fas fa-seedling" aria-hidden="true"></i></span><span style="flex:0 0 44px">植物</span>
                     <div class="wr-eco-bar-bg"><div class="wr-eco-bar-fill" id="ecoPlant" style="width:0%;background:#4CAF50"></div></div>
                 </div>
                 <div class="wr-eco-row">
-                    <span class="wr-eco-icon">🐟</span><span style="flex:0 0 44px">鱼类</span>
+                    <span class="wr-eco-icon"><i class="fas fa-fish" aria-hidden="true"></i></span><span style="flex:0 0 44px">鱼类</span>
                     <div class="wr-eco-bar-bg"><div class="wr-eco-bar-fill" id="ecoFish" style="width:0%;background:#29B6F6"></div></div>
                 </div>
                 <div class="wr-eco-row">
-                    <span class="wr-eco-icon">🪶</span><span style="flex:0 0 44px">鸟类</span>
+                    <span class="wr-eco-icon"><i class="fas fa-feather-alt" aria-hidden="true"></i></span><span style="flex:0 0 44px">鸟类</span>
                     <div class="wr-eco-bar-bg"><div class="wr-eco-bar-fill" id="ecoBird" style="width:0%;background:#FFD700"></div></div>
                 </div>
                 <div class="wr-eco-row">
-                    <span class="wr-eco-icon">🌾</span><span style="flex:0 0 44px">芦苇</span>
+                    <span class="wr-eco-icon"><i class="fas fa-spa" aria-hidden="true"></i></span><span style="flex:0 0 44px">芦苇</span>
                     <div class="wr-eco-bar-bg"><div class="wr-eco-bar-fill" id="ecoReed" style="width:0%;background:#26A69A"></div></div>
                 </div>
             </div>
@@ -828,20 +827,14 @@
                 window.addEventListener('resize', function(){ self.resizeCanvas(); });
 
                 document.addEventListener('keydown', function(e){
-                    if (self.isRunning && e.code === 'Space') { e.preventDefault(); self.switchTool(); }
+                    if (self.isRunning && ['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+                    if (self.isRunning && e.code === 'Space' && !e.repeat) self.switchTool();
                     self.keys[e.code] = true;
                 });
                 document.addEventListener('keyup', function(e){ self.keys[e.code] = false; });
 
                 this.canvas.addEventListener('click', function(e){ self.handleClick(e); });
                 this.canvas.addEventListener('touchstart', function(e){ e.preventDefault(); self.handleTouch(e); }, {passive:false});
-
-                var self2 = this;
-                this.canvas.addEventListener('keydown', function(e){
-                    if (self2.isRunning && e.code === 'Space') { e.preventDefault(); self2.switchTool(); }
-                    self2.keys[e.code] = true;
-                });
-                this.canvas.addEventListener('keyup', function(e){ self2.keys[e.code] = false; });
 
                 document.getElementById('wrStartBtn').onclick = function() { self.showLevelSelect(); };
 
@@ -851,21 +844,19 @@
             },
 
             loadProgress:function() {
-                var saved = localStorage.getItem('wr_unlocked');
-                if (saved) this.unlockedLevels = parseInt(saved, 10);
-                var savedBest = localStorage.getItem('wr_best_scores');
-                if (savedBest) this.bestScores = JSON.parse(savedBest);
-                var savedStars = localStorage.getItem('wr_best_stars');
-                if (savedStars) this.bestStars = JSON.parse(savedStars);
-                var savedTotal = localStorage.getItem('wr_total_score');
-                if (savedTotal) this.totalScore = parseInt(savedTotal, 10);
+                var saved = ArkGameStorage.getItem('wr_unlocked');
+                if (saved) this.unlockedLevels = Math.max(1, Math.min(this.levels.length, parseInt(saved, 10) || 1));
+                this.bestScores = ArkGameStorage.readObject('wr_best_scores');
+                this.bestStars = ArkGameStorage.readObject('wr_best_stars');
+                var savedTotal = ArkGameStorage.getItem('wr_total_score');
+                if (savedTotal) this.totalScore = Math.max(0, parseInt(savedTotal, 10) || 0);
             },
 
             saveProgress:function() {
-                localStorage.setItem('wr_unlocked', this.unlockedLevels);
-                localStorage.setItem('wr_best_scores', JSON.stringify(this.bestScores));
-                localStorage.setItem('wr_best_stars', JSON.stringify(this.bestStars));
-                localStorage.setItem('wr_total_score', this.totalScore);
+                ArkGameStorage.setItem('wr_unlocked', this.unlockedLevels);
+                ArkGameStorage.setItem('wr_best_scores', JSON.stringify(this.bestScores));
+                ArkGameStorage.setItem('wr_best_stars', JSON.stringify(this.bestStars));
+                ArkGameStorage.setItem('wr_total_score', this.totalScore);
             },
 
             renderLevelSelect:function() {
@@ -874,7 +865,9 @@
                 var self = this;
                 this.levels.forEach(function(lv) {
                     var unlocked = lv.id <= self.unlockedLevels;
-                    var card = document.createElement('div');
+                    var card = document.createElement('button');
+                    card.type = 'button';
+                    card.disabled = !unlocked;
                     card.className = 'wr-level-card ' + lv.diff + (unlocked ? '' : ' locked');
                     var reqsHtml = lv.reqs.map(function(r) {
                         return '<span class="wr-level-req">' + r.label + ': ' + r.target + '</span>';
@@ -1546,7 +1539,7 @@
             },
 
             updateUserScore:function(score) {
-                var token = localStorage.getItem('yb_token');
+                var token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){
                     var ns = (d.score||0) + Math.floor(score);

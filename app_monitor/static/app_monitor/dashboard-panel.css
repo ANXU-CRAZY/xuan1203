@@ -36,8 +36,8 @@
 /* 数据与对话各占可用空间的一半，输入区独立固定在底部。 */
 #detail-panel .dashboard-overview { flex:1 1 0; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
 #detail-panel .dashboard-charts { flex:none; overflow:visible; }
-#detail-panel .dashboard-latest { flex:none; min-height:120px; height:150px; }
-#detail-panel .dashboard-chat { flex:1 1 0; border-top:1px solid #e5eeeb; }
+#detail-panel .dashboard-latest { flex:none; min-height:120px; height:150px; border-top-color:transparent; }
+#detail-panel .dashboard-chat { flex:1 1 calc(24px + var(--dashboard-split-correction,0px)); border-top:2px solid #9bbab3; }
 #detail-panel .ai-agent-panel {
     display:flex; position:static; inset:auto; width:100%; height:100%; max-height:none;
     border:0; border-radius:0; background:#fff; box-shadow:none; transform:none; opacity:1;

@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>看图识鸟 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <style>
         :root {
@@ -928,19 +927,11 @@
         }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-bird-guess">
     <!-- Background decoration -->
     <div class="bg-decoration" id="bgDecoration"></div>
-
-    <!-- Loading -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-bird">
-            <i class="fas fa-feather-pointed"></i>
-        </div>
-        <div class="spinner-ring"></div>
-        <p id="loadingText">正在加载鸟类图库...</p>
-    </div>
 
     <!-- Difficulty mode selection -->
     <div class="mode-modal" id="modeModal" style="display:none">
@@ -948,24 +939,24 @@
             <h2>请选择识别难度</h2>
             <p class="subtitle">系统将从图库中随机抽取 10 张鸟类图片，<br>不同难度出题范围与分值不同</p>
             <div class="mode-cards">
-                <div class="mode-card easy" onclick="game.start('easy')">
-                    <span class="mode-icon">🐣</span>
+                <button type="button" class="mode-card easy" onclick="game.start('easy')">
+                    <span class="mode-icon"><i class="fas fa-feather-alt" aria-hidden="true"></i></span>
                     <span class="mode-name">新手</span>
                     <span class="mode-desc">常见大型水鸟<br>体型大、易辨认</span>
-                    <span class="mode-score">每题 10 分 · 满分 100</span>
-                </div>
-                <div class="mode-card normal" onclick="game.start('normal')">
-                    <span class="mode-icon">🏠</span>
+                    <span class="mode-score">每题 10 分 · 另计连击奖励</span>
+                </button>
+                <button type="button" class="mode-card normal" onclick="game.start('normal')">
+                    <span class="mode-icon"><i class="fas fa-binoculars" aria-hidden="true"></i></span>
                     <span class="mode-name">普通</span>
                     <span class="mode-desc">中等常见鸟类<br>有一定辨识难度</span>
-                    <span class="mode-score">每题 15 分 · 满分 150</span>
-                </div>
-                <div class="mode-card hard" onclick="game.start('hard')">
-                    <span class="mode-icon">🏆</span>
+                    <span class="mode-score">每题 15 分 · 另计连击奖励</span>
+                </button>
+                <button type="button" class="mode-card hard" onclick="game.start('hard')">
+                    <span class="mode-icon"><i class="fas fa-award" aria-hidden="true"></i></span>
                     <span class="mode-name">专家</span>
                     <span class="mode-desc">珍稀小型鸟类<br>外观相似难区分</span>
-                    <span class="mode-score">每题 20 分 · 满分 200</span>
-                </div>
+                    <span class="mode-score">每题 20 分 · 另计连击奖励</span>
+                </button>
             </div>
             <button class="btn-secondary" onclick="$('#modeModal').fadeOut(200)">返回</button>
         </div>
@@ -1034,14 +1025,14 @@
         <div class="screen" id="startScreen">
             <div class="start-card">
                 <div class="start-icon">
-                    <i class="fas fa-feather-pointed"></i>
+                    <i class="fas fa-feather-alt"></i>
                 </div>
                 <h1 class="start-title">看图识鸟</h1>
                 <p class="start-subtitle">
-                    黄河湿地水鸟知识大挑战！<br>
-                    选择难度后，系统将从图库随机抽取 <strong>10 张图片</strong><br>
-                    <strong>答对加分</strong>，<strong>3 连击额外奖励</strong>，答题后弹出科普卡片
+                    从真实鸟类照片中辨认物种<br>
+                    每轮最多 <strong>10 题</strong>，答题后了解它们的分布与习性
                 </p>
+                <div class="quiz-preview-strip" id="quizPreview" aria-label="图库中的鸟类"></div>
                 <div class="start-stats">
                     <div class="start-stat">
                         <span class="num" id="totalSpecies">—</span>
@@ -1052,7 +1043,9 @@
                         <span class="desc">精选图片</span>
                     </div>
                 </div>
-                <button class="btn-primary" onclick="$('#modeModal').fadeIn(200)">
+                <div class="quiz-loading-status" id="loadingOverlay" role="status"><span class="spinner-ring"></span><p id="loadingText">正在准备鸟类图库…</p></div>
+                <button class="btn-secondary" id="quizRetry" onclick="loadQuizData()" hidden>重新加载图库</button>
+                <button class="btn-primary" id="quizStart" onclick="$('#modeModal').fadeIn(200)" disabled>
                     <i class="fas fa-play"></i>
                     开始挑战
                 </button>
@@ -1081,6 +1074,7 @@
                     <div class="bird-placeholder" id="birdPlaceholder">
                         <i class="fas fa-feather icon"></i>
                         <span class="text">正在加载图片...</span>
+                        <button class="btn-secondary" id="imageRetry" type="button" style="display:none" onclick="event.stopPropagation();game.retryImage()">重试图片</button>
                     </div>
                     <img id="birdImage" src="" alt="" style="display:none">
                     <div class="zoom-icon" id="zoomIcon"><i class="fas fa-search-plus"></i></div>
@@ -1149,7 +1143,6 @@
     </main>
 
     <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
     <script>
     (function() {
         'use strict';
@@ -1166,80 +1159,6 @@
         let BIRD_DATA = [];
         let totalImages = 0;
 
-        // 备用图（纯URL，直接可用）
-        const FALLBACK_IMAGES = {
-            '大天鹅': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Cygnus_cygnus.jpg/800px-Cygnus_cygnus.jpg',
-            '白鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Egretta_garzetta.jpg/800px-Egretta_garzetta.jpg',
-            '鸿雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Anser_cygnoides.jpg/800px-Anser_cygnoides.jpg',
-            '黑鹳': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Ciconia_nigra.jpg/800px-Ciconia_nigra.jpg',
-            '东方白鹳': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ciconia_boyciana.jpg/800px-Ciconia_boyciana.jpg',
-            '灰鹤': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Grus_grus.jpg/800px-Grus_grus.jpg',
-            '普通鸬鹚': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Phalacrocorax_carbo.jpg/800px-Phalacrocorax_carbo.jpg',
-            '斑嘴鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Anas_zonorhyncha.jpg/800px-Anas_zonorhyncha.jpg',
-            '白头鹤': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Grus_monacha.jpg/800px-Grus_monacha.jpg',
-            '豆雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Anser_fabalis.jpg/800px-Anser_fabalis.jpg',
-            '苍鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Ardea_cinerea.jpg/800px-Ardea_cinerea.jpg',
-            '绿头鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Anas_platyrhynchos.jpg/800px-Anas_platyrhynchos.jpg',
-            '夜鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Nycticorax_nycticorax.jpg/800px-Nycticorax_nycticorax.jpg',
-            '黑水鸡': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Gallinula_chloropus.jpg/800px-Gallinula_chloropus.jpg',
-            '白骨顶': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Fulica_atra.jpg/800px-Fulica_atra.jpg',
-            '凤头麦鸡': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Vanellus_vanellus.jpg/800px-Vanellus_vanellus.jpg',
-            '金眶鸻': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Charadrius_dubius.jpg/800px-Charadrius_dubius.jpg',
-            '普通翠鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Alcedo_atthis.jpg/800px-Alcedo_atthis.jpg',
-            '斑鱼狗': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Ceryle_rudis.jpg/800px-Ceryle_rudis.jpg',
-            '小天鹅': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Cygnus_bewickii_01.jpg/800px-Cygnus_bewickii_01.jpg',
-            '灰雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Anser_anser.jpg/800px-Anser_anser.jpg',
-            '白额雁': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Greater_white-fronted_goose_in_flight-1045.jpg/800px-Greater_white-fronted_goose_in_flight-1045.jpg',
-            '翘鼻麻鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Tadorna_tadorna_2.jpg/800px-Tadorna_tadorna_2.jpg',
-            '赤颈鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Mareca_penelope.jpg/800px-Mareca_penelope.jpg',
-            '绿翅鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Anas_crecca.jpg/800px-Anas_crecca.jpg',
-            '赤膀鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Mareca_strepera.jpg/800px-Mareca_strepera.jpg',
-            '普通秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Mergus_merganser.jpg/800px-Mergus_merganser.jpg',
-            '中华秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Scaly-sided_Merganser_RWD.jpg/800px-Scaly-sided_Merganser_RWD.jpg',
-            '白秋沙鸭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Mergellus_albellus.jpg/800px-Mergellus_albellus.jpg',
-            '鹌鹑': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Coturnix_coturnix.jpg/800px-Coturnix_coturnix.jpg',
-            '环颈雉': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Phasianus_colchicus.jpg/800px-Phasianus_colchicus.jpg',
-            '黑翅长脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Himantopus_hemantopus.jpg/800px-Himantopus_hemantopus.jpg',
-            '反嘴鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Recurvirostra_avosetta_2.jpg/800px-Recurvirostra_avosetta_2.jpg',
-            '红嘴鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Chroicocephalus_ridibundus.jpg/800px-Chroicocephalus_ridibundus.jpg',
-            '普通燕鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Sterna_hirundo.jpg/800px-Sterna_hirundo.jpg',
-            '白琵鹭': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Platalea_leucorodia.jpg/800px-Platalea_leucorodia.jpg',
-            '戴胜': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Upupa_epops.jpg/800px-Upupa_epops.jpg',
-            '大斑啄木鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Dendrocopos_major.jpg/800px-Dendrocopos_major.jpg',
-            '大杜鹃': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Cuculus_canorus.jpg/800px-Cuculus_canorus.jpg',
-            '红隼': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Falco_tinnunculus.jpg/800px-Falco_tinnunculus.jpg',
-            '游隼': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Falco_peregrinus.jpg/800px-Falco_peregrinus.jpg',
-            '雀鹰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Accipiter_nisus.jpg/800px-Accipiter_nisus.jpg',
-            '苍鹰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Accipiter_gentilis.jpg/800px-Accipiter_gentilis.jpg',
-            '普通鵟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Buteo_japonicus_108780228.jpg/800px-Buteo_japonicus_108780228.jpg',
-            '白尾鹞': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Circus_cyaneus.jpg/800px-Circus_cyaneus.jpg',
-            '黑翅鸢': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Elanus_caeruleus.jpg/800px-Elanus_caeruleus.jpg',
-            '纵纹腹小鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Athene_noctua.jpg/800px-Athene_noctua.jpg',
-            '长耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Asio_otus.jpg/800px-Asio_otus.jpg',
-            '短耳鸮': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Asio_flammeus.jpg/800px-Asio_flammeus.jpg',
-            '八哥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Acridotheres_cristatellus.jpg/800px-Acridotheres_cristatellus.jpg',
-            '灰椋鸟': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Spodiopsar_cineraceus.jpg/800px-Spodiopsar_cineraceus.jpg',
-            '灰喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Cyanopica_cyanus.jpg/800px-Cyanopica_cyanus.jpg',
-            '喜鹊': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Pica_pica.jpg/800px-Pica_pica.jpg',
-            '松鸦': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Garrulus_glandarius.jpg/800px-Garrulus_glandarius.jpg',
-            '北红尾鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Phoenicurus_auroreus.jpg/800px-Phoenicurus_auroreus.jpg',
-            '红喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Luscinia_calliope.jpg/800px-Luscinia_calliope.jpg',
-            '蓝喉歌鸲': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Luscinia_svecica.jpg/800px-Luscinia_svecica.jpg',
-            '黑枕黄鹂': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Oriolus_chinensis.jpg/800px-Oriolus_chinensis.jpg',
-            '树麻雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Passer_montanus.jpg/800px-Passer_montanus.jpg',
-            '白鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Motacilla_alba.jpg/800px-Motacilla_alba.jpg',
-            '灰鹡鸰': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Motacilla_cinerea.jpg/800px-Motacilla_cinerea.jpg',
-            '小鹀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Emberiza_pusilla.jpg/800px-Emberiza_pusilla.jpg',
-            '黄喉鹀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Emberiza_elegans.jpg/800px-Emberiza_elegans.jpg',
-            '金翅雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chloris_sinica_MHNT_226_%25C3%258Ele_s_Kouriles_HdB.jpg/800px-Chloris_sinica_MHNT_226_%25C3%258Ele_s_Kouriles_HdB.jpg',
-            '黄雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Spinus_spinus.jpg/800px-Spinus_spinus.jpg',
-            '燕雀': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Fringilla_montifringilla.jpg/800px-Fringilla_montifringilla.jpg',
-            '红颈滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Calidris_ruficollis.jpg/800px-Calidris_ruficollis.jpg',
-            '黑腹滨鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Calidris_alpina.jpg/800px-Calidris_alpina.jpg',
-            '青脚鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Tringa_nebularia.jpg/800px-Tringa_nebularia.jpg',
-            '白腰草鹬': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Common_Sandpiper_%28Actitis_hypoleucos%29%2C_Sfax%2C_Tunisia.jpg/800px-Common_Sandpiper_%28Actitis_hypoleucos%29%2C_Sfax%2C_Tunisia.jpg',
-            '遗鸥': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Relict_Gull.jpg/800px-Relict_Gull.jpg',
-        };
 
         /* ============================================================
            DIFFICULTY MAP — 按常见度划分
@@ -1325,11 +1244,19 @@
             hard:   { correct: 20, combo: 5 },
         };
         async function loadGameData() {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            $('#quizStart').prop('disabled', true);
+            $('#quizRetry').prop('hidden', true);
+            $('#loadingOverlay, #loadingOverlay .spinner-ring').show();
+            $('#loadingText').text('正在准备鸟类图库…');
             try {
-                const speciesRes = await fetch(`${API}/species/`);
+                const speciesRes = await fetch(`${API}/games/birds/`, {signal: controller.signal});
                 if (!speciesRes.ok) throw new Error('Species API error');
                 const speciesData = await speciesRes.json();
                 const speciesList = speciesData.results || speciesData;
+                speciesImageMap = {};
+                totalImages = 0;
 
                 BIRD_DATA = speciesList.map(s => {
                     const imgs = (s.gallery_images || []).filter(g => g.url);
@@ -1349,42 +1276,39 @@
                         galleryCount: imgs.length,
                         rawData: s,
                     };
-                });
-
-                try {
-                    const imageController = new AbortController();
-                    const imageTimer = setTimeout(() => imageController.abort(), 2500);
-                    const imagesRes = await fetch(`${API}/species-images/`, { signal: imageController.signal });
-                    clearTimeout(imageTimer);
-                    if (imagesRes.ok) {
-                        const imagesData = await imagesRes.json();
-                        const imgList = imagesData.results || imagesData;
-                        imgList.forEach(img => {
-                            if (!img.url || !img.species) return;
-                            if (!speciesImageMap[img.species]) speciesImageMap[img.species] = [];
-                            if (!speciesImageMap[img.species].some(existing => existing.url === img.url)) {
-                                speciesImageMap[img.species].push(img);
-                            }
-                        });
-                    }
-                } catch (_) {
-                    console.warn('图片补充数据加载较慢，先使用物种接口自带图片进入游戏。');
-                }
+                }).filter(bird => bird.galleryCount > 0);
+                if (BIRD_DATA.length < 4) throw new Error('可用图库不足');
 
                 $('#totalSpecies').text(BIRD_DATA.length);
                 $('#totalImages').text(totalImages);
-                $('#loadingOverlay').fadeOut(300);
+                const preview = document.getElementById('quizPreview');
+                preview.replaceChildren();
+                BIRD_DATA.slice(0, 3).forEach(bird => {
+                    const figure = document.createElement('figure');
+                    const image = document.createElement('img');
+                    image.src = getSpeciesImage(bird);
+                    image.alt = bird.name;
+                    const caption = document.createElement('figcaption');
+                    caption.textContent = bird.name;
+                    figure.append(image, caption);
+                    preview.append(figure);
+                });
+                $('#loadingOverlay').hide();
+                $('#quizStart').prop('disabled', false);
 
             } catch (e) {
-                console.error('加载失败:', e);
-                $('#loadingText').text('数据加载失败，请刷新重试');
-                $('.spinner-ring').hide();
+                $('#loadingText').text(e.name === 'AbortError' ? '图库连接超时，可以重新加载' : '图库暂不可用，请稍后重试');
+                $('#loadingOverlay .spinner-ring').hide();
+                $('#quizRetry').prop('hidden', false);
+            } finally {
+                clearTimeout(timeout);
             }
         }
+        window.loadQuizData = loadGameData;
 
         /* ============================================================
            GET IMAGE FOR A SPECIES
-           Priority: speciesImageMap[id] > FALLBACK_IMAGES[name] > null
+           Only image-backed local catalog records are used
            ============================================================ */
         function getSpeciesImage(bird) {
             // 1. From the enriched gallery (speciesId -> images)
@@ -1393,10 +1317,6 @@
                 // Pick a random one from the gallery for variety
                 const idx = Math.floor(Math.random() * imgs.length);
                 return imgs[idx].url;
-            }
-            // 2. Fallback URL map
-            if (FALLBACK_IMAGES[bird.name]) {
-                return FALLBACK_IMAGES[bird.name];
             }
             return null;
         }
@@ -1446,12 +1366,20 @@
            IMAGE LOAD HANDLERS (exposed to window for <img> onload/onerror)
            ============================================================ */
         function onImageLoaded() {
+            clearTimeout(game.imageTimer);
+            game.currentImageReady = true;
             $('#birdPlaceholder').hide();
             $('#birdImage').show();
+            if (!game.answered) $('.option-btn').prop('disabled', false);
         }
         function onImageError() {
+            clearTimeout(game.imageTimer);
+            game.currentImageReady = false;
             $('#birdPlaceholder').show();
+            $('#birdPlaceholder .text').text('图片暂时无法显示，请重试');
+            $('#imageRetry').show();
             $('#birdImage').hide();
+            $('.option-btn').prop('disabled', true);
         }
         window.onImageLoaded = onImageLoaded;
         window.onImageError = onImageError;
@@ -1515,6 +1443,8 @@
             wrong: 0,
             answered: false,
             mode: 'normal',   // 'easy' | 'normal' | 'hard'
+            currentImageReady: false,
+            imageTimer: null,
 
             shuffle(arr) {
                 for (let i = arr.length - 1; i > 0; i--) {
@@ -1525,12 +1455,13 @@
             },
 
             start(mode) {
-                if (BIRD_DATA.length === 0) {
+                if (BIRD_DATA.length < 4) {
                     showFeedback('数据加载中，请稍候...', 'wrong');
                     return;
                 }
 
                 this.mode = mode || 'normal';
+                this.TOTAL = Math.min(10, BIRD_DATA.length);
                 const cfg = SCORE_CONFIG[this.mode] || SCORE_CONFIG.normal;
 
                 // Select pool based on difficulty
@@ -1545,6 +1476,7 @@
                 if (pool.length < this.TOTAL) pool = BIRD_DATA;
 
                 this.questions = this.shuffle([...pool]).slice(0, this.TOTAL);
+                this.TOTAL = this.questions.length;
                 this.current = 0;
                 this.score = 0;
                 this.combo = 0;
@@ -1584,14 +1516,20 @@
                 container.removeClass('correct wrong');
 
                 // Load image using jQuery event binding (no global scope needed)
+                this.currentImageReady = false;
+                clearTimeout(this.imageTimer);
+                $('#birdPlaceholder').show();
+                $('#birdPlaceholder .text').text('正在加载图片…');
+                $('#imageRetry, #birdImage').hide();
                 const $birdImg = $('#birdImage');
                 $birdImg.off('load error');
                 $birdImg.on('load', onImageLoaded).on('error', onImageError);
                 $birdImg.attr('src', imgUrl || '');
+                this.imageTimer = setTimeout(onImageError, 8000);
 
                 const options = this.buildOptions(q);
                 const html = options.map(b =>
-                    `<button class="option-btn" data-name="${this.esc(b.name)}" onclick="game.selectAnswer('${this.esc(b.name)}', this)">
+                    `<button class="option-btn" disabled data-name="${this.esc(b.name)}" onclick="game.selectAnswer('${this.esc(b.name)}', this)">
                         <span>${b.name}</span>
                     </button>`
                 ).join('');
@@ -1601,6 +1539,13 @@
                 $('#finishBtn').hide();
 
                 this.answered = false;
+            },
+
+            retryImage() {
+                const bird = this.questions[this.current];
+                const images = speciesImageMap[bird.id] || [];
+                if (images.length > 1) images.push(images.shift());
+                this.showQuestion();
             },
 
             buildOptions(correctBird) {
@@ -1615,7 +1560,7 @@
             },
 
             selectAnswer(selectedName, btnEl) {
-                if (this.answered) return;
+                if (this.answered || !this.currentImageReady) return;
                 this.answered = true;
 
                 const q = this.questions[this.current];
@@ -1697,10 +1642,10 @@
 
                 const pct = (this.correct / this.TOTAL) * 100;
                 let grade = '', gradeLabel = '';
-                if (pct === 100)      { grade = 'S'; gradeLabel = '满分！鸟类专家！'; }
-                else if (pct >= 80)   { grade = 'A'; gradeLabel = '优秀！观鸟达人'; }
+                if (pct === 100)      { grade = 'S'; gradeLabel = '全部答对'; }
+                else if (pct >= 80)   { grade = 'A'; gradeLabel = '辨识熟练'; }
                 else if (pct >= 60)   { grade = 'B'; gradeLabel = '良好，还需努力'; }
-                else if (pct >= 40)   { grade = 'C'; gradeLabel = '继续加油！'; }
+                else if (pct >= 40)   { grade = 'C'; gradeLabel = '再观察一次'; }
                 else                  { grade = 'D'; gradeLabel = '多看看图库吧'; }
 
                 const modeLabel = {easy:'新手', normal:'普通', hard:'专家'}[this.mode] || '普通';
@@ -1731,7 +1676,7 @@
             },
 
             updateScore() {
-                const token = localStorage.getItem('yb_token');
+                const token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 $.ajax({
                     url: '/api/profiles/me/',

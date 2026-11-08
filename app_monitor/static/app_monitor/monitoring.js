@@ -526,7 +526,8 @@ function installMonitoringDashboard(app) {
                 state.payload = payload; state.params = params; state.picking = false;
                 document.body.classList.remove('analysis-selecting');
                 state.layer.clearLayers();
-                L.geoJSON(payload.buffer, { style:{ color:'#1f6f78', weight:2, fillOpacity:0.1 }, interactive:false }).addTo(state.layer);
+                L.geoJSON(payload.buffer, { style:{ color:'#168f8c', weight:2.5, fillColor:'#24b5a6', fillOpacity:0.12, dashArray:'8 6', className:'buffer-scan-boundary' }, interactive:false }).addTo(state.layer);
+                L.circleMarker(state.center, { radius:7, color:'#fff', weight:2, fillColor:'#168f8c', fillOpacity:1, interactive:false, className:'buffer-scan-center' }).addTo(state.layer);
                 L.geoJSON(payload.routes, { style:{ color:'#F39C12', weight:5 }, onEachFeature:(f,l) => l.bindTooltip(this.escapeHtml(f.properties.name)) }).addTo(state.layer);
                 payload.results.forEach(item => {
                     const marker = L.circleMarker([item.lat,item.lng], { radius:5, color:this.getProtectionColor(this.getProtectionGroup(item.species_protection)), fillOpacity:0.9, bubblingMouseEvents:false });

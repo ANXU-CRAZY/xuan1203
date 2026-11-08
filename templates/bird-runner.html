@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小鸟闯关 | 黄河生态方舟</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
     <link rel="stylesheet" href="{% static 'app_monitor/css/games-shared.css' %}?v=2026042701">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"><\/script>');</script>
+    <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <style>
         :root {
             --g-primary: #3d6b4f;
@@ -217,8 +215,9 @@
         }
     </style>
 {% include "app_monitor/site_theme.html" %}
+{% include "app_monitor/game_shell.html" %}
 </head>
-<body data-ark-page="game">
+<body data-ark-page="game" class="ark-game game-bird-runner">
     <!-- HEADER -->
     <header class="gh">
         <a href="/" class="gh-logo">
@@ -332,8 +331,8 @@
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
 
-                this.highScore = parseInt(localStorage.getItem('birdRunnerHighScore') || '0');
-                const savedSkinId = localStorage.getItem('birdRunnerSkin') || 'crane';
+                this.highScore = parseInt(ArkGameStorage.getItem('birdRunnerHighScore') || '0');
+                const savedSkinId = ArkGameStorage.getItem('birdRunnerSkin') || 'crane';
                 this.currentSkin = birdSkins.find(s => s.id === savedSkinId) || birdSkins[0];
                 $('#brHighScore').text(this.highScore);
 
@@ -348,11 +347,11 @@
                 birdSkins.forEach(skin => {
                     const sel = this.currentSkin.id === skin.id;
                     const card = $(`
-                        <div class="br-skin-card ${sel ? 'selected' : ''}" data-id="${skin.id}">
+                        <button type="button" class="br-skin-card ${sel ? 'selected' : ''}" data-id="${skin.id}" aria-pressed="${sel}">
                             <canvas width="52" height="36" data-skin="${skin.id}"></canvas>
                             <div class="skin-name">${skin.name}</div>
                             <div class="skin-desc">${skin.desc}</div>
-                        </div>
+                        </button>
                     `);
                     card.on('click', () => this.selectSkin(skin.id));
                     grid.append(card);
@@ -367,11 +366,14 @@
 
             drawSkinPreview(canvas, skin) {
                 const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const s = 0.65;
+                ctx.strokeStyle = 'rgba(35,55,49,.3)';
+                ctx.lineWidth = 1;
                 ctx.fillStyle = skin.body;
-                ctx.beginPath(); ctx.ellipse(22, 18, 12*s, 9*s, 0, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(22, 18, 12*s, 9*s, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = skin.head;
-                ctx.beginPath(); ctx.arc(30, 14, 7*s, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(30, 14, 7*s, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = skin.accent;
                 ctx.beginPath(); ctx.arc(33, 9, 3*s, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#333';
@@ -380,7 +382,7 @@
 
             selectSkin(id) {
                 this.currentSkin = birdSkins.find(s => s.id === id);
-                localStorage.setItem('birdRunnerSkin', id);
+                ArkGameStorage.setItem('birdRunnerSkin', id);
                 this.renderSkinGrid();
             },
 
@@ -521,7 +523,7 @@
                 $('#brEarnedScore').text(this.score);
                 if (this.score > this.highScore) {
                     this.highScore = this.score;
-                    localStorage.setItem('birdRunnerHighScore', this.highScore);
+                    ArkGameStorage.setItem('birdRunnerHighScore', this.highScore);
                     $('#brHighScore').text(this.highScore);
                     $('#brNewRecordBadge').show();
                 } else { $('#brNewRecordBadge').hide(); }
@@ -533,7 +535,7 @@
             updateHud() { $('#brCurrentScore').text(this.score); },
 
             updateUserScore() {
-                const token = localStorage.getItem('yb_token');
+                const token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 $.ajax({
                     url: '/api/profiles/me/', method: 'GET',

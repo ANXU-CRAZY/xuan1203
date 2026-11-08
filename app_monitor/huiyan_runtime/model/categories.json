@@ -1255,45 +1255,6 @@
    }
   ]
  },
- "夜鹰与雨燕": {
-  "desc": "夜鹰科 · 雨燕科",
-  "words": [
-   {
-    "en": "nocturnal bird resting on bare ground at night",
-    "zh": "夜鹰与雨燕"
-   },
-   {
-    "en": "sleek swift with long curved wings in flight",
-    "zh": "夜鹰与雨燕"
-   },
-   {
-    "en": "chinese nightjar",
-    "zh": "夜鹰与雨燕"
-   },
-   {
-    "en": "common swift",
-    "zh": "夜鹰与雨燕"
-   }
-  ],
-  "n": 4,
-  "group": "鸟类",
-  "en": "Nightjar and Swift",
-  "subs": [
-   {
-    "name": "夜鹰目·夜鹰科与雨燕目·雨燕科",
-    "desc": "普通夜鹰、普通雨燕",
-    "orders": [
-     "夜鹰目·夜鹰科",
-     "雨燕目·雨燕科"
-    ],
-    "classes": [
-     "chinese nightjar",
-     "common swift"
-    ],
-    "phrase": "nocturnal bird resting on ground and sleek swift with long curved wings"
-   }
-  ]
- },
  "鸥类与水面鸟": {
   "desc": "鸥科 · 燕鸥科 · 鹈鹕科 · 鸬鹚科",
   "words": [
@@ -1353,6 +1314,45 @@
      "great cormorant"
     ],
     "phrase": "large water bird with long flat bill or dark diving cormorant"
+   }
+  ]
+ },
+ "夜鹰与雨燕": {
+  "desc": "夜鹰科 · 雨燕科",
+  "words": [
+   {
+    "en": "nocturnal bird resting on bare ground at night",
+    "zh": "夜鹰与雨燕"
+   },
+   {
+    "en": "sleek swift with long curved wings in flight",
+    "zh": "夜鹰与雨燕"
+   },
+   {
+    "en": "chinese nightjar",
+    "zh": "夜鹰与雨燕"
+   },
+   {
+    "en": "common swift",
+    "zh": "夜鹰与雨燕"
+   }
+  ],
+  "n": 4,
+  "group": "鸟类",
+  "en": "Nightjar and Swift",
+  "subs": [
+   {
+    "name": "夜鹰目·夜鹰科与雨燕目·雨燕科",
+    "desc": "普通夜鹰、普通雨燕",
+    "orders": [
+     "夜鹰目·夜鹰科",
+     "雨燕目·雨燕科"
+    ],
+    "classes": [
+     "chinese nightjar",
+     "common swift"
+    ],
+    "phrase": "nocturnal bird resting on ground and sleek swift with long curved wings"
    }
   ]
  },

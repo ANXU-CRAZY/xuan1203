@@ -5,6 +5,14 @@ from pathlib import Path
 # 构建路径
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Independent SAM 2 workbench. Weights and its packaged dependencies stay
+# outside Django; CPU/tiny keeps this optional service off the bird model path.
+HUIYAN_LAND_SERVICE_URL = os.environ.get('HUIYAN_LAND_SERVICE_URL', 'http://127.0.0.1:8013')
+HUIYAN_LAND_EXECUTABLE = os.environ.get('HUIYAN_LAND_EXECUTABLE', r'E:\方舟慧眼-轻量版\方舟慧眼-轻量版.exe')
+HUIYAN_LAND_AUTOSTART = os.environ.get('HUIYAN_LAND_AUTOSTART', '1' if os.name == 'nt' else '0') == '1'
+HUIYAN_LAND_MODEL = os.environ.get('HUIYAN_LAND_MODEL', 'tiny')
+HUIYAN_LAND_DEVICE = os.environ.get('HUIYAN_LAND_DEVICE', 'cpu')
+
 # 安全密钥 (生产环境)
 SECRET_KEY = 'django-insecure-custom-key-for-xuan'
 DEBUG = False

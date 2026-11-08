@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>黄河生态方舟 | 态势感知终端</title>
+    <link rel="stylesheet" href="/static/app_monitor/recognition.css?v=20261108-3">
 
     <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
     <link rel="stylesheet" href="/static/vendor/font-awesome/all.min.css">
@@ -1022,9 +1023,10 @@
             .ai-agent-quick { grid-template-columns: 1fr 1fr; }
         }
 </style>
-<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261107-spatial2">
+<link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261108-scan1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261107-composer1">
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261108-divider1">
+<script src="/static/app_monitor/dashboard-panel.js?v=20261108-divider1" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1097,10 +1099,11 @@
     .bottom-action.games-action { --action-color:#9252af; --action-bg:#f5edf9; }
     .bottom-action.species-action { --action-color:#15856d; --action-bg:#e8f6f0; }
     .bottom-action.articles-action { --action-color:#c26c27; --action-bg:#fff2e6; }
-    #games-panel { top:auto !important; bottom:110px; width:430px; max-height:calc(100vh - 140px) !important; padding:18px; border-radius:18px; }
-    #games-panel .games-panel-head { margin-bottom:14px; }
-    #games-panel .games-panel-head h2 { font-family:inherit; font-size:18px; font-weight:700; }
-    #games-panel .games-panel-head small { font-size:11px; letter-spacing:.08em; }
+    #games-panel { top:auto !important; bottom:110px; width:400px; max-height:calc(100vh - 140px) !important; padding:14px; border-radius:18px; }
+    #games-panel .games-panel-head { margin-bottom:10px; }
+    #games-panel .games-panel-head > div { display:flex; align-items:center; gap:10px; min-width:0; }
+    #games-panel .games-panel-head h2 { margin:0; font-family:inherit; font-size:18px; font-weight:700; white-space:nowrap; }
+    #games-panel .games-panel-head small { font-size:11px; font-weight:700; letter-spacing:.04em; white-space:nowrap; }
     #games-panel .games-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     #games-panel .games-grid a { justify-content:flex-start; gap:10px; height:auto; min-height:61px; padding:10px; border:1px solid #e1ece9; border-radius:12px; color:#254950; background:#f7fbfa; box-shadow:none; }
     #games-panel .games-grid a:hover, #games-panel .games-grid a:focus-visible { background:#eaf6f3; border-color:#abd8ce; outline:none; }
@@ -1152,13 +1155,13 @@
 <section id="apps-menu" class="apps-menu" aria-label="应用菜单" hidden>
     <h2 class="apps-menu-title">常用应用</h2>
     <div class="apps-menu-grid">
-        <a href="/huiyan/"><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
+        <a href="/huiyan/choose/" data-recognition-choice><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
         <a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer"><i class="fas fa-flask" aria-hidden="true"></i><span>方舟实验室</span></a>
         <a href="/admin/"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>
     </div>
 </section>
 <section id="games-panel" class="games-panel" aria-labelledby="games-title" hidden>
-    <div class="games-panel-head"><div><small>探索 · 学习 · 守护</small><h2 id="games-title">生态互动</h2></div><button id="games-close" type="button" aria-label="关闭生态互动"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+    <div class="games-panel-head"><div><h2 id="games-title">生态互动</h2><small>探索 · 学习 · 守护</small></div><button id="games-close" type="button" aria-label="关闭生态互动"><i class="fas fa-times" aria-hidden="true"></i></button></div>
     <div class="games-grid">
         <a href="/bird-guess/" title="认识湿地中的鸟类"><i class="fas fa-feather" aria-hidden="true"></i><span class="game-copy"><strong>看图识鸟</strong><small>认识湿地鸟类</small></span></a>
         <a href="/bird-runner/" title="开启鸟类知识挑战"><i class="fas fa-dove" aria-hidden="true"></i><span class="game-copy"><strong>小鸟闯关</strong><small>开启知识挑战</small></span></a>
@@ -1384,15 +1387,21 @@
     <a href="/gallery/" class="bottom-action gallery-action"><i class="fas fa-images" aria-hidden="true"></i><span>图库</span></a>
     <button id="games-toggle" class="bottom-action games-action" type="button" aria-expanded="false" aria-controls="games-panel"><i class="fas fa-gamepad" aria-hidden="true"></i><span>生态互动</span></button>
     <div class="huiyan-entry-group">
-    <a href="/huiyan/" class="huiyan-quick-entry" title="进入方舟慧眼 · AI识别鸟兽" aria-label="打开方舟慧眼，AI识别鸟兽">
+    <a href="/huiyan/choose/" class="huiyan-quick-entry" data-recognition-choice title="选择识鸟或识别地物" aria-label="打开方舟慧眼，选择识别任务" aria-haspopup="dialog" aria-controls="recognition-choice">
         <i class="fas fa-dove" aria-hidden="true"></i>
-        <span>AI识鸟</span>
+        <span>AI识别</span>
     </a>
     <a href="/report/" class="huiyan-report-badge" title="上报观鸟记录" aria-label="上报观鸟记录">上报</a>
     </div>
     <a href="/species/" class="bottom-action species-action"><i class="fas fa-book" aria-hidden="true"></i><span>百科</span></a>
     <a href="/articles/" class="bottom-action articles-action"><i class="fas fa-newspaper" aria-hidden="true"></i><span>科普</span></a>
 </div>
+
+<dialog id="recognition-choice" class="recognition-dialog" aria-labelledby="recognition-choice-title">
+  <div class="recognition-dialog-head"><div class="recognition-heading"><img src="/static/app_monitor/img/logo.png" alt=""><div><h2 id="recognition-choice-title">方舟慧眼</h2><p>选择识别任务</p></div></div><button type="button" class="recognition-close" aria-label="关闭任务选择"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+  {% include 'app_monitor/_recognition_options.html' %}
+</dialog>
+<script src="/static/app_monitor/recognition.js?v=20261108-1"></script>
 
 <div class="site-record-footer">
     <span>@黄河生态方舟2026</span>
@@ -1439,7 +1448,7 @@
 <script src="/static/vendor/leaflet/leaflet.js"></script>
 <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
 
-<script src="/static/app_monitor/monitoring.js?v=20261107-spatial2"></script>
+<script src="/static/app_monitor/monitoring.js?v=20261108-scan1"></script>
 <script src="/static/app_monitor/monitoring-towers.js?v=20261104-logo1"></script>
 <script>
     // 在原有 Canvas 上绘制鸟形符号，保留大量点位的批量渲染和点击行为。

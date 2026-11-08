@@ -22,6 +22,11 @@
 .analysis-row select { min-width:0; flex:1; padding:7px; border:1px solid #b4d6d3; border-radius:6px; color:#31565a; background:#fff; font:inherit; }
 .analysis-actions button { flex:1; }
 #analysis-status { line-height:1.6; overflow-wrap:anywhere; }
+.buffer-scan-boundary { animation:buffer-scan-trace 1.5s ease-out both; }
+.buffer-scan-center { animation:buffer-scan-center 1.2s ease-out both; }
+@keyframes buffer-scan-trace { from { stroke-dashoffset:80; stroke-opacity:.25; fill-opacity:0; } to { stroke-dashoffset:0; stroke-opacity:1; fill-opacity:.12; } }
+@keyframes buffer-scan-center { from { stroke-opacity:.25; fill-opacity:.25; } to { stroke-opacity:1; fill-opacity:1; } }
+@media (prefers-reduced-motion:reduce) { .buffer-scan-boundary,.buffer-scan-center { animation:none; } }
 #analysis-results { margin:0; padding-left:22px; max-height:160px; overflow:auto; }
 #analysis-results button { border:0; background:none; color:#1f6f78; cursor:pointer; text-align:left; padding:5px; }
 #analysis-scope { font-size:12px; color:#657c7b; }

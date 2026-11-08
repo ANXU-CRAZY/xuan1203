@@ -1,0 +1,50 @@
+/* Style-only companion to the bird workbench. Native geometry and controls
+   belong to the segmentation service; do not set layout or spacing here. */
+:root,body.light {
+  --ark-sans:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font:var(--ark-sans); --mono:var(--ark-sans);
+  --c-bg:#F7F9F7; --c-surface:#FFFFFF; --c-surface-2:#F1F6F4;
+  --c-surface-3:#EAF0EB; --c-line:#E1E8E5; --c-line-soft:#EAF0EB;
+  --c-text:#172B35; --c-text-2:#526A71; --c-text-3:#6B828A;
+  --c-accent:#20909D; --c-accent-dim:#187583; --c-accent-glow:#E4EEEF;
+  --c-on-bg:#E4EEEF; --c-on-bg-2:#D7E7E7; --c-on-bd:#BCD4D4; --c-on-fg:#187583;
+  --c-ok:#27866A; --c-warn:#A47626; --c-err:#B6524D; --c-info:#347DA1;
+}
+body:not(.light) {
+  --c-bg:#0B1D26; --c-surface:#102A34; --c-surface-2:#153541;
+  --c-surface-3:#1B414B; --c-line:#2B4C56; --c-line-soft:#24424D;
+  --c-text:#E9F2F0; --c-text-2:#BCCFCF; --c-text-3:#9DB3B8;
+  --c-accent:#77C6CA; --c-accent-dim:#56A9B1; --c-accent-glow:#1B414B;
+  --c-on-bg:#1B414B; --c-on-bg-2:#244C58; --c-on-bd:#3F6870; --c-on-fg:#E9F2F0;
+}
+.top {box-shadow:0 4px 20px rgba(23,43,53,.04)}
+.top::before {background:transparent}
+.mark {background:transparent;border-color:transparent;box-shadow:none}
+.brand-name {color:var(--c-text)}
+.brand-sub,.brand-tag {color:var(--c-text-3)}
+.panel,.modcard,.subframe {border-color:var(--c-line);background:var(--c-surface);box-shadow:0 4px 18px rgba(23,43,53,.035)}
+.panel>.hd {background:transparent;color:var(--c-text);border-color:var(--c-line-soft)}
+.mchd {background:var(--c-surface-2);color:var(--c-text);border-color:var(--c-line-soft)}
+.idx,.cnt,.badge {color:var(--c-accent);background:var(--c-accent-glow);border-color:var(--c-line)}
+.btn,.tbtn,.vpbtn,.pillbtn {background:var(--c-surface-2);color:var(--c-text);border-color:var(--c-line);box-shadow:none}
+.btn.primary {background:linear-gradient(135deg,#20909D,#187583);color:#fff;border-color:transparent}
+body:not(.light) .btn.primary {background:var(--c-accent);color:#102A34}
+.btn:hover,.tbtn:hover,.vpbtn:hover,.pillbtn:hover {border-color:var(--c-accent);box-shadow:none}
+.tab {color:var(--c-text-2);background:transparent}
+.tab.on {background:var(--c-accent-glow);color:var(--c-accent)}
+.pill,.sumbox,.hmod {background:var(--c-surface-2);border-color:var(--c-line-soft);box-shadow:none}
+input,select,textarea,.txt-input,.psel {color:var(--c-text);background-color:var(--c-surface);border-color:var(--c-line)}
+input::placeholder,textarea::placeholder {color:var(--c-text-3)}
+table.rt thead,.rt th {color:var(--c-text-2);background:var(--c-surface-2)}
+.hint,.note,.pk {color:var(--c-text-3)}
+:focus-visible {outline-color:var(--c-accent)}
+#modelTier,#ppsIn,#iouIn {text-align:center}
+
+/* The location panel follows the bird workbench; surrounding columns stay native. */
+.land-mapbar {display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.land-mapbar input {flex:1 1 0;min-width:0;width:0;padding:5px 7px;border:1px solid var(--c-line);border-radius:6px;font-size:11.5px}
+.land-mapbar .btn {flex:none;padding:4px 7px;min-height:29px;font-size:11.5px}
+#landGeoMap {height:250px;border:1px solid var(--c-line);border-radius:8px;overflow:hidden;background:var(--c-surface-2);isolation:isolate}
+#landGeoMap .leaflet-control-attribution {font-size:9px;color:#526A71;background:rgba(255,255,255,.88)}
+.land-mapfoot {margin-top:8px;font-size:12px;color:var(--c-text-3);line-height:1.5}
+.land-mapfoot[data-error="true"] {color:var(--c-err)}
