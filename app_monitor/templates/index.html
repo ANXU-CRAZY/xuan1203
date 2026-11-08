@@ -1025,8 +1025,8 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261108-bufferheat1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261108-chatcard5">
-<script src="/static/app_monitor/dashboard-panel.js?v=20261108-chatcard5" defer></script>
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261108-overview-fit">
+<script src="/static/app_monitor/dashboard-panel.js?v=20261108-live-module" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1243,7 +1243,11 @@
         </span>
         <span class="dashboard-widget-label">监测分析</span>
     </button>
-    <button type="button" id="dashboard-chat-toggle" class="dashboard-widget" aria-controls="ai-agent" aria-pressed="false" onclick="app.toggleDashboardModule('chat')">
+    <button type="button" id="dashboard-live-toggle" class="dashboard-widget" aria-controls="dashboard-live" aria-pressed="false" onclick="app.toggleDashboardModule('live')">
+        <span class="dashboard-widget-symbol dashboard-widget-monitor" aria-hidden="true"><i class="fas fa-satellite-dish"></i></span>
+        <span class="dashboard-widget-label">实时动态</span>
+    </button>
+    <button type="button" id="dashboard-chat-toggle" class="dashboard-widget" aria-controls="dashboard-chat-card" aria-pressed="false" onclick="app.toggleDashboardModule('chat')">
         <span class="dashboard-widget-symbol dashboard-avatar" aria-hidden="true">
             <span class="ai-agent-person"><span class="ai-agent-head"></span><span class="ai-agent-body"></span></span>
             <span class="ai-agent-status"></span>
@@ -1264,7 +1268,8 @@
         <button type="button" class="dashboard-return" id="dashboard-return" onclick="app.showDashboardTab('overview')" hidden>返回数据</button>
         <button type="button" id="dashboard-collapse" class="dashboard-collapse" aria-label="收起分析面板" aria-expanded="true" onclick="app.toggleDashboardPanel()"><i class="fas fa-minus"></i></button>
     </div>
-    <div id="dashboard-overview" class="dashboard-overview" aria-label="数据概览">
+    <div class="dashboard-panes">
+    <section id="dashboard-overview" class="dashboard-overview" aria-label="监测分析">
         <div class="dashboard-charts">
         <div class="dashboard-summary" aria-label="监测数据统计">
             <div class="bottom-stat"><div class="b-num" id="s-records">0</div><div class="b-label">总观测记录</div></div>
@@ -1290,14 +1295,14 @@
         </div>
 
         </div>
-        <div class="dashboard-latest">
+    </section>
+    <section id="dashboard-live" class="dashboard-latest" aria-label="实时动态">
         <!-- 实时动态 -->
         <div style="font-size:11px; font-weight:700; color:var(--c-dark); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
             <span class="live-dot"></span><i class="fas fa-satellite-dish"></i> 最新动态 · 实时数据接入
         </div>
         <div class="log-container" id="realtime-log-box"><div class="log-empty"><i class="fas fa-seedling"></i><span>正在同步观鸟记录</span></div></div>
-        </div>
-    </div>
+    </section>
     <div class="dashboard-chat-card" id="dashboard-chat-card">
     <div id="ai-agent" class="dashboard-chat">
     <section id="ai-agent-panel" class="ai-agent-panel" aria-label="智能巡护助手">
@@ -1319,6 +1324,7 @@
                 <button type="button" id="ai-agent-send" title="发送" aria-label="发送给小舟"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
+    </div>
     </div>
 </div>
 
@@ -2989,8 +2995,7 @@
                     this.askAI(btn.dataset.aiPrompt || btn.textContent.trim());
                 });
             });
-            // Chat shares the monitoring panel, with one scrollable message area.
-            this.dashboardModules = { overview:true, chat:false };
+            this.dashboardModules = ['live', 'overview'];
             this.updateDashboardModules();
             window.addEventListener('resize', () => {
                 if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel();
@@ -2999,40 +3004,48 @@
 
         updateDashboardModules: function() {
             const panel = document.getElementById('detail-panel');
-            const state = this.dashboardModules || { overview:false, chat:false };
-            const show = state.overview || state.chat;
+            const active = this.dashboardModules;
+            const show = active.length > 0;
+            const single = active.length === 1;
             panel.classList.toggle('dashboard-closed', !show);
-            panel.classList.toggle('dashboard-single', show && !(state.overview && state.chat));
-            panel.classList.toggle('dashboard-chat-only', state.chat && !state.overview);
+            panel.classList.toggle('dashboard-single', single);
             panel.classList.toggle('minimized', false);
             document.body.classList.toggle('dashboard-expanded', show);
-            document.body.classList.toggle('dashboard-chat-only', state.chat && !state.overview);
-            document.getElementById('dashboard-overview').hidden = !state.overview;
-            document.getElementById('ai-agent').hidden = !state.chat;
-            document.getElementById('dashboard-chat-card').hidden = !state.chat;
-            panel.querySelector('.dashboard-composer').hidden = !state.chat;
-            document.getElementById('dashboard-title').textContent = state.overview && state.chat ? '监测分析 · 小舟智能体' : state.overview ? '监测分析' : '小舟智能体';
-            for (const name of ['overview','chat']) document.getElementById(`dashboard-${name}-toggle`).setAttribute('aria-pressed', String(state[name]));
+            document.body.classList.toggle('dashboard-single', single);
+            const titles = [];
+            for (const name of ['overview', 'live', 'chat']) {
+                const toggle = document.getElementById(`dashboard-${name}-toggle`);
+                const open = active.includes(name);
+                toggle.setAttribute('aria-pressed', String(open));
+                document.getElementById(toggle.getAttribute('aria-controls')).hidden = !open;
+                if (open) titles.push(toggle.querySelector('.dashboard-widget-label').textContent);
+            }
+            document.getElementById('dashboard-title').textContent = titles.join(' · ');
             const button = document.getElementById('dashboard-collapse');
             button.setAttribute('aria-expanded', String(show));
-            if (show && state.overview) requestAnimationFrame(() => Object.values(this.charts).forEach(chart => chart?.resize()));
+            if (active.includes('overview')) requestAnimationFrame(() => Object.values(this.charts).forEach(chart => chart?.resize()));
         },
 
-        toggleDashboardModule: function(name) {
-            this.dashboardModules[name] = !this.dashboardModules[name];
+        toggleDashboardModule: function(name, open = !this.dashboardModules.includes(name)) {
+            if (open) {
+                if (!this.dashboardModules.includes(name)) {
+                    // Opening a third module replaces the oldest open module.
+                    this.dashboardModules = [...this.dashboardModules, name].slice(-2);
+                }
+            } else {
+                this.dashboardModules = this.dashboardModules.filter(module => module !== name);
+            }
             this.updateDashboardModules();
         },
 
         toggleDashboardPanel: function(expanded) {
-            if (expanded === true) this.dashboardModules = { overview:true, chat:true };
-            else this.dashboardModules = { overview:false, chat:false };
+            this.dashboardModules = expanded === true ? ['live', 'overview'] : [];
             this.updateDashboardModules();
         },
 
         showDashboardTab: function(tab) {
             const chat = tab === 'chat';
-            this.dashboardModules[chat ? 'chat' : 'overview'] = true;
-            this.updateDashboardModules();
+            this.toggleDashboardModule(chat ? 'chat' : 'overview', true);
             if (chat) {
                 const box = document.getElementById('ai-agent-messages');
                 box.scrollTop = box.scrollHeight;
@@ -3045,12 +3058,11 @@
         },
 
         closeAIAssistant: function() {
-            this.showDashboardTab('overview');
+            this.toggleDashboardModule('chat', false);
         },
 
         toggleAIAssistant: function(forceOpen) {
-            this.dashboardModules.chat = forceOpen === undefined ? !this.dashboardModules.chat : forceOpen;
-            this.updateDashboardModules();
+            this.toggleDashboardModule('chat', forceOpen);
         },
 
         positionAIPanel: function() { /* The chat is laid out within the dashboard. */ },

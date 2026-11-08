@@ -1,7 +1,8 @@
-/* Shared monitoring and Xiaozhou workspace; all dimensions are bounded by
+/* Shared monitoring, live activity and Xiaozhou workspace; dimensions are bounded by
    the filter bar and bottom map controls. */
 :root {--dashboard-panel-width:420px; --dashboard-panel-inset:20px}
 #detail-panel {
+    --dashboard-single-height:calc(min(800px, 100dvh - var(--monitor-sidebar-top,150px) - 40px) * .75);
     width:var(--dashboard-panel-width); height:800px; bottom:24px; right:var(--dashboard-panel-inset);
     max-height:calc(100dvh - var(--monitor-sidebar-top,150px) - 40px);
     overflow:hidden; border-radius:16px; box-sizing:border-box;
@@ -27,9 +28,12 @@ body.dashboard-expanded .dashboard-module-controls {
 .dashboard-widget-monitor svg {width:25px; height:25px}
 .dashboard-widget-label {font-size:11px; font-weight:700; line-height:1.35; white-space:nowrap}
 #detail-panel.dashboard-closed {display:none !important}
-#detail-panel.dashboard-chat-only {height:calc(min(800px, 100dvh - var(--monitor-sidebar-top,150px) - 40px) * .75)}
-#detail-panel.dashboard-single .dashboard-overview,#detail-panel.dashboard-single .dashboard-chat-card {flex:1 1 0}
-#detail-panel.dashboard-single .dashboard-latest {flex:1 1 150px;height:auto}
+#detail-panel.dashboard-single {height:var(--dashboard-single-height)}
+#detail-panel.dashboard-single:has(#dashboard-overview:not([hidden])) {
+    height:auto;
+    max-height:var(--dashboard-single-height);
+}
+#detail-panel.dashboard-single:has(#dashboard-overview:not([hidden])) .dashboard-panes {flex-basis:auto}
 #detail-panel > .panel-head { flex:none; padding:13px 16px; cursor:move; }
 .dashboard-heading { display:inline-flex; align-items:center; gap:8px; }
 .dashboard-heading-copy { display:flex; flex-direction:column; gap:2px; }
@@ -44,12 +48,14 @@ body.dashboard-expanded .dashboard-module-controls {
 .dashboard-tabs button { flex:1; border:0; border-radius:8px; background:transparent; padding:9px 5px; color:#607b7d; font-family:inherit; font-weight:600; font-size:12px; cursor:pointer; }
 .dashboard-tabs button[aria-selected="true"] { background:#e4f2ef; color:#167c84; }
 .dashboard-tabs button:focus-visible, .dashboard-collapse:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
-.dashboard-overview { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; padding:12px 14px 0; gap:10px; }
-.dashboard-charts { flex:0 1 auto; min-height:0; overflow:auto; scrollbar-width:thin; }
-.dashboard-latest { display:flex; flex-direction:column; flex:1 1 160px; min-height:0; border-top:1px solid #e5eeeb; padding-top:10px; }
+.dashboard-panes {display:flex; flex-direction:column; flex:1; min-height:0; padding:12px 14px; gap:10px}
+.dashboard-overview {flex:0 1 auto; max-height:55%; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin}
+.dashboard-latest {display:flex; flex-direction:column; flex:1 1 0; min-height:0}
+#detail-panel.dashboard-single .dashboard-overview {flex:1 1 auto; max-height:none}
 #detail-panel .dashboard-latest .log-container { flex:1 1 auto; min-height:0; height:auto; overflow-y:auto; padding:0 5px; scrollbar-width:thin; }
 #detail-panel [hidden] { display:none !important; }
 #detail-panel .chart-row { gap:10px; margin-bottom:6px; }
+#detail-panel.dashboard-single .chart-row {margin-bottom:0}
 #detail-panel .chart-col > .chart-card { height:100%; box-sizing:border-box; }
 #detail-panel .chart-card { flex-shrink:0; }
 #detail-panel .chart-card-title { font-size:11px; line-height:1.5; }
@@ -59,23 +65,21 @@ body.dashboard-expanded .dashboard-module-controls {
 #detail-panel .species-list-container { height:160px; min-height:160px; max-height:none; overflow:auto; scrollbar-width:thin; }
 #detail-panel .species-row { min-height:32px; padding:8px 3px; box-sizing:border-box; }
 #detail-panel .dashboard-chat { position:static !important; display:flex; flex:1; min-height:0; touch-action:auto; width:100%; }
-/* 数据与对话各占可用空间的一半，输入区独立固定在底部。 */
-#detail-panel .dashboard-overview { flex:1 1 0; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
-#detail-panel .dashboard-charts { flex:none; overflow:visible; }
-#detail-panel .dashboard-latest { flex:none; min-height:120px; height:150px; border-top-color:transparent; }
 #detail-panel .dashboard-chat-card {
-    display:flex; flex-direction:column; flex:1 1 calc(88px + var(--dashboard-split-correction,0px));
+    display:flex; flex-direction:column; flex:1 1 0;
     min-height:0;
 }
 #detail-panel:not(.dashboard-single) .dashboard-chat-card {
-    position:relative; box-sizing:border-box; width:var(--dashboard-data-width, calc(100% - 28px)); margin:0 0 12px 14px;
+    position:relative; box-sizing:border-box;
     border:1px solid transparent; border-radius:12px; background:#fff; overflow:hidden;
 }
 #detail-panel:not(.dashboard-single) .dashboard-chat-card::after {
     content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
     border:1px solid #d5d9d8; border-radius:11px; box-sizing:border-box;
 }
-#detail-panel:not(.dashboard-single) .dashboard-latest > div:first-child {visibility:hidden}
+#detail-panel .dashboard-overview:not([hidden]) ~ .dashboard-chat-card {
+    width:var(--dashboard-data-width, 100%);
+}
 #detail-panel .dashboard-chat {flex:1 1 0; border-top:0}
 #detail-panel .ai-agent-panel {
     display:flex; position:static; inset:auto; width:100%; height:100%; max-height:none;
@@ -105,15 +109,17 @@ body.dashboard-expanded .dashboard-module-controls {
 #detail-panel .dashboard-composer .ai-suggestions-btn:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
 #detail-panel .dashboard-composer button:disabled { opacity:.45; cursor:wait; }
 #detail-panel.minimized { height:110px; max-height:none; }
-#detail-panel.minimized .dashboard-overview, #detail-panel.minimized .dashboard-chat, #detail-panel.minimized .dashboard-composer { display:none !important; }
+#detail-panel.minimized .dashboard-panes { display:none; }
 @media (max-width:1350px) and (min-width:769px) {
     :root {--dashboard-panel-width:390px; --dashboard-panel-inset:14px}
-    #detail-panel { bottom:92px; height:670px; max-height:calc(100dvh - var(--monitor-sidebar-top,150px) - 110px); }
-    #detail-panel.dashboard-chat-only {height:calc(min(670px, 100dvh - var(--monitor-sidebar-top,150px) - 110px) * .75)}
+    #detail-panel {
+        --dashboard-single-height:calc(min(670px, 100dvh - var(--monitor-sidebar-top,150px) - 110px) * .75);
+        bottom:92px; height:670px; max-height:calc(100dvh - var(--monitor-sidebar-top,150px) - 110px);
+    }
 }
 @media (max-width:768px) {
     :root {--dashboard-mobile-height:min(510px, calc(100dvh - var(--monitor-sidebar-top,230px) - 164px))}
-    body.dashboard-chat-only {--dashboard-mobile-height:calc(min(510px, 100dvh - var(--monitor-sidebar-top,230px) - 164px) * .75)}
+    body.dashboard-single {--dashboard-mobile-height:calc(min(510px, 100dvh - var(--monitor-sidebar-top,230px) - 164px) * .75)}
     .dashboard-module-controls {right:8px;bottom:160px;gap:8px}
     body.dashboard-expanded .dashboard-module-controls {
         right:12px; bottom:calc(108px + var(--dashboard-mobile-height) + 8px); flex-direction:row;
@@ -124,14 +130,12 @@ body.dashboard-expanded .dashboard-module-controls {
     .dashboard-widget {width:62px; min-height:64px; border-radius:20px}
     .dashboard-widget-label {font-size:10px}
     #detail-panel { display:flex; left:12px !important; right:12px !important; top:auto !important; bottom:108px; width:auto; height:var(--dashboard-mobile-height); max-height:none; border-radius:18px; z-index:1002; }
-    #detail-panel.dashboard-chat-only {height:var(--dashboard-mobile-height)}
+    #detail-panel.dashboard-single {--dashboard-single-height:var(--dashboard-mobile-height)}
     #detail-panel.minimized { height:110px; max-height:none; }
     #detail-panel > .panel-head { padding:11px 14px; cursor:default; }
     #detail-panel .dashboard-tabs { padding:4px 10px; }
     #detail-panel .dashboard-tabs button { padding:7px 4px; }
-    #detail-panel .dashboard-overview { padding:10px 10px 0; overflow-y:auto; }
-    #detail-panel:not(.dashboard-single) .dashboard-chat-card {width:var(--dashboard-data-width, calc(100% - 20px)); margin:0 0 10px 10px}
-    #detail-panel .dashboard-charts { flex:none; overflow:visible; }
+    .dashboard-panes {padding:10px}
     #detail-panel .chart-row { flex-direction:column; }
     #detail-panel .chart-col > .chart-card { height:auto; }
     #detail-panel .species-list-container { height:170px; min-height:170px; }
