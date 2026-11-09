@@ -1012,8 +1012,8 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261108-bufferheat1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261109-square-widgets">
-<script src="/static/app_monitor/dashboard-panel.js?v=20261109-fixed-widgets" defer></script>
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261109-overview-align">
+<script src="/static/app_monitor/dashboard-panel.js?v=20261109-overview-align" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -2987,7 +2987,7 @@
                     this.askAI(btn.dataset.aiPrompt || btn.textContent.trim());
                 });
             });
-            this.dashboardModules = ['live', 'overview'];
+            this.dashboardModules = [];
             this.updateDashboardModules();
             window.addEventListener('resize', () => {
                 if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel();
