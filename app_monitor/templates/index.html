@@ -338,21 +338,9 @@
         .huiyan-quick-entry > i { font-size: 24px; line-height: 1; }
         .huiyan-quick-entry > span { margin-top: 4px; font-size: 10px; font-weight: 800; white-space: nowrap; }
         .huiyan-report-badge {
-            position: absolute;
             top: -3px;
             right: -2px;
-            padding: 2px 5px;
-            border-radius: 7px 7px 7px 1px;
-            background: #234f56;
-            color: #6ff1d2;
-            font-size: 10px;
-            font-weight: 800;
-            line-height: 1.3;
-            z-index: 2;
-            text-decoration: none;
         }
-        .huiyan-report-badge:hover, .huiyan-report-badge:focus-visible { background:#176c73; color:#fff; }
-        .huiyan-report-badge:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
         .huiyan-quick-entry:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(12, 133, 128, .32); }
         .huiyan-quick-entry:focus-visible { outline: 3px solid #1f6f78; outline-offset: 3px; }
         .huiyan-quick-entry + .bottom-stat { border-left: none; }
@@ -710,7 +698,6 @@
             .huiyan-quick-entry { width: 56px; height: 56px; margin-top: -16px; margin-bottom: -16px; }
             .huiyan-quick-entry > i { font-size: 20px; }
             .huiyan-quick-entry > span { font-size: 9px; margin-top: 2px; }
-            .huiyan-report-badge { font-size: 9px; }
             .site-record-footer {
                 left: 50%;
                 bottom: 6px;
@@ -1025,8 +1012,8 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261108-bufferheat1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261108-overview-fit">
-<script src="/static/app_monitor/dashboard-panel.js?v=20261108-live-module" defer></script>
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261109-square-widgets">
+<script src="/static/app_monitor/dashboard-panel.js?v=20261109-fixed-widgets" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1078,8 +1065,13 @@
     #filter-bar .monitor-date-field:focus-within .date-inp { color:#25434b; }
     #filter-bar .monitor-date-field:focus-within .date-inp::-webkit-datetime-edit { opacity:1; }
     .ai-insight-wrap .ai-insight-entry { width:60px; }
-    .protection-menu-toggle { position:absolute; z-index:2; right:-12px; top:-9px; border:1px solid #fff; border-radius:10px; padding:2px 5px; background:#218b91; color:#fff; font-family:inherit; font-size:9px; font-weight:700; line-height:1.4; cursor:pointer; white-space:nowrap; }
-    .protection-menu-toggle:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
+    .protection-menu-toggle, .huiyan-report-badge {
+        position:absolute; z-index:2; box-sizing:border-box; border:1px solid #fff; border-radius:10px;
+        padding:2px 5px; background:#218b91; color:#fff; font-family:inherit; font-size:9px;
+        font-weight:700; line-height:1.4; cursor:pointer; white-space:nowrap; text-decoration:none;
+    }
+    .protection-menu-toggle { right:-12px; top:-9px; }
+    .protection-menu-toggle:focus-visible, .huiyan-report-badge:focus-visible { outline:2px solid #20909d; outline-offset:2px; }
     #protection-filter-panel { position:fixed; z-index:1600; width:160px; padding:6px; gap:3px; border:1px solid #dce9e5; border-radius:12px; background:#fff; box-shadow:0 8px 24px rgba(23,57,58,.2); }
     #protection-filter-panel[hidden] { display:none !important; }
     #protection-filter-panel .topic-btn { flex-direction:row; justify-content:flex-start; min-height:36px; height:auto; gap:8px; padding:5px 8px; border:0; border-radius:8px; box-shadow:none; background:transparent; font-size:12px; }
