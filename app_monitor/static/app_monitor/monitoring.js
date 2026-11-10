@@ -533,7 +533,27 @@ function installMonitoringDashboard(app) {
             const boundsCircle = L.circle(state.center, { radius, interactive:false }).addTo(state.layer);
             const bounds = boundsCircle.getBounds();
             state.layer.removeLayer(boundsCircle);
-            if (!after) this.map.flyToBounds(bounds, { padding:[32,32], maxZoom:16, duration:1.25, animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+            if (!after) {
+                const mapRect = this.map.getContainer().getBoundingClientRect();
+                const toolbar = document.querySelector('.top-beam').getBoundingClientRect();
+                const bottomBar = document.querySelector('.bottom-actions').getBoundingClientRect();
+                const analysisPanel = $id('analysis-panel').getBoundingClientRect();
+                const margin = 48;
+                const bottom = Math.max(margin, mapRect.bottom - bottomBar.top + margin);
+                let top = Math.max(margin, toolbar.bottom - mapRect.top + margin);
+                if (window.innerWidth <= 768) {
+                    top = Math.max(top, Math.min(analysisPanel.bottom - mapRect.top + margin, mapRect.height - bottom - 80));
+                }
+                const right = window.innerWidth > 768
+                    ? Math.max(margin, mapRect.right - analysisPanel.left + margin)
+                    : margin;
+                this.map.flyToBounds(bounds, {
+                    paddingTopLeft:[margin, top],
+                    paddingBottomRight:[right, bottom],
+                    maxZoom:16, duration:1.25,
+                    animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                });
+            }
             state.payload = null; state.params = null;
             $id('analysis-export').disabled = true; $id('analysis-run').disabled = true;
             $id('buffer-next').hidden = true; $id('analysis-results').replaceChildren();
@@ -556,7 +576,7 @@ function installMonitoringDashboard(app) {
                 });
                 const s = payload.summary;
                 $id('analysis-status').textContent = `半径 ${radius} 米：${s.total_records} 条记录，${s.bird_count} 只，${s.species_count} 个物种；命中 ${s.matched_routes} 条样线。当前明细 ${payload.results.length} 条${payload.truncated ? '（已截断，可查看下一页）' : ''}。${payload.routes_truncated ? '样线图形仅显示前 100 条。' : ''}`;
-                $id('analysis-scope').textContent = `时间：${params.start || '不限'} 至 ${params.end || '不限'}；保护等级：${params.protection === 'all' ? '全部' : params.protection}。统计与 CSV 均覆盖全部符合条件的已审核记录；CSV 导出观测记录，不含样线几何。`;
+                $id('analysis-scope').textContent = `时间：${params.start || '不限'} 至 ${params.end || '不限'}；保护等级：${params.protection === 'all' ? '全部' : params.protection}。统计与 CSV 均覆盖全部符合条件的已审核记录；CSV 不包含坐标、描述及样线几何。`;
                 const list = $id('analysis-results');
                 payload.results.slice(0,50).forEach(item => {
                     const li = document.createElement('li'), button = document.createElement('button');

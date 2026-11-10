@@ -364,24 +364,26 @@ class _Echo:
 
 @endpoint
 def buffer_csv(request):
-    qs, lng, lat, radius = buffer_query(request)
+    qs, _, _, radius = buffer_query(request)
     # Export ALL matching records, never the visible point page.  Iterate in
     # chunks so a broad buffer does not allocate the full dataset in memory.
     def stream():
         writer = csv.writer(_Echo())
         yield '\ufeff'
         yield writer.writerow(['记录编号', '物种中文名', '物种拉丁名', '保护等级', '监测点位', '观测日期', '鸟类数量（只）',
-                               '经度', '纬度', '描述', '导出范围', '中心经度', '中心纬度', '半径（米）', '开始日期', '结束日期', '保护等级筛选'])
-        scope = ['缓冲范围内全部已审核且符合筛选的记录', lng, lat, radius,
+                               '导出范围', '半径（米）', '开始日期', '结束日期', '保护等级筛选'])
+        scope = ['缓冲范围内全部已审核且符合筛选的记录', radius,
                  request.GET.get('start') or request.GET.get('start_date', ''),
                  request.GET.get('end') or request.GET.get('end_date', ''),
                  request.GET.get('protection') or request.GET.get('protection_filter', 'all')]
         if scope[-1] == 'all':
             scope[-1] = '全部'
-        for row in qs.order_by('pk').values(*FIELDS).iterator(chunk_size=1000):
+        export_fields = ('id', 'species__name_cn', 'species__name_latin', 'species__protection_level',
+                         'zone__name', 'observation_time', 'count')
+        for row in qs.order_by('pk').values(*export_fields).iterator(chunk_size=1000):
             values = [row['id'], row['species__name_cn'], row['species__name_latin'],
                       get_protection_group(row['species__protection_level']), row['zone__name'],
-                      row['observation_time'], row['count'], row['lng'], row['lat'], row['description'], *scope]
+                      row['observation_time'], row['count'], *scope]
             yield writer.writerow([csv_cell(value) for value in values])
     response = StreamingHttpResponse(stream(), content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="monitoring-buffer-all-records.csv"'

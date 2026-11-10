@@ -1,12 +1,49 @@
 """Spatial contract tests; run on an isolated PostGIS test database."""
 import csv
 import io
+from unittest.mock import patch
 
 from django.contrib.gis.geos import LineString, MultiLineString, Point
-from django.test import TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from .models import MonitoringRoute, ObservationRecord, SpeciesInfo, WetlandZone
-from .monitoring import csv_cell
+from .monitoring import buffer_csv, csv_cell
+
+
+class BufferCsvPrivacyTests(SimpleTestCase):
+    def test_export_omits_coordinates_and_free_text(self):
+        row = {
+            'id': 1, 'species__name_cn': '白鹤', 'species__name_latin': 'Grus leucogeranus',
+            'species__protection_level': '国家一级', 'zone__name': '测试点',
+            'observation_time': '2024-01-01', 'count': 5,
+        }
+
+        class Query:
+            def order_by(self, field):
+                return self
+
+            def values(self, *fields):
+                assert 'lng' not in fields and 'lat' not in fields and 'description' not in fields
+                return self
+
+            def iterator(self, chunk_size):
+                return iter([row])
+
+        request = RequestFactory().get('/api/monitoring/buffer.csv', {
+            'lng': '114.123456', 'lat': '35.123456', 'radius': '5000',
+        })
+        with patch('app_monitor.monitoring.buffer_query', return_value=(Query(), 114.123456, 35.123456, 5000)):
+            response = buffer_csv(request)
+            content = b''.join(response.streaming_content).decode('utf-8-sig')
+        rows = list(csv.reader(io.StringIO(content)))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(len(rows[0]), len(rows[1]))
+        self.assertTrue(all('经度' not in name and '纬度' not in name for name in rows[0]))
+        self.assertNotIn('描述', rows[0])
+        self.assertNotIn('114.123456', content)
+        self.assertNotIn('35.123456', content)
+        self.assertEqual(rows[1][1], '白鹤')
+        self.assertEqual(rows[1][6], '5')
 
 
 class MonitoringTests(TestCase):
@@ -134,8 +171,10 @@ class MonitoringTests(TestCase):
         rows=list(csv.reader(io.StringIO(content)))
         self.assertEqual(len(rows),5004)
         self.assertEqual(rows[0][6],'鸟类数量（只）')
-        self.assertEqual(rows[-1][9], '\' =HYPERLINK("危险"),逗号\n换行')
-        self.assertEqual(rows[-1][10],'缓冲范围内全部已审核且符合筛选的记录')
+        self.assertEqual(rows[-1][7],'缓冲范围内全部已审核且符合筛选的记录')
+        self.assertFalse(any('经度' in name or '纬度' in name for name in rows[0]))
+        self.assertNotIn('描述', rows[0])
+        self.assertTrue(all(len(row) == len(rows[0]) for row in rows))
 
     def test_formula_prefixes(self):
         for value in ('=1+1','+cmd','-cmd','@SUM(A1)',' \t=1','\tvalue','\rvalue','\nvalue','\x00=cmd','\v=1'):

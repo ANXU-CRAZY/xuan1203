@@ -35,7 +35,7 @@ body.dashboard-expanded .dashboard-module-controls {
     max-height:var(--dashboard-single-height);
 }
 #detail-panel.dashboard-single:has(#dashboard-overview:not([hidden])) .dashboard-panes {flex-basis:auto}
-#detail-panel > .panel-head { flex:none; padding:13px 16px; cursor:move; }
+#detail-panel > .panel-head { flex:none; padding:13px 16px; border-bottom:0; cursor:move; }
 .dashboard-heading { display:inline-flex; align-items:center; gap:8px; }
 .dashboard-heading-copy { display:flex; flex-direction:column; gap:2px; }
 .dashboard-heading-copy small { font-size:10px; font-weight:400; color:#6f858b; letter-spacing:0; }
@@ -100,7 +100,7 @@ body.dashboard-expanded .dashboard-module-controls {
 #detail-panel .ai-msg { flex-shrink:0; max-width:92%; font-size:13px; line-height:1.8; }
 #detail-panel .ai-msg.assistant { background:#f4f8f6; }
 #detail-panel .ai-msg.user { background:#20909d; }
-#detail-panel .dashboard-composer { position:relative; flex:none; padding:10px 12px 12px; align-items:flex-end; background:#fff; }
+#detail-panel .dashboard-composer { position:relative; flex:none; padding:10px 12px 12px; border-top:0; align-items:flex-end; background:#fff; }
 .dashboard-input-wrap { position:relative; flex:1; min-width:0; }
 .dashboard-composer textarea { display:block; width:100%; min-width:0; resize:vertical; min-height:44px; max-height:140px; box-sizing:border-box; border:1px solid #cfe2dc; border-radius:14px; padding:11px 46px 10px 45px; font-family:inherit; font-size:13px; line-height:1.5; color:#25434b; background:#f8fbfa; outline:none; }
 .dashboard-composer textarea:focus { border-color:#20909d; box-shadow:0 0 0 2px #20909d1a; }
@@ -122,6 +122,18 @@ body.dashboard-expanded .dashboard-module-controls {
     .dashboard-module-controls:has(+ #detail-panel.dashboard-single #dashboard-overview:not([hidden])) {
         top:var(--dashboard-panel-top, auto);
         bottom:auto;
+    }
+    body:is(.analysis-open, .heat-selecting) .dashboard-module-controls,
+    body:is(.analysis-open, .heat-selecting) .dashboard-module-controls:has(+ #detail-panel.dashboard-single #dashboard-overview:not([hidden])) {
+        top:var(--monitor-sidebar-top, 180px);
+        right:370px;
+        bottom:auto;
+    }
+}
+@media (min-width:769px) and (max-width:1024px) {
+    body:is(.analysis-open, .heat-selecting) .dashboard-module-controls,
+    body:is(.analysis-open, .heat-selecting) .dashboard-module-controls:has(+ #detail-panel.dashboard-single #dashboard-overview:not([hidden])) {
+        right:334px;
     }
 }
 @media (max-width:768px) {
