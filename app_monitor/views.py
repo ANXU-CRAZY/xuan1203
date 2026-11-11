@@ -934,6 +934,18 @@ def _get_deepseek_model(local_env=None):
 
 
 def _call_deepseek(message, data_context):
+    messages = [
+        {'role': 'system', 'content': AI_SYSTEM_PROMPT},
+        {'role': 'user', 'content': (
+            f"用户问题：{message}\n\n"
+            f"平台真实数据摘要：\n{json.dumps(data_context, ensure_ascii=False, indent=2)}\n\n"
+            "请基于以上数据回答，避免编造。回答控制在 400 字以内。"
+        )},
+    ]
+    return _request_deepseek(messages, max_tokens=900)
+
+
+def _request_deepseek(messages, *, max_tokens, timeout=20, json_mode=False):
     local_env = _load_deepseek_local_env()
 
     api_key = (
@@ -956,20 +968,14 @@ def _call_deepseek(message, data_context):
 
     payload = {
         'model': model,
-        'messages': [
-            {'role': 'system', 'content': AI_SYSTEM_PROMPT},
-            {
-                'role': 'user',
-                'content': (
-                    f"用户问题：{message}\n\n"
-                    f"平台真实数据摘要：\n{json.dumps(data_context, ensure_ascii=False, indent=2)}\n\n"
-                    "请基于以上数据回答，避免编造。回答控制在 400 字以内。"
-                )
-            },
-        ],
+        'messages': messages,
         'temperature': 0.3,
-        'max_tokens': 900,
+        'max_tokens': max_tokens,
     }
+    if json_mode:
+        payload['response_format'] = {'type': 'json_object'}
+        if model.startswith('deepseek-v4') or model == 'deepseek-flash':
+            payload['thinking'] = {'type': 'disabled'}
     body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
     req = urlrequest.Request(
         endpoint,
@@ -981,7 +987,7 @@ def _call_deepseek(message, data_context):
         method='POST',
     )
     try:
-        with urlrequest.urlopen(req, timeout=20) as response:
+        with urlrequest.urlopen(req, timeout=timeout) as response:
             result = json.loads(response.read().decode('utf-8'))
     except HTTPError as exc:
         return None, f'DeepSeek HTTP {exc.code}'
@@ -989,7 +995,8 @@ def _call_deepseek(message, data_context):
         return None, f'DeepSeek 调用失败：{exc}'
 
     try:
-        return result['choices'][0]['message']['content'].strip(), None
+        content = result['choices'][0]['message']['content']
+        return (content.strip(), None) if isinstance(content, str) else (None, 'DeepSeek 返回内容为空')
     except (KeyError, IndexError, TypeError):
         return None, 'DeepSeek 返回格式异常'
 

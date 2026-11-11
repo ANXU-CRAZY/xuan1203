@@ -6,7 +6,7 @@ from django.views.static import serve
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
-from app_monitor import monitoring
+from app_monitor import monitoring, monitoring_report
 from app_monitor import games
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
@@ -66,6 +66,7 @@ urlpatterns = [
     # 专为前端准备的登录接口
     path('api/login/', obtain_auth_token, name='api_token_auth'),
     path('api/ai/chat/', ai_chat, name='ai_chat'),
+    path('api/ai/monitoring-report/', monitoring_report.download, name='ai_monitoring_report'),
 
     # 水鸟识别 API（由 bird_recognition 应用提供）
     path('bird/', include('bird_recognition.urls')),

@@ -1014,6 +1014,8 @@
 {% include "app_monitor/site_theme.html" %}
 <link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261110-analysis-alignment">
 <script src="/static/app_monitor/dashboard-panel.js?v=20261109-overview-align" defer></script>
+<link rel="stylesheet" href="/static/app_monitor/monitoring-report.css?v=20261111-report3">
+<script src="/static/app_monitor/monitoring-report.js?v=20261111-report2" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
 <style>
     .top-beam .brand { gap:12px; }
@@ -1296,6 +1298,26 @@
         <div class="log-container" id="realtime-log-box"><div class="log-empty"><i class="fas fa-seedling"></i><span>正在同步观鸟记录</span></div></div>
     </section>
     <div class="dashboard-chat-card" id="dashboard-chat-card">
+    <details class="monitoring-report" id="monitoring-report">
+        <summary><i class="fas fa-file-word" aria-hidden="true"></i> 生成监测报告</summary>
+        <form id="monitoring-report-form" action="{% url 'ai_monitoring_report' %}" method="post" data-current-month="{% now 'Y-m' %}">
+            {% csrf_token %}
+            <div class="monitoring-report-period">
+                <label>年份 <input name="year" type="number" min="1900" max="{% now 'Y' %}" value="{% now 'Y' %}" required></label>
+                <label>月份 <select name="month" aria-label="报告月份">
+                    <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                    <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+                    <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                    <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+                </select></label>
+            </div>
+            <div class="monitoring-report-actions">
+                <button type="submit" value="annual"><i class="fas fa-calendar" aria-hidden="true"></i> 下载年度报告</button>
+                <button type="submit" value="monthly"><i class="fas fa-calendar-alt" aria-hidden="true"></i> 下载月度报告</button>
+            </div>
+            <p id="monitoring-report-status" role="status" aria-live="polite"></p>
+        </form>
+    </details>
     <div id="ai-agent" class="dashboard-chat">
     <section id="ai-agent-panel" class="ai-agent-panel" aria-label="智能巡护助手">
         <div id="ai-agent-messages" class="ai-agent-messages">
