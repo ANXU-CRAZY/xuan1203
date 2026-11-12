@@ -180,7 +180,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'score', 'avatar']
+        fields = ['id', 'username', 'email', 'score', 'avatar', 'is_staff', 'date_joined']
+        read_only_fields = ['is_staff', 'date_joined']
 
 
 # ==========================================

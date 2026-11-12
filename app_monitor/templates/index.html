@@ -1012,8 +1012,8 @@
 </style>
 <link rel="stylesheet" href="/static/app_monitor/monitoring.css?v=20261108-bufferheat1">
 {% include "app_monitor/site_theme.html" %}
-<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261110-analysis-alignment">
-<script src="/static/app_monitor/dashboard-panel.js?v=20261109-overview-align" defer></script>
+<link rel="stylesheet" href="/static/app_monitor/dashboard-panel.css?v=20261112-mobile">
+<script src="/static/app_monitor/dashboard-panel.js?v=20261112-mobile" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-report.css?v=20261111-report3">
 <script src="/static/app_monitor/monitoring-report.js?v=20261111-report2" defer></script>
 <link rel="stylesheet" href="/static/app_monitor/monitoring-towers.css?v=20261104-logo2">
@@ -1115,7 +1115,17 @@
         .top-beam .brand .brand-title { font-size:16px; }
         .top-beam .brand-copy small { font-size:10px; }
         body[data-ark-page="monitor"] .top-beam .nav-btn { height:30px; padding:0 9px !important; font-size:11px; }
-        body[data-ark-page="monitor"] .top-beam #navArea { width:100%; margin:0; order:2; }
+        body[data-ark-page="monitor"] .top-beam { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px 8px; }
+        body[data-ark-page="monitor"] .top-beam #navArea { width:auto; margin:0; order:0; flex:none; overflow:visible; }
+        body[data-ark-page="monitor"] .top-beam .brand {gap:8px; min-width:0; flex-shrink:1}
+        body[data-ark-page="monitor"] .top-beam .brand-title {font-size:clamp(12px,3.5vw,16px); white-space:nowrap}
+        body[data-ark-page="monitor"] .top-beam .brand-tagline {display:none}
+        body[data-ark-page="monitor"] .top-beam .brand-copy small {font-size:8px; letter-spacing:0; white-space:nowrap}
+        body[data-ark-page="monitor"] .top-beam .brand-logo-link {width:30px; height:30px; flex:none}
+        body[data-ark-page="monitor"] .top-beam .brand-logo {width:30px; height:30px}
+        body[data-ark-page="monitor"] #navArea .nav-score {display:none}
+        body[data-ark-page="monitor"] #navArea .apps-toggle, body[data-ark-page="monitor"] #navArea .account-avatar {width:30px; height:30px}
+        body[data-ark-page="monitor"] #filter-bar {grid-column:1 / -1; min-width:0;}
         body[data-ark-page="monitor"] #filter-bar { width:100%; order:3; }
         .bottom-stats-bar.bottom-actions { grid-template-columns:repeat(2,minmax(0,1fr)) 56px repeat(2,minmax(0,1fr)); gap:0; }
         .bottom-actions .huiyan-entry-group { width:56px; height:56px; margin-top:-20px; margin-bottom:-20px; }
@@ -1137,12 +1147,12 @@
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
         <button type="button" class="apps-toggle" id="apps-toggle" aria-label="打开应用菜单" aria-expanded="false" aria-controls="apps-menu"><span class="apps-dots" aria-hidden="true"></span></button>
-        <div id="navGuest" class="nav-auth" style="display:flex; align-items:center; gap:6px;">
-            <a href="/login/" class="account-avatar" aria-label="个人登录" title="个人登录"><i class="fas fa-user" aria-hidden="true"></i></a>
+        <div id="navGuest" class="nav-auth" style="display:{% if request.user.is_authenticated %}none{% else %}flex{% endif %}; align-items:center; gap:6px;">
+            <a href="{% url 'account_entry' %}" class="account-avatar" aria-label="我的" title="我的"><i class="fas fa-user" aria-hidden="true"></i></a>
         </div>
-        <div id="navUser" class="nav-auth" style="display:none; align-items:center; gap:6px;">
+        <div id="navUser" class="nav-auth" style="display:{% if request.user.is_authenticated %}flex{% else %}none{% endif %}; align-items:center; gap:6px;">
             <span class="nav-score" id="navScore"><i class="fas fa-coins" aria-hidden="true"></i> <span>0</span> 分</span>
-            <a href="/profile/" id="account-profile" class="account-avatar" aria-label="个人中心" title="个人中心"><i class="fas fa-user" aria-hidden="true"></i></a>
+            <a href="{% url 'account_entry' %}" id="account-profile" class="account-avatar" aria-label="个人中心" title="个人中心"><i class="fas fa-user" aria-hidden="true"></i></a>
         </div>
     </nav>
 </div>
@@ -1577,39 +1587,42 @@
         // === 登录状态初始化 ===
         initAuth: function() {
             const token = localStorage.getItem('yb_token');
-            const userStr = localStorage.getItem('yb_user');
-            if (token && userStr) {
-                try {
-                    const user = JSON.parse(userStr);
+            const hasSession = {% if request.user.is_authenticated %}true{% else %}false{% endif %};
+            const sessionUserId = {% if request.user.is_authenticated %}{{ request.user.pk }}{% else %}null{% endif %};
+            if (!token && !hasSession) return;
+            $.ajax({
+                url: this.api + '/profiles/me/',
+                headers: token ? {Authorization: 'Token ' + token} : {},
+                success: (user) => {
+                    if (token && hasSession && user.id !== sessionUserId) {
+                        localStorage.removeItem('yb_token');
+                        this.initAuth();
+                        return;
+                    }
+                    localStorage.setItem('yb_user', JSON.stringify(user));
                     $('#navGuest').hide();
                     $('#navUser').css('display', 'flex');
-                    if (user.username) {
-                        const initial = user.username[0].toUpperCase();
-                        const avatar = document.getElementById('account-profile');
-                        avatar.textContent = initial;
-                        if (user.avatar) { const image = document.createElement('img'); image.src = user.avatar; image.alt = ''; avatar.replaceChildren(image); }
+                    $('#navScore span').text(user.score || 0);
+                    const avatar = document.getElementById('account-profile');
+                    avatar.title = user.is_staff ? '管理后台' : '个人中心';
+                    avatar.setAttribute('aria-label', avatar.title);
+                    avatar.textContent = (user.username || 'U')[0].toUpperCase();
+                    if (user.avatar) {
+                        const image = document.createElement('img');
+                        image.src = user.avatar;
+                        image.alt = '';
+                        avatar.replaceChildren(image);
                     }
-                    if (user.score !== undefined) {
-                        $('#navScore span').text(user.score);
-                    }
-                    // 拉取最新积分
-                    $.ajax({
-                        url: this.api + '/profiles/me/',
-                        method: 'GET',
-                        headers: { 'Authorization': 'Token ' + token },
-                        success: function(data) {
-                            localStorage.setItem('yb_user', JSON.stringify(data));
-                            $('#navScore span').text(data.score || 0);
-                        },
-                        error: function() {
-                            localStorage.removeItem('yb_token');
-                            localStorage.removeItem('yb_user');
-                            $('#navUser').hide();
-                            $('#navGuest').css('display', 'flex');
-                        }
-                    });
-                } catch(e) {}
-            }
+                },
+                error: (response) => {
+                    if (response.status !== 401 && response.status !== 403) return;
+                    localStorage.removeItem('yb_token');
+                    localStorage.removeItem('yb_user');
+                    if (token && hasSession) { this.initAuth(); return; }
+                    $('#navUser').hide();
+                    $('#navGuest').css('display', 'flex');
+                },
+            });
         },
 
         // === 拖拽核心功能 ===
@@ -1673,7 +1686,7 @@
             const labelLayer = L.layerGroup([vecLabel]);
             let currentLabel = vecLabel;
 
-            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.25, layers: [vec, this.layers.region, this.layers.protectedExperimental, this.layers.protectedBuffer, this.layers.protectedCore, this.layers.record], zoomControl: false, attributionControl:false });
+            this.map = L.map('map', { center: [35.15, 113.85], zoom: 9.5, zoomSnap: 0.125, layers: [vec, this.layers.region, this.layers.protectedExperimental, this.layers.protectedBuffer, this.layers.protectedCore, this.layers.record], zoomControl: false, attributionControl:false });
             this.map.createPane('regionPane');
             this.map.getPane('regionPane').style.zIndex = 360;
             this.map.createPane('protectedAreaPane');
@@ -2001,7 +2014,7 @@
             // 桌面初始视野按参考图保留周边区域，避免只剩郑州边界后自动放得过大。
             const size = this.map.getSize();
             const scale = Math.min(size.x / 1536, size.y / 850);
-            const overviewZoom = 8.5 + Math.log2(scale);
+            const overviewZoom = 8.5 + Math.log2(scale * 1.1);
             this.map.setView([35.02, 114.05], overviewZoom, { animate: false });
             this.heatmap.autoDismissZoom = this.map.getZoom() + 0.5;
         },
@@ -3012,12 +3025,16 @@
             this.dashboardModules = [];
             this.updateDashboardModules();
             window.addEventListener('resize', () => {
+                this.updateDashboardModules();
                 if (!widget.classList.contains('ai-agent-closed')) this.positionAIPanel();
             });
         },
 
         updateDashboardModules: function() {
             const panel = document.getElementById('detail-panel');
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                this.dashboardModules = this.dashboardModules.slice(-1);
+            }
             const active = this.dashboardModules;
             const show = active.length > 0;
             const single = active.length === 1;
@@ -3044,7 +3061,7 @@
             if (open) {
                 if (!this.dashboardModules.includes(name)) {
                     // Opening a third module replaces the oldest open module.
-                    this.dashboardModules = [...this.dashboardModules, name].slice(-2);
+                    this.dashboardModules = [...this.dashboardModules, name].slice(window.matchMedia('(max-width: 768px)').matches ? -1 : -2);
                 }
             } else {
                 this.dashboardModules = this.dashboardModules.filter(module => module !== name);

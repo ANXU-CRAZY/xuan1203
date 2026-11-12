@@ -6,6 +6,7 @@ from django.views.static import serve
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from app_monitor import account
 from app_monitor import monitoring, monitoring_report
 from app_monitor import games
 from app_monitor.views import (
@@ -36,7 +37,8 @@ urlpatterns = [
     # 协作者补充的前端页面
     path('report/', lambda r: render(r, 'report.html'), name='report'),
     path('profile/', lambda r: render(r, 'profile.html'), name='profile'),
-    path('login/', lambda r: render(r, 'login.html'), name='login'),
+    path('login/', account.login_page, name='login'),
+    path('account/', account.entry, name='account_entry'),
     path('bird-guess/', lambda r: render(r, 'bird-guess.html'), name='bird_guess'),
     path('bird-runner/', lambda r: render(r, 'bird-runner.html'), name='bird_runner'),
     path('wetland-restorer/', lambda r: render(r, 'wetland-restorer.html'), name='wetland_restorer'),
@@ -65,6 +67,9 @@ urlpatterns = [
 
     # 专为前端准备的登录接口
     path('api/login/', obtain_auth_token, name='api_token_auth'),
+    path('api/account/login/', account.PlatformLoginView.as_view(), name='account_login'),
+    path('api/account/session/', account.restore_session, name='account_session'),
+    path('api/account/logout/', account.sign_out, name='account_logout'),
     path('api/ai/chat/', ai_chat, name='ai_chat'),
     path('api/ai/monitoring-report/', monitoring_report.download, name='ai_monitoring_report'),
 

@@ -371,7 +371,7 @@
             changePassword: "{% url 'admin:password_change' %}",
             logout: "{% url 'admin:logout' %}"
         }
-        var lanuageCode = '{% get_language %}';
+        var lanuageCode = 'zh-hans';
 
         function localeError(e) {
             console.warn("Please add the {% get_language %}.js language file to the '/simpleui-x/theme' directory.")
@@ -392,7 +392,7 @@
             src="{% static 'admin/simpleui-x/automatic/segment.js' %}?_={% get_version %}"></script>
     <script type="text/javascript" src="{% static 'admin/simpleui-x/locale/en-us.js' %}?_={% get_version %}"></script>
     <script type="text/javascript"
-            src="{% static 'admin/simpleui-x/locale/' %}{% get_language %}.js?_={% get_version %}"
+            src="{% static 'admin/simpleui-x/locale/' %}zh-hans.js?_={% get_version %}"
             onerror="localeError()"></script>
     <script type="text/javascript" src="{% static 'admin/simpleui-x/js/cookie.js' %}?_={% get_version %}"></script>
     <script type="text/javascript" src="{% static 'admin/simpleui-x/theme/theme.js' %}?_={% get_version %}"></script>

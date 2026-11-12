@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>进入我的空间</title></head>
+<body>
+    <p role="status" id="account-status">正在进入我的空间…</p>
+    <a href="{% url 'login' %}">返回登录</a>
+    <script>
+        (async () => {
+            const token = localStorage.getItem('yb_token');
+            if (!token) { location.replace('{% url "login" %}'); return; }
+            try {
+                const response = await fetch('{% url "account_session" %}', {
+                    method:'POST', headers:{Authorization:'Token ' + token},
+                });
+                if (response.status === 401) {
+                    localStorage.removeItem('yb_token');
+                    localStorage.removeItem('yb_user');
+                    location.replace('{% url "login" %}');
+                    return;
+                }
+                if (!response.ok) throw new Error();
+                const result = await response.json();
+                location.replace(result.next_url);
+            } catch {
+                document.getElementById('account-status').textContent = '暂时无法进入，请刷新重试。';
+            }
+        })();
+    </script>
+</body>
+</html>

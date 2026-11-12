@@ -609,6 +609,13 @@
         return localStorage.getItem(TOKEN_KEY);
     }
 
+    function authHeaders() {
+        const headers = {'X-CSRFToken': '{{ csrf_token }}'};
+        const token = getToken();
+        if (token) headers.Authorization = 'Token ' + token;
+        return headers;
+    }
+
     function getUser() {
         try {
             return JSON.parse(localStorage.getItem(USER_KEY) || '{}');
@@ -616,7 +623,7 @@
     }
 
     function isLoggedIn() {
-        return !!getToken();
+        return !!getToken() || {% if request.user.is_authenticated %}true{% else %}false{% endif %};
     }
 
     function checkAuth() {
@@ -633,16 +640,15 @@
         window._toastTimer = setTimeout(() => t.removeClass('show'), 3000);
     }
 
-    function loadProfile() {
-        if (!checkAuth()) return;
-        const token = getToken();
-        const user = getUser();
-
+    function renderProfile(user) {
         // 显示用户名
         $('#dispUsername').text(user.username || '--');
         $('#navUsername').text(user.username || '--');
         $('#editUsername').val(user.username || '');
         $('#editEmail').val(user.email || '');
+
+        $('#dispEmail').text(user.email || '尚未填写邮箱');
+        $('#dispJoined').text(user.date_joined ? '注册于 ' + new Date(user.date_joined).toLocaleDateString('zh-CN') : '');
 
         // 显示头像
         const avatarUrl = user.avatar;
@@ -655,13 +661,22 @@
             $('#navAvatar').html(`<div style="width:100%;height:100%;background:linear-gradient(135deg,#00ADB5,#008c93);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:bold">${initial}</div>`);
         }
 
+    }
+
+    function loadProfile() {
+        if (!checkAuth()) return;
+        const user = getUser();
+
+        renderProfile(user);
+
         // 从 API 拉取最新数据
         $.ajax({
             url: API + '/profiles/me/',
             method: 'GET',
-            headers: { 'Authorization': 'Token ' + token },
+            headers: authHeaders(),
             success: function(data) {
                 $('#statScore').text(data.score || 0);
+                renderProfile(data);
                 localStorage.setItem(USER_KEY, JSON.stringify(data));
                 loadRecords();
             },
@@ -672,12 +687,11 @@
     }
 
     function loadRecords() {
-        const token = getToken();
         // 只拉自己的记录（用 uploader 过滤）
         $.ajax({
             url: API + '/observations/',
             method: 'GET',
-            headers: { 'Authorization': 'Token ' + token },
+            headers: authHeaders(),
             success: function(res) {
                 // 过滤只显示当前用户的记录
                 const userId = getUser().id;
@@ -747,13 +761,12 @@
     }
 
     function saveProfile() {
-        const token = getToken();
         const email = $('#editEmail').val().trim();
 
         $.ajax({
             url: API + '/profiles/update_profile/',
             method: 'PUT',
-            headers: { 'Authorization': 'Token ' + token, 'Content-Type': 'application/json' },
+            headers: {...authHeaders(), 'Content-Type':'application/json'},
             data: JSON.stringify({ email }),
             success: function() {
                 toast('资料更新成功', 'success');
@@ -771,11 +784,10 @@
         const formData = new FormData();
         formData.append('avatar', file);
 
-        const token = getToken();
         $.ajax({
             url: API + '/profiles/me/avatar/',
             method: 'POST',
-            headers: { 'Authorization': 'Token ' + token },
+            headers: authHeaders(),
             data: formData,
             processData: false,
             contentType: false,
@@ -791,11 +803,10 @@
 
     function deleteRecord(id) {
         if (!confirm('确定要删除这条观测记录吗？')) return;
-        const token = getToken();
         $.ajax({
             url: API + '/observations/' + id + '/',
             method: 'DELETE',
-            headers: { 'Authorization': 'Token ' + token },
+            headers: authHeaders(),
             success: function() {
                 toast('删除成功', 'success');
                 loadRecords();
@@ -813,9 +824,16 @@
 
     function logout() {
         if (!confirm('确定要退出登录吗？')) return;
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-        window.location.href = '/login/';
+        $.ajax({
+            url: API + '/account/logout/', method:'POST',
+            headers: authHeaders(),
+            success: function() {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(USER_KEY);
+                window.location.href = '/login/';
+            },
+            error: function() { toast('退出失败，请重试', 'error'); },
+        });
     }
 
     // 页面加载时初始化

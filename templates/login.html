@@ -234,6 +234,12 @@
                 <!-- 消息提示 -->
                 <div id="msgBox" class="message"></div>
 
+                <!-- 切换标签 -->
+                <div class="tab-switch">
+                    <button class="tab-btn active" onclick="switchTab('login')">登录</button>
+                    <button class="tab-btn" onclick="switchTab('register')">注册</button>
+                </div>
+
                 <!-- 登录表单 -->
                 <div id="loginSection" class="form-section active">
                     <div class="form-group">
@@ -268,16 +274,12 @@
                     <button class="btn-submit" onclick="doRegister()">注册</button>
                 </div>
 
-                <!-- 切换标签 -->
-                <div class="tab-switch">
-                    <button class="tab-btn active" onclick="switchTab('login')">登录</button>
-                    <button class="tab-btn" onclick="switchTab('register')">注册</button>
-                </div>
-
+                <a class="admin-login-entry" href="{% url 'admin:index' %}">
+                    <strong>管理人员登录</strong><span>进入监测管理后台 →</span>
+                </a>
                 <div class="back-link">
                     <a href="/">&larr; 返回首页</a>
-                    <span class="link-separator">|</span>
-                    <a href="/admin/">管理后台登录</a>
+
                 </div>
             </div>
         </div>
@@ -317,29 +319,16 @@
             }
 
             $.ajax({
-                url: API + '/login/',
+                url: '{% url "account_login" %}',
                 method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
                 contentType: 'application/json',
                 data: JSON.stringify({ username, password }),
                 success: function(res) {
                     const token = res.token;
                     localStorage.setItem(TOKEN_KEY, token);
-                    // 获取用户信息
-                    $.ajax({
-                        url: API + '/profiles/me/',
-                        method: 'GET',
-                        headers: { 'Authorization': 'Token ' + token },
-                        success: function(user) {
-                            localStorage.setItem(USER_KEY, JSON.stringify(user));
-                            showMsg('登录成功！正在跳转...', 'success');
-                            setTimeout(() => window.location.href = '/profile/', 1000);
-                        },
-                        error: function() {
-                            // token 保存成功就算登录成功
-                            showMsg('登录成功！正在跳转...', 'success');
-                            setTimeout(() => window.location.href = '/profile/', 1000);
-                        }
-                    });
+                    localStorage.removeItem(USER_KEY);
+                    window.location.href = res.next_url || '{% url "account_entry" %}';
                 },
                 error: function(xhr) {
                     const err = xhr.responseJSON || {};
@@ -398,20 +387,7 @@
         // 页面加载时检查是否已登录
         $(function() {
             const token = localStorage.getItem(TOKEN_KEY);
-            if (token) {
-                $.ajax({
-                    url: API + '/profiles/me/',
-                    method: 'GET',
-                    headers: { 'Authorization': 'Token ' + token },
-                    success: function() {
-                        window.location.href = '/profile/';
-                    },
-                    error: function() {
-                        localStorage.removeItem(TOKEN_KEY);
-                        localStorage.removeItem(USER_KEY);
-                    }
-                });
-            }
+            if (token) window.location.replace('{% url "account_entry" %}');
         });
     </script>
 </body>
