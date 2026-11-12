@@ -193,13 +193,6 @@ SIMPLEUI_ICON = {
 CORS_ALLOW_ALL_ORIGINS = True
 SIMPLEUI_CONFIG = {
     'system_keep': True,  # 保留系统自动生成的所有菜单
-    'menus': [
-        {
-            'name': '水鸟识别',
-            'icon': 'fas fa-dove',  # 使用与“物种信息”相同的图标，风格统一
-            'url': '/bird-page/',   # 指向我们创建的水鸟识别页面
-        }
-    ]
 }
 
 REST_FRAMEWORK = {

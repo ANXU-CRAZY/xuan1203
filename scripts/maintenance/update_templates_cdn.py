@@ -17,7 +17,6 @@ TEMPLATE_FILES = [
     'app_monitor/templates/article-detail.html',
     'app_monitor/templates/image-gallery.html',
     'app_monitor/templates/species-detail.html',
-    'app_monitor/templates/app_monitor/bird_recognition.html',
 ]
 
 # CDN 替换规则

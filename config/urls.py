@@ -3,6 +3,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
+from django.views.generic import RedirectView
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
@@ -11,7 +12,7 @@ from app_monitor import monitoring, monitoring_report
 from app_monitor import games
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
-    index_view, UserProfileViewSet, bird_recognition_page,
+    index_view, UserProfileViewSet,
     ProductViewSet, SpeciesViewSet, RegisterViewSet,
     ArticleViewSet, SpeciesImageViewSet,
     ai_chat, map_observations,
@@ -76,8 +77,7 @@ urlpatterns = [
     # 水鸟识别 API（由 bird_recognition 应用提供）
     path('bird/', include('bird_recognition.urls')),
 
-    # 水鸟识别前端页面（集成在 app_monitor 中）
-    path('bird-page/', bird_recognition_page, name='bird_recognition'),
+    path('bird-page/', RedirectView.as_view(pattern_name='huiyan'), name='bird_recognition'),
 
     # 方舟慧眼（同源封装：不再启动独立 8765 服务）
     path('', include('config.huiyan_urls')),

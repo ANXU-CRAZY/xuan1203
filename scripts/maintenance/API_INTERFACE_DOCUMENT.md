@@ -42,7 +42,7 @@ http://8.130.88.229/bird/
 | 图片图库页 | `/image-gallery/` | 图片图库页面 |
 | 科普文章页 | `/articles/` | 鸟类科普文章列表 |
 | 文章详情页 | `/articles/{article_id}/` | 单篇科普文章详情 |
-| 水鸟识别页 | `/bird-page/` | 上传图片并调用识别模型 |
+| 慧眼识鸟 | `/huiyan/` | 上传图片并进行鸟类识别 |
 | 看图识鸟游戏 | `/bird-guess/` | 看图识鸟互动功能 |
 | 迁徙页面 | `/migration/` | 鸟类迁徙展示页面 |
 | 湿地修复互动 | `/wetland-restorer/` | 湿地修复互动页面 |

@@ -340,6 +340,24 @@
 </div>
 {% block base_script %}
     <script type="text/javascript">
+        // SimpleUI restores open tabs from session storage before mounting.
+        (() => {
+            const retiredPage = /^\/(?:platform\/)?bird-page\/?(?:[?#]|$)/;
+            try {
+                const saved = JSON.parse(sessionStorage.getItem('tabs') || 'null');
+                if (Array.isArray(saved)) {
+                    const tabs = saved.filter(tab => !retiredPage.test(tab?.url || ''));
+                    if (tabs.length !== saved.length) {
+                        sessionStorage.setItem('tabs', JSON.stringify(tabs));
+                    }
+                }
+            } catch {
+                // The menu can still render when browser storage is unavailable.
+            }
+            if (retiredPage.test(location.hash.slice(1))) {
+                history.replaceState(null, '', location.pathname + location.search);
+            }
+        })();
         {% if home %}
             var home = {
                 id: '0',
