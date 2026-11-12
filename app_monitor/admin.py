@@ -17,6 +17,7 @@ from datetime import datetime
 admin.site.site_header = '湿地监测管理后台'
 admin.site.site_title = '湿地监测系统'
 admin.site.index_title = '系统管理'
+admin.site.logout_template = 'admin/platform_logged_out.html'
 
 
 # ====================

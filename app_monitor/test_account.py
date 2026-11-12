@@ -34,6 +34,12 @@ class AccountRoutingTests(TestCase):
         self.assertEqual(set(response.json()), {'token'})
         self.assertNotIn('_auth_user_id', client.session)
 
+    def test_admin_logout_clears_the_browser_login_state(self):
+        self.client.force_login(self.manager)
+        response = self.client.post('/admin/logout/')
+        self.assertContains(response, "localStorage.removeItem('yb_token')")
+        self.assertNotIn('_auth_user_id', self.client.session)
+
     def test_existing_token_can_restore_session(self):
         for user, destination in ((self.member, '/profile/'), (self.manager, '/admin/')):
             token = Token.objects.create(user=user)

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>已退出管理后台</title></head>
+<body>
+    <p>已退出管理后台。<a href="{% url 'admin:login' %}">重新登录</a></p>
+    <script>
+        localStorage.removeItem('yb_token');
+        localStorage.removeItem('yb_user');
+        location.replace('{% url "admin:login" %}');
+    </script>
+</body>
+</html>
