@@ -6,8 +6,7 @@ from django.views.static import serve
 from django.views.generic import RedirectView
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
-from app_monitor import account
+from app_monitor import account, password_reset
 from app_monitor import monitoring, monitoring_report
 from app_monitor import games
 from app_monitor.views import (
@@ -67,7 +66,9 @@ urlpatterns = [
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口
-    path('api/login/', obtain_auth_token, name='api_token_auth'),
+    path('api/login/', account.PlatformTokenView.as_view(), name='api_token_auth'),
+    path('api/auth/password-reset/send-code/', password_reset.send_code, name='password_reset_send'),
+    path('api/auth/password-reset/confirm/', password_reset.confirm, name='password_reset_confirm'),
     path('api/account/login/', account.PlatformLoginView.as_view(), name='account_login'),
     path('api/account/session/', account.restore_session, name='account_session'),
     path('api/account/logout/', account.sign_out, name='account_logout'),

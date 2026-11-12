@@ -13,6 +13,33 @@ class AccountRoutingTests(TestCase):
         self.manager = User.objects.create_user('routing-manager', password='routing-password',
                                                 is_staff=True, is_superuser=True)
 
+    def test_anonymous_entry_offers_separate_login_destinations(self):
+        response = self.client.get('/account/')
+        self.assertContains(response, '普通用户登录')
+        self.assertContains(response, '管理员登录')
+        self.assertContains(response, 'href="/login/"')
+        self.assertContains(response, 'href="/admin/"')
+        response = self.client.get('/login/')
+        self.assertNotContains(response, 'adminLoginEntry')
+        self.assertNotContains(response, '管理人员登录')
+        self.assertContains(response, 'id="registerSection"')
+        self.assertContains(response, 'href="#password-reset"')
+
+    def test_home_login_choice_is_only_present_for_guests(self):
+        self.assertContains(self.client.get('/'), 'id="account-login-dialog"')
+        self.client.force_login(self.manager)
+        self.assertNotContains(self.client.get('/'), 'id="account-login-dialog"')
+
+    def test_admin_password_reset_entry_returns_to_admin_login(self):
+        response = self.client.get('/admin/login/')
+        self.assertContains(response, 'href="/login/?role=admin#password-reset"')
+        response = self.client.get('/login/?role=admin')
+        self.assertContains(response, '找回管理员密码')
+        self.assertContains(response, 'data-login-url="/admin/login/"')
+        self.assertContains(response, 'href="/admin/login/" class="reset-back"')
+        response = self.client.get('/login/?role=https://example.com')
+        self.assertContains(response, 'data-login-url="/login/"')
+
     def test_password_login_establishes_session_and_routes_by_role(self):
         for user, destination in ((self.member, '/profile/'), (self.manager, '/admin/')):
             client = Client(enforce_csrf_checks=True)

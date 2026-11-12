@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>进入我的空间</title></head>
-<body>
-    <p role="status" id="account-status">正在进入我的空间…</p>
-    <a href="{% url 'login' %}">返回登录</a>
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>选择登录方式 | 黄河生态方舟</title>
+    <link rel="stylesheet" href="/static/app_monitor/account-choice.css?v=20261112-1">
+</head>
+<body class="account-entry-page">
+    <main class="account-entry-card">
+        <div id="account-options">{% include 'account-choice.html' %}</div>
+        <p role="status" class="account-entry-status" id="account-status" hidden>正在进入我的空间…</p>
+        <a class="account-entry-back" href="/">← 返回首页</a>
+    </main>
     <script>
         (async () => {
-            const token = localStorage.getItem('yb_token');
-            if (!token) { location.replace('{% url "login" %}'); return; }
+            let token;
+            try { token = localStorage.getItem('yb_token'); } catch { return; }
+            if (!token) return;
+            const options = document.getElementById('account-options');
+            const status = document.getElementById('account-status');
+            options.hidden = true;
+            status.hidden = false;
             try {
                 const response = await fetch('{% url "account_session" %}', {
                     method:'POST', headers:{Authorization:'Token ' + token},
@@ -15,14 +27,15 @@
                 if (response.status === 401) {
                     localStorage.removeItem('yb_token');
                     localStorage.removeItem('yb_user');
-                    location.replace('{% url "login" %}');
+                    options.hidden = false;
+                    status.hidden = true;
                     return;
                 }
                 if (!response.ok) throw new Error();
                 const result = await response.json();
                 location.replace(result.next_url);
             } catch {
-                document.getElementById('account-status').textContent = '暂时无法进入，请刷新重试。';
+                status.textContent = '暂时无法进入，请刷新重试。';
             }
         })();
     </script>

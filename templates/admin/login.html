@@ -1,0 +1,27 @@
+{% extends "admin/login.html" %}
+
+{% block css %}
+    {{ block.super }}
+    <style>
+        /* Blend the logo's white canvas into the existing login background. */
+        .login-main .logo img {
+            filter: contrast(1.12) brightness(1.03);
+            mix-blend-mode: multiply;
+        }
+        .admin-password-reset {
+            margin-top: 16px;
+            text-align: right;
+            font-size: 14px;
+        }
+        .admin-password-reset a { color: #247f8b; text-decoration: none; }
+        .admin-password-reset a:hover { text-decoration: underline; }
+        .admin-password-reset a:focus-visible { outline: 2px solid #247f8b; outline-offset: 4px; }
+    </style>
+{% endblock %}
+
+{% block form %}
+    {{ block.super }}
+    <div class="admin-password-reset">
+        <a href="{% url 'login' %}?role=admin#password-reset">忘记密码？</a>
+    </div>
+{% endblock %}

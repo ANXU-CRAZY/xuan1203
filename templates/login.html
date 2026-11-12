@@ -207,6 +207,16 @@
             display: block;
         }
 
+        .login-body [hidden] {display:none !important}
+        .forgot-password {display:flex; justify-content:flex-end; margin:0 0 14px}
+        .forgot-password a, .reset-back {color:#175f68; font-size:14px}
+        .reset-heading {font-size:21px; margin:0 0 16px}
+        .reset-actions {display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px}
+        .reset-actions button {padding:9px 14px; border:1px solid #a5c5c0; border-radius:8px; color:#175f68; background:#edf6f3; cursor:pointer}
+        .reset-actions button:disabled {color:#52686c; cursor:default}
+        #resetCode {letter-spacing:.28em; font-variant-numeric:tabular-nums; font-size:18px}
+        .reset-back {display:inline-block; margin-top:16px}
+
         /* 移动端适配 */
         @media (max-width: 480px) {
             .login-container {
@@ -235,7 +245,7 @@
                 <div id="msgBox" class="message"></div>
 
                 <!-- 切换标签 -->
-                <div class="tab-switch">
+                <div class="tab-switch" id="loginTabs">
                     <button class="tab-btn active" onclick="switchTab('login')">登录</button>
                     <button class="tab-btn" onclick="switchTab('register')">注册</button>
                 </div>
@@ -250,6 +260,7 @@
                         <label>密码</label>
                         <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
                     </div>
+                    <div class="forgot-password"><a href="#password-reset">忘记密码？</a></div>
                     <button class="btn-submit" onclick="doLogin()">登录</button>
                 </div>
 
@@ -274,9 +285,36 @@
                     <button class="btn-submit" onclick="doRegister()">注册</button>
                 </div>
 
-                <a class="admin-login-entry" href="{% url 'admin:index' %}">
-                    <strong>管理人员登录</strong><span>进入监测管理后台 →</span>
-                </a>
+                <section id="password-reset" hidden aria-labelledby="resetHeading">
+                    <h2 id="resetHeading" class="reset-heading">{% if admin_password_reset %}找回管理员密码{% else %}找回密码{% endif %}</h2>
+                    <form id="resetForm" data-send-url="{% url 'password_reset_send' %}" data-confirm-url="{% url 'password_reset_confirm' %}" data-login-url="{{ reset_login_url }}">
+                        <div class="form-group">
+                            <label for="resetEmail">注册邮箱</label>
+                            <input type="email" id="resetEmail" autocomplete="email" maxlength="254" required>
+                        </div>
+                        <div class="reset-actions">
+                            <button type="button" id="resetSend">发送验证码</button>
+                        </div>
+                        <p id="resetStatus" class="message" role="status" aria-live="polite"></p>
+                        <fieldset id="resetFields" style="border:0;min-width:0" hidden disabled>
+                            <div class="form-group">
+                                <label for="resetCode">6 位数字验证码</label>
+                                <input type="text" id="resetCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="resetPassword">新密码</label>
+                                <input type="password" id="resetPassword" autocomplete="new-password" minlength="8" maxlength="4096" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="resetConfirmation">确认新密码</label>
+                                <input type="password" id="resetConfirmation" autocomplete="new-password" minlength="8" maxlength="4096" required>
+                            </div>
+                            <button type="submit" id="resetConfirm" class="btn-submit">修改密码</button>
+                        </fieldset>
+                    </form>
+                    <a href="{% if admin_password_reset %}{{ reset_login_url }}{% else %}#login{% endif %}" class="reset-back">{% if admin_password_reset %}返回管理员登录{% else %}返回登录{% endif %}</a>
+                </section>
+
                 <div class="back-link">
                     <a href="/">&larr; 返回首页</a>
 
@@ -286,6 +324,7 @@
     </div>
 
     <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
+    <script src="/static/app_monitor/password-reset.js?v=2" defer></script>
     <script>
         const API = '/api';
         const TOKEN_KEY = 'yb_token';
@@ -375,7 +414,7 @@
 
         // 回车键快捷提交
         document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && document.getElementById('password-reset').hidden) {
                 if ($('#loginSection').is(':visible')) {
                     doLogin();
                 } else {
@@ -387,7 +426,7 @@
         // 页面加载时检查是否已登录
         $(function() {
             const token = localStorage.getItem(TOKEN_KEY);
-            if (token) window.location.replace('{% url "account_entry" %}');
+            if (token && location.hash !== '#password-reset') window.location.replace('{% url "account_entry" %}');
         });
     </script>
 </body>

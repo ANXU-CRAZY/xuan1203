@@ -6,6 +6,32 @@ from django.dispatch import receiver
 from .protection import normalize_protection_level
 
 
+class PasswordResetRequest(models.Model):
+    class State(models.TextChoices):
+        QUEUED = 'queued'
+        SENT = 'sent'
+        CLOSED = 'closed'
+
+    email_key = models.CharField(max_length=64)
+    ip_key = models.CharField(max_length=64)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    state = models.CharField(max_length=6, choices=State.choices, default=State.QUEUED)
+    code_digest = models.CharField(max_length=64, blank=True)
+    expires_at = models.DateTimeField(null=True)
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=['email_key', 'created_at']),
+                   models.Index(fields=['ip_key', 'created_at']),
+                   models.Index(fields=['state', 'id'])]
+
+
+class PasswordResetService(models.Model):
+    worker_seen_at = models.DateTimeField(null=True)
+    unavailable_until = models.DateTimeField(null=True)
+
+
 # ====================
 # 1. 物种信息库
 # ====================

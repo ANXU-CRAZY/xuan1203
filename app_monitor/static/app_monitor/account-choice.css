@@ -1,0 +1,59 @@
+.account-choice-dialog {
+    box-sizing: border-box;
+    width: min(420px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 36px 28px 28px;
+    border: 1px solid #dce7e5;
+    border-radius: 22px;
+    background: #fff;
+    color: #183740;
+    box-shadow: 0 20px 70px #102e3833;
+    font-family: inherit;
+}
+.account-choice-dialog::backdrop { background: #102e3866; }
+.account-choice-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #60767b;
+    font-size: 25px;
+    cursor: pointer;
+}
+.account-choice-close:hover { background: #edf5f4; }
+.account-choice { text-align: center; }
+.account-choice-logo { display: block; width: 64px; height: 64px; object-fit: contain; margin: 0 auto 16px; }
+.account-choice h1 { margin: 0; font-size: 23px; line-height: 1.5; font-weight: 700; }
+.account-choice-intro { margin: 6px 0 26px; font-size: 14px; color: #657b80; }
+.account-choice-options { display: grid; gap: 12px; }
+.account-choice-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid #d7e5e3;
+    border-radius: 12px;
+    color: #224c53;
+    background: #f7faf9;
+    text-decoration: none;
+    text-align: left;
+}
+.account-choice-option:hover { border-color: #38929a; background: #edf6f4; }
+.account-choice-option svg { width: 27px; height: 27px; flex: 0 0 27px; color: #288692; }
+.account-choice-option strong { display: block; font-size: 16px; line-height: 1.5; }
+.account-choice-option small { display: block; margin-top: 4px; color: #657b80; font-size: 12px; }
+.account-choice-option:focus-visible, .account-choice-close:focus-visible { outline: 3px solid #288692; outline-offset: 3px; }
+.account-entry-page { box-sizing: border-box; margin: 0; min-height: 100dvh; padding: 24px 16px; display: grid; place-items: center; background: #f5f8f6; color: #183740; font-family: 'Microsoft YaHei', sans-serif; }
+.account-entry-card { box-sizing: border-box; width: 100%; max-width: 420px; padding: 32px 28px 24px; background: #fff; border: 1px solid #dce7e5; border-radius: 22px; box-shadow: 0 16px 48px #102e3814; }
+.account-entry-back { display: block; margin-top: 24px; text-align: center; color: #288692; font-size: 14px; text-decoration: none; }
+.account-entry-status { text-align: center; font-size: 14px; color: #657b80; }
+.account-entry-page [hidden] { display: none !important; }
+@media (max-width: 380px) {
+    .account-choice-dialog, .account-entry-card { padding-left: 20px; padding-right: 20px; }
+    .account-choice-option { padding: 16px 12px; gap: 12px; }
+}

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>黄河生态方舟 | 态势感知终端</title>
+    <link rel="stylesheet" href="/static/app_monitor/account-choice.css?v=20261112-1">
+    <script src="/static/app_monitor/account-choice.js?v=20261112-1" defer></script>
     <link rel="stylesheet" href="/static/app_monitor/recognition.css?v=20261108-3">
 
     <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
@@ -1136,6 +1138,13 @@
 </style>
 </head>
 <body data-ark-page="monitor">
+
+{% if not request.user.is_authenticated %}
+<dialog id="account-login-dialog" class="account-choice-dialog" aria-labelledby="account-choice-title">
+    <button type="button" class="account-choice-close" aria-label="关闭登录选择">×</button>
+    {% include 'account-choice.html' %}
+</dialog>
+{% endif %}
 
 <div class="top-beam">
     <div class="brand">

@@ -53,13 +53,6 @@ body[data-ark-page="content"] .profile-header {
 .profile-header .profile-stats {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; max-width:360px; margin-top:18px}
 .profile-header .stat-item {text-align:left}
 .profile-header .stat-label {color:#61767d; margin-top:4px}
-.login-body .admin-login-entry {
-    display:flex; flex-direction:column; gap:5px; margin-top:22px; padding:14px 16px;
-    border:1px solid #aacac7; border-radius:10px; background:#edf6f3;
-    color:#215b60; text-decoration:none;
-}
-.admin-login-entry strong {font-size:15px}
-.admin-login-entry span {font-size:12px}
 @media (max-width:480px) {
     body[data-ark-page="content"] .profile-header {padding:18px; gap:16px; align-items:flex-start; flex-wrap:wrap}
     .profile-header .profile-info {flex:1 1 170px}

@@ -5,6 +5,10 @@ from pathlib import Path
 # 构建路径
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+from .smtp_settings import load_smtp_settings
+
+globals().update(load_smtp_settings(BASE_DIR))
+
 # Independent SAM 2 workbench. Weights and its packaged dependencies stay
 # outside Django; CPU/tiny keeps this optional service off the bird model path.
 HUIYAN_LAND_SERVICE_URL = os.environ.get('HUIYAN_LAND_SERVICE_URL', 'http://127.0.0.1:8013')
@@ -171,7 +175,7 @@ LEAFLET_CONFIG = {
 # === 6. SimpleUI 后台美化配置 ===
 SIMPLEUI_HOME_INFO = False
 SIMPLEUI_ANALYSIS = False
-SIMPLEUI_LOGO = 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png'
+SIMPLEUI_LOGO = '/static/app_monitor/img/logo.png'
 SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 
 SIMPLEUI_INDEX = '/'
