@@ -8,6 +8,7 @@ from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from app_monitor import account, password_reset
 from app_monitor import monitoring, monitoring_report
+from app_monitor import tower_coverage
 from app_monitor import games
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
@@ -61,6 +62,7 @@ urlpatterns = [
     path('api/monitoring/years/', monitoring.years, name='monitoring_years'),
     path('api/monitoring/heatmap/', monitoring.heatmap, name='monitoring_heatmap'),
     path('api/monitoring/buffer/', monitoring.buffer_analysis, name='monitoring_buffer'),
+    path('api/monitoring/tower-coverage/', tower_coverage.uncovered, name='monitoring_tower_coverage'),
     path('api/monitoring/buffer.csv', monitoring.buffer_csv, name='monitoring_buffer_csv'),
     path('api/monitoring/records/<int:record_id>/', monitoring.detail, name='monitoring_detail'),
     path('api/', include(router.urls)),

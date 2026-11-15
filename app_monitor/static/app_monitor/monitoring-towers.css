@@ -1,4 +1,16 @@
 /* A compact click-to-open layer popover, matching the dashboard palette. */
+.tower-radar-footprint { --tower-scan-rgb:27,186,157; position:absolute; pointer-events:none; overflow:hidden; border-radius:50%; }
+.tower-radar-footprint.is-planned { --tower-scan-rgb:214,143,42; }
+.tower-radar-sweep { position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg,transparent 0deg 300deg,rgba(var(--tower-scan-rgb),.03) 305deg,rgba(var(--tower-scan-rgb),.18) 335deg,rgba(var(--tower-scan-rgb),.4) 359deg,rgba(var(--tower-scan-rgb),.1) 360deg);
+    animation:tower-radar-rotate 5s linear infinite; }
+.tower-radar-sweep::after { content:''; position:absolute; left:calc(50% - 1px); bottom:50%;
+    width:2px; height:50%; background:rgb(var(--tower-scan-rgb));
+    box-shadow:0 0 4px rgba(var(--tower-scan-rgb),.85),0 0 1px #073f36; }
+.tower-radar-crosshair { position:absolute; inset:0; opacity:.18;
+    background:linear-gradient(transparent calc(50% - .5px),#147e76 50%,transparent calc(50% + .5px)),linear-gradient(90deg,transparent calc(50% - .5px),#147e76 50%,transparent calc(50% + .5px)); }
+@keyframes tower-radar-rotate { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .tower-radar-sweep { animation:none; transform:rotate(40deg); } }
 body[data-ark-page="monitor"] .leaflet-control-layers {
     border-radius:13px !important; background:#fffffffa !important;
     box-shadow:0 4px 18px #173f4914 !important;
