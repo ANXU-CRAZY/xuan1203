@@ -10,7 +10,7 @@ import re
 DOMAINS = {'arklab-geoai.org.cn', 'www.arklab-geoai.org.cn'}
 PREFIX = '/platform'
 ROOTS = (
-    'api', 'static', 'media', 'huiyan', 'admin', 'login', 'profile', 'report',
+    'api', 'static', 'media', 'huiyan', 'admin', 'login', 'profile', 'report', 'workbench',
     'species', 'articles', 'gallery', 'image-gallery', 'bird', 'bird-page',
     'bird-guess', 'bird-runner', 'wetland-restorer', 'migration',
     'wetland-detective', 'floating-island', 'WMTX', 'wmtx', 'accounts',

@@ -1,0 +1,43 @@
+/* Provider presets in GeoLibre's native picker and the compatibility sidebar. */
+.ark-background {margin:8px 0 0;border-top:1px solid #e4ece7;color:#294940;font:12px "PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+.ark-background-heading {display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px}
+.ark-background button {cursor:pointer}
+.ark-background-eye {display:grid;place-items:center;flex:0 0 24px;width:24px;height:28px;padding:0;border:0;border-radius:4px;background:transparent;color:#6d8a7b}
+.ark-background-eye:hover {background:#edf5f0;color:#167b84}
+.ark-background-symbol {flex-shrink:0;color:#6d8a7b}
+.ark-background-title {display:flex;align-items:center;gap:8px;flex:1;min-width:0;min-height:36px;padding:0;border:0;background:transparent;text-align:left;color:inherit;font-family:inherit;font-size:12px;font-weight:500}
+.ark-background-title>span {flex:1}
+.ark-background-title small {font-size:10px;font-weight:400;color:#81988a}
+.ark-background-title>svg,.ark-background-title>i {color:#81988a}
+.ark-background[data-selected=true]>.ark-background-heading {background:#eef6f1;box-shadow:inset 3px 0 #20909d}
+.ark-background-options {padding:4px 16px 16px 20px}
+.ark-background fieldset {border:0;margin:0;padding:0;display:grid;gap:2px;min-width:0}
+.ark-background legend {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.ark-background fieldset label {display:flex;align-items:center;gap:9px;min-height:36px;padding:7px 8px;border-radius:5px;cursor:pointer}
+.ark-background fieldset label:has(input:checked) {background:#edf6f2;color:#176a6e}
+.ark-background fieldset label:hover {background:#f3f7f4}
+.ark-background input[type=radio],.ark-background input[type=checkbox] {appearance:auto;accent-color:#208b92;width:13px;height:13px;margin:0;flex-shrink:0}
+.ark-background fieldset label>span {display:flex;justify-content:space-between;align-items:center;gap:4px;flex:1;min-width:0}
+.ark-background small {font-size:9px;font-weight:400;color:#81988a;white-space:nowrap}
+.ark-background-labels {display:flex;align-items:center;gap:9px;margin:10px 0 0;padding:12px 8px 0;border-top:1px solid #e4ece7;cursor:pointer}
+.ark-background-labels:has(input:disabled) {color:#91a198;cursor:default}
+.ark-background-note {font-size:10px;line-height:1.7;color:#81988a;margin:7px 8px 12px}
+.ark-background-opacity {display:flex;align-items:center;gap:9px;padding:0 8px;font-size:10px;color:#738b7e}
+.ark-background-opacity input {appearance:auto;flex:1;min-width:0;width:60px;accent-color:#208b92;height:16px;margin:0}
+.ark-background-opacity output {min-width:30px;text-align:right;font-variant-numeric:tabular-nums}
+.ark-background button:focus-visible,.ark-background input:focus-visible {outline:2px solid #208b92;outline-offset:2px}
+:root.dark .ark-background {color:#e4eeea;border-color:#35504c}
+:root.dark .ark-background[data-selected=true]>.ark-background-heading,:root.dark .ark-background fieldset label:has(input:checked) {background:#224342;color:#e4eeea}
+:root.dark .ark-background fieldset label:hover,:root.dark .ark-background-eye:hover {background:#29413e}
+:root.dark .ark-background-labels {border-color:#35504c}
+.ark-basemap-presets {padding:0}
+.ark-basemap-presets h3 {margin:0 0 8px;font-size:12px;font-weight:500;color:hsl(var(--muted-foreground))}
+.ark-basemap-preset-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ark-basemap-preset-grid button {min-height:40px;padding:6px 10px;border:1px solid hsl(var(--input));border-radius:6px;background:hsl(var(--background));color:hsl(var(--foreground));font-size:14px;font-weight:500;line-height:1.4;cursor:pointer}
+.ark-basemap-preset-grid button:hover {background:hsl(var(--accent))}
+.ark-basemap-preset-grid button[aria-pressed=true] {background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary))}
+.ark-preset-labels {display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:hsl(var(--foreground))}
+.ark-preset-labels input {appearance:auto;width:13px;height:13px;accent-color:#208b92;margin:0}
+.ark-preset-labels small {margin-left:auto;color:hsl(var(--muted-foreground));font-size:10px}
+.ark-preset-labels:has(input:disabled) {color:hsl(var(--muted-foreground))}
+@media (max-width:480px) {.ark-basemap-preset-grid {grid-template-columns:repeat(2,minmax(0,1fr))}.ark-preset-labels {flex-wrap:wrap}.ark-preset-labels small {margin-left:21px;width:100%}}

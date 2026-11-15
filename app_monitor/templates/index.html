@@ -1168,6 +1168,7 @@
 <section id="apps-menu" class="apps-menu" aria-label="应用菜单" hidden>
     <h2 class="apps-menu-title">常用应用</h2>
     <div class="apps-menu-grid">
+        <a href="{% url 'workbench' %}"><i class="fas fa-layer-group" aria-hidden="true"></i><span>ARK GeoStudio</span></a>
         <a href="/huiyan/choose/" data-recognition-choice><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
         <a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer"><i class="fas fa-flask" aria-hidden="true"></i><span>方舟实验室</span></a>
         <a href="/admin/"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>
@@ -1262,8 +1263,7 @@
     </button>
     <button type="button" id="dashboard-chat-toggle" class="dashboard-widget" aria-controls="dashboard-chat-card" aria-pressed="false" onclick="app.toggleDashboardModule('chat')">
         <span class="dashboard-widget-symbol dashboard-avatar" aria-hidden="true">
-            <span class="ai-agent-person"><span class="ai-agent-head"></span><span class="ai-agent-body"></span></span>
-            <span class="ai-agent-status"></span>
+            {% include 'app_monitor/xiaozhou_avatar.html' %}
         </span>
         <span class="dashboard-widget-label">小舟智能体</span>
     </button>
@@ -1272,8 +1272,7 @@
     <div class="panel-head" id="drag-right">
         <span class="dashboard-heading">
             <button type="button" id="ai-agent-fab" class="dashboard-avatar" title="打开小舟对话" aria-label="打开小舟对话">
-                <span class="ai-agent-person" aria-hidden="true"><span class="ai-agent-head"></span><span class="ai-agent-body"></span></span>
-                <span class="ai-agent-status" aria-hidden="true"></span>
+                {% include 'app_monitor/xiaozhou_avatar.html' %}
             </button>
             <span class="dashboard-heading-copy"><span id="dashboard-title">监测分析 · 小舟智能体</span><small>读取当前图层、日期和观测统计</small></span>
         </span>

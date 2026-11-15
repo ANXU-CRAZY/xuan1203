@@ -1,0 +1,94 @@
+.wb-agent-toggle {
+    position: absolute; right: var(--wb-agent-edge, 16px); bottom: 60px; z-index: 6;
+    display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px;
+    border: 1px solid #d3e4df; border-radius: 24px; background: #fff; color: #224e52;
+    box-shadow: 0 3px 12px #183c341a; font-family: inherit; font-size: 13px; font-weight: 600;
+}
+.wb-agent-toggle, .wb-agent-heading { cursor: grab; touch-action: none; user-select: none }
+.wb-agent-toggle[aria-expanded=true], .wb-agent-toggle:hover { background: #edf6f3; border-color: #a8cfc5 }
+.wb-print-layout-open :is(.wb-agent, .wb-agent-toggle, .wb-map-credit) { visibility: hidden }
+.wb-agent-toggle:active, .wb-agent-heading:active { cursor: grabbing }
+.wb-agent-dragging::after { content: ""; position: absolute; inset: 0; z-index: 5; cursor: grabbing }
+.wb-agent-avatar {
+    position: relative; display: grid; place-items: center; width: 36px; height: 36px; flex: none;
+    border-radius: 50%; background: #eef9f6; border: 1px solid #d5e8e1; pointer-events: none;
+}
+.wb-agent-avatar .ai-agent-person { position: absolute; width: 42px; height: 46px; transform: scale(.68) }
+.wb-agent-avatar .ai-agent-head {
+    position: absolute; left: 10px; top: 3px; width: 22px; height: 22px; border-radius: 50%;
+    background: #00adb5; box-shadow: inset 0 -4px #00000014;
+}
+.wb-agent-avatar .ai-agent-head::before, .wb-agent-avatar .ai-agent-head::after {
+    content: ""; position: absolute; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #fff;
+}
+.wb-agent-avatar .ai-agent-head::before { left: 6px }
+.wb-agent-avatar .ai-agent-head::after { right: 6px }
+.wb-agent-avatar .ai-agent-body {
+    position: absolute; left: 5px; bottom: 2px; width: 32px; height: 24px; border-radius: 16px 16px 12px 12px;
+    background: linear-gradient(135deg, #174b55, #2e7d73);
+}
+.wb-agent-avatar .ai-agent-body::after {
+    content: ""; position: absolute; left: 9px; top: 7px; width: 14px; height: 8px;
+    border: 2px solid #ffffffe6; border-bottom: 0; border-radius: 12px 12px 0 0; box-sizing: content-box;
+}
+.wb-agent-avatar .ai-agent-status {
+    position: absolute; right: 0; top: 0; width: 9px; height: 9px; border: 2px solid #fff; border-radius: 50%; background: #55d17b;
+}
+.wb-agent {
+    position: absolute; z-index: 7; right: var(--wb-agent-edge, 16px); bottom: 116px;
+    width: 328px; max-width: calc(100% - 16px); max-height: min(432px, calc(100% - 16px));
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid #d9e6e0; border-radius: 12px; background: #fff; box-shadow: 0 6px 24px #20312e24;
+    font-size: 13px;
+}
+.wb-agent-heading {
+    min-height: 52px; flex: none; display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; border-bottom: 1px solid #e7eeea; background: #f7fbf9;
+}
+.wb-agent-heading .wb-agent-avatar { width: 32px; height: 32px }
+.wb-agent-heading .ai-agent-person { transform: scale(.58) }
+.wb-agent h2 { font-size: 15px; margin: 0; font-weight: 600; flex: 1 }
+.wb-agent-grip {
+    width: 15px; height: 14px; background-image: radial-gradient(circle, #6f8c85 1px, transparent 1.25px);
+    background-size: 5px 5px; margin-right: 4px;
+}
+.wb-agent-content { overflow: auto; overscroll-behavior: contain; padding: 12px }
+.wb-agent form { display: grid; gap: 8px }
+.wb-agent form label { color: #3c5b5c; font-size: 12px }
+.wb-agent textarea {
+    font: inherit; width: 100%; min-height: 68px; max-height: 136px; resize: vertical; padding: 8px 10px;
+    color: var(--ark-ink); background: #f8fbfa; border: 1px solid #cfdfd9; border-radius: 7px; line-height: 1.5;
+}
+.wb-agent-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end }
+#wb-agent-example {
+    margin-right: auto; padding: 4px 0; border: 0; background: transparent; color: #176a6e; font: inherit; font-size: 12px;
+}
+#wb-agent-example:hover { text-decoration: underline }
+#wb-agent-status {
+    margin: 12px 0 0; padding: 8px; border-radius: 6px; background: #eff6f3;
+    font-size: 12px; line-height: 1.45; color: #335b55; overflow-wrap: anywhere;
+}
+#wb-agent-status:empty, .wb-agent-steps:empty { display: none }
+.wb-agent-steps { list-style: none; margin: 4px 0 0; padding: 0; color: #254948; font-size: 12px }
+.wb-agent-steps li {
+    position: relative; margin: 0; padding: 8px 0 8px 16px; border-bottom: 1px solid #edf2ef; overflow-wrap: anywhere;
+}
+.wb-agent-steps li:last-child { border-bottom: 0 }
+.wb-agent-steps li::before {
+    content: ""; position: absolute; left: 1px; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: #bd9b58;
+}
+.wb-agent-steps [data-state=done]::before { background: #418577 }
+.wb-agent-steps [data-state=error]::before { background: #ae5548 }
+.wb-agent-steps small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.5; color: #55706b }
+.wb-agent-steps [data-state=error] small { color: #a24235 }
+.wb-agent-toggle:focus-visible, .wb-agent-heading:focus-visible, .wb-agent textarea:focus-visible {
+    outline: 2px solid #208b92; outline-offset: -2px;
+}
+@media (max-width: 640px) {
+    .wb-agent-toggle { right: 12px; bottom: 40px }
+    .wb-agent { right: 12px; bottom: 92px; max-height: min(360px, calc(100% - 16px)) }
+}
+.wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 52px }
+@media (max-width: 640px) {
+    .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 12px }
+}

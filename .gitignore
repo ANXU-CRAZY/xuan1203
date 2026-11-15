@@ -41,6 +41,7 @@ bird_recognition/yolo_model/
 .env.*
 !.env.example
 var/land-segmentation/
+var/geolibre/
 
 # IDE and OS files
 .idea/

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "branding": {"appName": "ARK GeoStudio", "welcome": false},
+  "capabilities": ["project:edit", "data:add", "export:data", "processing:run", "processing:sidecar", "assistant:use"],
+  "interface": {
+    "enabled": true,
+    "level": "advanced",
+    "lock": true,
+    "hiddenMenus": ["ai"],
+    "hiddenMenuItems": ["project.share", "project.collaborate", "project.gallery"],
+    "hiddenDataSources": ["geolens", "s3", "postgis", "mssql"],
+    "hiddenPlugins": ["maplibre-gl-geoagent", "maplibre-gl-basemap-control"]
+  },
+  "plugins": {"sideload": false, "blocked": ["maplibre-gl-geoagent", "maplibre-gl-basemap-control"]},
+  "sharing": {"embedOrigins": []},
+  "ai": {"enabled": true, "model": "deepseek-chat"}
+}

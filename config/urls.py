@@ -10,6 +10,7 @@ from app_monitor import account, password_reset
 from app_monitor import monitoring, monitoring_report
 from app_monitor import tower_coverage
 from app_monitor import games
+from app_monitor import workbench, workbench_agent, workbench_sidecar, workbench_processing
 from app_monitor.views import (
     ObservationViewSet, ZoneViewSet, TransectViewSet,
     index_view, UserProfileViewSet,
@@ -40,6 +41,15 @@ urlpatterns = [
     path('profile/', lambda r: render(r, 'profile.html'), name='profile'),
     path('login/', account.login_page, name='login'),
     path('account/', account.entry, name='account_entry'),
+    path('workbench/', workbench.page, name='workbench'),
+    path('workbench/agent/plan/', workbench_agent.plan, name='workbench_agent_plan'),
+    path('workbench/agent/native/v1/chat/completions', workbench_agent.native_chat, name='workbench_agent_native'),
+    path('ai/v1/chat/completions', workbench_agent.native_chat, name='workbench_agent_native_policy'),
+    path('sidecar/<path:path>', workbench_sidecar.proxy, name='workbench_sidecar'),
+    path('workbench/analysis/whitebox/', workbench_processing.whitebox_start, name='workbench_whitebox_start'),
+    path('workbench/analysis/artifact/<str:directory>/<int:index>/', workbench_processing.whitebox_artifact, name='workbench_whitebox_artifact'),
+    path('workbench/geolibre/', workbench.engine, name='workbench_engine'),
+    path('workbench/geolibre/<path:asset>', workbench.engine, name='workbench_engine_asset'),
     path('bird-guess/', lambda r: render(r, 'bird-guess.html'), name='bird_guess'),
     path('bird-runner/', lambda r: render(r, 'bird-runner.html'), name='bird_runner'),
     path('wetland-restorer/', lambda r: render(r, 'wetland-restorer.html'), name='wetland_restorer'),

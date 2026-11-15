@@ -1,0 +1,57 @@
+/* Fangzhou appearance over the pinned GeoLibre 3.7.0 browser build. */
+:root, :root[data-theme] {
+    --background: 105 12% 97%;
+    --foreground: 192 29% 19%;
+    --primary: 186 66% 37%;
+    --primary-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 192 29% 19%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 192 29% 19%;
+    --secondary: 145 14% 95%;
+    --muted: 145 14% 95%;
+    --muted-foreground: 164 10% 43%;
+    --accent: 156 23% 93%;
+    --accent-foreground: 181 42% 29%;
+    --border: 145 13% 87%;
+    --input: 149 13% 76%;
+    --ring: 186 66% 37%;
+}
+html, body, button, input, select, textarea {font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif !important}
+:root.dark, :root.dark[data-theme] {
+    --background: 198 55% 10%;
+    --foreground: 150 18% 91%;
+    --card: 195 38% 14%;
+    --card-foreground: 150 18% 91%;
+    --popover: 195 38% 17%;
+    --popover-foreground: 150 18% 91%;
+    --primary: 180 44% 61%;
+    --primary-foreground: 198 55% 10%;
+    --muted: 190 26% 20%;
+    --muted-foreground: 160 14% 70%;
+    --secondary: 190 26% 20%;
+    --accent: 183 27% 25%;
+    --accent-foreground: 150 18% 91%;
+    --border: 186 18% 29%;
+    --input: 186 18% 40%;
+}
+#root header>span:first-child>svg {display:none}
+#root header>span:first-child:before {content:""; display:block; width:22px; height:22px; flex-shrink:0; background:url('../img/logo.png') center/contain no-repeat; mix-blend-mode:multiply; filter:contrast(1.12) brightness(1.03)}
+#root header>span:first-child {display:none}
+#root header {min-height:40px;padding:4px 14px;gap:7px;background:#fafcf9;border-color:#e1e9e2}
+#root header button {border-radius:6px;font-size:12px;min-height:30px;padding-inline:9px}
+[data-testid="layer-row"] {border:0;border-bottom:1px solid #eaf0eb;border-radius:0;padding:13px 12px!important;background:transparent}
+[data-testid="layer-row"]:has([data-layer-select][aria-pressed="true"]) {background:#eef6f1;box-shadow:inset 3px 0 #20909d}
+[data-testid="layer-row"] [data-layer-select] {font-size:12px;font-weight:500;line-height:23px}
+[data-testid="layer-row"]>div:first-child>button:first-of-type {min-width:24px;min-height:26px}
+[data-testid="layer-row"] span.uppercase {display:none}
+[data-testid="layer-row"] button[title="移除图层"] {color:#b08e87}
+[data-testid="layer-row"] button:hover {background:#e5f0e8}
+.maplibregl-control-container .maplibregl-ctrl-group {border:1px solid #dce6e0;border-radius:7px;box-shadow:0 2px 8px #294f3010;overflow:hidden}
+.maplibregl-ctrl button[aria-label="底图"] {display:none}
+.maplibregl-canvas:focus {outline:none}
+#root footer {display:none}
+.maplibregl-ctrl-globe-enabled,.maplibregl-ctrl-globe-disabled {display:none!important}
+.maplibregl-ctrl-globe,button[aria-label="Layer Control"] {display:none!important}
+button[aria-label="底图"] {display:none!important}
+html[data-ark-map-credit] .maplibregl-ctrl-attrib {display:none!important}

@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ARK GeoStudio</title>
+    <link rel="icon" href="{% static 'app_monitor/img/logo.png' %}">
+    <link rel="stylesheet" href="{% static 'vendor/font-awesome/all.min.css' %}">
+    {% include 'app_monitor/site_theme.html' %}
+    <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-workflow1">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/background.css' %}?v=20261115-1">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=4">
+</head>
+<body data-ark-page="workbench">
+<header class="wb-header">
+    <a href="{% url 'home' %}" class="wb-brand" aria-label="返回黄河生态方舟监测平台">
+        <img src="{% static 'app_monitor/img/logo.png' %}" alt="方舟实验室 Logo">
+        <span><strong>ARK GeoStudio</strong><small>ARK GEOAI LAB · 科研工作台</small></span>
+    </a>
+    <nav class="wb-nav" aria-label="平台导航">
+        <a href="{% url 'home' %}">监测平台</a>
+        <a href="{% url 'workbench' %}" class="active" aria-current="page">ARK GeoStudio</a>
+        <a href="{% url 'huiyan_choose' %}">方舟慧眼</a>
+    </nav>
+    <div class="wb-actions" aria-label="工程操作">
+        <button type="button" id="wb-sample" aria-label="示例工程" title="示例工程" class="wb-button" data-needs-map disabled><i class="fas fa-map" aria-hidden="true"></i><span>示例工程</span></button>
+        <button type="button" id="wb-home" aria-label="研究区全览" title="研究区全览" class="wb-button" data-needs-map disabled><i class="fas fa-crosshairs" aria-hidden="true"></i><span>研究区全览</span></button>
+        <button type="button" id="wb-save" aria-label="保存工程" title="保存工程" class="wb-button" data-needs-map disabled><i class="far fa-save" aria-hidden="true"></i><span>保存工程</span></button>
+        <button type="button" id="wb-export" aria-label="导出地图" title="导出地图" class="wb-button" data-needs-map disabled><i class="fas fa-camera" aria-hidden="true"></i><span>导出地图</span></button>
+        <button type="button" id="wb-import" aria-label="导入数据" title="导入数据" class="wb-button primary" data-needs-map disabled><i class="fas fa-plus" aria-hidden="true"></i><span>导入数据</span></button>
+        <input type="file" id="wb-file" accept=".geojson,.json,.geolibre" hidden>
+    </div>
+    <div class="wb-header-end">
+        <span class="wb-local" id="wb-mode"><i class="fas fa-laptop" aria-hidden="true"></i> 本地工作区</span>
+        <button type="button" id="wb-help" class="wb-icon-button" aria-label="使用说明" title="使用说明" aria-expanded="false" aria-controls="wb-guide"><i class="far fa-question-circle" aria-hidden="true"></i></button>
+        <a href="{% url 'account_entry' %}" class="wb-account" aria-label="我的"><i class="fas fa-user" aria-hidden="true"></i></a>
+    </div>
+</header>
+<main class="wb-workspace" id="wb-workspace" aria-label="GeoLibre 科研地图工作台"
+      data-engine-url="{% url 'workbench_engine' %}"
+      data-leaflet-url="{% static 'vendor/leaflet/leaflet.js' %}"
+      data-project-url="{% url 'workbench_engine' %}example-project.json"
+      data-settings-url="{% static 'app_monitor/workbench/settings.json' %}">
+    <iframe id="wb-map" title="方舟科研地图与图层编辑器" allow="fullscreen" referrerpolicy="same-origin"></iframe>
+    <div id="wb-compatible" hidden></div>
+    <span id="wb-map-credit" class="wb-map-credit">© 天地图</span>
+    <button type="button" id="wb-agent-toggle" class="wb-agent-toggle" data-needs-map disabled
+            aria-controls="wb-agent" aria-expanded="false" title="打开或拖动小舟智能体">
+        <span class="wb-agent-avatar">{% include 'app_monitor/xiaozhou_avatar.html' %}</span>
+        <span>小舟智能体</span>
+    </button>
+    <aside id="wb-agent" class="wb-agent" aria-labelledby="wb-agent-title" hidden>
+        <div class="wb-agent-heading" tabindex="0" aria-label="拖动面板，也可用方向键移动">
+            <span class="wb-agent-avatar">{% include 'app_monitor/xiaozhou_avatar.html' %}</span>
+            <h2 id="wb-agent-title">小舟智能体</h2>
+            <span class="wb-agent-grip" aria-hidden="true"></span>
+            <button type="button" class="wb-icon-button" id="wb-agent-close" aria-label="收起小舟智能体">×</button>
+        </div>
+        <div class="wb-agent-content">
+        <form id="wb-agent-form" data-plan-url="{% url 'workbench_agent_plan' %}">
+            {% csrf_token %}
+            <label for="wb-agent-input">用一句话描述地图任务</label>
+            <textarea id="wb-agent-input" rows="3" maxlength="800" required placeholder="例如：定位黄河走势，再切换到卫星影像"></textarea>
+            <div class="wb-agent-actions">
+                <button type="button" id="wb-agent-example">缓冲区示例</button>
+                <button type="button" id="wb-agent-stop" class="wb-button" hidden>停止</button>
+                <button type="submit" id="wb-agent-run" class="wb-button primary">执行任务</button>
+            </div>
+        </form>
+        <p id="wb-agent-status" role="status" aria-live="polite"></p>
+        <ol id="wb-agent-steps" class="wb-agent-steps" aria-label="执行步骤" aria-live="polite"></ol>
+        </div>
+    </aside>
+    <div id="wb-loading" class="wb-loading" role="status" aria-live="polite">
+        <img src="{% static 'app_monitor/img/logo.png' %}" alt="">
+        <strong id="wb-loading-title">正在准备科研地图</strong>
+        <span id="wb-loading-copy">加载地图组件与示例工程，请稍候</span>
+        <button type="button" id="wb-retry" class="wb-button" hidden>重新加载</button>
+    </div>
+    <dialog id="wb-export-dialog" class="wb-export-dialog" aria-labelledby="wb-export-title">
+        <h2 id="wb-export-title">地图还在渲染</h2>
+        <p>当前画面可能缺少部分底图或图层。可以等待完整渲染，或先下载现在的画面。</p>
+        <p id="wb-export-progress" role="status"></p>
+        <form method="dialog" class="wb-export-actions">
+            <button type="submit" class="wb-button">取消</button>
+            <button type="button" id="wb-export-wait" class="wb-button">等待完整地图</button>
+            <button type="button" id="wb-export-visible" class="wb-button primary">下载当前画面</button>
+        </form>
+    </dialog>
+    <aside id="wb-guide" class="wb-guide" aria-labelledby="wb-guide-title" hidden>
+        <div class="wb-guide-heading"><span class="wb-kicker">开始探索</span><button type="button" id="wb-guide-close" class="wb-icon-button" aria-label="关闭使用说明"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+        <h1 id="wb-guide-title">工作台使用说明</h1>
+        <p class="wb-guide-intro">导入数据、管理图层，保存你的专题地图。</p>
+        <ol class="wb-steps">
+            <li><span>01</span><div><h2>认识工作区</h2><p>左侧管理图层，中间浏览地图，选中图层后可在右侧调整样式。</p></div></li>
+            <li><span>02</span><div><h2>带入自己的数据</h2><p>点击“导入数据”打开 GeoJSON 或已保存的工程。其他格式可通过地图内“添加数据”菜单打开。</p></div></li>
+            <li><span>03</span><div><h2>留下研究成果</h2><p>“保存工程”下载可重新打开的工程文件；“导出地图”下载当前视角的 PNG 图片。</p></div></li>
+        </ol>
+        <div class="wb-guide-note"><i class="fas fa-info-circle" aria-hidden="true"></i><p>示例工程使用模拟数据。快捷导入在浏览器完成，调用本地计算组件时会传递所需图层。</p></div>
+        <button type="button" id="wb-start" class="wb-button primary">开始使用 <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+        <a class="wb-engine-credit" href="https://geolibre.app/" target="_blank" rel="noopener noreferrer">地图工作台由 GeoLibre 3.7.0 提供支持</a>
+    </aside>
+</main>
+<footer class="wb-statusbar">
+    <span id="wb-status" role="status" aria-live="polite"><span class="wb-status-dot"></span> 正在加载</span>
+    <span id="wb-layer-count">— 个图层</span>
+    <span class="wb-status-end">方舟实验室 <span aria-hidden="true">·</span> <span id="wb-coordinates">地图准备中</span></span>
+</footer>
+<div id="wb-toast" class="wb-toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-workflow1"></script>
+</body>
+</html>

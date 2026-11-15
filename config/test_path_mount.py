@@ -4,6 +4,10 @@ from config.path_mount import PlatformMount, mount_location, rewrite_text
 
 
 class PathMountTests(unittest.TestCase):
+    def test_workbench_links_and_engine_paths_mount_without_changing_relative_assets(self):
+        value = '<a href="/workbench/"><iframe src="/workbench/geolibre/"><script src="./assets/map.js">'
+        self.assertEqual(rewrite_text(value, html=True), '<a href="/platform/workbench/"><iframe src="/platform/workbench/geolibre/"><script src="./assets/map.js">')
+
     def test_legacy_paths_and_generated_urls_are_not_double_prefixed(self):
         value = '''<a href="/"><img src="/static/a.png"><a href="/platform/admin/">'''
         self.assertEqual(rewrite_text(value, html=True), '''<a href="/platform/"><img src="/platform/static/a.png"><a href="/platform/admin/">''')

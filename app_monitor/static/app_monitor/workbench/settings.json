@@ -1,0 +1,6 @@
+{
+  "language": "zh",
+  "theme": {"scheme": "custom", "customColor": "#20909d"},
+  "layout": {"browserPanelVisible": false, "layerPanelVisible": true, "stylePanelVisible": true, "commentsPanelVisible": false, "showProjectInfo": false, "toolbarLabels": true, "compactLayerList": true, "bottomPanelsUnderMap": true},
+  "uiProfile": {"enabled": true, "level": "advanced", "onboarded": true}
+}
