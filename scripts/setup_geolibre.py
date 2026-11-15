@@ -223,6 +223,11 @@ async function loadWhiteboxTools(): Promise<WhiteboxTool[]> {'''
   }'''
     if source.count(before) != 1:
         raise SystemExit('Unexpected upstream sidecar transport')
+    source = source.replace(before, after)
+    before = '    return `${origin}/sidecar`;'
+    after = '    return `${origin}${location.pathname.split("/workbench/geolibre/")[0]}/sidecar`;'
+    if source.count(before) != 1:
+        raise SystemExit('Unexpected upstream sidecar URL')
     (SOURCE / relative).write_text(source.replace(before, after), encoding='utf-8')
     relative = 'apps/geolibre-desktop/src/lib/assistant/provider.ts'
     source = subprocess.check_output(['git', 'show', f'{COMMIT}:{relative}'], cwd=SOURCE).decode('utf-8')
@@ -243,6 +248,14 @@ async function loadWhiteboxTools(): Promise<WhiteboxTool[]> {'''
     result.GEOLIBRE_AI_PROXY_OMIT_AUTHORIZATION = "1";'''
     if source.count(before) != 1:
         raise SystemExit('Unexpected upstream assistant proxy point')
+    (SOURCE / relative).write_text(source.replace(before, after), encoding='utf-8')
+
+    relative = 'apps/geolibre-desktop/src/lib/deployment-env.ts'
+    source = subprocess.check_output(['git', 'show', f'{COMMIT}:{relative}'], cwd=SOURCE).decode('utf-8')
+    before = 'if (policy.ai?.enabled === true) out.VITE_GEOLIBRE_AI_URL = "/ai";'
+    after = 'if (policy.ai?.enabled === true) out.VITE_GEOLIBRE_AI_URL = `${location.pathname.split("/workbench/geolibre/")[0]}/ai`;'
+    if source.count(before) != 1:
+        raise SystemExit('Unexpected upstream assistant URL')
     (SOURCE / relative).write_text(source.replace(before, after), encoding='utf-8')
 
 

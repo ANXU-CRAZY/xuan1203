@@ -29,7 +29,8 @@ export async function runArkWhitebox(request: Request): Promise<WhiteboxJob> {
     });
     body.append('manifest', JSON.stringify({tool_id: request.tool_id, parameters: request.parameters, inputs, output_kinds}));
     const csrf = document.cookie.split('; ').find(part => part.startsWith('csrftoken='))?.slice(10) || '';
-    const response = await fetch('/workbench/analysis/whitebox/', {method: 'POST', body,
+    const prefix = location.pathname.split('/workbench/geolibre/')[0];
+    const response = await fetch(`${prefix}/workbench/analysis/whitebox/`, {method: 'POST', body,
         headers: {'X-CSRFToken': decodeURIComponent(csrf)}});
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || '空间计算任务启动失败。');
@@ -44,7 +45,7 @@ export async function runArkWhitebox(request: Request): Promise<WhiteboxJob> {
     for (const [index, artifact] of data.artifacts.entries()) {
         const outputName = Object.keys(job.outputs).find(key => job.outputs[key] === artifact.path);
         if (!outputName) continue;
-        const output = await fetch(`/workbench/analysis/artifact/${data.directory}/${index}/`);
+        const output = await fetch(`${prefix}/workbench/analysis/artifact/${data.directory}/${index}/`);
         if (!output.ok) throw new Error('分析完成，但无法读取输出文件。');
         job.outputs[outputName] = artifact.kind === 'vector_out' ? await output.json() : new Uint8Array(await output.arrayBuffer());
     }

@@ -12,14 +12,22 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from .views import _request_deepseek, _load_deepseek_local_env, _get_deepseek_model
+from .workbench_access import may_compute
 
 
 @require_POST
 @csrf_protect
 def native_chat(request):
     """Local-only OpenAI-compatible streaming proxy; the API key stays on the server."""
-    if request.get_host().split(':')[0] not in {'127.0.0.1', 'localhost'} or request.META.get('REMOTE_ADDR') not in {'127.0.0.1', '::1'}:
-        return JsonResponse({'error': {'message': '该计算工作台仅供本机使用。'}}, status=403)
+    if not may_compute(request):
+        return JsonResponse({'error': {'message': '请登录后使用小舟智能体。'}}, status=403)
+    rate_key = 'geostudio:native:' + ('local' if request.get_host().split(':')[0] in {'127.0.0.1', 'localhost'} else str(request.user.pk))
+    cache.add(rate_key, 0, 60)
+    try:
+        if cache.incr(rate_key) > 20:
+            return JsonResponse({'error': {'message': '请求过于频繁，请稍后再试。'}}, status=429)
+    except ValueError:
+        cache.set(rate_key, 1, 60)
     if request.content_type != 'application/json' or len(request.body) > 500_000:
         return JsonResponse({'error': {'message': '请求格式不正确或内容过大。'}}, status=400)
     try:

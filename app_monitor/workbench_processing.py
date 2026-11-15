@@ -9,18 +9,19 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 
 from .workbench_sidecar import ensure_running
+from .workbench_access import is_local, may_compute, owner_id
 
 TOOL_ID = re.compile(r'^[a-zA-Z0-9_]{1,100}$')
 
 
 def _local(request):
-    return (request.get_host().split(':')[0] in {'127.0.0.1', 'localhost'} and
-            request.META.get('REMOTE_ADDR') in {'127.0.0.1', '::1'})
+    return is_local(request)
 
 
 def _call(path, payload=None):
@@ -47,8 +48,16 @@ def _contains_path(value):
 @require_POST
 @csrf_protect
 def whitebox_start(request):
-    if not _local(request):
+    if not may_compute(request):
         raise Http404
+    if not _local(request):
+        rate_key = 'geostudio:analysis:' + owner_id(request)
+        cache.add(rate_key, 0, 60)
+        try:
+            if cache.incr(rate_key) > 10:
+                return JsonResponse({'detail': '操作过于频繁，请稍后再试。'}, status=429)
+        except ValueError:
+            cache.set(rate_key, 1, 60)
     try:
         manifest = json.loads(request.POST.get('manifest', ''))
         tool_id = manifest['tool_id']
@@ -98,7 +107,10 @@ def whitebox_start(request):
             artifacts.append({'name': name, 'path': str(path), 'kind': kind})
         job = _call('whitebox/run', {'tool_id': tool_id, 'parameters': parameters, 'tool': tool})
         job_id = str(uuid.UUID(job['id']))
-        (folder / 'job.json').write_text(json.dumps({'job_id': job_id, 'artifacts': artifacts}), encoding='utf-8')
+        (folder / 'job.json').write_text(json.dumps({'job_id': job_id, 'artifacts': artifacts, 'owner': owner_id(request)}), encoding='utf-8')
+        job_index = Path(settings.BASE_DIR) / 'var/geolibre/job-index'
+        job_index.mkdir(parents=True, exist_ok=True)
+        (job_index / (job_id + '.json')).write_text(json.dumps({'directory': folder.name, 'owner': owner_id(request)}), encoding='utf-8')
         return JsonResponse({'job': job, 'directory': folder.name, 'artifacts': artifacts})
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({'detail': '分析参数或输入数据不正确。'}, status=400)
@@ -108,11 +120,13 @@ def whitebox_start(request):
 
 @require_GET
 def whitebox_artifact(request, directory, index):
-    if not _local(request) or not re.fullmatch(r'[0-9a-f]{32}', directory):
+    if not may_compute(request) or not re.fullmatch(r'[0-9a-f]{32}', directory):
         raise Http404
     folder = (Path(settings.BASE_DIR) / 'var/geolibre/jobs' / directory).resolve()
     try:
         data = json.loads((folder / 'job.json').read_text(encoding='utf-8'))
+        if data.get('owner') != owner_id(request):
+            raise Http404
         path = Path(data['artifacts'][index]['path'])
         if path.is_symlink() or path.resolve().parent != folder or not path.is_file():
             raise Http404

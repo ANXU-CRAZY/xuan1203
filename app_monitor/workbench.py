@@ -15,7 +15,7 @@ from .workbench_basemaps import make_style, provider_config
 
 @require_safe
 def page(request):
-    response = render(request, 'workbench.html')
+    response = render(request, 'workbench.html', {'geostudio_online': getattr(settings, 'GEOSTUDIO_REMOTE_COMPUTE', False)})
     response['Cache-Control'] = 'no-store'
     return response
 

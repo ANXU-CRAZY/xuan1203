@@ -11,6 +11,9 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_protect
+from .workbench_access import is_local, may_compute, owner_id
+import json
+import re
 
 _START_LOCK = threading.Lock()
 
@@ -52,9 +55,25 @@ def ensure_running():
 
 @csrf_protect
 def proxy(request, path):
-    if (request.get_host().split(':')[0] not in {'127.0.0.1', 'localhost'} or
-            request.META.get('REMOTE_ADDR') not in {'127.0.0.1', '::1'}):
+    if not may_compute(request):
         raise Http404
+    if not is_local(request):
+        # Never expose raw filesystem, conversion or execution endpoints online.
+        allowed = (request.method == 'GET' and (
+            path in {'health', 'algorithms', 'whitebox/status', 'whitebox/tools',
+                     'raster/status', 'vector/status', 'conversion/status'} or
+            re.fullmatch(r'whitebox/tools/[A-Za-z0-9_]{1,100}', path)))
+        job = re.fullmatch(r'whitebox/jobs/([0-9a-fA-F-]{36})', path)
+        if request.method == 'GET' and job:
+            try:
+                import uuid
+                job_id = str(uuid.UUID(job.group(1)))
+                index = Path(settings.BASE_DIR) / 'var/geolibre/job-index' / (job_id + '.json')
+                allowed = json.loads(index.read_text(encoding='utf-8')).get('owner') == owner_id(request)
+            except (ValueError, OSError, json.JSONDecodeError):
+                allowed = False
+        if not allowed:
+            raise Http404
     if request.method not in {'GET', 'POST'} or not (
         path in {'health', 'algorithms'} or path.startswith(('raster/', 'vector/', 'whitebox/', 'conversion/jobs/'))
     ) or '..' in path.split('/'):
