@@ -233,7 +233,7 @@ def _workbench_html(data, request):
     text = ROOT_URLS.sub(lambda match: match[1] + base + match[2], data.decode("utf-8"))
     text = re.sub(r"<title>.*?</title>", "<title>方舟慧眼 · 地物识别器</title>", text, count=1, flags=re.S)
     navigation = ('<a class="land-nav" href="https://arklab-geoai.org.cn/platform/" target="_top">返回方舟视界</a>'
-                  '<a class="land-nav land-nav-lab" href="https://arklab-geoai.org.cn/geostudio/" target="_top">方舟云图</a>'
+                  '<a class="land-nav land-nav-lab" href="https://arklab-geoai.org.cn/geostudio/" target="_top">访问方舟云图 ↗</a>'
                   '<a class="land-nav land-nav-lab" href="https://arklab-geoai.org.cn/" '
                   'target="_blank" rel="noopener noreferrer">访问方舟实验室 ↗</a>')
     text = text.replace('<div class="top-right">', '<div class="top-right">' + navigation, 1)
