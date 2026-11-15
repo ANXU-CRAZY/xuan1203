@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黄河生态方舟 | 态势感知终端</title>
+    <title>方舟视界 · 智「析」一切</title>
     <link rel="stylesheet" href="/static/app_monitor/account-choice.css?v=20261112-1">
     <script src="/static/app_monitor/account-choice.js?v=20261112-1" defer></script>
     <link rel="stylesheet" href="/static/app_monitor/recognition.css?v=20261108-3">
@@ -1121,7 +1121,7 @@
         body[data-ark-page="monitor"] .top-beam #navArea { width:auto; margin:0; order:0; flex:none; overflow:visible; }
         body[data-ark-page="monitor"] .top-beam .brand {gap:8px; min-width:0; flex-shrink:1}
         body[data-ark-page="monitor"] .top-beam .brand-title {font-size:clamp(12px,3.5vw,16px); white-space:nowrap}
-        body[data-ark-page="monitor"] .top-beam .brand-tagline {display:none}
+        body[data-ark-page="monitor"] .top-beam .brand-tagline {display:inline; font-size:10px; margin-left:4px}
         body[data-ark-page="monitor"] .top-beam .brand-copy small {font-size:8px; letter-spacing:0; white-space:nowrap}
         body[data-ark-page="monitor"] .top-beam .brand-logo-link {width:30px; height:30px; flex:none}
         body[data-ark-page="monitor"] .top-beam .brand-logo {width:30px; height:30px}
@@ -1152,7 +1152,7 @@
             <img src="/static/app_monitor/img/logo.png" alt="" class="brand-logo" onerror="this.hidden=true;this.style.display='none';this.nextElementSibling.classList.add('show')">
             <span class="brand-logo-fallback" aria-hidden="true">黄河</span>
         </a>
-        <div class="brand-copy"><span class="brand-title">黄河生态方舟<span class="brand-tagline">· 智绘一切</span></span><small>ARK GEOAI LAB · ONLINE</small></div>
+        <div class="brand-copy"><span class="brand-title">方舟视界<span class="brand-tagline">· 智「析」一切</span></span><small>See Beyond. Understand More.</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
         <button type="button" class="apps-toggle" id="apps-toggle" aria-label="打开应用菜单" aria-expanded="false" aria-controls="apps-menu"><span class="apps-dots" aria-hidden="true"></span></button>
@@ -1168,7 +1168,7 @@
 <section id="apps-menu" class="apps-menu" aria-label="应用菜单" hidden>
     <h2 class="apps-menu-title">常用应用</h2>
     <div class="apps-menu-grid">
-        <a href="{% url 'workbench' %}"><i class="fas fa-layer-group" aria-hidden="true"></i><span>ARK GeoStudio</span></a>
+        <a href="{% if request.get_host == 'arklab-geoai.org.cn' or request.get_host == 'www.arklab-geoai.org.cn' %}/geostudio/{% else %}{% url 'workbench' %}{% endif %}"><i class="fas fa-layer-group" aria-hidden="true"></i><span>方舟云图</span></a>
         <a href="/huiyan/choose/" data-recognition-choice><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
         <a href="https://arklab-geoai.org.cn/" target="_blank" rel="noopener noreferrer"><i class="fas fa-flask" aria-hidden="true"></i><span>方舟实验室</span></a>
         <a href="/admin/"><i class="fas fa-cog" aria-hidden="true"></i><span>后台</span></a>

@@ -11,6 +11,7 @@ button:disabled {opacity:.45; cursor:wait}
 .wb-brand img {height:43px; width:43px; object-fit:contain; mix-blend-mode:multiply; filter:contrast(1.12) brightness(1.03)}
 .wb-brand>span {display:grid; gap:5px}
 .wb-brand strong {font-size:20px; font-weight:650; letter-spacing:.02em}
+.wb-brand-tagline {font-size:.72em; color:var(--ark-muted); white-space:nowrap}
 .wb-brand small {font-size:9px; font-weight:600; color:var(--ark-muted); letter-spacing:.07em}
 .wb-nav {align-self:stretch; display:flex; align-items:stretch; gap:28px; white-space:nowrap}
 .wb-nav a {display:flex; align-items:center; position:relative; font-size:14px; color:#637a7d; font-weight:500}

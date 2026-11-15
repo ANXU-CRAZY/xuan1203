@@ -60,7 +60,8 @@ class GeoStudioAccessTests(SimpleTestCase):
     def test_online_page_exposes_expected_navigation_and_login(self):
         response = self.client.get('/', HTTP_HOST='example.com')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'ARK GeoStudio')
+        self.assertContains(response, '方舟云图')
+        self.assertContains(response, 'Connect Everything. Map Beyond.')
         self.assertContains(response, '/platform/')
         self.assertContains(response, '在线工作区')
         self.assertEqual(self.client.get('/account/', HTTP_HOST='example.com').status_code, 200)

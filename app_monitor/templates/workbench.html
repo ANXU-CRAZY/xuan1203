@@ -4,24 +4,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ARK GeoStudio</title>
+    <title>方舟云图 · 智「绘」一切</title>
     <link rel="icon" href="{% static 'app_monitor/img/logo.png' %}">
     <link rel="stylesheet" href="{% static 'vendor/font-awesome/all.min.css' %}">
     {% include 'app_monitor/site_theme.html' %}
     <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
-    <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-workflow1">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-brand2">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/background.css' %}?v=20261115-1">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=4">
 </head>
 <body data-ark-page="workbench">
 <header class="wb-header">
-    <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}" class="wb-brand" aria-label="返回黄河生态方舟监测平台">
+    <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}" class="wb-brand" aria-label="返回方舟视界监测平台">
         <img src="{% static 'app_monitor/img/logo.png' %}" alt="方舟实验室 Logo">
-        <span><strong>ARK GeoStudio</strong><small>ARK GEOAI LAB · 科研工作台</small></span>
+        <span><strong>方舟云图<span class="wb-brand-tagline"> · 智「绘」一切</span></strong><small>Connect Everything. Map Beyond.</small></span>
     </a>
     <nav class="wb-nav" aria-label="平台导航">
-        <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}">监测平台</a>
-        <a href="{% url 'workbench' %}" class="active" aria-current="page">ARK GeoStudio</a>
+        <a href="{% url 'workbench' %}" class="active" aria-current="page">方舟云图</a>
+        <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}">方舟视界</a>
         <a href="{% if geostudio_online %}/platform/huiyan/{% else %}{% url 'huiyan_choose' %}{% endif %}">方舟慧眼</a>
     </nav>
     <div class="wb-actions" aria-label="工程操作">
@@ -100,7 +100,7 @@
         </ol>
         <div class="wb-guide-note"><i class="fas fa-info-circle" aria-hidden="true"></i><p>示例工程使用模拟数据。快捷导入在浏览器完成，调用本地计算组件时会传递所需图层。</p></div>
         <button type="button" id="wb-start" class="wb-button primary">开始使用 <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
-        <a class="wb-engine-credit" href="https://geolibre.app/" target="_blank" rel="noopener noreferrer">地图工作台由 GeoLibre 3.7.0 提供支持</a>
+        <span class="wb-engine-credit">GeoAI-Studio 1.0</span>
     </aside>
 </main>
 <footer class="wb-statusbar">
@@ -109,6 +109,6 @@
     <span class="wb-status-end">方舟实验室 <span aria-hidden="true">·</span> <span id="wb-coordinates">地图准备中</span></span>
 </footer>
 <div id="wb-toast" class="wb-toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-workflow1"></script>
+<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-brand3"></script>
 </body>
 </html>
