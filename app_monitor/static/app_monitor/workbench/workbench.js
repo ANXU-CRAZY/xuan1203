@@ -225,7 +225,7 @@ document.getElementById('wb-sample').addEventListener('click', event => action(e
     await client.loadProject(projectUrl);
     await client.setView(region);
     basemapSignature = ''; await updateBasemap();
-    document.title = '方舟云图 · 智「绘」一切';
+    document.title = '方舟视界 · 智「析」一切';
     await updateLayers();
     toast('已打开示例工程');
 }));
@@ -340,7 +340,7 @@ fileInput.addEventListener('change', async () => {
         await client.addLayer({id, name, type: 'geojson', source: {type: 'geojson'}, geojson: data,
             style: {fillColor: '#72a48b', fillOpacity: 0.3, strokeColor: '#248e99', strokeWidth: 2, circleRadius: 6},
             metadata: {origin: 'local-file', fileName: file.name}});
-        document.title = `${file.name} · 方舟云图`;
+        document.title = `${file.name} · 方舟视界`;
         await client.setView(bounds[0] === bounds[2] && bounds[1] === bounds[3]
             ? {center: bounds.slice(0, 2), zoom: 13}
             : {bbox: bounds});

@@ -60,8 +60,8 @@ class GeoStudioAccessTests(SimpleTestCase):
     def test_online_page_exposes_expected_navigation_and_login(self):
         response = self.client.get('/', HTTP_HOST='example.com')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '方舟云图')
-        self.assertContains(response, 'Connect Everything. Map Beyond.')
+        self.assertContains(response, '方舟视界')
+        self.assertContains(response, 'See Beyond. Understand More.')
         self.assertContains(response, 'https://arklab-geoai.org.cn/platform/')
         self.assertContains(response, 'https://arklab-geoai.org.cn/geostudio/')
         self.assertContains(response, 'https://arklab-geoai.org.cn/platform/huiyan/choose/')
