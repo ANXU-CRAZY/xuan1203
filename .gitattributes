@@ -1,2 +1,4 @@
 # Git LFS for species gallery images
 media/species/gallery/** filter=lfs diff=lfs merge=lfs -text
+# The Windows land-recognition distribution is split below GitHub's per-file limit.
+integrations/huiyan-land/artifacts/*.part filter=lfs diff=lfs merge=lfs -text

@@ -12,7 +12,8 @@ globals().update(load_smtp_settings(BASE_DIR))
 # Independent SAM 2 workbench. Weights and its packaged dependencies stay
 # outside Django; CPU/tiny keeps this optional service off the bird model path.
 HUIYAN_LAND_SERVICE_URL = os.environ.get('HUIYAN_LAND_SERVICE_URL', 'http://127.0.0.1:8013')
-HUIYAN_LAND_EXECUTABLE = os.environ.get('HUIYAN_LAND_EXECUTABLE', r'E:\方舟慧眼-轻量版\方舟慧眼-轻量版.exe')
+_bundled_land_exe = BASE_DIR / 'var' / 'huiyan-land' / '方舟慧眼-轻量版' / '方舟慧眼-轻量版.exe'
+HUIYAN_LAND_EXECUTABLE = os.environ.get('HUIYAN_LAND_EXECUTABLE', str(_bundled_land_exe) if _bundled_land_exe.is_file() else r'E:\方舟慧眼-轻量版\方舟慧眼-轻量版.exe')
 HUIYAN_LAND_AUTOSTART = os.environ.get('HUIYAN_LAND_AUTOSTART', '1' if os.name == 'nt' else '0') == '1'
 HUIYAN_LAND_MODEL = os.environ.get('HUIYAN_LAND_MODEL', 'tiny')
 HUIYAN_LAND_DEVICE = os.environ.get('HUIYAN_LAND_DEVICE', 'cpu')

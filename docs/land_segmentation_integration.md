@@ -14,7 +14,15 @@
 
 ## 本地运行
 
-当前提供的目录是 Windows PyInstaller onedir 成品，入口为 `E:\方舟慧眼-轻量版\方舟慧眼-轻量版.exe`，并没有 `web_demo.py` 源文件。
+仓库通过 Git LFS 保存 Windows PyInstaller onedir 成品的分卷，包括程序、运行依赖、四档 SAM 2 权重与 GroundingDINO 权重。它是打包成品，不包含完整的 `web_demo.py` 等原项目源码。首次获取后执行：
+
+```powershell
+git lfs install
+git lfs pull --include="integrations/huiyan-land/artifacts/*"
+.\anxu\Scripts\python.exe scripts/install_huiyan_land.py
+```
+
+安装脚本先检查所有分卷和完整压缩包的 SHA-256，再解压到 `var/huiyan-land/方舟慧眼-轻量版/`；若目录已存在则拒绝覆盖。重启 Django 后会优先使用安装后的程序。也可通过 `HUIYAN_LAND_EXECUTABLE` 指定其他完整 onedir 安装目录；如未安装，保留原来的 `E:\方舟慧眼-轻量版\方舟慧眼-轻量版.exe` 回退路径。
 
 启动项目后访问 <http://127.0.0.1:8012/>，点「AI识别」→「识别地物」。宿主会在第一次打开地物工作台时启动本机 `127.0.0.1:8013` 的轻量版，默认 tiny / CPU。识鸟和监测大屏不会触发 SAM 或 GroundingDINO 加载。
 
@@ -27,7 +35,7 @@
 | 配置 | 默认值 | 含义 |
 | --- | --- | --- |
 | `HUIYAN_LAND_SERVICE_URL` | `http://127.0.0.1:8013` | 仅接受本机 HTTP 地址，固定端口，不静默换端口 |
-| `HUIYAN_LAND_EXECUTABLE` | 上述 E 盘 exe | 保留整个 onedir 目录，包括 `_internal`、checkpoints、models |
+| `HUIYAN_LAND_EXECUTABLE` | 优先仓库安装路径，否则为原 E 盘 exe | 保留整个 onedir 目录，包括 `_internal`、checkpoints、models |
 | `HUIYAN_LAND_AUTOSTART` | Windows 为 `1`，其他系统为 `0` | 是否按需启动 exe |
 | `HUIYAN_LAND_MODEL` | `tiny` | 可选 tiny / small / base_plus / large |
 | `HUIYAN_LAND_DEVICE` | `cpu` | cpu / cuda / auto |
@@ -74,4 +82,4 @@
 
 ## 部署边界
 
-本次接通的是本地 Windows 成品。Linux 服务器无法直接运行这个 Windows exe；在线部署前需要取得分割项目的源码或 Linux 服务包，在服务器独立运行，并将本机服务地址配置到 Django。不要把 Windows 的 `_internal` 上传覆盖 Django 虚拟环境，也不要将数 GB 权重加入 Git。
+本次保存的是 Windows 成品。Linux 服务器无法直接运行这个 Windows exe；在线部署前需要取得分割项目的源码或 Linux 服务包，在服务器独立运行，并将本机服务地址配置到 Django。不要把 Windows 的 `_internal` 上传覆盖 Django 虚拟环境。Git LFS 分卷较大，拉取会使用仓库所有者的 LFS 带宽。

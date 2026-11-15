@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "platform": "windows",
+  "archive_size": 3062569085,
+  "archive_sha256": "10a50abc99a127708ef462182f38ef47c468ad1f95c87e7cd521d3ba7a4cfc94",
+  "archive_entries": 17007,
+  "parts": [
+    {
+      "name": "huiyan-land-windows.zip.001.part",
+      "size": 805306368,
+      "sha256": "1dfabdd4532093e3fb5245c27ddc07508d388349800e714afa0338eb1a7b8d68"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-01.part",
+      "size": 67108864,
+      "sha256": "fc8b957cad4ee07caa9058e12d7b32eeabb2965827dc578b3f44c32ec2fbb232"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-02.part",
+      "size": 67108864,
+      "sha256": "31d46bdf2903071db090d8c644f614b2d9ea9ec694f7757fe2deb19e1284ead9"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-03.part",
+      "size": 67108864,
+      "sha256": "55d6873aa8ceef2adbfdf91787992d995773ee81d2445128a13d71e89cb78112"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-04.part",
+      "size": 67108864,
+      "sha256": "c45970f9a17f54d3786caba1cfda5c0bb64adf67659cc709010d58ceedf30fb3"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-01.part",
+      "size": 8388608,
+      "sha256": "ec2d3dd377426e0fbac67794e00514430b6e3b3ae27acbd1e5b7519ba734425d"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-02.part",
+      "size": 8388608,
+      "sha256": "6301dbb67dd3b9d5cc42d235f65732b471165069a576b7e5d505d69c59c7ebf4"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-03.part",
+      "size": 8388608,
+      "sha256": "c35d5d356ea22aeb8c04599bfadef70ac7c205a6af024c7fba9769b56989b827"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-04.part",
+      "size": 8388608,
+      "sha256": "342ffbbd2a72948382d218cc3c0ad62e8a4f64a6c86efc6065ba961ac562d86c"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-05.part",
+      "size": 8388608,
+      "sha256": "4cf876f62876830f1e94c5e8d9d64422998a9c5b68e0b042a9224e73c83346f4"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-06.part",
+      "size": 8388608,
+      "sha256": "a665dd184b39f7d6351e5cfc79c0ec39cbe49709cee1cf3f5e567ad75a99deb5"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-07.part",
+      "size": 8388608,
+      "sha256": "a8345601300acbe11b53e08ccd5b719b489d1c250f06452e4b6c8b9b6bd8428b"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-05-08.part",
+      "size": 8388608,
+      "sha256": "64f520b4eabe6f83d53f1c72483dcf44b538f0d3fd986076f00c63861d8d92ad"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-06.part",
+      "size": 67108864,
+      "sha256": "c06d9615bf2e69c48b84a00c56f1af3ba65b3fc57076f3d8a7dfd9644e1eb47a"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-07.part",
+      "size": 67108864,
+      "sha256": "f4e0d431b1ad2ab308610456289c72e50a4eaad4cc9ca44481ba518c36517cc3"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-08.part",
+      "size": 67108864,
+      "sha256": "0d7cc842ea998f1c7a56c2deaa863ddbd32df6834e0e05806acf7b9f06983b97"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-09.part",
+      "size": 67108864,
+      "sha256": "6499634778846e72892e92d839dc85d50fa26dd248dc57062cdb6e9227768215"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-10.part",
+      "size": 67108864,
+      "sha256": "34d7f744385267c9197dff86dd4e44443cc74a97edc79908a1ee01bb8b0abe37"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-11.part",
+      "size": 67108864,
+      "sha256": "96cf2a39b19da7a5250dbf7f20399bc55a36fd3d81e953786212986dbb00167d"
+    },
+    {
+      "name": "huiyan-land-windows.zip.002-12.part",
+      "size": 67108864,
+      "sha256": "80851f6160f94d3a38d374f2471c1dbcb205bfbc17ee0e0b6178e330dfb55824"
+    },
+    {
+      "name": "huiyan-land-windows.zip.003.part",
+      "size": 805306368,
+      "sha256": "21d11c95a719d66e2c35faabf5e490d253cedc146028709e15ad9cb7e2f4fee1"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-01.part",
+      "size": 67108864,
+      "sha256": "4aedc760bdc9eba4842d504e23f66fe85c201d17b9069441c5f69d06a8f41743"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-02.part",
+      "size": 67108864,
+      "sha256": "478bebc0be3fb912488fe29e37b8e3ff0c50fbea919393dea95afb26ecdb456a"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-03.part",
+      "size": 67108864,
+      "sha256": "c32d6ac9c1823d4e5b7f29338c7d3e8acaa65d1ef41bebeacfc6c29de30272db"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-04.part",
+      "size": 67108864,
+      "sha256": "e16a000e6614de248b9afdecb23a65eb781723a72873a7d99368ef902e242f6a"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-05.part",
+      "size": 67108864,
+      "sha256": "363f97becd6c128973ab1b74c70ed00a6c9195d52b5f47829047ed812f0cc9f3"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-01.part",
+      "size": 8388608,
+      "sha256": "6c126c925a118e885bb45611f1aeef869aea6976346deabe5219e165a5e878a8"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-02.part",
+      "size": 8388608,
+      "sha256": "6d4de351cdb0c6c1ad759a8e96a0670d80c2bd3866a356de165cd8b7ed148d9c"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-03.part",
+      "size": 8388608,
+      "sha256": "271f85b27087e4c6fe71afe6d15e822d1e4e05728373911fd0a8065f6b5a5039"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-04.part",
+      "size": 8388608,
+      "sha256": "8598c275dc672572014a8aabe65db7f45252d9dad885cc0f9f2763d87a8ae927"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-05.part",
+      "size": 8388608,
+      "sha256": "b369d8f18ed2d237b13339ecbb6dca9189cf47f5ff12b3cb226ae0f2f296dc5c"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-06.part",
+      "size": 8388608,
+      "sha256": "f9825e5675c8d5825a802e16629a4ef8b3e7c77370710fa487458139e7a136de"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-07.part",
+      "size": 8388608,
+      "sha256": "01484364d07a3dd59052924be2fe588cc972058ed147f73254b7fd0263089195"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-06-08.part",
+      "size": 8388608,
+      "sha256": "79a3fc5ca6bf4c0c3c47b82482b15e3c78cee93d9807ffd365a08b0095fb4662"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-07.part",
+      "size": 67108864,
+      "sha256": "75bcaef150d2d150ba641827be3078644fdfaf50771921b871c7a8c9206b4cc6"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-08.part",
+      "size": 67108864,
+      "sha256": "8f94576cb5dcc00e36bd8397e803512bf5285f07752df117681159679ea2ab96"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-09.part",
+      "size": 67108864,
+      "sha256": "bffc6278ff1aaa65fb0a6bd42060d9988f504166f1ece26a027050367bad34b2"
+    },
+    {
+      "name": "huiyan-land-windows.zip.004-10.part",
+      "size": 42670205,
+      "sha256": "334b3a54147060d7e358b10a0f7ccfdede067d53d7ca71dd2faa8dee7580283b"
+    }
+  ]
+}
