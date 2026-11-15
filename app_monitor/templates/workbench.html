@@ -9,21 +9,16 @@
     <link rel="stylesheet" href="{% static 'vendor/font-awesome/all.min.css' %}">
     {% include 'app_monitor/site_theme.html' %}
     <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
-    <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-brand2">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-apps4">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/background.css' %}?v=20261115-1">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=4">
 </head>
 <body data-ark-page="workbench">
 <header class="wb-header">
-    <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}" class="wb-brand" aria-label="返回方舟视界监测平台">
+    <a href="https://arklab-geoai.org.cn/platform/" class="wb-brand" aria-label="返回方舟视界监测平台">
         <img src="{% static 'app_monitor/img/logo.png' %}" alt="方舟实验室 Logo">
         <span><strong>方舟云图<span class="wb-brand-tagline"> · 智「绘」一切</span></strong><small>Connect Everything. Map Beyond.</small></span>
     </a>
-    <nav class="wb-nav" aria-label="平台导航">
-        <a href="{% url 'workbench' %}" class="active" aria-current="page">方舟云图</a>
-        <a href="{% if geostudio_online %}/platform/{% else %}{% url 'home' %}{% endif %}">方舟视界</a>
-        <a href="{% if geostudio_online %}/platform/huiyan/{% else %}{% url 'huiyan_choose' %}{% endif %}">方舟慧眼</a>
-    </nav>
     <div class="wb-actions" aria-label="工程操作">
         <button type="button" id="wb-sample" aria-label="示例工程" title="示例工程" class="wb-button" data-needs-map disabled><i class="fas fa-map" aria-hidden="true"></i><span>示例工程</span></button>
         <button type="button" id="wb-home" aria-label="研究区全览" title="研究区全览" class="wb-button" data-needs-map disabled><i class="fas fa-crosshairs" aria-hidden="true"></i><span>研究区全览</span></button>
@@ -35,6 +30,16 @@
     <div class="wb-header-end">
         <span class="wb-local" id="wb-mode"><i class="fas fa-laptop" aria-hidden="true"></i> {% if geostudio_online %}在线工作区{% else %}本地工作区{% endif %}</span>
         <button type="button" id="wb-help" class="wb-icon-button" aria-label="使用说明" title="使用说明" aria-expanded="false" aria-controls="wb-guide"><i class="far fa-question-circle" aria-hidden="true"></i></button>
+        <button type="button" id="wb-apps-toggle" class="wb-apps-toggle" aria-label="打开应用菜单" title="切换应用" aria-expanded="false" aria-controls="wb-apps-menu"><span class="wb-apps-dots" aria-hidden="true"></span></button>
+        <section id="wb-apps-menu" class="wb-apps-menu" aria-label="应用菜单" hidden>
+            <h2>常用应用</h2>
+            <div class="wb-apps-grid">
+                <a href="https://arklab-geoai.org.cn/platform/"><i class="fas fa-map-marked-alt" aria-hidden="true"></i><span>方舟视界</span></a>
+                <a href="https://arklab-geoai.org.cn/geostudio/" aria-current="page"><i class="fas fa-layer-group" aria-hidden="true"></i><span>方舟云图</span></a>
+                <a href="https://arklab-geoai.org.cn/platform/huiyan/choose/"><i class="fas fa-eye" aria-hidden="true"></i><span>方舟慧眼</span></a>
+                <a href="https://arklab-geoai.org.cn/"><i class="fas fa-flask" aria-hidden="true"></i><span>方舟实验室</span></a>
+            </div>
+        </section>
         <a href="{% url 'account_entry' %}" class="wb-account" aria-label="我的"><i class="fas fa-user" aria-hidden="true"></i></a>
     </div>
 </header>
@@ -109,6 +114,6 @@
     <span class="wb-status-end">方舟实验室 <span aria-hidden="true">·</span> <span id="wb-coordinates">地图准备中</span></span>
 </footer>
 <div id="wb-toast" class="wb-toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-brand3"></script>
+<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-apps4"></script>
 </body>
 </html>

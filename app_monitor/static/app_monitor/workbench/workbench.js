@@ -1,6 +1,24 @@
 import {connect} from './geolibre-embed.js';
 import {initAgent} from './agent.js?v=11';
 
+const appsToggle = document.getElementById('wb-apps-toggle');
+const appsMenu = document.getElementById('wb-apps-menu');
+function closeApps() {
+    appsMenu.hidden = true;
+    appsToggle.setAttribute('aria-expanded', 'false');
+}
+appsToggle.addEventListener('click', () => {
+    const opening = appsMenu.hidden;
+    appsMenu.hidden = !opening;
+    appsToggle.setAttribute('aria-expanded', String(opening));
+});
+document.addEventListener('click', event => {
+    if (!appsMenu.hidden && !appsMenu.contains(event.target) && !appsToggle.contains(event.target)) closeApps();
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !appsMenu.hidden) { closeApps(); appsToggle.focus(); }
+});
+
 const workspace = document.getElementById('wb-workspace');
 const frame = document.getElementById('wb-map');
 const loading = document.getElementById('wb-loading');

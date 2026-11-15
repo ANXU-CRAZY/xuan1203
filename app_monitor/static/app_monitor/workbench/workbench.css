@@ -18,7 +18,17 @@ button:disabled {opacity:.45; cursor:wait}
 .wb-nav a:hover {color:var(--ark-accent)}
 .wb-nav .active {color:var(--ark-accent-deep); font-weight:650}
 .wb-nav .active:after {position:absolute; content:""; height:3px; background:var(--ark-accent); border-radius:3px 3px 0 0; bottom:0; left:0; right:0}
-.wb-header-end {display:flex; align-items:center; gap:10px; flex-shrink:0}
+.wb-header-end {display:flex; align-items:center; gap:10px; flex-shrink:0; position:relative}
+.wb-apps-toggle {width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#425e61}
+.wb-apps-toggle:hover,.wb-apps-toggle[aria-expanded="true"] {background:#e2f0ed}
+.wb-apps-toggle:focus-visible,.wb-apps-grid a:focus-visible {outline:2px solid #20909d;outline-offset:2px}
+.wb-apps-dots {display:block;width:4px;height:4px;border-radius:50%;background:currentColor;transform:translate(-6px,-6px);box-shadow:6px 0 currentColor,12px 0 currentColor,0 6px currentColor,6px 6px currentColor,12px 6px currentColor,0 12px currentColor,6px 12px currentColor,12px 12px currentColor}
+.wb-apps-menu {position:absolute;right:0;top:calc(100% + 12px);z-index:1000;width:292px;max-width:calc(100vw - 24px);padding:12px;border:1px solid #dce9e5;border-radius:22px;background:#eaf3f0;box-shadow:0 8px 24px rgba(23,57,58,.2)}
+.wb-apps-menu h2 {margin:0;padding:14px 16px 2px;border-radius:16px 16px 0 0;background:#fff;color:#29464a;font-size:14px;font-weight:700}
+.wb-apps-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:10px 6px 14px;border-radius:0 0 16px 16px;background:#fff}
+.wb-apps-grid a {min-width:0;display:flex;flex-direction:column;align-items:center;gap:9px;padding:13px 2px;border-radius:12px;color:#284c50;font-size:12px;font-weight:600;text-align:center}
+.wb-apps-grid a:hover,.wb-apps-grid a[aria-current="page"] {background:#eaf5f2}
+.wb-apps-grid i {width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#e8f5f2;color:#208995;font-size:20px}
 .wb-local {font-size:12px; color:#6c8182; display:flex; align-items:center; gap:7px}
 .wb-icon-button {width:32px; height:32px; display:grid; place-items:center; border:0; border-radius:8px; background:transparent; color:#6c8182; font-size:18px}
 .wb-icon-button:hover {background:#eef5f3; color:var(--ark-accent-deep)}

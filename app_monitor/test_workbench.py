@@ -28,7 +28,7 @@ class WorkbenchFrontendTests(SimpleTestCase):
         self.assertIn('id="wb-import"', header)
         self.assertIn('id="wb-save"', header)
         self.assertContains(response, 'data-engine-url="/workbench/geolibre/"')
-        self.assertContains(self.client.get('/'), 'href="/workbench/"')
+        self.assertContains(self.client.get('/'), 'href="https://arklab-geoai.org.cn/geostudio/"')
 
     def test_only_engine_allows_same_origin_embedding(self):
         response = self.client.get('/workbench/geolibre/')
