@@ -12,7 +12,8 @@ def sign_in(request):
         return redirect('home')
     error = ''
     if request.method == 'POST':
-        key = 'geostudio:login:' + request.META.get('REMOTE_ADDR', '')
+        # The dedicated reverse proxy overwrites X-Real-IP for every request.
+        key = 'geostudio:login:' + request.META.get('HTTP_X_REAL_IP', request.META.get('REMOTE_ADDR', ''))
         cache.add(key, 0, 60)
         try:
             attempts = cache.incr(key)
