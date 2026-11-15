@@ -1,0 +1,19 @@
+[Unit]
+Description=ARK GeoStudio isolated web service
+After=network.target postgresql.service
+
+[Service]
+User=geostudio
+Group=www-data
+WorkingDirectory=/srv/ark-geostudio
+Environment=DJANGO_SETTINGS_MODULE=config.geostudio_settings
+EnvironmentFile=/etc/ark-geostudio/secret.env
+EnvironmentFile=-/etc/xuan1203/ai.env
+RuntimeDirectory=ark-geostudio
+RuntimeDirectoryMode=0755
+UMask=0077
+ExecStart=/home/xuan1203/venv/bin/gunicorn config.geostudio_wsgi:application --bind unix:/run/ark-geostudio/gunicorn.sock --workers 1 --threads 4 --timeout 150 --umask 007
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

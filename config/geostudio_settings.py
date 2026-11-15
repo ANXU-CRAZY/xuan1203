@@ -1,6 +1,7 @@
 """Settings for the independently mounted ARK GeoStudio service."""
 from .settings import *  # noqa: F403
 
+SECRET_KEY = os.environ.get('GEOSTUDIO_SECRET_KEY', SECRET_KEY)  # noqa: F405
 ALLOWED_HOSTS = ['arklab-geoai.org.cn', 'www.arklab-geoai.org.cn', '127.0.0.1', 'localhost']
 CSRF_TRUSTED_ORIGINS = ['https://arklab-geoai.org.cn', 'https://www.arklab-geoai.org.cn']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
