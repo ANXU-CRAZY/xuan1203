@@ -74,7 +74,7 @@ function installMonitoringTowers(app) {
             });
             for (const [kind,type] of Object.entries(TYPES)) {
                 this.layerControl.addOverlay(this.layers[type.key],layerLabel(kind));
-                this.layers[type.key].addTo(this.map);
+                if (kind==='existing') this.layers[type.key].addTo(this.map);
             }
             this.map.on('zoomend moveend overlayadd overlayremove',()=>this.updateMonitoringTowerLabels());
             this.map.on('click',()=>this.clearMonitoringTowerSelection());
@@ -147,7 +147,7 @@ function installMonitoringTowers(app) {
             const planned=marker.feature.properties.kind==='planned';
             const color=planned?'#c78a37':'#168f8c';
             const outer=L.circle(center,{radius:COVERAGE_RADIUS,pane:'towerScanPane',interactive:false,
-                color,weight:2,fillOpacity:0.03});
+                stroke:false,fillColor:color,fillOpacity:0.04});
             // Add temporarily so Leaflet computes geographic circle bounds.
             outer.addTo(this.towerScanLayer);
             const bounds=outer.getBounds();
@@ -159,8 +159,6 @@ function installMonitoringTowers(app) {
                 clearTimeout(selected.scanTimer);
                 this.map.off('moveend',selected.startScan);
                 outer.addTo(this.towerScanLayer);
-                for (const radius of [1000,2000]) L.circle(center,{radius,pane:'towerScanPane',interactive:false,
-                    color,weight:1,opacity:0.4,dashArray:'3 5',fill:false}).addTo(this.towerScanLayer);
                 new RadarSweep(center,bounds,planned).addTo(this.towerScanLayer);
             };
             const mapRect=this.map.getContainer().getBoundingClientRect(),margin=32;
@@ -262,8 +260,8 @@ function installMonitoringTowers(app) {
                     marker.addTo(this.layers[TYPES[p.kind].key]);
                     this.monitoringTowerMarkers.push(marker);
                     L.circle([lat,lng],{radius:COVERAGE_RADIUS,pane:'towerCoveragePane',interactive:false,
-                        color:p.kind==='planned'?'#c78a37':'#168f8c',weight:1.2,
-                        dashArray:p.kind==='planned'?'6 5':null,fillOpacity:p.kind==='planned'?0.025:0.075
+                        stroke:false,fillColor:p.kind==='planned'?'#c78a37':'#168f8c',
+                        fillOpacity:p.kind==='planned'?0.07:0.12
                     }).addTo(this.towerCoverageGroups[p.kind]);
                 }
                 this.updateMonitoringTowerLabels();
