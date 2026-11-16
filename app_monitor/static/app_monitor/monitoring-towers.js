@@ -60,7 +60,6 @@ function installMonitoringTowers(app) {
                 this.map.getPane(name).style.pointerEvents='none';
             }
             this.towerCoverageGroups={existing:L.layerGroup(),planned:L.layerGroup()};
-            this.towerScanLayer=L.layerGroup().addTo(this.map);
             this.layerControl.addOverlay(this.layers.monitoringCoverage,
                 '<span data-tower-layer="coverage">监测覆盖范围</span>');
             this.layerControl.addOverlay(this.layers.monitoringUncovered,
@@ -96,9 +95,6 @@ function installMonitoringTowers(app) {
             const selected=this._selectedMonitoringTower;
             if (!selected) return;
             this._selectedMonitoringTower=null;
-            if (selected.startScan) this.map.off('moveend',selected.startScan);
-            clearTimeout(selected.scanTimer);
-            this.towerScanLayer.clearLayers();
             selected.marker.getElement()?.classList.remove('is-selected');
             // Remove only this tower's halo, preserving any newer bird highlight.
             if (selected.halo) this.hitLayer?.removeLayer(selected.halo);
@@ -144,23 +140,7 @@ function installMonitoringTowers(app) {
             const selected=this._selectedMonitoringTower={marker};
             marker.getElement()?.classList.add('is-selected');
             const center=marker.getLatLng();
-            const planned=marker.feature.properties.kind==='planned';
-            const color=planned?'#c78a37':'#168f8c';
-            const outer=L.circle(center,{radius:COVERAGE_RADIUS,pane:'towerScanPane',interactive:false,
-                stroke:false,fillColor:color,fillOpacity:0.04});
-            // Add temporarily so Leaflet computes geographic circle bounds.
-            outer.addTo(this.towerScanLayer);
-            const bounds=outer.getBounds();
-            this.towerScanLayer.clearLayers();
-            let started=false;
-            selected.startScan=()=>{
-                if (started || this._selectedMonitoringTower!==selected || !this.map.hasLayer(this.layers.monitoringCoverage)) return;
-                started=true;
-                clearTimeout(selected.scanTimer);
-                this.map.off('moveend',selected.startScan);
-                outer.addTo(this.towerScanLayer);
-                new RadarSweep(center,bounds,planned).addTo(this.towerScanLayer);
-            };
+            const bounds=center.toBounds(COVERAGE_RADIUS*2);
             const mapRect=this.map.getContainer().getBoundingClientRect(),margin=32;
             let top=margin,bottom=margin,right=margin,left=margin;
             for (const selector of ['.top-beam','#filter-bar']) {
@@ -183,10 +163,8 @@ function installMonitoringTowers(app) {
             right=Math.min(right,mapRect.width*0.65);
             top=Math.min(top,mapRect.height*0.4);
             bottom=Math.min(bottom,mapRect.height-top-100);
-            this.map.once('moveend',selected.startScan);
             this.map.flyToBounds(bounds,{paddingTopLeft:[left,top],paddingBottomRight:[right,bottom],
                 maxZoom:16,duration:1.25,animate:!matchMedia('(prefers-reduced-motion: reduce)').matches});
-            selected.scanTimer=setTimeout(selected.startScan,1450);
         },
         openDetailModal: function(...args) {
             if (!this.heatmap.active && !this.bufferAnalysis?.picking) {
@@ -263,6 +241,9 @@ function installMonitoringTowers(app) {
                         stroke:false,fillColor:p.kind==='planned'?'#c78a37':'#168f8c',
                         fillOpacity:p.kind==='planned'?0.07:0.12
                     }).addTo(this.towerCoverageGroups[p.kind]);
+                    const center=L.latLng(lat,lng);
+                    new RadarSweep(center,center.toBounds(COVERAGE_RADIUS*2),p.kind==='planned')
+                        .addTo(this.towerCoverageGroups[p.kind]);
                 }
                 this.updateMonitoringTowerLabels();
                 for (const [kind,type] of Object.entries(TYPES)) {
