@@ -77,6 +77,7 @@ function installMonitoringTowers(app) {
                 if (kind==='existing') this.layers[type.key].addTo(this.map);
             }
             this.map.on('zoomend moveend overlayadd overlayremove',()=>this.updateMonitoringTowerLabels());
+            this.map.on('moveend zoomend overlayadd overlayremove',()=>this.updateAutomaticTowerScan());
             this.map.on('click',()=>this.clearMonitoringTowerSelection());
             document.addEventListener('keydown',event=>{
                 if (event.key==='Escape') this.clearMonitoringTowerSelection();
@@ -103,6 +104,28 @@ function installMonitoringTowers(app) {
             // Remove only this tower's halo, preserving any newer bird highlight.
             if (selected.halo) this.hitLayer?.removeLayer(selected.halo);
             selected.popup?.remove();
+            this.updateAutomaticTowerScan();
+        },
+        updateAutomaticTowerScan: function() {
+            if (this._selectedMonitoringTower) return;
+            let nearest=null, distance=Infinity;
+            if (this.map.hasLayer(this.layers.monitoringCoverage)) {
+                const size=this.map.getSize(), center=size.divideBy(2), bounds=this.map.getBounds();
+                for (const marker of this.monitoringTowerMarkers) {
+                    if (!this.map.hasLayer(marker) || !bounds.contains(marker.getLatLng())) continue;
+                    const d=this.map.latLngToContainerPoint(marker.getLatLng()).distanceTo(center);
+                    if (d<distance) { distance=d; nearest=marker; }
+                }
+            }
+            if (this._autoScanMarker===nearest && (nearest || !this.towerScanLayer.getLayers().length)) return;
+            this.towerScanLayer.clearLayers();
+            this._autoScanMarker=nearest;
+            if (!nearest) return;
+            const center=nearest.getLatLng(), planned=nearest.feature.properties.kind==='planned';
+            const color=planned?'#c78a37':'#168f8c';
+            L.circle(center,{radius:COVERAGE_RADIUS,pane:'towerScanPane',interactive:false,
+                stroke:false,fillColor:color,fillOpacity:0.04}).addTo(this.towerScanLayer);
+            new RadarSweep(center,center.toBounds(COVERAGE_RADIUS*2),planned).addTo(this.towerScanLayer);
         },
         loadUncoveredMonitoringArea: async function() {
             if (this._towerUncoveredLoaded || this._towerUncoveredLoading) return;
@@ -152,6 +175,7 @@ function installMonitoringTowers(app) {
             outer.addTo(this.towerScanLayer);
             const bounds=outer.getBounds();
             this.towerScanLayer.clearLayers();
+            this._autoScanMarker=null;
             let started=false;
             selected.startScan=()=>{
                 if (started || this._selectedMonitoringTower!==selected || !this.map.hasLayer(this.layers.monitoringCoverage)) return;
@@ -265,6 +289,7 @@ function installMonitoringTowers(app) {
                     }).addTo(this.towerCoverageGroups[p.kind]);
                 }
                 this.updateMonitoringTowerLabels();
+                this.updateAutomaticTowerScan();
                 for (const [kind,type] of Object.entries(TYPES)) {
                     // Update the registered label too: Leaflet rebuilds the
                     // control when layers are added/removed programmatically.
