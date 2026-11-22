@@ -1513,7 +1513,7 @@
                     url: '/api/profiles/me/', method: 'GET',
                     headers: {'Authorization': 'Token ' + token},
                     success: data => {
-                        const ns = (data.score || 0) + earned;
+                        const ns = (data.game_score || 0) + earned;
                         $.ajax({
                             url: '/api/profiles/me/', method: 'PATCH',
                             headers: {'Authorization': 'Token ' + token},

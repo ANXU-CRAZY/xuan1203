@@ -1,6 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
-from django.db import connection
+from django.db import connection, transaction
 from django.conf import settings
 from django.utils import timezone
 from django.utils.html import escape
@@ -19,10 +19,12 @@ from urllib.error import HTTPError, URLError
 import json
 import os
 import re
+from uuid import uuid4
 
 # DRF 相关引用
 from rest_framework import viewsets, permissions, status, serializers
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
@@ -38,6 +40,7 @@ except ImportError:
 # 确保包含 Product, UserProfile
 from .models import MapObservationCache, ObservationRecord, WetlandZone, MonitoringRoute, Product, UserProfile, SpeciesInfo, SpeciesImage
 from .protection import normalize_protection_level, get_protection_group
+from .contribution_points import RedemptionError, award_observation, redeem_product
 from django.contrib.auth.models import User
 
 # === 引入序列化器 ===
@@ -114,7 +117,7 @@ class ObservationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # 默认按时间倒序
-        queryset = ObservationRecord.objects.all().order_by('-observation_time')
+        queryset = ObservationRecord.objects.filter(client_observation_id__isnull=True).order_by('-observation_time')
 
         user = self.request.user
 
@@ -131,22 +134,21 @@ class ObservationViewSet(viewsets.ModelViewSet):
         # C. 游客: 只看 '已通过'
         return queryset.filter(status='approved')
 
+    @transaction.atomic
     def perform_create(self, serializer):
         """
         当用户 POST 上传数据时执行
         """
-        # 1. 自动关联当前登录用户
-        serializer.save(uploader=self.request.user)
+        observation = serializer.save(uploader=self.request.user)
+        award_observation(observation, settings.CONTRIBUTION_REWARDS['web'])
 
-        # 2. 积分奖励逻辑 (上传一条 +10分)
-        try:
-            # 获取或创建用户的积分档案
-            profile, created = UserProfile.objects.get_or_create(user=self.request.user)
-            profile.score += 10
-            profile.save()
-            print(f"用户 {self.request.user.username} 上传成功，积分+10，当前: {profile.score}")
-        except Exception as e:
-            print(f"加分失败: {e}")
+    def get_object(self):
+        observation = super().get_object()
+        user = self.request.user
+        if self.action in ('update', 'partial_update', 'destroy') and not user.is_staff:
+            if observation.uploader_id != user.pk:
+                raise PermissionDenied('只能修改自己的观测记录。')
+        return observation
 
     # === GIS 功能: 附近预警 ===
     @action(detail=False, methods=['get'])
@@ -330,36 +332,27 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [permissions.IsAdminUser()]
+        return super().get_permissions()
+
     # POST /api/products/{id}/redeem/
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def redeem(self, request, pk=None):
-        product = self.get_object()
-        user = request.user
-
+        product = get_object_or_404(self.get_queryset(), pk=pk)
+        request_key = request.headers.get('Idempotency-Key')
+        if request_key is None:
+            request_key = uuid4().hex
+        elif not re.fullmatch('[A-Za-z0-9_-]{1,80}', request_key):
+            return Response({'error': '兑换请求编号格式无效'}, status=400)
         try:
-            profile = user.profile
-        except UserProfile.DoesNotExist:
-            return Response({"error": "用户档案不存在"}, status=400)
-
-        # 1. 校验库存
-        if product.stock <= 0:
-            return Response({"error": "商品库存不足"}, status=400)
-
-        # 2. 校验积分
-        if profile.score < product.price:
-            return Response({"error": f"积分不足，还需要 {product.price - profile.score} 分"}, status=400)
-
-        # 3. 执行交易
-        profile.score -= product.price
-        profile.save()
-
-        product.stock -= 1
-        product.save()
-
-        return Response({
-            "message": f"成功兑换: {product.name}",
-            "remaining_score": profile.score
-        })
+            name, remaining = redeem_product(request.user.pk, product.pk, request_key)
+        except RedemptionError as exc:
+            return Response({'error': str(exc)}, status=400)
+        except Product.DoesNotExist:
+            return Response({'error': '商品不存在'}, status=404)
+        return Response({'message': f'成功兑换: {name}', 'remaining_score': remaining})
 
 
 # ==========================================
@@ -642,7 +635,7 @@ class SpeciesImageViewSet(viewsets.ReadOnlyModelViewSet):
 # 5. 用户档案视图 /api/profiles/
 # ==========================================
 class UserProfileUpdateScoreSerializer(serializers.Serializer):
-    score = serializers.IntegerField(required=True)
+    score = serializers.IntegerField(min_value=0, max_value=2147483647)
 
 
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
@@ -657,11 +650,10 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
             profile, _ = UserProfile.objects.get_or_create(user=request.user)
             score = request.data.get('score')
             if score is not None:
-                try:
-                    profile.score = int(score)
-                    profile.save(update_fields=['score'])
-                except (TypeError, ValueError):
-                    return Response({'score': ['请输入有效积分']}, status=400)
+                serializer = UserProfileUpdateScoreSerializer(data={'score': score})
+                serializer.is_valid(raise_exception=True)
+                profile.game_score = serializer.validated_data['score']
+                profile.save(update_fields=['game_score'])
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
@@ -671,9 +663,9 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = UserProfileUpdateScoreSerializer(data=request.data)
         if serializer.is_valid():
             profile, _ = UserProfile.objects.get_or_create(user=request.user)
-            profile.score = serializer.validated_data['score']
-            profile.save(update_fields=['score'])
-            return Response({'score': profile.score})
+            profile.game_score = serializer.validated_data['score']
+            profile.save(update_fields=['game_score'])
+            return Response({'score': profile.score, 'game_score': profile.game_score})
         return Response(serializer.errors, status=400)
 
     # PUT/PATCH /api/profiles/update_profile/

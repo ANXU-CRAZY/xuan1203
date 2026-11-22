@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from uuid import uuid4
 from django.contrib.gis.geos import Point
 from leaflet.admin import LeafletGeoAdmin
 from import_export import resources, fields
@@ -7,7 +9,7 @@ from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ForeignKeyWidget
 # 👇 引入所有用到的模型 (记得加 Product)
 from .models import SpeciesInfo, WetlandZone, MonitoringRoute, UserProfile, ObservationRecord, AIDetectionResult, \
-    Product, SpeciesImage
+    Product, SpeciesImage, PointTransaction
 from .protection import normalize_protection_level
 from datetime import datetime
 
@@ -26,6 +28,9 @@ admin.site.logout_template = 'admin/platform_logged_out.html'
 
 # (1) 观测记录导入配置
 class ObservationRecordResource(resources.ModelResource):
+    def get_queryset(self):
+        return super().get_queryset().filter(client_observation_id__isnull=True)
+
     # 兼容不同来源的 CSV 表头，统一转换成内部使用的标准列名。
     HEADER_ALIASES = {
         '中文名': '中文名',
@@ -240,6 +245,9 @@ class ObservationRecordAdmin(ImportExportModelAdmin):
     search_fields = ('species__name_cn', 'zone__name', 'uploader__username')
     date_hierarchy = 'observation_time'
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(client_observation_id__isnull=True)
+
     # 注册批量操作动作
     actions = ['approve_records', 'reject_records']
 
@@ -267,6 +275,26 @@ class UserProfileAdmin(admin.ModelAdmin):
     # 👇 这里的字段名改为 score (对应新 Model)
     list_display = ('user', 'score', 'avatar')
     search_fields = ('user__username',)
+    readonly_fields = ('total_contribution_points', 'completed_observation_count', 'game_score')
+
+    @transaction.atomic
+    def save_model(self, request, obj, form, change):
+        previous = UserProfile.objects.select_for_update().get(pk=obj.pk) if change else None
+        if previous:
+            obj.total_contribution_points = previous.total_contribution_points
+            obj.completed_observation_count = previous.completed_observation_count
+            obj.game_score = previous.game_score
+            if 'score' not in form.changed_data:
+                obj.score = previous.score
+        super().save_model(request, obj, form, change)
+        difference = obj.score - (previous.score if previous else 0)
+        if difference:
+            PointTransaction.objects.create(
+                user=obj.user, transaction_type=PointTransaction.Kind.ADJUSTMENT,
+                points_change=difference, available_points_after=obj.score,
+                total_points_after=obj.total_contribution_points,
+                idempotency_key=f'adjustment:{uuid4().hex}', description='后台余额调整',
+            )
 
 
 # 👇 新增：商品后台管理

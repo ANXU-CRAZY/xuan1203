@@ -35,7 +35,7 @@ class Command(BaseCommand):
         batch_size = options['batch_size']
         status = options['status']
 
-        queryset = ObservationRecord.objects.select_related('species', 'zone').order_by('id')
+        queryset = ObservationRecord.objects.filter(client_observation_id__isnull=True).select_related('species', 'zone').order_by('id')
         if status != 'all':
             queryset = queryset.filter(status=status)
 

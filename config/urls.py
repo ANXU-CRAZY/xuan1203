@@ -7,6 +7,7 @@ from django.views.generic import RedirectView
 from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from app_monitor import account, password_reset
+from app_monitor.contribution_api import ContributionViewSet
 from app_monitor import monitoring, monitoring_report
 from app_monitor import tower_coverage
 from app_monitor import games
@@ -75,6 +76,12 @@ urlpatterns = [
     path('api/monitoring/tower-coverage/', tower_coverage.uncovered, name='monitoring_tower_coverage'),
     path('api/monitoring/buffer.csv', monitoring.buffer_csv, name='monitoring_buffer_csv'),
     path('api/monitoring/records/<int:record_id>/', monitoring.detail, name='monitoring_detail'),
+    path('api/observations/upload-session/', ContributionViewSet.as_view({'post': 'start'}), name='contribution-upload-session'),
+    path('api/observations/mine/', ContributionViewSet.as_view({'get': 'mine'}), name='contribution-mine'),
+    path('api/observations/<int:observation_id>/complete/', ContributionViewSet.as_view({'post': 'complete'}), name='contribution-complete'),
+    path('api/observations/<int:observation_id>/upload-status/', ContributionViewSet.as_view({'get': 'upload_status'}), name='contribution-upload-status'),
+    path('api/observations/<int:observation_id>/contribution/', ContributionViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='contribution-detail'),
+    path('api/users/me/contribution-profile/', ContributionViewSet.as_view({'get': 'profile'}), name='contribution-profile'),
     path('api/', include(router.urls)),
 
     # 专为前端准备的登录接口

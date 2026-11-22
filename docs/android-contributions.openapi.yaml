@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: 方舟云图 Android 观测贡献接口
+  version: 1.0.0
+  description: |
+    业务请求使用 Django Token 鉴权。图片 PUT 请求发往 uploadUrl，使用接口返回的所有请求头和原始文件字节。
+    不向对象存储附加平台 Token。观测与原图为私有数据。示例 URL 和哈希均为占位。
+servers:
+  - url: https://arklab-geoai.org.cn/platform/api
+    description: 正式服务
+  - url: http://127.0.0.1:8012/api
+    description: 本机开发（Android 模拟器中通常改为 10.0.2.2）
+security:
+  - PlatformToken: []
+paths:
+  /login/:
+    post:
+      operationId: loginForToken
+      summary: 获取平台 Token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: {type: string}
+                password: {type: string, format: password}
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token: {type: string}
+        '400': {$ref: '#/components/responses/BadRequest'}
+  /observations/upload-session/:
+    post:
+      operationId: createObservationUpload
+      summary: 创建观测或刷新待上传图片的签名
+      description: 同一用户与同一 UUID 复用原始清单。已验证图片无需重新上传，已完成时返回空的 uploads。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UploadSessionInput'}
+            example:
+              clientObservationId: f0d35f8e-e95f-4594-959b-75f26d17ed93
+              title: 湿地观测
+              capturedAt: '2026-11-22T10:30:00+08:00'
+              location: {longitude: 113.6, latitude: 34.9, accuracy: 8.5, source: gps}
+              device: {phoneModel: Android, thermalDeviceModel: E20 Plus}
+              media:
+                - clientMediaId: 8dfeb84b-38af-491b-8f1a-6adf81e79dc9
+                  type: rgb
+                  pairGroupId: 2c99774f-232d-4dd1-89ba-1e82fe1fc105
+                  filename: rgb.jpg
+                  mimeType: image/jpeg
+                  fileSize: 3456789
+                  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      responses:
+        '200': {$ref: '#/components/responses/UploadSession'}
+        '201': {$ref: '#/components/responses/UploadSession'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+  /observations/{observationId}/complete/:
+    parameters:
+      - $ref: '#/components/parameters/ObservationId'
+    post:
+      operationId: completeObservationUpload
+      summary: 校验全部图片、完成观测并发放积分
+      description: 提交完整清单，包括已经验证的图片。重试不会重复发分。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [media]
+              properties:
+                media:
+                  type: array
+                  minItems: 1
+                  maxItems: 3
+                  items:
+                    type: object
+                    required: [clientMediaId, objectKey, sha256]
+                    properties:
+                      clientMediaId: {type: string, format: uuid}
+                      objectKey: {type: string, maxLength: 300}
+                      sha256: {$ref: '#/components/schemas/Sha256'}
+      responses:
+        '200':
+          description: 完成结果和当前积分
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ObservationState'
+                  - $ref: '#/components/schemas/ContributionProfile'
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: 清单不匹配，或部分图片未验证。存在逐图校验状态时按 media 重试。
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/ObservationState'
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+  /observations/{observationId}/upload-status/:
+    parameters:
+      - $ref: '#/components/parameters/ObservationId'
+    get:
+      operationId: getObservationUploadStatus
+      summary: 查询观测和各图片的状态
+      responses:
+        '200':
+          description: 观测状态
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ObservationState'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /observations/mine/:
+    get:
+      operationId: listMyContributions
+      summary: 分页查询当前用户的 APP 观测
+      parameters:
+        - name: page
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 1000000, default: 1}
+        - name: pageSize
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 50, default: 20}
+        - name: status
+          in: query
+          schema: {$ref: '#/components/schemas/UploadStatus'}
+      responses:
+        '200':
+          description: 个人观测列表，含短时缩略图地址
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, page, pageSize, results]
+                properties:
+                  count: {type: integer}
+                  page: {type: integer}
+                  pageSize: {type: integer}
+                  results:
+                    type: array
+                    items: {$ref: '#/components/schemas/ObservationSummary'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+  /observations/{observationId}/contribution/:
+    parameters:
+      - $ref: '#/components/parameters/ObservationId'
+    get:
+      operationId: getObservationContribution
+      summary: 查询本人观测详情及短时图片地址
+      responses:
+        '200':
+          description: 观测详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ObservationSummary'
+                  - type: object
+                    properties:
+                      description: {type: string}
+                      device: {$ref: '#/components/schemas/Device'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+    delete:
+      operationId: deleteObservationContribution
+      summary: 软删除本人观测
+      description: 删除后停止签发访问地址，已签发地址正常到期。历史积分保留。
+      responses:
+        '204': {description: 删除成功或已删除}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /users/me/contribution-profile/:
+    get:
+      operationId: getMyContributionProfile
+      summary: 查询可用积分、累计贡献和段位
+      responses:
+        '200':
+          description: 贡献资料
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ContributionProfile'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /products/{productId}/redeem/:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema: {type: integer, format: int64, minimum: 1}
+    post:
+      operationId: redeemProduct
+      summary: 用可用积分兑换商品
+      description: 累计贡献和段位保持稳定。APP 重试同一交易时复用 Idempotency-Key。
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema: {type: string, pattern: '^[A-Za-z0-9_-]{1,80}$'}
+      responses:
+        '200':
+          description: 兑换结果与兑换时的余额
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message, remaining_score]
+                properties:
+                  message: {type: string}
+                  remaining_score: {type: integer}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+components:
+  securitySchemes:
+    PlatformToken:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 使用完整的 Token 前缀，例如 Token abc123。
+  parameters:
+    ObservationId:
+      name: observationId
+      in: path
+      required: true
+      schema: {type: integer, format: int64, minimum: 1}
+  responses:
+    UploadSession:
+      description: 观测编号、状态和未验证图片的预签名任务
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [observationId, status, uploads]
+            properties:
+              observationId: {type: integer, format: int64}
+              status: {$ref: '#/components/schemas/UploadStatus'}
+              uploads:
+                type: array
+                items: {$ref: '#/components/schemas/UploadTask'}
+    BadRequest:
+      description: 字段无效或操作条件不满足
+      content:
+        application/json:
+          schema: {type: object, additionalProperties: true}
+    Unauthorized:
+      description: 未登录或令牌失效
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: 记录不存在或调用人无权访问
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Conflict:
+      description: 清单与原始请求不一致
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    StorageUnavailable:
+      description: 存储尚未配置或暂时不可用，可稍后重试
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: {type: string}
+        detail: {type: string}
+      anyOf:
+        - required: [error]
+        - required: [detail]
+    Sha256: {type: string, pattern: '^[0-9a-fA-F]{64}$'}
+    UploadStatus: {type: string, enum: [uploading, failed, completed]}
+    MediaKind: {type: string, enum: [rgb, thermal, thumbnail]}
+    Location:
+      type: object
+      nullable: true
+      required: [longitude, latitude]
+      properties:
+        longitude: {type: number, format: double, minimum: -180, maximum: 180}
+        latitude: {type: number, format: double, minimum: -90, maximum: 90}
+        accuracy: {type: number, format: double, minimum: 0, maximum: 100000, nullable: true}
+        source: {type: string, maxLength: 30}
+    Device:
+      type: object
+      properties:
+        phoneModel: {type: string, maxLength: 100}
+        thermalDeviceModel: {type: string, maxLength: 100}
+    UploadSessionInput:
+      type: object
+      required: [clientObservationId, title, capturedAt, media]
+      properties:
+        clientObservationId: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 120}
+        description: {type: string, maxLength: 4000}
+        speciesName: {type: string, maxLength: 100}
+        capturedAt: {type: string, format: date-time}
+        location: {$ref: '#/components/schemas/Location'}
+        device: {$ref: '#/components/schemas/Device'}
+        media:
+          type: array
+          minItems: 1
+          maxItems: 3
+          description: 至少一张原图，每种类型最多一张，全组使用相同 pairGroupId。
+          items: {$ref: '#/components/schemas/MediaInput'}
+    MediaInput:
+      type: object
+      required: [clientMediaId, type, pairGroupId, filename, mimeType, fileSize, sha256]
+      properties:
+        clientMediaId: {type: string, format: uuid}
+        type: {$ref: '#/components/schemas/MediaKind'}
+        pairGroupId: {type: string, format: uuid}
+        filename: {type: string, maxLength: 200}
+        mimeType: {type: string, enum: [image/jpeg, image/png, image/webp]}
+        fileSize: {type: integer, minimum: 1, maximum: 20971520}
+        sha256: {$ref: '#/components/schemas/Sha256'}
+    UploadTask:
+      type: object
+      required: [clientMediaId, objectKey, uploadUrl, method, headers, expiresAt]
+      properties:
+        clientMediaId: {type: string, format: uuid}
+        objectKey: {type: string}
+        uploadUrl: {type: string, format: uri}
+        method: {type: string, enum: [PUT]}
+        headers:
+          type: object
+          required: [Content-Type, Content-Length, x-amz-checksum-sha256]
+          properties:
+            Content-Type: {type: string}
+            Content-Length: {type: string}
+            x-amz-checksum-sha256: {type: string, format: byte}
+        expiresAt: {type: string, format: date-time}
+    ObservationState:
+      type: object
+      required: [observationId, clientObservationId, status, uploadError, pointsAwarded, retryable, media]
+      properties:
+        observationId: {type: integer, format: int64}
+        clientObservationId: {type: string, format: uuid}
+        status: {$ref: '#/components/schemas/UploadStatus'}
+        uploadError: {type: string}
+        pointsAwarded: {type: integer}
+        retryable: {type: boolean}
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              clientMediaId: {type: string, format: uuid}
+              objectKey: {type: string}
+              type: {$ref: '#/components/schemas/MediaKind'}
+              pairGroupId: {type: string, format: uuid}
+              status: {type: string, enum: [pending, verified, failed]}
+              error: {type: string}
+              retryable: {type: boolean}
+    ObservationSummary:
+      allOf:
+        - $ref: '#/components/schemas/ObservationState'
+        - type: object
+          properties:
+            title: {type: string}
+            speciesName: {type: string}
+            capturedAt: {type: string, format: date-time}
+            paired: {type: boolean}
+            location: {$ref: '#/components/schemas/Location'}
+            rgbImageUrl: {type: string, format: uri, nullable: true}
+            thermalImageUrl: {type: string, format: uri, nullable: true}
+            thumbnailUrl: {type: string, format: uri, nullable: true}
+    ContributionProfile:
+      type: object
+      required: [availablePoints, totalContributionPoints, completedObservationCount, rank]
+      properties:
+        availablePoints: {type: integer}
+        totalContributionPoints: {type: integer, format: int64, minimum: 0}
+        completedObservationCount: {type: integer, format: int64, minimum: 0}
+        rank:
+          type: object
+          required: [code, name, minimumPoints, maximumPoints, nextRankName, nextRankPoints, pointsToNextRank, progressPercent]
+          properties:
+            code: {type: string, enum: [WETLAND_SPROUT, PATROL_GREEN_FEATHER, WATER_SILVER_FEATHER, ECO_GOLD_WING, ARK_GUARDIAN]}
+            name: {type: string}
+            minimumPoints: {type: integer}
+            maximumPoints: {type: integer, nullable: true}
+            nextRankName: {type: string, nullable: true}
+            nextRankPoints: {type: integer, nullable: true}
+            pointsToNextRank: {type: integer}
+            progressPercent: {type: integer, minimum: 0, maximum: 100}

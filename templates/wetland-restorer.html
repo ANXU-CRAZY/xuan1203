@@ -1542,7 +1542,7 @@
                 var token = ArkGameStorage.getItem('yb_token');
                 if (!token) return;
                 $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){
-                    var ns = (d.score||0) + Math.floor(score);
+                    var ns = (d.game_score||0) + Math.floor(score);
                     $.ajax({url:'/api/profiles/me/',method:'PATCH',headers:{'Authorization':'Token '+token},contentType:'application/json',data:JSON.stringify({score:ns})});
                 }});
             },

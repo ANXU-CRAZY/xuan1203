@@ -1683,7 +1683,7 @@
                     method: 'GET',
                     headers: { 'Authorization': 'Token ' + token },
                     success: (data) => {
-                        const newScore = (data.score || 0) + this.score;
+                        const newScore = (data.game_score || 0) + this.score;
                         $.ajax({
                             url: '/api/profiles/me/',
                             method: 'PATCH',

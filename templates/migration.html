@@ -986,7 +986,7 @@
                 if(!token) return;
                 var self=this;
                 $.ajax({url:'/api/profiles/me/',method:'GET',headers:{'Authorization':'Token '+token},success:function(d){
-                    var ns=(d.score||0)+self.score;
+                    var ns=(d.game_score||0)+self.score;
                     $.ajax({url:'/api/profiles/me/',method:'PATCH',headers:{'Authorization':'Token '+token},contentType:'application/json',data:JSON.stringify({score:ns})});
                 }});
             },

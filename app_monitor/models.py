@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import Q
 from .protection import normalize_protection_level
 
 
@@ -130,6 +131,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="用户")
     # 统一使用 score 作为积分字段名，避免歧义
     score = models.IntegerField(default=0, verbose_name="当前积分")
+    game_score = models.PositiveIntegerField(default=0)
+    total_contribution_points = models.PositiveBigIntegerField(default=0)
+    completed_observation_count = models.PositiveBigIntegerField(default=0)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="头像")
 
     class Meta:
@@ -151,8 +155,13 @@ def create_user_profile(sender, instance, created, **kwargs):
 # 4. 业务数据 (观测记录)
 # ====================
 class ObservationRecord(models.Model):
-    species = models.ForeignKey(SpeciesInfo, on_delete=models.CASCADE, verbose_name="物种")
-    zone = models.ForeignKey(WetlandZone, on_delete=models.CASCADE, verbose_name="监测点位")
+    class UploadStatus(models.TextChoices):
+        UPLOADING = 'uploading', '上传中'
+        COMPLETED = 'completed', '已完成'
+        FAILED = 'failed', '失败'
+
+    species = models.ForeignKey(SpeciesInfo, on_delete=models.CASCADE, null=True, verbose_name="物种")
+    zone = models.ForeignKey(WetlandZone, on_delete=models.CASCADE, null=True, verbose_name="监测点位")
     observation_time = models.DateField(verbose_name="观测日期")
     count = models.IntegerField(default=1, verbose_name="数量")
     image = models.ImageField(upload_to='observations/', blank=True, null=True, verbose_name="现场照片")
@@ -194,13 +203,40 @@ class ObservationRecord(models.Model):
         related_name='reported_observations'
     )
 
+    client_observation_id = models.UUIDField(null=True, editable=False)
+    upload_manifest_hash = models.CharField(max_length=64, blank=True, editable=False)
+    title = models.CharField(max_length=120, blank=True, editable=False)
+    submitted_species_name = models.CharField(max_length=100, blank=True, editable=False)
+    captured_at = models.DateTimeField(null=True, editable=False)
+    location_accuracy = models.FloatField(null=True, editable=False)
+    location_source = models.CharField(max_length=30, blank=True, editable=False)
+    device_model = models.CharField(max_length=100, blank=True, editable=False)
+    thermal_device_model = models.CharField(max_length=100, blank=True, editable=False)
+    upload_status = models.CharField(max_length=12, choices=UploadStatus, blank=True, editable=False)
+    upload_error = models.CharField(max_length=160, blank=True, editable=False)
+    points_awarded = models.PositiveIntegerField(default=0, editable=False)
+    upload_created_at = models.DateTimeField(null=True, editable=False)
+    upload_updated_at = models.DateTimeField(null=True, editable=False)
+    deleted_at = models.DateTimeField(null=True, editable=False)
+
     class Meta:
         ordering = ['-observation_time']
         verbose_name = "观测记录"
         verbose_name_plural = "观测记录"
+        constraints = [
+            models.UniqueConstraint(fields=['uploader', 'client_observation_id'],
+                                    name='obs_client_id_per_uploader'),
+            models.CheckConstraint(
+                condition=(Q(client_observation_id__isnull=True, species__isnull=False, zone__isnull=False)
+                           | Q(client_observation_id__isnull=False, status='pending')),
+                name='obs_legacy_refs_or_private_capture',
+            ),
+        ]
+        indexes = [models.Index(fields=['uploader', '-id'], condition=Q(client_observation_id__isnull=False),
+                                name='obs_capture_owner_idx')]
 
     def __str__(self):
-        return f"{self.observation_time} - {self.species.name_cn}"
+        return f"{self.observation_time} - {self.species.name_cn if self.species_id else self.title}"
 
     def save(self, *args, **kwargs):
         if self.location:
@@ -209,6 +245,61 @@ class ObservationRecord(models.Model):
         elif self.longitude is not None and self.latitude is not None:
             self.location = Point(self.longitude, self.latitude, srid=4326)
         super().save(*args, **kwargs)
+
+
+class ObservationMedia(models.Model):
+    class Kind(models.TextChoices):
+        RGB = 'rgb', '可见光'
+        THERMAL = 'thermal', '红外'
+        THUMBNAIL = 'thumbnail', '缩略图'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', '待上传'
+        VERIFIED = 'verified', '已验证'
+        FAILED = 'failed', '失败'
+
+    observation = models.ForeignKey(ObservationRecord, related_name='media', on_delete=models.CASCADE)
+    client_media_id = models.UUIDField()
+    kind = models.CharField(max_length=10, choices=Kind)
+    pair_group_id = models.UUIDField()
+    storage_provider = models.CharField(max_length=16)
+    bucket_name = models.CharField(max_length=63)
+    upload_key = models.CharField(max_length=300, unique=True)
+    object_key = models.CharField(max_length=300, unique=True)
+    original_filename = models.CharField(max_length=200)
+    mime_type = models.CharField(max_length=30)
+    file_size = models.PositiveIntegerField()
+    sha256 = models.CharField(max_length=64, blank=True)
+    width = models.PositiveIntegerField(null=True)
+    height = models.PositiveIntegerField(null=True)
+    upload_status = models.CharField(max_length=10, choices=Status, default=Status.PENDING)
+    upload_error = models.CharField(max_length=160, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['observation', 'client_media_id'], name='obs_media_client_id'),
+            models.UniqueConstraint(fields=['observation', 'kind'], name='obs_media_one_per_kind'),
+        ]
+
+
+class PointTransaction(models.Model):
+    class Kind(models.TextChoices):
+        OBSERVATION = 'observation_reward', '观测奖励'
+        REDEEM = 'redeem', '兑换'
+        ADJUSTMENT = 'adjustment', '调整'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    observation = models.ForeignKey(ObservationRecord, null=True, on_delete=models.SET_NULL)
+    product = models.ForeignKey('Product', null=True, on_delete=models.SET_NULL)
+    transaction_type = models.CharField(max_length=20, choices=Kind)
+    points_change = models.IntegerField()
+    available_points_after = models.IntegerField()
+    total_points_after = models.PositiveBigIntegerField()
+    idempotency_key = models.CharField(max_length=170, unique=True)
+    description = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 # ====================

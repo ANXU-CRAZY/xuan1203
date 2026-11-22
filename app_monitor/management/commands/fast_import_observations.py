@@ -146,7 +146,7 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             if options['replace']:
-                deleted, _ = ObservationRecord.objects.all().delete()
+                deleted, _ = ObservationRecord.objects.filter(client_observation_id__isnull=True).delete()
                 self.stdout.write(self.style.WARNING(f'Existing observation records deleted: {deleted}'))
 
             species_map = self.ensure_species(parsed['species'], batch_size)

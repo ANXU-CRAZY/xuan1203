@@ -1,6 +1,11 @@
 import os
 import platform  # 引入系统判断模块
 from pathlib import Path
+from .contribution_settings import (
+    CONTRIBUTION_STORAGE_BUCKET, CONTRIBUTION_STORAGE_REGION,
+    CONTRIBUTION_UPLOAD_TTL, CONTRIBUTION_DOWNLOAD_TTL,
+    CONTRIBUTION_MAX_IMAGE_BYTES, CONTRIBUTION_MAX_IMAGE_PIXELS, CONTRIBUTION_REWARDS,
+)
 
 # 构建路径
 BASE_DIR = Path(__file__).resolve().parent.parent

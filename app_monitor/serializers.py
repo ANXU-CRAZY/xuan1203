@@ -176,11 +176,12 @@ class ProductSerializer(serializers.ModelSerializer):
 class UserInfoSerializer(serializers.ModelSerializer):
     # 从关联的 UserProfile 表中读取积分和头像
     score = serializers.IntegerField(source='profile.score', read_only=True)
+    game_score = serializers.IntegerField(source='profile.game_score', read_only=True)
     avatar = serializers.ImageField(source='profile.avatar', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'score', 'avatar', 'is_staff', 'date_joined']
+        fields = ['id', 'username', 'email', 'score', 'game_score', 'avatar', 'is_staff', 'date_joined']
         read_only_fields = ['is_staff', 'date_joined']
 
 
@@ -264,7 +265,7 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
             'reporter_name',  # 🚑 旧前端救命字段
             'uploader_name'  # ✨ 新后台字段
         ]
-        read_only_fields = ['status', 'uploader', 'observation_time']
+        read_only_fields = ['status', 'uploader']
 
     # ---------------------------------------------------
     # 逻辑实现：无论数据怎么存，都转换成前端能看懂的样子
