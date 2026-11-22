@@ -5,6 +5,7 @@ info:
   description: |
     业务请求使用 Django Token 鉴权。图片 PUT 请求发往 uploadUrl，使用接口返回的所有请求头和原始文件字节。
     不向对象存储附加平台 Token。观测与原图为私有数据。示例 URL 和哈希均为占位。
+    正式环境尚未配置 S3 时，上传任务接口返回 503。登录、列表和贡献资料可独立联调。
 servers:
   - url: https://arklab-geoai.org.cn/platform/api
     description: 正式服务
@@ -319,7 +320,12 @@ components:
         description: {type: string, maxLength: 4000}
         speciesName: {type: string, maxLength: 100}
         capturedAt: {type: string, format: date-time}
-        location: {$ref: '#/components/schemas/Location'}
+        location:
+          description: 无定位时省略或传 null，有坐标但无精度时省略 accuracy。
+          allOf:
+            - $ref: '#/components/schemas/Location'
+            - properties:
+                accuracy: {type: number, minimum: 0, maximum: 100000}
         device: {$ref: '#/components/schemas/Device'}
         media:
           type: array
