@@ -193,13 +193,18 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     });
     panel.addEventListener('keydown', event => { if (event.key === 'Escape') openPanel(false); });
     function discardDraft() {
-        if (draft) status.textContent = '描述已修改，请重新生成方案。';
+        status.textContent = draft ? '描述已修改，请重新发送。' : '';
         draft = null;
         preview.hidden = confirm.hidden = true;
-        run.hidden = false;
     }
     example.onclick = () => { discardDraft(); input.value = EXAMPLE; input.focus(); };
     input.addEventListener('input', discardDraft);
+    input.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ||
+            event.isComposing || event.keyCode === 229) return;
+        event.preventDefault();
+        if (!task && !event.repeat) form.requestSubmit(run);
+    });
     stop.onclick = () => task?.abort();
     window.addEventListener('pagehide', () => task?.abort());
 
@@ -304,9 +309,8 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             draft = {client, message, version, plan, refs, nativeFrame};
             previewSteps.replaceChildren(...rows);
             status.textContent = (plan.goal ? '任务理解：' + plan.goal + '。' : '') + '请核对下列工具和参数。';
-            run.hidden = true;
             preview.hidden = confirm.hidden = false;
-            status.scrollIntoView({block: 'start'});
+            scroll.scrollTop = 0;
         } catch (error) {
             status.textContent = signal.aborted ? '已停止生成方案。' :
                 error.name === 'TimeoutError' ? '方案生成超时，请稍后重试。' : error.message;
@@ -321,7 +325,6 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         const {client, message, version, plan, refs, nativeFrame} = draft;
         draft = null;
         confirm.hidden = true;
-        run.hidden = false;
         task = new AbortController();
         const {signal} = task;
         setBusy(true);

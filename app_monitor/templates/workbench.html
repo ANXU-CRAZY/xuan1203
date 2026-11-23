@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-brand-swap5">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/background.css' %}?v=20261115-1">
-    <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=8">
 </head>
 <body data-ark-page="workbench">
 <header class="wb-header">
@@ -63,26 +63,24 @@
             <span class="wb-agent-grip" aria-hidden="true"></span>
             <button type="button" class="wb-icon-button" id="wb-agent-close" aria-label="收起小舟智能体">×</button>
         </div>
-        <div class="wb-agent-content">
         <form id="wb-agent-form" data-plan-url="{% url 'workbench_agent_plan' %}">
             {% csrf_token %}
             <label for="wb-agent-input">用一句话描述地图任务</label>
-            <textarea id="wb-agent-input" rows="3" maxlength="800" required placeholder="例如：筛出研究区范围内的水鸟观测点"></textarea>
-            <div class="wb-agent-examples">
-                <button type="button" id="wb-agent-example">试一句日常说法</button>
+            <textarea id="wb-agent-input" rows="3" maxlength="800" enterkeyhint="send" required placeholder="例如：筛出研究区范围内的水鸟观测点"></textarea>
+            <div class="wb-agent-actions">
+                <button type="button" id="wb-agent-example">示例</button>
+                <button type="button" id="wb-agent-stop" class="wb-button" hidden>停止</button>
+                <button type="submit" id="wb-agent-run" class="wb-button primary" title="发送（Enter）">发送</button>
+                <button type="button" id="wb-agent-confirm" class="wb-button primary" hidden>确认执行</button>
             </div>
         </form>
+        <div class="wb-agent-content">
         <p id="wb-agent-status" role="status" aria-live="polite"></p>
         <section id="wb-agent-plan" class="wb-agent-plan" hidden>
             <h3>GIS 工具方案</h3>
             <ol id="wb-agent-preview"></ol>
         </section>
         <ol id="wb-agent-steps" class="wb-agent-steps" aria-label="执行步骤" aria-live="polite"></ol>
-        </div>
-        <div class="wb-agent-actions">
-            <button type="button" id="wb-agent-stop" class="wb-button" hidden>停止</button>
-            <button type="submit" id="wb-agent-run" form="wb-agent-form" class="wb-button primary">生成方案</button>
-            <button type="button" id="wb-agent-confirm" class="wb-button primary" hidden>确认执行</button>
         </div>
     </aside>
     <div id="wb-loading" class="wb-loading" role="status" aria-live="polite">
@@ -122,6 +120,6 @@
 </footer>
 <div id="wb-toast" class="wb-toast" role="status" aria-live="polite" hidden></div>
 {{ analysis_labels|json_script:"wb-analysis-labels" }}
-<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261123-tool-plan"></script>
+<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261123-agent-send"></script>
 </body>
 </html>
