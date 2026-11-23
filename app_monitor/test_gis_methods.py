@@ -23,6 +23,11 @@ class MethodRoutingTests(SimpleTestCase):
                          [dict(tool='buffer', layer='L1', meters=2000),
                           dict(tool='points_within', layer='L2', area='R1'), dict(tool='count', layer='R2')])
 
+    def test_plain_language_translates_to_verified_gis_steps(self):
+        self.assertEqual(self.plan('找出离黄河走势 2 公里内的观测点，数一下有几条记录。')['steps'],
+                         [dict(tool='buffer', layer='L1', meters=2000),
+                          dict(tool='points_within', layer='L2', area='R1'), dict(tool='count', layer='R2')])
+
     @patch('app_monitor.workbench_agent._request_deepseek')
     def test_direct_plans_are_available_to_native_without_model_call(self, model):
         def query(message):
@@ -70,6 +75,20 @@ class MethodRoutingTests(SimpleTestCase):
             self.assertNotIn(wrong, prompt)
         self.assertNotIn('run_algorithm', guidance('地图核密度', native=True, tools=set()))
 
+    @patch('app_monitor.workbench_agent._request_deepseek')
+    def test_native_plan_supports_registered_methods_and_validates_inputs(self, model):
+        def query(step):
+            model.return_value = (json.dumps({'goal': '识别观测点聚集区域', 'steps': [step]}), None)
+            return self.client.post('/workbench/agent/plan/', {
+                'message': '帮我看看这些鸟在哪些地方扎堆', 'allowNative': True, 'layers': self.layers,
+            }, content_type='application/json')
+
+        step = dict(tool='native', method='kernel-density', inputs=['L2'], parameters={'权重': '等权'})
+        self.assertEqual(query(step).json()['steps'], [step])
+        self.assertIn('只输出待确认的方案', model.call_args.args[0][0]['content'])
+        self.assertEqual(query({**step, 'inputs': ['R1']}).status_code, 422)
+        self.assertEqual(query({**step, 'method': 'unregistered-method'}).status_code, 422)
+
     @patch('app_monitor.workbench_agent._load_deepseek_local_env', return_value={'DEEPSEEK_API_KEY': 'test'})
     @patch('app_monitor.workbench_agent.urlrequest.urlopen')
     def test_native_proxy_routes_latest_task_using_advertised_tools(self, upstream, _env):
@@ -85,6 +104,23 @@ class MethodRoutingTests(SimpleTestCase):
         sent = json.loads(upstream.call_args.args[0].data)
         self.assertIn('slope from elevation DEM', sent['messages'][0]['content'])
         self.assertNotIn('kernel-density', sent['messages'][0]['content'])
+
+    @patch('app_monitor.workbench_agent._load_deepseek_local_env', return_value={'DEEPSEEK_API_KEY': 'test'})
+    @patch('app_monitor.workbench_agent.urlrequest.urlopen')
+    def test_confirmed_native_step_only_offers_selected_tool_family(self, upstream, _env):
+        stream = io.BytesIO(b'OK')
+        stream.headers = {'Content-Type': 'text/event-stream'}
+        upstream.return_value = stream
+        tool = lambda name: {'type': 'function', 'function': {'name': name,
+            'parameters': {'properties': {'id': {'type': 'string'}}}}}
+        response = self.client.post('/ai/v1/chat/completions', {
+            'messages': [{'role': 'user', 'content': 'Current layers:\nUser request: 已确认 GIS 工具：kernel-density'}],
+            'tools': [tool(name) for name in ('list_layers', 'run_algorithm', 'apply_symbology')],
+        }, content_type='application/json')
+        self.assertEqual(b''.join(response.streaming_content), b'OK')
+        functions = [entry['function'] for entry in json.loads(upstream.call_args.args[0].data)['tools']]
+        self.assertEqual([entry['name'] for entry in functions], ['list_layers', 'run_algorithm'])
+        self.assertEqual(functions[1]['parameters']['properties']['id']['enum'], ['kernel-density'])
 
     @patch('app_monitor.workbench_agent._request_deepseek')
     def test_bad_model_field_rejected(self, model):

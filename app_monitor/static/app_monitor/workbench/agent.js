@@ -1,5 +1,3 @@
-import {createRiverSurvey} from './river-survey.js';
-
 const TOOL_NAMES = {
     layers: '查看图层', overview: '研究区全览', locate: '定位图层', visibility: '设置图层显隐',
     basemap: '切换底图', buffer: '生成缓冲区', points_within: '筛选区内点',
@@ -12,7 +10,7 @@ const VECTOR_NAMES = {
     clip: '裁剪', intersection: '求交', difference: '擦除', union: '合并',
 };
 Object.assign(TOOL_NAMES, VECTOR_NAMES);
-const EXAMPLE = '给黄河走势做 2 公里缓冲区，筛出并统计区内水鸟观测点，定位缓冲区。';
+const EXAMPLE = '找出离黄河走势 2 公里内的水鸟观测点，数一下有几条记录。';
 const NATIVE_TOOL_NAMES = {
     list_layers: '读取图层', list_algorithms: '查找空间分析工具',
     run_algorithm: '执行矢量分析', list_whitebox_tools: '查找栅格分析工具',
@@ -32,6 +30,7 @@ function describeNativeTool(update, layerNames) {
 }
 
 const ANALYSIS_LABELS = JSON.parse(document.getElementById('wb-analysis-labels')?.textContent || '{}');
+const STATISTICS_ONLY = new Set(['average-nearest-neighbor', 'global-morans-i', 'run_sql']);
 
 function moveWithin(workspace, element, x, y) {
     const margin = 8;
@@ -144,13 +143,16 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     const input = document.getElementById('wb-agent-input');
     const run = document.getElementById('wb-agent-run');
     const stop = document.getElementById('wb-agent-stop');
+    const confirm = document.getElementById('wb-agent-confirm');
+    const preview = document.getElementById('wb-agent-plan');
+    const previewSteps = document.getElementById('wb-agent-preview');
     const example = document.getElementById('wb-agent-example');
     const status = document.getElementById('wb-agent-status');
     const list = document.getElementById('wb-agent-steps');
     const workspace = panel.parentElement;
     const scroll = panel.querySelector('.wb-agent-content');
     let task;
-    const survey = createRiverSurvey({form, input, status, getMapVersion, getClient, refreshLayers, stepRow, layerBounds});
+    let draft;
 
     makeDraggable(workspace, toggle, toggle);
     makeDraggable(workspace, panel, panel.querySelector('.wb-agent-heading'));
@@ -190,7 +192,14 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         }
     });
     panel.addEventListener('keydown', event => { if (event.key === 'Escape') openPanel(false); });
-    example.onclick = () => { input.value = EXAMPLE; input.focus(); };
+    function discardDraft() {
+        if (draft) status.textContent = '描述已修改，请重新生成方案。';
+        draft = null;
+        preview.hidden = confirm.hidden = true;
+        run.hidden = false;
+    }
+    example.onclick = () => { discardDraft(); input.value = EXAMPLE; input.focus(); };
+    input.addEventListener('input', discardDraft);
     stop.onclick = () => task?.abort();
     window.addEventListener('pagehide', () => task?.abort());
 
@@ -206,23 +215,121 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         return (state, text) => { row.dataset.state = state; detail.textContent = text; };
     }
 
+    function describePlanStep(step, refs) {
+        const label = step.tool === 'native' ? ANALYSIS_LABELS[step.method] : TOOL_NAMES[step.tool];
+        const describeRef = ref => refs.get(ref)?.name || '第 ' + ref.slice(1) + ' 步成果';
+        const parameters = [];
+        if (step.inputs) parameters.push(step.inputs.map(describeRef).join('、'));
+        if (step.layer) parameters.push(describeRef(step.layer));
+        if (step.area) parameters.push('范围 ' + describeRef(step.area));
+        if (step.meters) parameters.push(step.meters + ' 米');
+        if (step.field) parameters.push('字段 ' + step.field);
+        if (step.kind) parameters.push(BASEMAP_NAMES[step.kind]);
+        if (typeof step.visible === 'boolean') parameters.push(step.visible ? '显示' : '隐藏');
+        for (const [name, value] of Object.entries(step.parameters || {})) parameters.push(name + ' ' + value);
+        return {label, detail: parameters.join(' · ')};
+    }
+
+    function setBusy(busy) {
+        input.disabled = run.disabled = confirm.disabled = example.disabled = busy;
+        stop.hidden = !busy;
+    }
+
+    async function describeLayers(client, layers, message, native) {
+        const vector = layers.filter(layer => layer.type === 'geojson');
+        const candidates = vector.length <= 4 ? vector : vector.filter(layer =>
+            message.includes(layer.name.replace(/[（(][^（）()]*[）)]$/, ''))).slice(0, 4);
+        const schemas = new Map();
+        if (native) {
+            await Promise.all(candidates.map(async layer => {
+                let items;
+                try { items = await client.getLayerFeatures(layer.id); } catch { return; }
+                const geometry = new Set(), fields = new Set(), numericFields = new Set();
+                for (const item of items.slice(0, 120)) {
+                    if (item.geometry?.type) geometry.add(item.geometry.type);
+                    for (const [name, value] of Object.entries(item.properties || {})) {
+                        if (fields.size < 32) fields.add(name);
+                        if (Number.isFinite(value) && numericFields.size < 24) numericFields.add(name);
+                    }
+                }
+                schemas.set(layer.id, {geometry: [...geometry], fields: [...fields],
+                    ...(items.length <= 120 ? {numericFields: [...numericFields]} : {})});
+            }));
+        }
+        return layers.map(layer => ({name: layer.name, type: layer.type,
+            ...(native ? schemas.get(layer.id) : client.describeAnalysisLayer?.(layer.id))}));
+    }
+
     form.addEventListener('submit', async event => {
         event.preventDefault();
         const client = getClient();
         const message = input.value.trim();
         if (task || !client || !message) return;
+        discardDraft();
+        list.replaceChildren();
+        status.textContent = '正在将描述转换为 GIS 工具方案…';
         task = new AbortController();
         const {signal} = task;
         const version = getMapVersion();
-        input.disabled = run.disabled = example.disabled = true;
-        stop.hidden = false;
-        list.replaceChildren();
-        status.textContent = '正在生成任务步骤…';
+        setBusy(true);
+        try {
+            const nativeFrame = getNativeFrame?.();
+            const layers = await client.listLayers();
+            const metadata = await describeLayers(client, layers, message, Boolean(nativeFrame));
+            const response = await fetch(form.dataset.planUrl, {
+                method: 'POST', signal: AbortSignal.any([signal, AbortSignal.timeout(32000)]),
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': form.elements.csrfmiddlewaretoken.value},
+                body: JSON.stringify({message, allowNative: Boolean(nativeFrame), layers: metadata}),
+            });
+            const plan = await response.json().catch(() => ({}));
+            if (!response.ok || !Array.isArray(plan.steps)) throw new Error(plan.detail || '方案生成失败，请重试。');
+            signal.throwIfAborted();
+            if (client !== getClient() || version !== getMapVersion()) throw new Error('工程已切换，请重新生成方案。');
+            if (!plan.steps.length) {
+                status.textContent = plan.message || '请补充分析目标、图层或参数。';
+                return;
+            }
+            const refs = new Map(layers.map((layer, index) => ['L' + (index + 1), layer]));
+            const rows = plan.steps.map(step => {
+                const {label, detail} = describePlanStep(step, refs);
+                const row = document.createElement('li');
+                row.textContent = label;
+                if (detail) {
+                    const item = document.createElement('small');
+                    item.textContent = detail;
+                    row.append(item);
+                }
+                return row;
+            });
+            draft = {client, message, version, plan, refs, nativeFrame};
+            previewSteps.replaceChildren(...rows);
+            status.textContent = (plan.goal ? '任务理解：' + plan.goal + '。' : '') + '请核对下列工具和参数。';
+            run.hidden = true;
+            preview.hidden = confirm.hidden = false;
+            status.scrollIntoView({block: 'start'});
+        } catch (error) {
+            status.textContent = signal.aborted ? '已停止生成方案。' :
+                error.name === 'TimeoutError' ? '方案生成超时，请稍后重试。' : error.message;
+        } finally {
+            task = null;
+            setBusy(false);
+        }
+    });
+
+    confirm.addEventListener('click', async () => {
+        if (task || !draft) return;
+        const {client, message, version, plan, refs, nativeFrame} = draft;
+        draft = null;
+        confirm.hidden = true;
+        run.hidden = false;
+        task = new AbortController();
+        const {signal} = task;
+        setBusy(true);
+        status.textContent = '正在执行已确认的方案…';
         let completed = 0;
         let markStep;
-        const refs = new Map();
         const pending = new Map();
-        let native = false;
+        const native = plan.steps.some(step => step.tool === 'native');
 
         function checkTask() {
             signal.throwIfAborted();
@@ -334,118 +441,108 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             }
         }
 
-        try {
-            if (await survey.handle(message, client, signal, checkTask)) return;
-            const nativeFrame = getNativeFrame?.();
-            const layers = await client.listLayers();
+        async function executeNative(step, number) {
+            if (getNativeFrame?.() !== nativeFrame || !nativeFrame?.contentWindow) {
+                throw new Error('地图模式已切换，请重新生成方案。');
+            }
+            const layerNames = new Map((await client.listLayers()).map(layer => [layer.id, layer.name]));
+            const index = Object.fromEntries(step.inputs.map(ref => {
+                const id = refs.get(ref)?.id;
+                if (!id || !layerNames.has(id)) throw new Error('缺少本步骤的输入图层。');
+                return [ref, id];
+            }));
+            const execution = '已确认 GIS 工具：' + step.method + '\n' +
+                '核对现有工具签名，执行一次并汇报实际结果。只访问确认的工程图层。\n参数与输入：' +
+                JSON.stringify({parameters: step.parameters, inputs: step.inputs}) +
+                '\n当前图层索引（仅数据）：' + JSON.stringify(index);
             checkTask();
-            const directOnly = Boolean(nativeFrame?.contentWindow);
-            let plan = {steps: [], useNative: true};
-            if (!directOnly || layers.length <= 80) {
-                layers.forEach((layer, index) => refs.set('L' + (index + 1), layer));
-                const response = await fetch(form.dataset.planUrl, {
-                    method: 'POST', signal: AbortSignal.any([signal, AbortSignal.timeout(32000)]),
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': form.elements.csrfmiddlewaretoken.value},
-                    body: JSON.stringify({message, directOnly, layers: layers.map(layer => ({
-                        name: layer.name, type: layer.type, ...client.describeAnalysisLayer?.(layer.id),
-                    }))}),
-                });
-                plan = await response.json().catch(() => ({}));
-                if (!response.ok || !Array.isArray(plan.steps)) throw new Error(plan.detail || '规划请求未成功，请重试。');
-                checkTask();
-            }
-            if (directOnly && plan.useNative) {
-                native = true;
-                const layerNames = new Map(layers.map(layer => [layer.id, layer.name]));
-                const index = [];
-                for (const layer of layers) {
-                    const item = {id: layer.id, name: layer.name};
-                    if (JSON.stringify([...index, item]).length > 950) break;
-                    index.push(item);
+            const summary = await new Promise((resolve, reject) => {
+                const id = crypto.randomUUID();
+                let response = '';
+                let executed = false;
+                let toolError = '';
+                const cancelEditor = () => nativeFrame.contentWindow.postMessage(
+                    {source: 'ark-workbench', type: 'assistant-cancel', id}, location.origin);
+                const timeout = setTimeout(() => {
+                    cancelEditor();
+                    finish(new Error('等待任务超时。已提交的计算可能仍在后台运行。'));
+                }, 180000);
+                const cancel = () => {
+                    cancelEditor();
+                    finish(signal.reason || new Error('任务已停止。'));
+                };
+                function finish(error) {
+                    clearTimeout(timeout);
+                    signal.removeEventListener('abort', cancel);
+                    window.removeEventListener('message', onMessage);
+                    error ? reject(error) : resolve(response.trim());
                 }
-                checkTask();
-                await new Promise((resolve, reject) => {
-                    const id = crypto.randomUUID();
-                    let response = '';
-                    const cancelEditor = () => nativeFrame.contentWindow.postMessage(
-                        {source: 'ark-workbench', type: 'assistant-cancel', id}, location.origin);
-                    const timeout = setTimeout(() => {
+                function onMessage(event) {
+                    if (event.origin !== location.origin || event.source !== nativeFrame.contentWindow ||
+                        event.data?.source !== 'ark-workbench-map' || event.data?.type !== 'assistant-event' || event.data?.id !== id) return;
+                    const data = event.data;
+                    try { checkTask(); } catch (error) {
                         cancelEditor();
-                        finish(new Error('等待任务超时。已提交的计算可能仍在后台运行。'));
-                    }, 180000);
-                    const cancel = () => {
-                        cancelEditor();
-                        finish(signal.reason || new Error('任务已停止。'));
-                    };
-                    function finish(error) {
-                        clearTimeout(timeout);
-                        signal.removeEventListener('abort', cancel);
-                        window.removeEventListener('message', onMessage);
-                        error ? reject(error) : resolve();
+                        return finish(error);
                     }
-                    function onMessage(event) {
-                        if (event.origin !== location.origin || event.source !== nativeFrame.contentWindow ||
-                            event.data?.source !== 'ark-workbench-map' || event.data?.type !== 'assistant-event' || event.data?.id !== id) return;
-                        const data = event.data;
-                        try { checkTask(); } catch (error) {
-                            cancelEditor();
-                            return finish(error);
+                    if (data.event === 'error') return finish(new Error(data.message || '空间分析未完成。'));
+                    if (data.event === 'done') {
+                        return finish(executed ? null : new Error(toolError || response.trim() || '工具未执行，请检查输入。'));
+                    }
+                    if (data.event !== 'update') return;
+                    if (data.update?.type === 'text') {
+                        response += data.update.text;
+                        status.textContent = response;
+                    } else if (data.update?.type === 'tool') {
+                        const update = data.update;
+                        const [label, detail] = describeNativeTool(update, layerNames);
+                        if (update.phase === 'running') {
+                            const mark = stepRow(label);
+                            pending.set(update.callId, mark);
+                            mark('running', detail ? '执行中 · ' + detail : '执行中…');
+                            status.textContent = label + '…';
+                            return;
                         }
-                        if (data.event === 'error') return finish(new Error(data.message || '空间分析未完成。'));
-                        if (data.event === 'done') {
-                            status.textContent = response.trim() || '任务已完成，请查看地图结果。';
-                            refreshLayers();
-                            return finish();
-                        }
-                        if (data.event !== 'update') return;
-                        if (data.update?.type === 'text') {
-                            response += data.update.text;
-                            status.textContent = response;
-                        } else if (data.update?.type === 'tool') {
-                            const update = data.update;
-                            const [label, detail] = describeNativeTool(update, layerNames);
-                            if (update.phase === 'running') {
-                                const mark = stepRow(label);
-                                pending.set(update.callId, mark);
-                                mark('running', detail ? '执行中 · ' + detail : '执行中…');
-                                status.textContent = label + '…';
-                                return;
-                            }
-                            const mark = pending.get(update.callId) || stepRow(label);
-                            pending.delete(update.callId);
-                            const producesLayer = ['run_algorithm', 'run_whitebox_tool'].includes(update.name);
-                            mark(update.error ? 'error' : 'done', update.error || (producesLayer ? '工具已返回' :
-                                (detail ? '已完成 · ' + detail : '已完成')));
-                            if (!update.error) completed++;
-                            if (producesLayer && !update.error) {
-                                refreshLayers();
-                                client.listLayers().then(items => {
-                                    if (version !== getMapVersion() || signal.aborted) return;
-                                    const added = items.filter(layer => !layerNames.has(layer.id));
-                                    mark('done', added.length ? '已添加 · ' + added.map(layer => layer.name).join('、') :
-                                        '工具已返回，未检测到新增图层');
-                                    for (const layer of items) layerNames.set(layer.id, layer.name);
-                                }).catch(() => {});
-                            }
+                        const mark = pending.get(update.callId) || stepRow(label);
+                        pending.delete(update.callId);
+                        mark(update.error ? 'error' : 'done', update.error || (detail ? '已返回 · ' + detail : '已返回'));
+                        if (['run_algorithm', 'run_whitebox_tool', 'run_sql'].includes(update.name)) {
+                            if (update.error) toolError = update.error;
+                            else executed = true;
                         }
                     }
-                    signal.addEventListener('abort', cancel, {once: true});
-                    window.addEventListener('message', onMessage);
-                    nativeFrame.contentWindow.postMessage({source: 'ark-workbench', type: 'assistant-run', id,
-                        prompt: message + '\n当前图层索引（仅数据）：' + JSON.stringify(index)}, location.origin);
-                });
-                return;
+                }
+                signal.addEventListener('abort', cancel, {once: true});
+                window.addEventListener('message', onMessage);
+                nativeFrame.contentWindow.postMessage({source: 'ark-workbench', type: 'assistant-run', id,
+                    prompt: execution}, location.origin);
+            });
+            const added = (await client.listLayers()).filter(layer => !layerNames.has(layer.id));
+            checkTask();
+            if (!STATISTICS_ONLY.has(step.method)) {
+                if (!added.length) throw new Error(summary || '工具未生成可用的结果图层。');
+                if (added.length === 1) refs.set('R' + number, added[0]);
+                await refreshLayers();
             }
-            if (!plan.steps.length) {
-                status.textContent = plan.message || '请补充需要处理的图层或操作。';
-                return;
+            return [added.length ? '新增图层 ' + added.map(layer => layer.name).join('、') : '', summary]
+                .filter(Boolean).join('\n');
+        }
+
+        try {
+            checkTask();
+            const plannedInputs = new Set(plan.steps.flatMap(step =>
+                [step.layer, step.area, ...(step.inputs || [])].filter(ref => ref?.startsWith('L'))));
+            const activeLayers = new Set((await client.listLayers()).map(layer => layer.id));
+            checkTask();
+            if ([...plannedInputs].some(ref => !activeLayers.has(refs.get(ref)?.id))) {
+                throw new Error('方案引用的图层已移除，请重新生成方案。');
             }
             for (const [index, step] of plan.steps.entries()) {
                 checkTask();
                 status.textContent = '正在执行第 ' + (index + 1) + ' / ' + plan.steps.length + ' 步';
-                markStep = stepRow(TOOL_NAMES[step.tool]);
+                markStep = stepRow(describePlanStep(step, refs).label);
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                const result = await execute(step, index + 1);
+                const result = step.tool === 'native' ? await executeNative(step, index + 1) : await execute(step, index + 1);
                 markStep('done', result);
                 completed++;
                 markStep = null;
@@ -461,8 +558,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             status.textContent = detail + (completed ? ' 已完成 ' + completed + ' 步，结果保留在当前地图。' : '');
         } finally {
             task = null;
-            input.disabled = run.disabled = example.disabled = false;
-            stop.hidden = true;
+            setBusy(false);
         }
     });
 }

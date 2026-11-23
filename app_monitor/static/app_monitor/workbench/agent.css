@@ -52,14 +52,19 @@
     width: 15px; height: 14px; background-image: radial-gradient(circle, #6f8c85 1px, transparent 1.25px);
     background-size: 5px 5px; margin-right: 4px;
 }
-.wb-agent-content { overflow: auto; overscroll-behavior: contain; padding: 12px }
+.wb-agent-content { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px }
 .wb-agent form { display: grid; gap: 8px }
 .wb-agent form label { color: #3c5b5c; font-size: 12px }
 .wb-agent textarea {
     font: inherit; width: 100%; min-height: 68px; max-height: 136px; resize: vertical; padding: 8px 10px;
     color: var(--ark-ink); background: #f8fbfa; border: 1px solid #cfdfd9; border-radius: 7px; line-height: 1.5;
 }
-.wb-agent-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end }
+.wb-agent-examples { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.wb-agent-actions {
+    flex: none; display: flex; justify-content: flex-end; gap: 8px; padding: 8px 12px;
+    border-top: 1px solid #e7eeea; background: #fff;
+}
+.wb-agent-actions .wb-button { min-height: 38px; padding: 6px 12px; font-size: 12px; white-space: nowrap }
 #wb-agent-example {
     margin-right: auto; padding: 4px 0; border: 0; background: transparent; color: #176a6e; font: inherit; font-size: 12px;
 }
@@ -89,18 +94,11 @@
     .wb-agent { right: 12px; bottom: 92px; max-height: min(360px, calc(100% - 16px)) }
 }
 .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 52px }
-#wb-survey-options:not([hidden]) {
-    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0;
-}
-#wb-survey-options label { display: grid; gap: 3px; color: #385854; font-size: 12px }
-#wb-survey-options label:first-child, #wb-survey-options button { grid-column: 1 / -1 }
-#wb-survey-options input, #wb-survey-options select {
-    min-width: 0; width: 100%; box-sizing: border-box; border: 1px solid #cfdfd9;
-    background: #fff; color: #193940; border-radius: 5px; padding: 5px;
-}
-#wb-survey-results { margin: 10px 0; }
-#wb-survey-results table { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 6px }
-#wb-survey-results th, #wb-survey-results td { text-align: left; padding: 4px; border-bottom: 1px solid #e2ebe8 }
+.wb-agent-plan { margin-top: 12px; color: #254948; overflow-wrap: anywhere }
+.wb-agent-plan h3 { font-size: 13px; margin: 0 0 6px }
+.wb-agent-plan ol { margin: 0; padding-left: 20px }
+.wb-agent-plan li { padding: 4px 0; line-height: 1.45 }
+.wb-agent-plan small { display: block; color: #55706b; font-size: 11px }
 @media (max-width: 640px) {
     .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 12px }
 }

@@ -18,7 +18,7 @@ from .gis_methods import METHODS
 def page(request):
     response = render(request, 'workbench.html', {
         'geostudio_online': getattr(settings, 'GEOSTUDIO_REMOTE_COMPUTE', False),
-        'analysis_labels': {m.native: m.name for m in METHODS if not m.raster},
+        'analysis_labels': {m.native: m.name for m in METHODS},
     })
     response['Cache-Control'] = 'no-store'
     return response

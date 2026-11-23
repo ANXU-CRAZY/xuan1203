@@ -42,8 +42,10 @@ METHODS = (
            '将同类图层的要素追加到一个图层，检查属性字段和几何类型。保留重叠或边界的现状。'),
     Method('空间连接', '空间连接|空间关联|挂接.*属性|归属.*行政区|spatial join', 'spatial-join', '',
            '确认目标和连接图层、空间谓词、一对多关系及未匹配记录。普通属性连接不能代替空间关系。'),
-    Method('分组汇总', '分组|分类汇总|汇总统计|每.*合计|summary statistics', 'aggregate', '',
-           '确定分组键和统计字段。计行、求和、物种去重意义不同。按真实参数定义选择，核对各组总量。'),
+    Method('汇总统计', '分组|分类汇总|汇总统计|每.*合计|summary statistics|只数|种数|多少种', 'run_sql', '',
+           '读取实际字段后对工程图层统计。先确定可选分组键和指标，区分计行、求和、非空物种去重。'),
+    Method('按字段聚合面', '面积.*按字段|按字段.*融合|按组.*融', 'aggregate', '',
+           '输入面图层，按指定字段聚合几何并计算附带统计。仅需结果表时按属性汇总。'),
     Method('反距离权重插值', '反距离|反距权|\\bidw\\b|插值|估算.*未测', 'idw interpolation', 'idw',
            '输入测量点与连续数值字段。排除编号和经纬度，多个候选先问字段；核对距离单位、网格大小和输出范围。精度评价需独立验证点。', True),
     Method('核密度', '核密度|点密度|热力图|密集程度|哪里最密|哪些地方最密|扎堆的地方|kernel density', 'kernel-density', '',
@@ -72,10 +74,12 @@ def matching_methods(message):
             and not (method.compatible == 'idw' and re.search(r'克里金|kriging|样条', message, re.I))]
 
 
-def guidance(message, *, native, tools=()):
+def guidance(message, *, native, tools=(), planning=False):
     methods = matching_methods(message)
     if native:
-        general = ('用中文回答。先读当前图层、字段、单位。地图算法的图层参数只用真实 id，SQL 表名只用于 SQL。'
+        general = ('用中文拟订方案。以图层类型、字段、单位和已知能力选择步骤。方法咨询直接解释，步骤留空。'
+                   '只输出待确认的方案，不执行工具。' if planning else
+                   '用中文回答。先读当前图层、字段、单位。地图算法的图层参数只用真实 id，SQL 表名只用于 SQL。'
                    '方法咨询只解释；用户需要执行时，用当前声明的工具实际操作地图。'
                    '先发现算法，再按返回的 id、参数签名和图层 id 执行。复合任务按依赖引用实际产物。'
                    '按要求的统计口径与交付范围执行；只问记录数时只统计记录数。'
@@ -88,7 +92,9 @@ def guidance(message, *, native, tools=()):
     if re.search(r'克里金|kriging|样条', message, re.I):
         lines.append('严格按所要求的插值方法查询当前工具目录；兼容模式只有 IDW，不能用 IDW 替代克里金或样条。')
     for m in methods:
-        if native:
+        if native and m.native == 'run_sql':
+            route = 'list_layers 核对当前图层，再用 run_sql 只读统计' if 'run_sql' in tools else '当前未声明统计工具'
+        elif native:
             discover = 'list_whitebox_tools' if m.raster else 'list_algorithms'
             execute = 'run_whitebox_tool' if m.raster else 'run_algorithm'
             route = (f'{discover} 检索 {m.native}，确认可用后 {execute}'
@@ -120,6 +126,9 @@ def direct_plan(message, layers):
     chain = re.fullmatch(rf'(?:给|为|对)?(?P<line>{ref})(?:做|创建|建立|生成){distance_pattern}(?:的)?缓冲区'
                          rf'[，,、。]?(?:再)?(?:筛出|筛选|提取)(?:其中|里面|缓冲区内|区内)(?:的)?(?P<points>{ref})'
                          r'(?P<count>[，,。]?(?:并|再|然后)统计(?:记录数|条数|点数))?', command)
+    if not chain:
+        chain = re.fullmatch(rf'(?:找出|筛出|只保留)(?:离|距)(?P<line>{ref}){distance_pattern}内的(?P<points>{ref})'
+                             r'(?P<count>[，,。]?(?:数一下有几条记录|统计条数))?', command)
     if chain:
         if any(len(aliases[chain[k]]) != 1 for k in ('line', 'points')):
             return {'steps': [], 'message': '同名图层无法区分，请使用完整图层名。'}

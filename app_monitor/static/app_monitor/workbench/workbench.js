@@ -1,5 +1,5 @@
 import {connect} from './geolibre-embed.js';
-import {initAgent} from './agent.js?v=14';
+import {initAgent} from './agent.js?v=16';
 
 const appsToggle = document.getElementById('wb-apps-toggle');
 const appsMenu = document.getElementById('wb-apps-menu');

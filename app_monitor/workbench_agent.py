@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 
 from .views import _request_deepseek, _load_deepseek_local_env, _get_deepseek_model
 from .workbench_access import is_local, may_compute
-from .gis_methods import check_geometry, direct_plan, guidance, unsupported_request
+from .gis_methods import METHODS, check_geometry, direct_plan, guidance, unsupported_request
 
 
 @require_POST
@@ -51,14 +51,26 @@ def native_chat(request):
         return JsonResponse({'error': {'message': '会话格式不正确。'}}, status=400)
     # Retrieve against the latest user task, not tool output or an older task in this session.
     latest = next((m.get('content') for m in reversed(messages) if m.get('role') == 'user'), '')
-    names = {t['function']['name'] for t in payload.get('tools', [])
-             if isinstance(t, dict) and isinstance(t.get('function'), dict)
-             and isinstance(t['function'].get('name'), str)}
     if isinstance(latest, list):
         latest = '\n'.join(part['text'] for part in latest if isinstance(part, dict)
                            and part.get('type') == 'text' and isinstance(part.get('text'), str))
     question = latest.partition('\n当前图层索引（仅数据）：')[0] if isinstance(latest, str) else ''
+    confirmed = re.search(r'^(?:User request: )?已确认 GIS 工具：([^\n]+)$', question, re.M)
+    method = NATIVE_METHODS.get(confirmed[1]) if confirmed else None
+    if method:
+        allowed = {'list_layers', *native_tool_names(method)}
+        payload['tools'] = [t for t in payload.get('tools', [])
+                            if native_tool_name(t) in allowed]
+        for tool in payload['tools']:
+            if native_tool_name(tool) == 'run_algorithm':
+                schema = tool['function'].get('parameters')
+                properties = schema.get('properties') if isinstance(schema, dict) else None
+                if isinstance(properties, dict) and isinstance(properties.get('id'), dict):
+                    properties['id']['enum'] = [method.native]
+    names = {native_tool_name(t) for t in payload.get('tools', [])}
     advice = guidance(question[:2000], native=True, tools=names)
+    if method:
+        advice += '\n仅执行本条已确认 GIS 工具和明确参数。遇到不可用工具或缺少必要输入时停止并说明。'
     if messages and messages[0].get('role') == 'system' and isinstance(messages[0].get('content'), str):
         messages[0] = {**messages[0], 'content': messages[0]['content'] + '\n' + advice}
     else:
@@ -105,6 +117,8 @@ TOOLS = {
     **{name: ('layer', 'area') for name in OVERLAY_VECTOR},
 }
 DERIVED = {'buffer', 'points_within', 'idw'} | SINGLE_VECTOR | OVERLAY_VECTOR
+NATIVE_METHODS = {method.native: method for method in METHODS}
+STATISTICS_ONLY = {'average-nearest-neighbor', 'global-morans-i', 'run_sql'}
 HIDE_BASEMAP = re.compile(
     r'(?:关闭|关掉|隐藏|去掉|移除|取消|不显示)\s*(?:当前|现有)?\s*底图'
     r'|(?:切换|换|设置|设|改)(?:为|成|到|至)?\s*(?:无底图|空白底图)'
@@ -117,8 +131,9 @@ KEEP_BASEMAP = re.compile(
     re.IGNORECASE,
 )
 SYSTEM = """你为方舟科研工作台生成地图任务计划。只输出 JSON 对象。
-格式为 {"steps":[{"tool":"操作名", "必要参数": "值"}],"message":""}。
+格式为 {"goal":"用一句话说明用户要达成什么","steps":[{"tool":"操作名", "必要参数": "值"}],"message":""}。
 无法完成时返回 {"steps":[],"message":"用简短中文说明缺少什么图层、参数或能力"}。
+先判断分析目标、数据类型和关键参数，再选择工具。只写可核对的方案，不披露内部推理。
 只使用以下工具和指定参数：
 layers 列出图层；overview 回到研究区全览；locate(layer) 定位图层；
 visibility(layer,visible) 显示或隐藏图层，visible 为布尔值；
@@ -141,8 +156,36 @@ layer 和 area 用给定图层引用 L1、L2 等，或上一步结果引用 R1�
 仅在用户明确要求时切换底图。分析、制图、导出专题图默认保留当前底图，不能自行切成 blank。
 不得生成代码、SQL、外部链接或其他工具。"""
 
+NATIVE_PLAN = """
+原生地图还支持以下 method。若常用步骤无法表达完整任务，可使用
+{"tool":"native","method":"目录中的精确键","inputs":["L1"],"parameters":{"参数中文名":"用户指定值"}}。
+inputs 从当前图层和前序产物中选，按输入角色排序。parameters 只记录有依据的参数和单位。
+缺少关键数据、指标或范围时先问一个最具体的问题，steps 设为空。
+工具的执行参数由运行环境发现并解析；不得发明查询键，不得将统计量当作结果图层。
+"""
 
-def valid_steps(steps, layer_refs):
+
+def native_tool_name(spec):
+    function = spec.get('function') if isinstance(spec, dict) else None
+    return function.get('name', '') if isinstance(function, dict) and isinstance(function.get('name'), str) else ''
+
+
+def native_tool_names(method):
+    if method.native == 'run_sql':
+        return ('run_sql',)
+    if method.raster:
+        return ('list_whitebox_tools', 'run_whitebox_tool')
+    return ('list_algorithms', 'run_algorithm')
+
+
+def native_catalog(context):
+    if not any(layer['type'] not in ('', 'geojson') for layer in context):
+        # IDW is an exception because it starts with point measurements.
+        return [m for m in METHODS if not m.raster or m.compatible == 'idw']
+    return METHODS
+
+
+def valid_steps(steps, layer_refs, native_methods=()):
     if not isinstance(steps, list) or len(steps) > MAX_STEPS:
         return False
     refs = set(layer_refs)
@@ -150,6 +193,19 @@ def valid_steps(steps, layer_refs):
         if not isinstance(step, dict):
             return False
         tool = step.get('tool')
+        if tool == 'native':
+            method, inputs, params = step.get('method'), step.get('inputs'), step.get('parameters')
+            if (step.keys() != {'tool', 'method', 'inputs', 'parameters'}
+                    or not isinstance(method, str) or method not in native_methods
+                    or not isinstance(inputs, list) or not 1 <= len(inputs) <= 6
+                    or not all(isinstance(x, str) and x in refs for x in inputs)
+                    or not isinstance(params, dict) or len(params) > 10
+                    or not all(len(k) <= 48 and (type(v) in (int, float, bool) or
+                               isinstance(v, str) and len(v) <= 120) for k, v in params.items())):
+                return False
+            if method not in STATISTICS_ONLY:
+                refs.add(f'R{index}')
+            continue
         if not isinstance(tool, str) or tool not in TOOLS:
             return False
         expected = {'tool', *TOOLS[tool]}
@@ -192,9 +248,11 @@ def plan(request):
         message = data['message'].strip()
         layers = data['layers']
         direct_only = data.get('directOnly', False)
+        allow_native = data.get('allowNative', False)
     except (AttributeError, KeyError, TypeError, ValueError):
         return respond({'detail': '请输入有效的地图任务。'}, 400)
-    if not 1 <= len(message) <= 800 or not isinstance(layers, list) or len(layers) > 80 or not isinstance(direct_only, bool):
+    if (not 1 <= len(message) <= 800 or not isinstance(layers, list) or len(layers) > 80
+            or type(direct_only) is not bool or type(allow_native) is not bool):
         return respond({'detail': '任务长度限 800 字，图层数量限 80 个。'}, 400)
 
     context = []
@@ -203,13 +261,17 @@ def plan(request):
             return respond({'detail': '图层摘要格式不正确。'}, 400)
         geometry = layer.get('geometry', [])
         fields = layer.get('numericFields', [])
+        attributes = layer.get('fields', [])
         if (not isinstance(geometry, list) or not isinstance(fields, list)
-                or not all(isinstance(s, str) for s in geometry + fields)):
+                or not isinstance(attributes, list)
+                or not all(isinstance(s, str) for s in geometry + fields + attributes)):
             return respond({'detail': '图层摘要格式不正确。'}, 400)
         entry = {'ref': f'L{index}', 'name': layer['name'][:120], 'geometry': geometry[:8],
                  'type': str(layer.get('type', ''))[:32]}
         if 'numericFields' in layer:
             entry['numericFields'] = [f for f in fields[:24] if len(f) <= 64 and not IDENTIFIER_FIELD.fullmatch(f)]
+        if attributes:
+            entry['fields'] = [f for f in attributes[:32] if len(f) <= 64]
         context.append(entry)
     direct = direct_plan(message, context)
     if direct is not None:
@@ -217,7 +279,7 @@ def plan(request):
         return respond({'steps': [], 'message': issue} if issue else direct)
     if direct_only:
         return respond({'steps': [], 'useNative': True})
-    missing = unsupported_request(message, context)
+    missing = '' if allow_native else unsupported_request(message, context)
     if missing:
         return respond({'steps': [], 'message': missing})
     identity = 'local' if is_local(request) else f'user:{request.user.pk}'
@@ -230,8 +292,13 @@ def plan(request):
         attempts = 1
     if attempts > 8:
         return respond({'detail': '请求太频繁，请稍后再试。'}, 429)
+    available = native_catalog(context) if allow_native else []
+    system = SYSTEM + '\n' + guidance(message, native=allow_native, planning=True,
+        tools={'list_algorithms', 'run_algorithm', 'list_whitebox_tools', 'run_whitebox_tool', 'run_sql'} if allow_native else ())
+    if allow_native:
+        system += NATIVE_PLAN + '\n'.join(f'{m.native} | {m.name} | {m.guidance}' for m in available)
     output, error = _request_deepseek(
-        [{'role': 'system', 'content': SYSTEM + '\n' + guidance(message, native=False)}, {
+        [{'role': 'system', 'content': system}, {
             'role': 'user',
             'content': json.dumps({'任务': message, '当前图层': context}, ensure_ascii=False),
         }],
@@ -243,9 +310,10 @@ def plan(request):
         result = json.loads(output)
         steps = result['steps']
         note = result.get('message', '')
+        goal = result.get('goal', '')
     except (AttributeError, KeyError, TypeError, ValueError):
         return respond({'detail': 'DeepSeek 返回的计划无法读取，请重试。'}, 502)
-    if not valid_steps(steps, (layer['ref'] for layer in context)):
+    if not valid_steps(steps, (layer['ref'] for layer in context), {m.native for m in available}):
         return respond({'detail': '计划含有不支持的操作或参数，请换一种描述。'}, 422)
     issue = check_geometry(steps, context)
     if issue:
@@ -268,4 +336,4 @@ def plan(request):
         if not HIDE_BASEMAP.search(message) or KEEP_BASEMAP.search(message):
             return respond({'detail': '计划尝试关闭底图，请重试或明确指定需要的底图。'}, 422)
     description = note[:300] if isinstance(note, str) and not steps else ''
-    return respond({'steps': steps, 'message': description})
+    return respond({'steps': steps, 'message': description, 'goal': goal[:180] if isinstance(goal, str) else ''})
