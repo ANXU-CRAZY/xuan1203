@@ -147,7 +147,7 @@ function runGeometry(url, payload, signal) {
     });
 }
 
-export function initAgent({getClient, getNativeFrame, getMapVersion, region, geometryUrl, setBasemap, exportMap, refreshLayers}) {
+export function initAgent({getClient, getNativeFrame, getMapVersion, getConversationProject, region, geometryUrl, setBasemap, exportMap, refreshLayers}) {
     const panel = document.getElementById('wb-agent');
     const toggle = document.getElementById('wb-agent-toggle');
     const close = document.getElementById('wb-agent-close');
@@ -155,15 +155,78 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     const input = document.getElementById('wb-agent-input');
     const run = document.getElementById('wb-agent-run');
     const stop = document.getElementById('wb-agent-stop');
-    const preview = document.getElementById('wb-agent-plan');
-    const goal = document.getElementById('wb-agent-goal');
-    const previewSteps = document.getElementById('wb-agent-preview');
     const example = document.getElementById('wb-agent-example');
-    const status = document.getElementById('wb-agent-status');
-    const list = document.getElementById('wb-agent-steps');
+    const turnTemplate = document.getElementById('wb-agent-turn');
     const workspace = panel.parentElement;
     const scroll = panel.querySelector('.wb-agent-content');
+    const historyKey = 'ark-workbench-chat-v1:' + form.dataset.historyScope;
+    let turns = [];
+    try {
+        const stored = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        if (Array.isArray(stored)) turns = stored.slice(-50).filter(turn =>
+            typeof turn?.message === 'string' && typeof turn.reply === 'string');
+    } catch { /* A new conversation can still be used when browser storage is unavailable. */ }
     let task;
+
+    function saveTurns() {
+        turns = turns.slice(-50);
+        try {
+            let serialized = JSON.stringify(turns);
+            while (serialized.length > 1500000 && turns.length > 1) {
+                turns.shift();
+                serialized = JSON.stringify(turns);
+            }
+            localStorage.setItem(historyKey, serialized);
+        } catch { /* Keep this tab's live history if browser storage is unavailable. */ }
+    }
+
+    function stepElement(label, detail, purpose) {
+        const row = document.createElement('li');
+        const title = document.createElement('span');
+        title.textContent = label;
+        row.append(title);
+        for (const text of [detail, purpose].filter(Boolean)) {
+            const note = document.createElement('small');
+            note.textContent = text;
+            row.append(note);
+        }
+        return row;
+    }
+
+    function renderTurn(turn) {
+        const card = turnTemplate.content.firstElementChild.cloneNode(true);
+        const reply = card.querySelector('.wb-agent-reply');
+        const view = {
+            card, reply,
+            preview: card.querySelector('.wb-agent-plan'),
+            goal: card.querySelector('.wb-agent-goal'),
+            planSteps: card.querySelector('.wb-agent-preview'),
+            list: card.querySelector('.wb-agent-steps'),
+        };
+        card.querySelector('.wb-agent-question').textContent = turn.message;
+        reply.textContent = turn.reply;
+        showPlan(turn, view);
+        for (const item of turn.logs || []) {
+            const row = stepElement(item.label, item.detail);
+            row.dataset.state = item.state;
+            view.list.append(row);
+        }
+        return view;
+    }
+
+    function showPlan(turn, view) {
+        if (!turn.planSteps?.length) return;
+        view.goal.textContent = '任务理解：' + turn.goal;
+        view.planSteps.replaceChildren(...turn.planSteps.map(step => stepElement(step.label, step.detail, step.purpose)));
+        view.preview.hidden = false;
+    }
+
+    function renderHistory() {
+        scroll.replaceChildren(...turns.map(turn => renderTurn(turn).card));
+        scroll.scrollTop = scroll.scrollHeight;
+    }
+    renderHistory();
+    workspace.addEventListener('workbench-project-change', () => task?.abort());
 
     makeDraggable(workspace, toggle, toggle);
     makeDraggable(workspace, panel, panel.querySelector('.wb-agent-heading'));
@@ -193,6 +256,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         panel.hidden = !open;
         toggle.setAttribute('aria-expanded', String(open));
         alignPanel();
+        if (open) scroll.scrollTop = scroll.scrollHeight;
         (open ? panel.querySelector('.wb-agent-heading') : toggle).focus({preventScroll: true});
     }
     toggle.onclick = () => openPanel(panel.hidden);
@@ -213,16 +277,17 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     stop.onclick = () => task?.abort();
     window.addEventListener('pagehide', () => task?.abort());
 
-    function stepRow(label) {
-        const row = document.createElement('li');
-        const title = document.createElement('span');
-        const detail = document.createElement('small');
-        title.textContent = label;
-        detail.textContent = '执行中…';
-        row.append(title, detail);
-        list.append(row);
+    function stepRow(turn, view, label) {
+        const item = {label, state: 'running', detail: '执行中…'};
+        const row = stepElement(label, item.detail);
+        turn.logs.push(item);
+        view.list.append(row);
         scroll.scrollTop = scroll.scrollHeight;
-        return (state, text) => { row.dataset.state = state; detail.textContent = text; };
+        return (state, text) => {
+            item.state = row.dataset.state = state;
+            item.detail = text.slice(0, 2000);
+            row.lastElementChild.textContent = item.detail;
+        };
     }
 
     function describePlanStep(step, refs) {
@@ -246,9 +311,34 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         stop.hidden = !busy;
     }
 
-    async function describeLayers(client, layers, message, native) {
+    function contextForTurn(project, layers) {
+        const recent = turns.filter(turn => turn.project === project && turn.finished);
+        const history = recent.slice(-6).map(turn => ({user: turn.message, reply: turn.reply.slice(0, 500)}));
+        const analysis = recent.findLast(turn => turn.analysis)?.analysis;
+        if (!analysis) return {history, previous: null, priorOutputs: []};
+        const layerRefs = new Map(layers.map((layer, index) => [layer.id, 'L' + (index + 1)]));
+        const remapRef = ref => ref.startsWith('R') ? ref : layerRefs.get(analysis.inputs[ref]);
+        const steps = analysis.steps.map(step => {
+            const mapped = {...step};
+            if (step.layer) mapped.layer = remapRef(step.layer);
+            if (step.area) mapped.area = remapRef(step.area);
+            if (step.inputs) mapped.inputs = step.inputs.map(remapRef);
+            return mapped;
+        });
+        const lostInput = steps.some((step, index) => (analysis.steps[index].layer && !step.layer) ||
+            (analysis.steps[index].area && !step.area) || step.inputs?.some(ref => !ref));
+        const outputs = analysis.outputs.filter(result => layerRefs.has(result.id));
+        return {history, previous: {
+            steps: lostInput ? [] : steps,
+            outputs: outputs.map(result => ({ref: layerRefs.get(result.id), tool: result.tool})),
+            outputMissing: outputs.length < analysis.outputs.length,
+        }, priorOutputs: outputs};
+    }
+
+    async function describeLayers(client, layers, message, native, previous) {
         const vector = layers.filter(layer => layer.type === 'geojson');
-        const candidates = vector.length <= 4 ? vector : vector.filter(layer =>
+        const priorResults = new Set((previous?.outputs || []).map(item => layers[Number(item.ref.slice(1)) - 1]?.id));
+        const candidates = vector.length <= 4 ? vector : vector.filter(layer => priorResults.has(layer.id) ||
             message.includes(layer.name.replace(/[（(][^（）()]*[）)]$/, ''))).slice(0, 4);
         const schemas = new Map();
         if (native) {
@@ -276,9 +366,18 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         const client = getClient();
         const message = input.value.trim();
         if (task || !client || !message) return;
-        preview.hidden = true;
-        list.replaceChildren();
-        status.textContent = '正在将描述转换为 GIS 工具方案…';
+        const project = getConversationProject();
+        const turn = {project, message, reply: '本轮已发送，结果尚未保存。', logs: []};
+        const view = renderTurn(turn);
+        const status = view.reply;
+        for (const details of scroll.querySelectorAll('details[open]')) details.open = false;
+        if (scroll.childElementCount >= 50) scroll.firstElementChild.remove();
+        scroll.append(view.card);
+        scroll.scrollTop = scroll.scrollHeight;
+        turns.push(turn);
+        saveTurns();
+        input.value = '';
+        status.textContent = '正在理解这一轮任务…';
         task = new AbortController();
         const {signal} = task;
         const version = getMapVersion();
@@ -286,11 +385,12 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         try {
             const nativeFrame = getNativeFrame?.();
             const layers = await client.listLayers();
-            const metadata = await describeLayers(client, layers, message, Boolean(nativeFrame));
+            const {history, previous, priorOutputs} = contextForTurn(project, layers);
+            const metadata = await describeLayers(client, layers, message, Boolean(nativeFrame), previous);
             const response = await fetch(form.dataset.planUrl, {
                 method: 'POST', signal: AbortSignal.any([signal, AbortSignal.timeout(32000)]),
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': form.elements.csrfmiddlewaretoken.value},
-                body: JSON.stringify({message, allowNative: Boolean(nativeFrame), layers: metadata}),
+                body: JSON.stringify({message, allowNative: Boolean(nativeFrame), layers: metadata, history, previous}),
             });
             const plan = await response.json().catch(() => ({}));
             if (!response.ok || !Array.isArray(plan.steps)) throw new Error(plan.detail || '方案生成失败，请重试。');
@@ -301,38 +401,52 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                 return;
             }
             const refs = new Map(layers.map((layer, index) => ['L' + (index + 1), layer]));
-            const rows = plan.steps.map((step, index) => {
+            turn.planSteps = plan.steps.map((step, index) => {
                 const {label, detail} = describePlanStep(step, refs);
-                const row = document.createElement('li');
-                row.textContent = label;
-                if (detail) {
-                    const item = document.createElement('small');
-                    item.textContent = detail;
-                    row.append(item);
-                }
-                const purpose = TOOL_PURPOSES[step.method || step.tool] || plan.reasons?.[index];
-                if (purpose) {
-                    const note = document.createElement('small');
-                    note.textContent = purpose;
-                    row.append(note);
-                }
-                return row;
+                return {label, detail, purpose: TOOL_PURPOSES[step.method || step.tool] || plan.reasons?.[index]};
             });
-            previewSteps.replaceChildren(...rows);
-            goal.textContent = '任务理解：' + (plan.goal || rows.map(row => row.firstChild.textContent).join(' → '));
-            preview.hidden = false;
-            scroll.scrollTop = 0;
-            await executePlan({client, message, version, plan, refs, nativeFrame, signal});
+            turn.goal = plan.goal || turn.planSteps.map(step => step.label).join(' → ');
+            showPlan(turn, view);
+            view.preview.open = true;
+            const succeeded = await executePlan({client, message, version, plan, refs, nativeFrame, signal, turn, view});
+            if (succeeded) {
+                const outputs = plan.steps.flatMap((step, index) => {
+                    const layer = refs.get('R' + (index + 1));
+                    return layer ? [{id: layer.id, tool: step.method || step.tool}] : [];
+                });
+                if (outputs.length) {
+                    const sourceRefs = new Set(plan.steps.flatMap(step =>
+                        [step.layer, step.area, ...(step.inputs || [])].filter(ref => ref?.startsWith('L'))));
+                    turn.analysis = {steps: plan.steps, outputs,
+                        inputs: Object.fromEntries([...sourceRefs].map(ref => [ref, refs.get(ref)?.id]))};
+                }
+                if (plan.revisesPrevious) {
+                    try {
+                        const existing = new Set((await client.listLayers()).map(layer => layer.id));
+                        if (!signal.aborted && client === getClient() && version === getMapVersion()) {
+                            for (const result of priorOutputs.filter(result => existing.has(result.id))) {
+                                await client.setLayerVisibility(result.id, false).catch(() => {});
+                            }
+                            await refreshLayers();
+                        }
+                    } catch { /* The new analysis already succeeded. Leave old display state as is. */ }
+                }
+            }
         } catch (error) {
             status.textContent = signal.aborted ? '已停止生成方案。' :
                 error.name === 'TimeoutError' ? '方案生成超时，请稍后重试。' : error.message;
         } finally {
+            turn.finished = true;
+            turn.reply = status.textContent.slice(0, 1200);
+            saveTurns();
+            scroll.scrollTop += view.card.getBoundingClientRect().top - scroll.getBoundingClientRect().top;
             task = null;
             setBusy(false);
         }
     });
 
-    async function executePlan({client, message, version, plan, refs, nativeFrame, signal}) {
+    async function executePlan({client, message, version, plan, refs, nativeFrame, signal, turn, view}) {
+        const status = view.reply;
         status.textContent = '正在执行分析…';
         let completed = 0;
         let markStep;
@@ -506,13 +620,13 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                         const update = data.update;
                         const [label, detail] = describeNativeTool(update, layerNames);
                         if (update.phase === 'running') {
-                            const mark = stepRow(label);
+                            const mark = stepRow(turn, view, label);
                             pending.set(update.callId, mark);
                             mark('running', detail ? '执行中 · ' + detail : '执行中…');
                             status.textContent = label + '…';
                             return;
                         }
-                        const mark = pending.get(update.callId) || stepRow(label);
+                        const mark = pending.get(update.callId) || stepRow(turn, view, label);
                         pending.delete(update.callId);
                         mark(update.error ? 'error' : 'done', update.error || (detail ? '已返回 · ' + detail : '已返回'));
                         if (['run_algorithm', 'run_whitebox_tool', 'run_sql'].includes(update.name)) {
@@ -549,7 +663,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             for (const [index, step] of plan.steps.entries()) {
                 checkTask();
                 status.textContent = '正在执行第 ' + (index + 1) + ' / ' + plan.steps.length + ' 步';
-                markStep = stepRow(describePlanStep(step, refs).label);
+                markStep = stepRow(turn, view, describePlanStep(step, refs).label);
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                 const result = step.tool === 'native' ? await executeNative(step, index + 1) : await execute(step, index + 1);
                 markStep('done', result);
@@ -559,7 +673,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             }
             checkTask();
             status.textContent = '任务完成，共执行 ' + completed + ' 步。' + lastResult;
-            scroll.scrollTop = 0;
+            return true;
         } catch (error) {
             let detail = error?.message || '任务执行失败。';
             if (signal.aborted) detail = native ? '已停止后续步骤。已提交的计算可能仍在后台运行。' : '任务已停止。';
@@ -567,6 +681,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             markStep?.('error', detail);
             for (const mark of pending.values()) mark('error', detail);
             status.textContent = detail + (completed ? ' 已完成 ' + completed + ' 步，结果保留在当前地图。' : '');
+            return false;
         }
     }
 }

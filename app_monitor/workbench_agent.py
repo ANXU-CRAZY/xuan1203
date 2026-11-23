@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import unicodedata
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
@@ -134,6 +135,9 @@ SYSTEM = """你为方舟科研工作台生成地图任务计划。只输出 JSON
 格式为 {"goal":"用一句话说明用户要达成什么","steps":[{"tool":"操作名", "必要参数": "值"}],
 "reasons":["每一步对任务目标的作用"],"message":""}。
 无法完成时返回 {"steps":[],"message":"用简短中文说明缺少什么图层、参数或能力"}。
+当前任务可能是对上一轮的补充、改参数、纠错或核对。参考对话及上次分析，但以当前任务的要求为准。
+同一项目内可使用上一轮仍在地图上的结果引用。旧计数只是历史记录，核对数量时读取现有图层重新统计。
+修改条件时沿用原始输入并重新分析。输入不在当前地图或指代不明时提问，避免擅自选择同名图层。
 先判断分析目标、数据类型和关键参数，再选择工具。reasons 按步骤顺序写简短的用途或选用依据。
 依据只引用图层信息、指定条件或已知 GIS 方法，不预测执行结果。
 只使用以下工具和指定参数：
@@ -233,6 +237,88 @@ def valid_steps(steps, layer_refs, native_methods=()):
     return True
 
 
+def conversation_data(data, layer_refs):
+    history = data.get('history', [])
+    if not isinstance(history, list) or len(history) > 6:
+        raise ValueError
+    recent = []
+    for item in history:
+        if not isinstance(item, dict) or not isinstance(item.get('user'), str) or not isinstance(item.get('reply'), str):
+            raise ValueError
+        recent.append({'用户': item['user'][:800], '小舟': item['reply'][:500]})
+    previous = data.get('previous')
+    if previous is None:
+        return recent, None
+    if not isinstance(previous, dict):
+        raise ValueError
+    steps, outputs = previous.get('steps', []), previous.get('outputs', [])
+    if not valid_steps(steps, layer_refs, NATIVE_METHODS) or not isinstance(outputs, list) or len(outputs) > MAX_STEPS:
+        raise ValueError
+    if any(not isinstance(item, dict) or not isinstance(item.get('ref'), str) or item['ref'] not in layer_refs
+           or not isinstance(item.get('tool'), str) or item['tool'] not in DERIVED and item['tool'] not in NATIVE_METHODS
+           for item in outputs):
+        raise ValueError
+    return recent, {'steps': steps, 'outputs': [{'ref': item['ref'], 'tool': item['tool']} for item in outputs],
+                    'outputMissing': previous.get('outputMissing') is True}
+
+
+def followup_plan(message, previous, context):
+    text = re.sub(r'\s+', '', unicodedata.normalize('NFKC', message)).strip('。!?,')
+    if re.fullmatch(r'(?:刚才|上次|上一轮)?(?:的)?(?:结果|统计|条件)?(?:不对|不准确|有误)', text):
+        return {'steps': [], 'message': '哪一项需要核对或修改？可以告诉我范围、输入图层或统计口径，也可以让我重数筛出的记录。'}
+    if text in {'重算上一轮', '重新运行上一轮筛选', '按上一轮条件重算', '按上一轮的条件再算一遍'}:
+        steps = previous['steps'] if previous else []
+        if steps and all(step['tool'] in {'buffer', 'points_within', 'count', 'locate'} for step in steps):
+            return {'steps': steps, 'message': '', 'goal': '使用上一轮的原始输入与参数重新执行',
+                    'revisesPrevious': True}
+        if not steps:
+            return {'steps': [], 'message': '当前地图缺少上一轮的原始输入，请先打开相应工程或指定图层。'}
+    edit = re.fullmatch(r'(?:不是[\d.]+(?:千米|公里|米)[，,])?(?:请|帮我)?'
+                        r'(?:把(?:刚才的|上一轮的)?缓冲距离)?(?:改成|改为|调整到|换成|重算)'
+                        r'(?:半径|距离)?(?P<distance>\d+(?:\.\d+)?|[一二两三四五六七八九十])(?P<unit>千米|公里|米)'
+                        r'(?:再算一遍|重算一遍|再算|重算)?', text)
+    if edit:
+        if not previous or not previous['steps']:
+            return {'steps': [], 'message': '当前没有可重算的缓冲分析。请先指定原始图层及筛选条件。'}
+        steps = previous['steps']
+        buffers = [index for index, step in enumerate(steps) if step['tool'] == 'buffer']
+        if len(buffers) != 1 or any(step['tool'] not in {'buffer', 'points_within', 'count', 'locate'} for step in steps):
+            return None
+        distance = edit['distance']
+        chinese = dict(zip('一二两三四五六七八九十', (1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
+        meters = float(chinese.get(distance, distance)) * (1 if edit['unit'] == '米' else 1000)
+        if not 1 <= meters <= 100000:
+            return {'steps': [], 'message': '缓冲距离须在 1 米至 100 公里之间。'}
+        steps = [dict(step) for step in steps]
+        before = steps[buffers[0]]['meters']
+        steps[buffers[0]]['meters'] = meters
+        return {'steps': steps, 'message': '', 'goal': f'沿用上一轮输入，将缓冲距离从 {before:g} 米改为 {meters:g} 米后重新分析',
+                'revisesPrevious': True}
+
+    target = re.fullmatch(r'(?:(?P<locate>定位|看一下|查看|放大到)|(?P<show>只看|只显示)|(?P<count>重新统计|核对|核对一下))'
+                          r'(?:刚才|上次|上一轮)(?:筛出|筛选出)的(?:点|观测点)(?:的)?(?:数|数量|记录数|有多少条|有几条)?', text)
+    if not target:
+        return None
+    outputs = previous['outputs'] if previous else []
+    filtered = [item['ref'] for item in outputs if item['tool'] in {'points_within', 'select-by-location'}]
+    if len(filtered) != 1:
+        return {'steps': [], 'message': '当前地图没有唯一的上一轮筛选图层。请指定图层，或重新运行上一轮筛选。'}
+    layer = filtered[0]
+    if target['count']:
+        return {'steps': [{'tool': 'count', 'layer': layer}], 'message': '', 'goal': '重新读取筛选图层，核对当前记录条数'}
+    steps = [{'tool': 'locate', 'layer': layer}]
+    if target['show']:
+        related = {item['ref']: item['ref'] == layer for item in outputs}
+        for previous_step in previous['steps']:
+            origin = previous_step.get('layer')
+            if previous_step['tool'] == 'points_within' and origin and origin.startswith('L') and origin != layer:
+                related.setdefault(origin, False)
+        if len(related) + len(steps) <= MAX_STEPS:
+            steps = [{'tool': 'visibility', 'layer': ref, 'visible': visible} for ref, visible in related.items()] + steps
+    name = next(item['name'] for item in context if item['ref'] == layer)
+    return {'steps': steps, 'message': '', 'goal': '查看上一轮生成的筛选图层「' + name + '」'}
+
+
 @require_POST
 @csrf_protect
 def plan(request):
@@ -276,6 +362,14 @@ def plan(request):
             entry['fields'] = [f for f in attributes[:32] if len(f) <= 64]
         context.append(entry)
     direct = direct_plan(message, context)
+    available = native_catalog(context) if allow_native else []
+    layer_refs = {layer['ref'] for layer in context}
+    try:
+        history, previous = conversation_data(data, layer_refs)
+    except ValueError:
+        return respond({'detail': '对话记录或图层引用格式不正确。'}, 400)
+    if direct is None and not direct_only:
+        direct = followup_plan(message, previous, context)
     if direct is not None:
         issue = check_geometry(direct['steps'], context)
         return respond({'steps': [], 'message': issue} if issue else direct)
@@ -294,7 +388,6 @@ def plan(request):
         attempts = 1
     if attempts > 8:
         return respond({'detail': '请求太频繁，请稍后再试。'}, 429)
-    available = native_catalog(context) if allow_native else []
     system = SYSTEM + '\n' + guidance(message, native=allow_native, planning=True,
         tools={'list_algorithms', 'run_algorithm', 'list_whitebox_tools', 'run_whitebox_tool', 'run_sql'} if allow_native else ())
     if allow_native:
@@ -302,7 +395,8 @@ def plan(request):
     output, error = _request_deepseek(
         [{'role': 'system', 'content': system}, {
             'role': 'user',
-            'content': json.dumps({'任务': message, '当前图层': context}, ensure_ascii=False),
+            'content': json.dumps({'任务': message, '当前图层': context, '最近对话': history, '上次分析': previous},
+                                  ensure_ascii=False),
         }],
         max_tokens=1400, timeout=25, json_mode=True,
     )
@@ -333,7 +427,8 @@ def plan(request):
             continue
         if not fields:
             return respond({'steps': [], 'message': '点图层里缺少可用于插值的数值观测字段。'})
-        if len(fields) > 1 and not any(name in message for name in fields):
+        previous_user = history[-1]['用户'] if history else ''
+        if len(fields) > 1 and not any(name in message or name in previous_user for name in fields):
             return respond({'steps': [], 'message': '要使用哪个字段插值？可选：' + '、'.join(fields)})
     if any(step['tool'] == 'basemap' and step['kind'] == 'blank' for step in steps):
         if not HIDE_BASEMAP.search(message) or KEEP_BASEMAP.search(message):

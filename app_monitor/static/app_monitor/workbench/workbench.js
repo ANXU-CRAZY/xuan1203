@@ -1,5 +1,5 @@
 import {connect} from './geolibre-embed.js';
-import {initAgent} from './agent.js?v=18';
+import {initAgent} from './agent.js?v=19';
 
 const appsToggle = document.getElementById('wb-apps-toggle');
 const appsMenu = document.getElementById('wb-apps-menu');
@@ -37,6 +37,8 @@ let renderObserver;
 let compatible = false;
 let boot = 0;
 let mapVersion = 0;
+let conversationProject = projectUrl;
+let openingSample = false;
 let basemap = 'vector';
 let annotations = true;
 let basemapSignature = '';
@@ -222,7 +224,9 @@ document.getElementById('wb-save').addEventListener('click', event => action(eve
 document.getElementById('wb-home').addEventListener('click', event => action(event.currentTarget, () => client.setView(region)));
 document.getElementById('wb-sample').addEventListener('click', event => action(event.currentTarget, async () => {
     if (!window.confirm('重新打开示例工程会替换当前图层。请先通过“项目”菜单保存需要保留的内容。')) return;
-    await client.loadProject(projectUrl);
+    openingSample = true;
+    try { await client.loadProject(projectUrl); }
+    finally { openingSample = false; }
     await client.setView(region);
     basemapSignature = ''; await updateBasemap();
     document.title = '方舟视界 · 智「析」一切';
@@ -362,7 +366,13 @@ function webglAvailable() {
 async function finishReady() {
     document.querySelectorAll('[data-needs-map]').forEach(button => { button.disabled = false; });
     client.on('viewChanged', updateViewport);
-    client.on('projectLoaded', () => { mapVersion++; updateLayers(); });
+    client.on('projectLoaded', event => {
+        mapVersion++;
+        conversationProject = openingSample || (!loading.hidden && event?.url === projectUrl)
+            ? projectUrl : crypto.randomUUID();
+        workspace.dispatchEvent(new Event('workbench-project-change'));
+        updateLayers();
+    });
     client.on('featuresChanged', updateLayers);
     if (compatible) {
         client.on('renderStateChanged', updateExportState);
@@ -382,7 +392,7 @@ async function finishReady() {
 }
 
 async function startCompatible(ticket) {
-    const {createCompatibleMap} = await import('./compatible-map.js?v=20261123-survey');
+    const {createCompatibleMap} = await import('./compatible-map.js?v=20261123-agent-chat');
     if (ticket !== boot) return;
     compatible = true;
     frame.hidden = true; frame.src = 'about:blank';
@@ -400,6 +410,8 @@ async function start() {
     client?.disconnect();
     renderObserver?.disconnect();
     client = null;
+    conversationProject = projectUrl;
+    workspace.dispatchEvent(new Event('workbench-project-change'));
     compatible = false;
     clearTimeout(basemapTimer);
     loading.hidden = false;
@@ -448,6 +460,7 @@ initAgent({
     getClient: () => client,
     getNativeFrame: () => compatible ? null : frame,
     getMapVersion: () => mapVersion,
+    getConversationProject: () => conversationProject,
     region,
     geometryUrl: new URL('ark-agent-geometry.js?v=4', new URL(workspace.dataset.engineUrl, location.href)),
     async setBasemap(kind) {

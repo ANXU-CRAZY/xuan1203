@@ -52,8 +52,15 @@
     width: 15px; height: 14px; background-image: radial-gradient(circle, #6f8c85 1px, transparent 1.25px);
     background-size: 5px 5px; margin-right: 4px;
 }
-.wb-agent-content { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 12px }
-.wb-agent-content:not(:has(> :not([hidden], :empty))) { display: none }
+.wb-agent-content { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 12px 0 }
+.wb-agent-content:empty { display: none }
+.wb-agent-turn { padding: 0 0 12px; margin-bottom: 12px; border-bottom: 1px solid #e7eeea }
+.wb-agent-turn:last-child { border-bottom: 0; margin-bottom: 0 }
+.wb-agent-question {
+    width: fit-content; max-width: 95%; margin: 0 0 8px auto; padding: 7px 9px;
+    border-radius: 8px 8px 2px 8px; color: #163f43; background: #e4f1ef;
+    white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45;
+}
 .wb-agent form { flex: none; display: grid; gap: 8px; padding: 12px }
 .wb-agent form label { color: #3c5b5c; font-size: 12px }
 .wb-agent-composer { border: 1px solid #cfdfd9; border-radius: 9px; background: #f8fbfa; overflow: hidden }
@@ -75,11 +82,11 @@
     margin-right: auto; padding: 4px 0; border: 0; background: transparent; color: #176a6e; font: inherit; font-size: 12px;
 }
 #wb-agent-example:hover { text-decoration: underline }
-#wb-agent-status {
+.wb-agent-reply {
     margin: 0 0 10px; padding: 8px; border-radius: 6px; background: #eff6f3;
     font-size: 12px; line-height: 1.45; color: #335b55; overflow-wrap: anywhere;
 }
-#wb-agent-status:empty, .wb-agent-steps:empty { display: none }
+.wb-agent-reply:empty, .wb-agent-steps:empty { display: none }
 .wb-agent-steps { list-style: none; margin: 4px 0 0; padding: 0; color: #254948; font-size: 12px }
 .wb-agent-steps li {
     position: relative; margin: 0; padding: 8px 0 8px 16px; border-bottom: 1px solid #edf2ef; overflow-wrap: anywhere;
@@ -102,7 +109,7 @@
 }
 .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 52px }
 .wb-agent-plan { margin-bottom: 10px; color: #254948; overflow-wrap: anywhere }
-.wb-agent-plan h3 { font-size: 13px; margin: 0 0 6px }
+.wb-agent-plan summary { font-size: 12px; font-weight: 600; margin: 0 0 6px; cursor: pointer }
 .wb-agent-plan p { margin: 0 0 8px; line-height: 1.45 }
 .wb-agent-plan ol { margin: 0; padding-left: 20px }
 .wb-agent-plan li { padding: 4px 0; line-height: 1.45 }

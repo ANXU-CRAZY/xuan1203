@@ -190,16 +190,16 @@ export async function createCompatibleMap(root, {leafletUrl, projectUrl}) {
         async loadProject(url) {
             const response = await fetch(url);
             if (!response.ok) throw new Error('Could not load project');
-            await client.openProject(await response.json());
+            await client.openProject(await response.json(), url);
         },
-        async openProject(next) {
+        async openProject(next, url = null) {
             if (!Array.isArray(next.layers) || next.layers.some(layer => layer.type !== 'geojson' || !Array.isArray(layer.geojson?.features))) throw new Error('Unsupported project');
             for (const entry of entries.values()) map.removeLayer(entry.layer);
             entries.clear(); project = next; selected = null;
             backgroundVisible = next.basemapVisible !== false;
             backgroundOpacity = typeof next.basemapOpacity === 'number' ? Math.max(0, Math.min(1, next.basemapOpacity)) : 1;
             applyBackgroundAppearance();
-            next.layers.forEach(add); renderRows(); emit('projectLoaded', {name: next.name});
+            next.layers.forEach(add); renderRows(); emit('projectLoaded', {name: next.name, url});
         },
         async addLayer(spec) { const id = add(spec); selected = id; renderRows(); emit('featuresChanged', {layerId: id}); return id; },
         async listLayers() { return [...entries.values()].map(({spec}) => ({id: spec.id, name: spec.name, type: spec.type, visible: spec.visible !== false, opacity: spec.opacity ?? 1})); },

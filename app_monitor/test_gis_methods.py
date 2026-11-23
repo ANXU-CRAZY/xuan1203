@@ -28,6 +28,38 @@ class MethodRoutingTests(SimpleTestCase):
                          [dict(tool='buffer', layer='L1', meters=2000),
                           dict(tool='points_within', layer='L2', area='R1'), dict(tool='count', layer='R2')])
 
+    def test_followup_revises_previous_distance_using_original_inputs(self):
+        first = self.plan('找出离黄河走势 2 公里内的观测点，数一下有几条记录。')
+        response = self.client.post('/workbench/agent/plan/', {
+            'message': '不是2公里，改成三公里再算一遍', 'layers': self.layers,
+            'previous': {'steps': first['steps'], 'outputs': []},
+        }, content_type='application/json')
+        result = response.json()
+        self.assertTrue(result['revisesPrevious'])
+        self.assertEqual(result['steps'], [dict(first['steps'][0], meters=3000), *first['steps'][1:]])
+
+    def test_followup_recounts_current_result_and_handles_missing_layer(self):
+        payload = {'message': '核对一下刚才筛出的点有几条？', 'layers': self.layers,
+                   'previous': {'steps': [], 'outputs': [{'ref': 'L2', 'tool': 'points_within'}]}}
+        result = self.client.post('/workbench/agent/plan/', payload, content_type='application/json').json()
+        self.assertEqual(result['steps'], [{'tool': 'count', 'layer': 'L2'}])
+        payload['previous']['outputs'] = []
+        result = self.client.post('/workbench/agent/plan/', payload, content_type='application/json').json()
+        self.assertEqual(result['steps'], [])
+        self.assertIn('重新运行', result['message'])
+
+    @patch('app_monitor.workbench_agent._request_deepseek')
+    def test_clarification_can_refer_to_previous_question(self, model):
+        model.return_value = ('{"steps":[{"tool":"idw","layer":"L2","field":"水温"}]}', None)
+        self.layers[1]['numericFields'].append('水深')
+        response = self.client.post('/workbench/agent/plan/', {
+            'message': '就用水温', 'layers': self.layers,
+            'history': [{'user': '估算观测点之间的水温', 'reply': '要用哪个字段？'}],
+        }, content_type='application/json')
+        self.assertEqual(response.json()['steps'], [{'tool': 'idw', 'layer': 'L2', 'field': '水温'}])
+        messages = model.call_args.args[0]
+        self.assertEqual(json.loads(messages[1]['content'])['最近对话'][0]['小舟'], '要用哪个字段？')
+
     @patch('app_monitor.workbench_agent._request_deepseek')
     def test_direct_plans_are_available_to_native_without_model_call(self, model):
         def query(message):
