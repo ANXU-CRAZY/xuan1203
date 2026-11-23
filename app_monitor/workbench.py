@@ -11,11 +11,15 @@ from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_safe
 from .workbench_basemaps import make_style, provider_config
+from .gis_methods import METHODS
 
 
 @require_safe
 def page(request):
-    response = render(request, 'workbench.html', {'geostudio_online': getattr(settings, 'GEOSTUDIO_REMOTE_COMPUTE', False)})
+    response = render(request, 'workbench.html', {
+        'geostudio_online': getattr(settings, 'GEOSTUDIO_REMOTE_COMPUTE', False),
+        'analysis_labels': {m.native: m.name for m in METHODS if not m.raster},
+    })
     response['Cache-Control'] = 'no-store'
     return response
 

@@ -8,7 +8,7 @@ from django.shortcuts import render
 from rest_framework.routers import DefaultRouter
 from app_monitor import account, password_reset
 from app_monitor.contribution_api import ContributionViewSet
-from app_monitor import monitoring, monitoring_report
+from app_monitor import monitoring, monitoring_report, river_survey
 from app_monitor import tower_coverage
 from app_monitor import games
 from app_monitor import workbench, workbench_agent, workbench_sidecar, workbench_processing
@@ -44,6 +44,8 @@ urlpatterns = [
     path('account/', account.entry, name='account_entry'),
     path('workbench/', workbench.page, name='workbench'),
     path('workbench/agent/plan/', workbench_agent.plan, name='workbench_agent_plan'),
+    path('workbench/analysis/river-survey/', river_survey.analyze, name='river_survey'),
+    path('workbench/agent/river-intent/', river_survey.interpret, name='river_intent'),
     path('workbench/agent/native/v1/chat/completions', workbench_agent.native_chat, name='workbench_agent_native'),
     path('ai/v1/chat/completions', workbench_agent.native_chat, name='workbench_agent_native_policy'),
     path('sidecar/<path:path>', workbench_sidecar.proxy, name='workbench_sidecar'),

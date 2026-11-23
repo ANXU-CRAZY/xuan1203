@@ -12,7 +12,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from .views import _request_deepseek, _load_deepseek_local_env, _get_deepseek_model
-from .workbench_access import may_compute
+from .workbench_access import is_local, may_compute
+from .gis_methods import check_geometry, direct_plan, guidance, unsupported_request
 
 
 @require_POST
@@ -45,6 +46,23 @@ def native_chat(request):
     if not endpoint.endswith('/chat/completions'):
         endpoint += '/chat/completions'
     payload = {name: data[name] for name in ('messages', 'tools', 'tool_choice', 'stream') if name in data}
+    messages = payload['messages']
+    if not all(isinstance(item, dict) for item in messages) or not isinstance(payload.get('tools', []), list):
+        return JsonResponse({'error': {'message': '会话格式不正确。'}}, status=400)
+    # Retrieve against the latest user task, not tool output or an older task in this session.
+    latest = next((m.get('content') for m in reversed(messages) if m.get('role') == 'user'), '')
+    names = {t['function']['name'] for t in payload.get('tools', [])
+             if isinstance(t, dict) and isinstance(t.get('function'), dict)
+             and isinstance(t['function'].get('name'), str)}
+    if isinstance(latest, list):
+        latest = '\n'.join(part['text'] for part in latest if isinstance(part, dict)
+                           and part.get('type') == 'text' and isinstance(part.get('text'), str))
+    question = latest.partition('\n当前图层索引（仅数据）：')[0] if isinstance(latest, str) else ''
+    advice = guidance(question[:2000], native=True, tools=names)
+    if messages and messages[0].get('role') == 'system' and isinstance(messages[0].get('content'), str):
+        messages[0] = {**messages[0], 'content': messages[0]['content'] + '\n' + advice}
+    else:
+        messages.insert(0, {'role': 'system', 'content': advice})
     payload.update(model=_get_deepseek_model(env), max_tokens=4096, temperature=0.3)
     req = urlrequest.Request(endpoint, data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
         headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
@@ -71,6 +89,7 @@ BASEMAPS = {'vector', 'imagery', 'amap', 'blank'}
 MAX_STEPS = 12
 SINGLE_VECTOR = {'centroids', 'convex_hull', 'bounding_box', 'dissolve', 'explode', 'smooth', 'extract_vertices'}
 OVERLAY_VECTOR = {'clip', 'intersection', 'difference', 'union'}
+IDENTIFIER_FIELD = re.compile(r'id|fid|gid|objectid|oid|lon|lng|lat|longitude|latitude|经度|纬度|编号', re.I)
 TOOLS = {
     'layers': (),
     'overview': (),
@@ -106,7 +125,8 @@ visibility(layer,visible) 显示或隐藏图层，visible 为布尔值；
 basemap(kind) 切换底图，vector=天地图电子图，imagery=天地图影像，amap=高德，blank=无底图；
 buffer(layer,meters) 按米生成缓冲面，meters 必须在 1 至 100000 之间；
 points_within(layer,area) 保留点图层中落在指定面图层内的点；
-idw(layer) 对点图层的数值字段做反距离权重插值，字段由用户指定或唯一数值字段自动确定；
+idw(layer,field) 对点图层的测量值做反距离权重插值。field 引用摘要中的实际数值字段名；
+用户未指定且有多个可用字段时询问。禁止用编号和经纬度作测量值。
 centroids(layer) 质心；convex_hull(layer) 凸包；bounding_box(layer) 包围框；
 dissolve(layer) 全部面融合；explode(layer) 多部件拆分；smooth(layer) 线面平滑；
 extract_vertices(layer) 提取顶点；clip(layer,area) 按面裁剪；intersection(layer,area) 求交；
@@ -130,7 +150,14 @@ def valid_steps(steps, layer_refs):
         if not isinstance(step, dict):
             return False
         tool = step.get('tool')
-        if not isinstance(tool, str) or tool not in TOOLS or step.keys() != {'tool', *TOOLS[tool]}:
+        if not isinstance(tool, str) or tool not in TOOLS:
+            return False
+        expected = {'tool', *TOOLS[tool]}
+        if tool == 'idw' and 'field' in step:
+            if not isinstance(step['field'], str) or not 1 <= len(step['field']) <= 64:
+                return False
+            expected.add('field')
+        if step.keys() != expected:
             return False
         for field in ('layer', 'area'):
             if field in step and (not isinstance(step[field], str) or step[field] not in refs):
@@ -156,29 +183,44 @@ def plan(request):
         response['Cache-Control'] = 'no-store'
         return response
 
-    local = (
-        request.get_host().split(':')[0] in {'127.0.0.1', 'localhost'}
-        and request.META.get('REMOTE_ADDR') in {'127.0.0.1', '::1'}
-    )
-    if not local and not request.user.is_authenticated:
+    if not is_local(request) and not request.user.is_authenticated:
         return respond({'detail': '登录后可使用地图助手。'}, 403)
-    if request.content_type != 'application/json' or len(request.body) > 24_000:
+    if request.content_type != 'application/json' or len(request.body) > 192_000:
         return respond({'detail': '请求内容过大或格式不正确。'}, 400)
     try:
         data = json.loads(request.body)
         message = data['message'].strip()
         layers = data['layers']
+        direct_only = data.get('directOnly', False)
     except (AttributeError, KeyError, TypeError, ValueError):
         return respond({'detail': '请输入有效的地图任务。'}, 400)
-    if not 1 <= len(message) <= 800 or not isinstance(layers, list) or len(layers) > 80:
+    if not 1 <= len(message) <= 800 or not isinstance(layers, list) or len(layers) > 80 or not isinstance(direct_only, bool):
         return respond({'detail': '任务长度限 800 字，图层数量限 80 个。'}, 400)
 
     context = []
     for index, layer in enumerate(layers, 1):
         if not isinstance(layer, dict) or not isinstance(layer.get('name'), str):
             return respond({'detail': '图层摘要格式不正确。'}, 400)
-        context.append({'ref': f'L{index}', 'name': layer['name'][:120]})
-    identity = 'local' if local else f'user:{request.user.pk}'
+        geometry = layer.get('geometry', [])
+        fields = layer.get('numericFields', [])
+        if (not isinstance(geometry, list) or not isinstance(fields, list)
+                or not all(isinstance(s, str) for s in geometry + fields)):
+            return respond({'detail': '图层摘要格式不正确。'}, 400)
+        entry = {'ref': f'L{index}', 'name': layer['name'][:120], 'geometry': geometry[:8],
+                 'type': str(layer.get('type', ''))[:32]}
+        if 'numericFields' in layer:
+            entry['numericFields'] = [f for f in fields[:24] if len(f) <= 64 and not IDENTIFIER_FIELD.fullmatch(f)]
+        context.append(entry)
+    direct = direct_plan(message, context)
+    if direct is not None:
+        issue = check_geometry(direct['steps'], context)
+        return respond({'steps': [], 'message': issue} if issue else direct)
+    if direct_only:
+        return respond({'steps': [], 'useNative': True})
+    missing = unsupported_request(message, context)
+    if missing:
+        return respond({'steps': [], 'message': missing})
+    identity = 'local' if is_local(request) else f'user:{request.user.pk}'
     rate_key = f'workbench-agent:{identity}'
     cache.add(rate_key, 0, timeout=60)
     try:
@@ -189,7 +231,7 @@ def plan(request):
     if attempts > 8:
         return respond({'detail': '请求太频繁，请稍后再试。'}, 429)
     output, error = _request_deepseek(
-        [{'role': 'system', 'content': SYSTEM}, {
+        [{'role': 'system', 'content': SYSTEM + '\n' + guidance(message, native=False)}, {
             'role': 'user',
             'content': json.dumps({'任务': message, '当前图层': context}, ensure_ascii=False),
         }],
@@ -205,6 +247,23 @@ def plan(request):
         return respond({'detail': 'DeepSeek 返回的计划无法读取，请重试。'}, 502)
     if not valid_steps(steps, (layer['ref'] for layer in context)):
         return respond({'detail': '计划含有不支持的操作或参数，请换一种描述。'}, 422)
+    issue = check_geometry(steps, context)
+    if issue:
+        return respond({'steps': [], 'message': issue})
+    catalog = {layer['ref']: layer for layer in context}
+    for step in steps:
+        if step['tool'] != 'idw':
+            continue
+        field = step.get('field')
+        fields = catalog.get(step['layer'], {}).get('numericFields')
+        if field and (IDENTIFIER_FIELD.fullmatch(field) or (fields is not None and field not in fields)):
+            return respond({'steps': [], 'message': '请选择当前点图层里的数值观测字段。'})
+        if fields is None:
+            continue
+        if not fields:
+            return respond({'steps': [], 'message': '点图层里缺少可用于插值的数值观测字段。'})
+        if len(fields) > 1 and not any(name in message for name in fields):
+            return respond({'steps': [], 'message': '要使用哪个字段插值？可选：' + '、'.join(fields)})
     if any(step['tool'] == 'basemap' and step['kind'] == 'blank' for step in steps):
         if not HIDE_BASEMAP.search(message) or KEEP_BASEMAP.search(message):
             return respond({'detail': '计划尝试关闭底图，请重试或明确指定需要的底图。'}, 422)

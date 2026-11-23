@@ -136,6 +136,8 @@ export async function createCompatibleMap(root, {leafletUrl, projectUrl}) {
         const data = structuredClone(spec);
         const layer = L.geoJSON(data.geojson, {style: feature => ({
             ...style(data),
+            ...(data.style?.simpleStyleEnabled && feature?.properties?.stroke
+                ? {color: feature.properties.stroke} : {}),
             ...(data.style?.simpleStyleEnabled && feature?.properties?.fill
                 ? {fillColor: feature.properties.fill, fillOpacity: (feature.properties['fill-opacity'] ?? 1) * (data.opacity ?? 1)}
                 : {}),
@@ -201,6 +203,16 @@ export async function createCompatibleMap(root, {leafletUrl, projectUrl}) {
         },
         async addLayer(spec) { const id = add(spec); selected = id; renderRows(); emit('featuresChanged', {layerId: id}); return id; },
         async listLayers() { return [...entries.values()].map(({spec}) => ({id: spec.id, name: spec.name, type: spec.type, visible: spec.visible !== false, opacity: spec.opacity ?? 1})); },
+        describeAnalysisLayer(id) {
+            const geometry = new Set(), numericFields = new Set();
+            for (const f of entries.get(id)?.spec.geojson.features || []) {
+                if (f.geometry?.type) geometry.add(f.geometry.type);
+                for (const [name, value] of Object.entries(f.properties || {})) {
+                    if (Number.isFinite(value) && numericFields.size < 24) numericFields.add(name);
+                }
+            }
+            return {geometry: [...geometry], numericFields: [...numericFields]};
+        },
         async setLayerVisibility(id, visible) {
             const entry = entries.get(id);
             if (!entry) throw new Error('图层已移除。');

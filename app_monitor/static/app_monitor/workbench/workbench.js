@@ -1,5 +1,5 @@
 import {connect} from './geolibre-embed.js';
-import {initAgent} from './agent.js?v=11';
+import {initAgent} from './agent.js?v=14';
 
 const appsToggle = document.getElementById('wb-apps-toggle');
 const appsMenu = document.getElementById('wb-apps-menu');
@@ -382,7 +382,7 @@ async function finishReady() {
 }
 
 async function startCompatible(ticket) {
-    const {createCompatibleMap} = await import('./compatible-map.js?v=20261115-agent2');
+    const {createCompatibleMap} = await import('./compatible-map.js?v=20261123-survey');
     if (ticket !== boot) return;
     compatible = true;
     frame.hidden = true; frame.src = 'about:blank';

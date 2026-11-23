@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/workbench.css' %}?v=20261115-brand-swap5">
     <link rel="stylesheet" href="{% static 'app_monitor/workbench/background.css' %}?v=20261115-1">
-    <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'app_monitor/workbench/agent.css' %}?v=5">
 </head>
 <body data-ark-page="workbench">
 <header class="wb-header">
@@ -64,17 +64,28 @@
             <button type="button" class="wb-icon-button" id="wb-agent-close" aria-label="收起小舟智能体">×</button>
         </div>
         <div class="wb-agent-content">
-        <form id="wb-agent-form" data-plan-url="{% url 'workbench_agent_plan' %}">
+        <form id="wb-agent-form" data-plan-url="{% url 'workbench_agent_plan' %}" data-survey-url="{% url 'river_survey' %}">
             {% csrf_token %}
             <label for="wb-agent-input">用一句话描述地图任务</label>
-            <textarea id="wb-agent-input" rows="3" maxlength="800" required placeholder="例如：定位黄河走势，再切换到卫星影像"></textarea>
+            <textarea id="wb-agent-input" rows="3" maxlength="800" required placeholder="例如：筛出研究区范围内的水鸟观测点"></textarea>
             <div class="wb-agent-actions">
+                <button type="button" id="wb-survey-example" class="wb-button">河段调查</button>
                 <button type="button" id="wb-agent-example">缓冲区示例</button>
                 <button type="button" id="wb-agent-stop" class="wb-button" hidden>停止</button>
                 <button type="submit" id="wb-agent-run" class="wb-button primary">执行任务</button>
             </div>
         </form>
         <p id="wb-agent-status" role="status" aria-live="polite"></p>
+        <form id="wb-survey-options" data-intent-url="{% url 'river_intent' %}" hidden>
+            <label>河道中心线<select name="river" required></select></label>
+            <label>观测数据<select name="source"><option value="approved">平台已审核观测</option><option value="sample">模拟观测 · 2026 年 10 月</option></select></label>
+            <label>观测月份<input type="month" name="month" required></label>
+            <label>物种<input name="bird" maxlength="100" placeholder="全部物种"></label>
+            <label>沿岸距离（公里）<input type="number" name="km" min="0.1" max="20" step="0.1" required></label>
+            <label>比较什么<select name="metric" required><option value="">请选择</option><option value="individuals">累计观察到多少只</option><option value="species">观察到多少种</option><option value="records">有多少条记录</option></select></label>
+            <button type="submit" class="wb-button primary">按每 5 公里统计</button>
+        </form>
+        <div id="wb-survey-results" hidden></div>
         <ol id="wb-agent-steps" class="wb-agent-steps" aria-label="执行步骤" aria-live="polite"></ol>
         </div>
     </aside>
@@ -114,6 +125,7 @@
     <span class="wb-status-end">方舟实验室 <span aria-hidden="true">·</span> <span id="wb-coordinates">地图准备中</span></span>
 </footer>
 <div id="wb-toast" class="wb-toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261115-brand-swap5"></script>
+{{ analysis_labels|json_script:"wb-analysis-labels" }}
+<script type="module" src="{% static 'app_monitor/workbench/workbench.js' %}?v=20261123-analysis-2"></script>
 </body>
 </html>

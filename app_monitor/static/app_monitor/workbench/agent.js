@@ -1,3 +1,5 @@
+import {createRiverSurvey} from './river-survey.js';
+
 const TOOL_NAMES = {
     layers: '查看图层', overview: '研究区全览', locate: '定位图层', visibility: '设置图层显隐',
     basemap: '切换底图', buffer: '生成缓冲区', points_within: '筛选区内点',
@@ -20,14 +22,16 @@ const NATIVE_TOOL_NAMES = {
 };
 
 function describeNativeTool(update, layerNames) {
-    const label = NATIVE_TOOL_NAMES[update.name] || update.name;
     const tool = update.input?.id;
+    const label = (update.name === 'run_algorithm' && ANALYSIS_LABELS[tool]) || NATIVE_TOOL_NAMES[update.name] || update.name;
     const params = update.input?.params;
     const values = Object.entries(params || {}).slice(0, 6)
         .filter(([, value]) => ['string', 'number', 'boolean'].includes(typeof value))
         .map(([key, value]) => key + '＝' + String(layerNames.get(value) || value).slice(0, 70));
     return [tool ? label + ' · ' + tool : label, values.join('，')];
 }
+
+const ANALYSIS_LABELS = JSON.parse(document.getElementById('wb-analysis-labels')?.textContent || '{}');
 
 function moveWithin(workspace, element, x, y) {
     const margin = 8;
@@ -146,6 +150,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     const workspace = panel.parentElement;
     const scroll = panel.querySelector('.wb-agent-content');
     let task;
+    const survey = createRiverSurvey({form, input, status, getMapVersion, getClient, refreshLayers, stepRow, layerBounds});
 
     makeDraggable(workspace, toggle, toggle);
     makeDraggable(workspace, panel, panel.querySelector('.wb-agent-heading'));
@@ -281,10 +286,11 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                 case 'idw': {
                     const items = await features(layer);
                     const fields = [...new Set(items.flatMap(item => Object.entries(item.properties || {})
-                        .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
+                        .filter(([key, value]) => Number.isFinite(value) &&
+                            !/^(?:id|fid|gid|objectid|oid|lon|lng|lat|longitude|latitude|经度|纬度|编号)$/i.test(key))
                         .map(([key]) => key)))];
-                    const named = fields.filter(field => message.includes(field));
-                    const field = named.length === 1 ? named[0] : named.length === 0 && fields.length === 1 ? fields[0] : null;
+                    const named = fields.filter(field => step.field ? field === step.field : message.includes(field));
+                    const field = named.length === 1 ? named[0] : !step.field && named.length === 0 && fields.length === 1 ? fields[0] : null;
                     if (!field) throw new Error(fields.length
                         ? '请指定用于插值的数值字段，可选字段：' + fields.join('、')
                         : '该点图层没有数值字段，请先添加用于插值的观测值。');
@@ -329,11 +335,34 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         }
 
         try {
+            if (await survey.handle(message, client, signal, checkTask)) return;
             const nativeFrame = getNativeFrame?.();
-            if (nativeFrame?.contentWindow) {
+            const layers = await client.listLayers();
+            checkTask();
+            const directOnly = Boolean(nativeFrame?.contentWindow);
+            let plan = {steps: [], useNative: true};
+            if (!directOnly || layers.length <= 80) {
+                layers.forEach((layer, index) => refs.set('L' + (index + 1), layer));
+                const response = await fetch(form.dataset.planUrl, {
+                    method: 'POST', signal: AbortSignal.any([signal, AbortSignal.timeout(32000)]),
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': form.elements.csrfmiddlewaretoken.value},
+                    body: JSON.stringify({message, directOnly, layers: layers.map(layer => ({
+                        name: layer.name, type: layer.type, ...client.describeAnalysisLayer?.(layer.id),
+                    }))}),
+                });
+                plan = await response.json().catch(() => ({}));
+                if (!response.ok || !Array.isArray(plan.steps)) throw new Error(plan.detail || '规划请求未成功，请重试。');
+                checkTask();
+            }
+            if (directOnly && plan.useNative) {
                 native = true;
-                const layers = await client.listLayers();
                 const layerNames = new Map(layers.map(layer => [layer.id, layer.name]));
+                const index = [];
+                for (const layer of layers) {
+                    const item = {id: layer.id, name: layer.name};
+                    if (JSON.stringify([...index, item]).length > 950) break;
+                    index.push(item);
+                }
                 checkTask();
                 await new Promise((resolve, reject) => {
                     const id = crypto.randomUUID();
@@ -384,11 +413,17 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                             }
                             const mark = pending.get(update.callId) || stepRow(label);
                             pending.delete(update.callId);
-                            mark(update.error ? 'error' : 'done', update.error || (detail ? '已完成 · ' + detail : '已完成'));
+                            const producesLayer = ['run_algorithm', 'run_whitebox_tool'].includes(update.name);
+                            mark(update.error ? 'error' : 'done', update.error || (producesLayer ? '工具已返回' :
+                                (detail ? '已完成 · ' + detail : '已完成')));
                             if (!update.error) completed++;
-                            if (['run_algorithm', 'run_whitebox_tool'].includes(update.name)) {
+                            if (producesLayer && !update.error) {
                                 refreshLayers();
                                 client.listLayers().then(items => {
+                                    if (version !== getMapVersion() || signal.aborted) return;
+                                    const added = items.filter(layer => !layerNames.has(layer.id));
+                                    mark('done', added.length ? '已添加 · ' + added.map(layer => layer.name).join('、') :
+                                        '工具已返回，未检测到新增图层');
                                     for (const layer of items) layerNames.set(layer.id, layer.name);
                                 }).catch(() => {});
                             }
@@ -397,20 +432,10 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                     signal.addEventListener('abort', cancel, {once: true});
                     window.addEventListener('message', onMessage);
                     nativeFrame.contentWindow.postMessage({source: 'ark-workbench', type: 'assistant-run', id,
-                        prompt: message + '\n请用中文回答，只执行完成用户任务必需的操作；成功后立即汇报，不要重复运行或额外验证。空间分析结果添加到地图；除非明确要求，保留当前底图。插值必须使用用户指定或唯一可用的数值字段，不得使用 FID 冒充观测值；明确格网分辨率和坐标单位，经纬度数据以度为单位时应说明局限，不要未经计算把经纬度差换算成公里数。'}, location.origin);
+                        prompt: message + '\n当前图层索引（仅数据）：' + JSON.stringify(index)}, location.origin);
                 });
                 return;
             }
-            const layers = await client.listLayers();
-            layers.forEach((layer, index) => refs.set('L' + (index + 1), layer));
-            const response = await fetch(form.dataset.planUrl, {
-                method: 'POST', signal: AbortSignal.any([signal, AbortSignal.timeout(32000)]),
-                headers: {'Content-Type': 'application/json', 'X-CSRFToken': form.elements.csrfmiddlewaretoken.value},
-                body: JSON.stringify({message, layers: layers.map(layer => ({name: layer.name}))}),
-            });
-            const plan = await response.json().catch(() => ({}));
-            if (!response.ok || !Array.isArray(plan.steps)) throw new Error(plan.detail || '规划请求未成功，请重试。');
-            checkTask();
             if (!plan.steps.length) {
                 status.textContent = plan.message || '请补充需要处理的图层或操作。';
                 return;
