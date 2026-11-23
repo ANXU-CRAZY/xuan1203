@@ -85,7 +85,7 @@ class MethodRoutingTests(SimpleTestCase):
 
         step = dict(tool='native', method='kernel-density', inputs=['L2'], parameters={'权重': '等权'})
         self.assertEqual(query(step).json()['steps'], [step])
-        self.assertIn('只输出待确认的方案', model.call_args.args[0][0]['content'])
+        self.assertIn('只输出工具方案', model.call_args.args[0][0]['content'])
         self.assertEqual(query({**step, 'inputs': ['R1']}).status_code, 422)
         self.assertEqual(query({**step, 'method': 'unregistered-method'}).status_code, 422)
 

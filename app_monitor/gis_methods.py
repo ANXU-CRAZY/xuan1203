@@ -78,7 +78,7 @@ def guidance(message, *, native, tools=(), planning=False):
     methods = matching_methods(message)
     if native:
         general = ('用中文拟订方案。以图层类型、字段、单位和已知能力选择步骤。方法咨询直接解释，步骤留空。'
-                   '只输出待确认的方案，不执行工具。' if planning else
+                   '只输出工具方案，由工作台执行。' if planning else
                    '用中文回答。先读当前图层、字段、单位。地图算法的图层参数只用真实 id，SQL 表名只用于 SQL。'
                    '方法咨询只解释；用户需要执行时，用当前声明的工具实际操作地图。'
                    '先发现算法，再按返回的 id、参数签名和图层 id 执行。复合任务按依赖引用实际产物。'
@@ -137,9 +137,11 @@ def direct_plan(message, layers):
             return {'steps': [], 'message': '缓冲距离须在 1 米至 100 公里之间。'}
         steps = [{'tool': 'buffer', 'layer': next(iter(aliases[chain['line']])), 'meters': meters},
                  {'tool': 'points_within', 'layer': next(iter(aliases[chain['points']])), 'area': 'R1'}]
+        goal = f'找出距{chain["line"]} {meters:g} 米内的{chain["points"]}'
         if chain['count']:
             steps.append({'tool': 'count', 'layer': 'R2'})
-        return {'steps': steps, 'message': ''}
+            goal += '，统计筛选结果的记录数'
+        return {'steps': steps, 'message': '', 'goal': goal}
     commands = [
         (rf'从(?P<layer>{ref})(?:中)?(?:扣除|擦除|挖掉)(?P<area>{ref})', 'difference'),
         (rf'(?:求|提取|计算)?(?P<layer>{ref})(?:与|和|跟)(?P<area>{ref})(?:的)?(?:交集|公共部分|重叠部分)', 'intersection'),

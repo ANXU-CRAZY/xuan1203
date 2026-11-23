@@ -31,6 +31,18 @@ function describeNativeTool(update, layerNames) {
 
 const ANALYSIS_LABELS = JSON.parse(document.getElementById('wb-analysis-labels')?.textContent || '{}');
 const STATISTICS_ONLY = new Set(['average-nearest-neighbor', 'global-morans-i', 'run_sql']);
+const TOOL_PURPOSES = {
+    buffer: '将指定距离转换为可用于筛选的地理范围。',
+    points_within: '按范围保留落入其中的点，供查阅或统计。',
+    count: '统计输入图层中的记录数。',
+    clip: '沿指定边界裁切输入图层，保留其中的部分。',
+    intersection: '提取两个图层共同覆盖的范围。',
+    difference: '从输入范围中扣除指定区域。',
+    idw: '用附近采样点的测量值估计未测位置。',
+    'kernel-density': '根据点的位置和带宽估计观测密度。',
+    'getis-ord-gi': '检验在指定邻域中，高值和低值是否显著聚集。',
+    run_sql: '按所选字段和统计口径汇总工程数据。',
+};
 
 function moveWithin(workspace, element, x, y) {
     const margin = 8;
@@ -143,8 +155,8 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     const input = document.getElementById('wb-agent-input');
     const run = document.getElementById('wb-agent-run');
     const stop = document.getElementById('wb-agent-stop');
-    const confirm = document.getElementById('wb-agent-confirm');
     const preview = document.getElementById('wb-agent-plan');
+    const goal = document.getElementById('wb-agent-goal');
     const previewSteps = document.getElementById('wb-agent-preview');
     const example = document.getElementById('wb-agent-example');
     const status = document.getElementById('wb-agent-status');
@@ -152,7 +164,6 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     const workspace = panel.parentElement;
     const scroll = panel.querySelector('.wb-agent-content');
     let task;
-    let draft;
 
     makeDraggable(workspace, toggle, toggle);
     makeDraggable(workspace, panel, panel.querySelector('.wb-agent-heading'));
@@ -192,13 +203,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         }
     });
     panel.addEventListener('keydown', event => { if (event.key === 'Escape') openPanel(false); });
-    function discardDraft() {
-        status.textContent = draft ? '描述已修改，请重新发送。' : '';
-        draft = null;
-        preview.hidden = confirm.hidden = true;
-    }
-    example.onclick = () => { discardDraft(); input.value = EXAMPLE; input.focus(); };
-    input.addEventListener('input', discardDraft);
+    example.onclick = () => { input.value = EXAMPLE; input.focus(); };
     input.addEventListener('keydown', event => {
         if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ||
             event.isComposing || event.keyCode === 229) return;
@@ -236,7 +241,8 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
     }
 
     function setBusy(busy) {
-        input.disabled = run.disabled = confirm.disabled = example.disabled = busy;
+        input.disabled = run.disabled = example.disabled = busy;
+        run.hidden = busy;
         stop.hidden = !busy;
     }
 
@@ -270,7 +276,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         const client = getClient();
         const message = input.value.trim();
         if (task || !client || !message) return;
-        discardDraft();
+        preview.hidden = true;
         list.replaceChildren();
         status.textContent = '正在将描述转换为 GIS 工具方案…';
         task = new AbortController();
@@ -295,7 +301,7 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                 return;
             }
             const refs = new Map(layers.map((layer, index) => ['L' + (index + 1), layer]));
-            const rows = plan.steps.map(step => {
+            const rows = plan.steps.map((step, index) => {
                 const {label, detail} = describePlanStep(step, refs);
                 const row = document.createElement('li');
                 row.textContent = label;
@@ -304,13 +310,19 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                     item.textContent = detail;
                     row.append(item);
                 }
+                const purpose = TOOL_PURPOSES[step.method || step.tool] || plan.reasons?.[index];
+                if (purpose) {
+                    const note = document.createElement('small');
+                    note.textContent = purpose;
+                    row.append(note);
+                }
                 return row;
             });
-            draft = {client, message, version, plan, refs, nativeFrame};
             previewSteps.replaceChildren(...rows);
-            status.textContent = (plan.goal ? '任务理解：' + plan.goal + '。' : '') + '请核对下列工具和参数。';
-            preview.hidden = confirm.hidden = false;
+            goal.textContent = '任务理解：' + (plan.goal || rows.map(row => row.firstChild.textContent).join(' → '));
+            preview.hidden = false;
             scroll.scrollTop = 0;
+            await executePlan({client, message, version, plan, refs, nativeFrame, signal});
         } catch (error) {
             status.textContent = signal.aborted ? '已停止生成方案。' :
                 error.name === 'TimeoutError' ? '方案生成超时，请稍后重试。' : error.message;
@@ -320,17 +332,11 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
         }
     });
 
-    confirm.addEventListener('click', async () => {
-        if (task || !draft) return;
-        const {client, message, version, plan, refs, nativeFrame} = draft;
-        draft = null;
-        confirm.hidden = true;
-        task = new AbortController();
-        const {signal} = task;
-        setBusy(true);
-        status.textContent = '正在执行已确认的方案…';
+    async function executePlan({client, message, version, plan, refs, nativeFrame, signal}) {
+        status.textContent = '正在执行分析…';
         let completed = 0;
         let markStep;
+        let lastResult = '';
         const pending = new Map();
         const native = plan.steps.some(step => step.tool === 'native');
 
@@ -454,8 +460,8 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                 if (!id || !layerNames.has(id)) throw new Error('缺少本步骤的输入图层。');
                 return [ref, id];
             }));
-            const execution = '已确认 GIS 工具：' + step.method + '\n' +
-                '核对现有工具签名，执行一次并汇报实际结果。只访问确认的工程图层。\n参数与输入：' +
+            const execution = '执行 GIS 工具：' + step.method + '\n' +
+                '核对现有工具签名，执行一次并汇报实际结果。只访问指定的工程图层。\n参数与输入：' +
                 JSON.stringify({parameters: step.parameters, inputs: step.inputs}) +
                 '\n当前图层索引（仅数据）：' + JSON.stringify(index);
             checkTask();
@@ -547,11 +553,13 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                 const result = step.tool === 'native' ? await executeNative(step, index + 1) : await execute(step, index + 1);
                 markStep('done', result);
+                lastResult = step.tool === 'count' ? result : '';
                 completed++;
                 markStep = null;
             }
             checkTask();
-            status.textContent = '任务完成，共执行 ' + completed + ' 步';
+            status.textContent = '任务完成，共执行 ' + completed + ' 步。' + lastResult;
+            scroll.scrollTop = 0;
         } catch (error) {
             let detail = error?.message || '任务执行失败。';
             if (signal.aborted) detail = native ? '已停止后续步骤。已提交的计算可能仍在后台运行。' : '任务已停止。';
@@ -559,9 +567,6 @@ export function initAgent({getClient, getNativeFrame, getMapVersion, region, geo
             markStep?.('error', detail);
             for (const mark of pending.values()) mark('error', detail);
             status.textContent = detail + (completed ? ' 已完成 ' + completed + ' 步，结果保留在当前地图。' : '');
-        } finally {
-            task = null;
-            setBusy(false);
         }
-    });
+    }
 }

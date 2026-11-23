@@ -55,7 +55,7 @@ def native_chat(request):
         latest = '\n'.join(part['text'] for part in latest if isinstance(part, dict)
                            and part.get('type') == 'text' and isinstance(part.get('text'), str))
     question = latest.partition('\n当前图层索引（仅数据）：')[0] if isinstance(latest, str) else ''
-    confirmed = re.search(r'^(?:User request: )?已确认 GIS 工具：([^\n]+)$', question, re.M)
+    confirmed = re.search(r'^(?:User request: )?(?:已确认|执行) GIS 工具：([^\n]+)$', question, re.M)
     method = NATIVE_METHODS.get(confirmed[1]) if confirmed else None
     if method:
         allowed = {'list_layers', *native_tool_names(method)}
@@ -70,7 +70,7 @@ def native_chat(request):
     names = {native_tool_name(t) for t in payload.get('tools', [])}
     advice = guidance(question[:2000], native=True, tools=names)
     if method:
-        advice += '\n仅执行本条已确认 GIS 工具和明确参数。遇到不可用工具或缺少必要输入时停止并说明。'
+        advice += '\n仅执行这一步指定的 GIS 工具和参数。遇到不可用工具或缺少必要输入时停止并说明。'
     if messages and messages[0].get('role') == 'system' and isinstance(messages[0].get('content'), str):
         messages[0] = {**messages[0], 'content': messages[0]['content'] + '\n' + advice}
     else:
@@ -131,9 +131,11 @@ KEEP_BASEMAP = re.compile(
     re.IGNORECASE,
 )
 SYSTEM = """你为方舟科研工作台生成地图任务计划。只输出 JSON 对象。
-格式为 {"goal":"用一句话说明用户要达成什么","steps":[{"tool":"操作名", "必要参数": "值"}],"message":""}。
+格式为 {"goal":"用一句话说明用户要达成什么","steps":[{"tool":"操作名", "必要参数": "值"}],
+"reasons":["每一步对任务目标的作用"],"message":""}。
 无法完成时返回 {"steps":[],"message":"用简短中文说明缺少什么图层、参数或能力"}。
-先判断分析目标、数据类型和关键参数，再选择工具。只写可核对的方案，不披露内部推理。
+先判断分析目标、数据类型和关键参数，再选择工具。reasons 按步骤顺序写简短的用途或选用依据。
+依据只引用图层信息、指定条件或已知 GIS 方法，不预测执行结果。
 只使用以下工具和指定参数：
 layers 列出图层；overview 回到研究区全览；locate(layer) 定位图层；
 visibility(layer,visible) 显示或隐藏图层，visible 为布尔值；
@@ -311,6 +313,7 @@ def plan(request):
         steps = result['steps']
         note = result.get('message', '')
         goal = result.get('goal', '')
+        reasons = result.get('reasons')
     except (AttributeError, KeyError, TypeError, ValueError):
         return respond({'detail': 'DeepSeek 返回的计划无法读取，请重试。'}, 502)
     if not valid_steps(steps, (layer['ref'] for layer in context), {m.native for m in available}):
@@ -336,4 +339,7 @@ def plan(request):
         if not HIDE_BASEMAP.search(message) or KEEP_BASEMAP.search(message):
             return respond({'detail': '计划尝试关闭底图，请重试或明确指定需要的底图。'}, 422)
     description = note[:300] if isinstance(note, str) and not steps else ''
-    return respond({'steps': steps, 'message': description, 'goal': goal[:180] if isinstance(goal, str) else ''})
+    plan = {'steps': steps, 'message': description, 'goal': goal[:180] if isinstance(goal, str) else ''}
+    if isinstance(reasons, list) and len(reasons) == len(steps) and all(isinstance(reason, str) for reason in reasons):
+        plan['reasons'] = [reason.strip()[:160] for reason in reasons]
+    return respond(plan)

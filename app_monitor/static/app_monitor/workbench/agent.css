@@ -56,14 +56,21 @@
 .wb-agent-content:not(:has(> :not([hidden], :empty))) { display: none }
 .wb-agent form { flex: none; display: grid; gap: 8px; padding: 12px }
 .wb-agent form label { color: #3c5b5c; font-size: 12px }
+.wb-agent-composer { border: 1px solid #cfdfd9; border-radius: 9px; background: #f8fbfa; overflow: hidden }
+.wb-agent-composer:focus-within { border-color: #31848a; box-shadow: 0 0 0 1px #31848a }
 .wb-agent textarea {
-    font: inherit; width: 100%; min-height: 68px; max-height: 136px; resize: vertical; padding: 8px 10px;
-    color: var(--ark-ink); background: #f8fbfa; border: 1px solid #cfdfd9; border-radius: 7px; line-height: 1.5;
+    display: block; font: inherit; width: 100%; min-height: 62px; max-height: 108px; resize: vertical;
+    padding: 8px 10px; color: var(--ark-ink, #182e32); background: transparent; border: 0; line-height: 1.5;
 }
 .wb-agent-actions {
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px;
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 4px 6px 6px 10px;
 }
-.wb-agent-actions .wb-button { min-height: 38px; padding: 6px 12px; font-size: 12px; white-space: nowrap }
+.wb-agent-send {
+    min-height: 36px; min-width: 58px; padding: 6px 12px; border: 1px solid transparent; border-radius: 7px;
+    background: var(--ark-accent-deep, #17696e); color: #fff; font: 600 13px/1.3 system-ui, sans-serif;
+}
+.wb-agent-send:hover { background: #145458 }
+.wb-agent-send:focus-visible { outline: 2px solid #17696e; outline-offset: 2px }
 #wb-agent-example {
     margin-right: auto; padding: 4px 0; border: 0; background: transparent; color: #176a6e; font: inherit; font-size: 12px;
 }
@@ -85,9 +92,10 @@
 .wb-agent-steps [data-state=error]::before { background: #ae5548 }
 .wb-agent-steps small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.5; color: #55706b }
 .wb-agent-steps [data-state=error] small { color: #a24235 }
-.wb-agent-toggle:focus-visible, .wb-agent-heading:focus-visible, .wb-agent textarea:focus-visible {
+.wb-agent-toggle:focus-visible, .wb-agent-heading:focus-visible {
     outline: 2px solid #208b92; outline-offset: -2px;
 }
+.wb-agent textarea:focus { outline: none }
 @media (max-width: 640px) {
     .wb-agent-toggle { right: 12px; bottom: 40px }
     .wb-agent { right: 12px; bottom: 92px; max-height: min(360px, calc(100% - 16px)) }
@@ -95,9 +103,11 @@
 .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 52px }
 .wb-agent-plan { margin-bottom: 10px; color: #254948; overflow-wrap: anywhere }
 .wb-agent-plan h3 { font-size: 13px; margin: 0 0 6px }
+.wb-agent-plan p { margin: 0 0 8px; line-height: 1.45 }
 .wb-agent-plan ol { margin: 0; padding-left: 20px }
 .wb-agent-plan li { padding: 4px 0; line-height: 1.45 }
 .wb-agent-plan small { display: block; color: #55706b; font-size: 11px }
+.wb-agent-steps small { white-space: pre-line }
 @media (max-width: 640px) {
     .wb-workspace[data-renderer=geolibre] { --wb-agent-edge: 12px }
 }

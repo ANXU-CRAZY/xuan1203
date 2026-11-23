@@ -37,6 +37,12 @@ class WorkbenchFrontendTests(SimpleTestCase):
         self.assertContains(response, 'src="./assets/map.js"')
         self.assertNotEqual(self.client.get('/workbench/').get('X-Frame-Options'), 'SAMEORIGIN')
 
+    @override_settings(STATIC_URL='/geostudio/static/')
+    def test_theme_assets_use_the_workbench_static_prefix(self):
+        response = self.client.get('/workbench/')
+        self.assertContains(response, 'href="/geostudio/static/app_monitor/site-theme.css?')
+        self.assertContains(response, 'src="/geostudio/static/app_monitor/site-shell.js?')
+
     def test_runtime_policy_allows_only_the_exact_request_origin(self):
         response = self.client.get('/workbench/geolibre/deployment.json', secure=True)
         policy = json.loads(response.content)
