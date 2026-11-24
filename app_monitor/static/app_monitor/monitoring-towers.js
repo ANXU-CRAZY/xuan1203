@@ -74,7 +74,7 @@ function installMonitoringTowers(app) {
             });
             for (const [kind,type] of Object.entries(TYPES)) {
                 this.layerControl.addOverlay(this.layers[type.key],layerLabel(kind));
-                if (kind==='existing') this.layers[type.key].addTo(this.map);
+                this.layers[type.key].addTo(this.map);
             }
             this.map.on('zoomend moveend overlayadd overlayremove',()=>this.updateMonitoringTowerLabels());
             this.map.on('moveend zoomend overlayadd overlayremove',()=>this.updateAutomaticTowerScan());
