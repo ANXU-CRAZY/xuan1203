@@ -19,6 +19,7 @@
             --bg-glass: rgba(255, 255, 255, 0.96);
             --shadow: 0 8px 32px rgba(0,0,0,0.12);
             --radius: 10px;
+            --monitor-footer-height: 46px;
         }
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Noto Sans SC', sans-serif; background: #eef2f5; }
 
@@ -295,7 +296,7 @@
         /* 底部统计条 */
         .bottom-stats-bar {
             position: absolute;
-            bottom: 20px;
+            bottom: calc(var(--monitor-footer-height) + 16px);
             left: 50%;
             transform: translateX(-50%);
             display: grid;
@@ -351,24 +352,25 @@
             left: 0;
             right: 0;
             bottom: 0;
-            width: 100vw;
             z-index: 1001;
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 8px;
-            padding: 4px 12px;
-            border-radius: 0;
-            background: rgba(255,255,255,0.34);
-            color: rgba(44,62,80,0.7);
-            font-size: 11px;
+            gap: 2px 14px;
+            padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255,255,255,.34);
+            color: #34535a;
+            font-size: 12px;
             line-height: 1.4;
-            white-space: nowrap;
+            text-align: center;
+            -webkit-backdrop-filter: blur(4px);
             backdrop-filter: blur(4px);
-            box-shadow: none;
         }
+        .site-record-credit { margin: 0; color: #30547b; font-size: inherit; text-wrap: balance; }
+        .site-record-brand, .site-record-credit { font-weight: 600; }
         .site-record-footer a {
-            color: #007a80;
+            color: #006d76;
             text-decoration: none;
             font-weight: 600;
         }
@@ -532,7 +534,7 @@
             #heat-info { top: 140px; right: 14px; max-width: 340px; }
             #rank-panel { width: 300px; height: 340px; left: 14px; bottom: 92px; }
             #detail-panel { width: 330px; height: 430px; right: 14px; bottom: 92px; }
-            .bottom-stats-bar { bottom: 14px; padding: 9px 16px; }
+            .bottom-stats-bar { padding: 9px 16px; }
             .bottom-stat { padding: 0 12px; }
         }
 
@@ -669,7 +671,7 @@
             }
 
             #rank-panel {
-                left: 12px !important; right: 12px !important; bottom: 118px !important;
+                left: 12px !important; right: 12px !important; bottom: calc(var(--monitor-footer-height) + 94px) !important;
                 top: auto !important; width: auto; height: 126px;
                 border-radius: 22px; z-index: 1001; overflow: hidden;
             }
@@ -688,7 +690,7 @@
             #detail-panel { display: none; }
 
             .bottom-stats-bar {
-                left: 12px; right: 12px; bottom: 38px; transform: none;
+                left: 12px; right: 12px; bottom: calc(var(--monitor-footer-height) + 12px); transform: none;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) 56px repeat(2, minmax(0, 1fr));
                 justify-content: space-between; gap: 0; padding: 8px 6px;
                 border-radius: 20px; background: rgba(255,255,255,0.94);
@@ -700,15 +702,7 @@
             .huiyan-quick-entry { width: 56px; height: 56px; margin-top: -16px; margin-bottom: -16px; }
             .huiyan-quick-entry > i { font-size: 20px; }
             .huiyan-quick-entry > span { font-size: 9px; margin-top: 2px; }
-            .site-record-footer {
-                left: 50%;
-                bottom: 6px;
-                transform: translateX(-50%);
-                font-size: 10px;
-                padding: 5px 10px;
-                border-radius: 8px;
-                background: rgba(255,255,255,0.92);
-            }
+            .site-record-footer { font-size: 11px; background: rgba(255,255,255,.38); }
 
             #detail-modal-overlay { align-items: flex-end; }
             #detail-modal {
@@ -729,7 +723,7 @@
             .nav-btn span { display: inline; }
             #filter-bar { bottom: 246px; }
             #heat-info { bottom: 354px; }
-            #rank-panel { bottom: 112px !important; height: 116px; }
+            #rank-panel { bottom: calc(var(--monitor-footer-height) + 88px) !important; height: 116px; }
             .panel-head { font-size: 12px; }
             .bottom-stat .b-num { font-size: 16px; }
             .bottom-stat .b-label { font-size: 8px; }
@@ -741,30 +735,7 @@
         }
 
         @media (min-width: 769px) {
-            #rank-panel { bottom: 44px !important; }
-            .bottom-stats-bar { bottom: 30px !important; }
-            .site-record-footer {
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                width: 100vw !important;
-                transform: none !important;
-                background: rgba(255,255,255,0.34) !important;
-                border: 0;
-                box-shadow: none;
-                backdrop-filter: blur(4px);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .site-record-footer {
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                width: 100vw !important;
-                transform: none !important;
-                background: rgba(255,255,255,0.38) !important;
-            }
+            #rank-panel { bottom: calc(var(--monitor-footer-height) + 20px) !important; }
         }
 
         /* === DeepSeek 智能巡护助手 === */
@@ -1095,7 +1066,7 @@
     .bottom-action.games-action { --action-color:#9252af; --action-bg:#f5edf9; }
     .bottom-action.species-action { --action-color:#15856d; --action-bg:#e8f6f0; }
     .bottom-action.articles-action { --action-color:#c26c27; --action-bg:#fff2e6; }
-    #games-panel { top:auto !important; bottom:110px; width:400px; max-height:calc(100vh - 140px) !important; padding:14px; border-radius:18px; }
+    #games-panel { top:auto !important; bottom:calc(var(--monitor-footer-height) + 92px); width:400px; max-height:calc(100dvh - var(--monitor-footer-height) - 120px) !important; padding:14px; border-radius:18px; }
     #games-panel .games-panel-head { margin-bottom:10px; }
     #games-panel .games-panel-head > div { display:flex; align-items:center; gap:10px; min-width:0; }
     #games-panel .games-panel-head h2 { margin:0; font-family:inherit; font-size:18px; font-weight:700; white-space:nowrap; }
@@ -1133,7 +1104,6 @@
         .bottom-actions .huiyan-entry-group { width:56px; height:56px; margin-top:-20px; margin-bottom:-20px; }
         .bottom-action { font-size:10px; padding:3px 2px; min-height:42px; }
         .bottom-action i { font-size:15px; }
-        #games-panel { bottom:110px; }
     }
 </style>
 </head>
@@ -1152,7 +1122,7 @@
             <img src="/static/app_monitor/img/logo.png" alt="" class="brand-logo" onerror="this.hidden=true;this.style.display='none';this.nextElementSibling.classList.add('show')">
             <span class="brand-logo-fallback" aria-hidden="true">黄河</span>
         </a>
-        <div class="brand-copy"><span class="brand-title">方舟云图<span class="brand-tagline">· 智「绘」一切</span></span><small>Connect Everything. Map Beyond.</small></div>
+        <div class="brand-copy"><span class="brand-title">方舟云图<span class="brand-tagline">· 智「绘」一切</span></span><small>ArkAltas | Connect Everything. Map Beyond.</small></div>
     </div>
     <nav class="nav-links" id="navArea" aria-label="主导航">
         <button type="button" class="apps-toggle" id="apps-toggle" aria-label="打开应用菜单" aria-expanded="false" aria-controls="apps-menu"><span class="apps-dots" aria-hidden="true"></span></button>
@@ -1464,10 +1434,19 @@
 </dialog>
 <script src="/static/app_monitor/recognition.js?v=20261108-1"></script>
 
-<div class="site-record-footer">
-    <span>@黄河生态方舟2026</span>
+<footer class="site-record-footer">
+    <span class="site-record-brand">@2026 方舟云图 · ArkAltas</span>
+    <p class="site-record-credit">郑州大学地球科学与技术学院方舟实验室、郑州市自然保护地事务中心合作开发</p>
     <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备15026986号-4</a>
-</div>
+</footer>
+<script>
+    (() => {
+        const footer = document.querySelector('.site-record-footer');
+        const syncFooterHeight = () => document.documentElement.style.setProperty('--monitor-footer-height', `${footer.offsetHeight}px`);
+        syncFooterHeight();
+        new ResizeObserver(syncFooterHeight).observe(footer);
+    })();
+</script>
 
 <script>document.querySelector('.top-beam').insertBefore(document.getElementById('filter-bar'), document.getElementById('navArea'));</script>
 <script>
