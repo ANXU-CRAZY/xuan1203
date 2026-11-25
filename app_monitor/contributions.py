@@ -9,7 +9,7 @@ from django.http import Http404
 from django.utils import timezone
 
 from .contribution_points import award_observation, reward_for
-from .contribution_storage import IMAGE_FORMATS, InvalidUpload, StorageService
+from .contribution_storage import IMAGE_FORMATS, InvalidUpload, storage_for_provider
 from .models import ObservationMedia, ObservationRecord, UserProfile
 
 
@@ -42,7 +42,6 @@ def upload_session(user, data):
     if existing and existing.upload_status == UploadStatus.COMPLETED:
         return existing, [], False
 
-    storage = StorageService()
     with transaction.atomic():
         location, device = data['location'], data['device']
         now = timezone.now()
@@ -63,8 +62,13 @@ def upload_session(user, data):
         if observation.upload_manifest_hash != fingerprint:
             raise ManifestConflict
         if created:
+            storage = storage_for_provider()
             ObservationMedia.objects.bulk_create([_new_media(observation, item, storage) for item in data['media']])
         pending = list(observation.media.exclude(upload_status=MediaStatus.VERIFIED))
+    if not pending:
+        return observation, [], created
+    if not created:
+        storage = storage_for_provider(pending[0].storage_provider)
     uploads = []
     for media in pending:
         expires_at = timezone.now() + timedelta(seconds=storage.upload_ttl)
@@ -97,8 +101,8 @@ def complete_observation(user, observation, submitted):
     if observation.upload_status == UploadStatus.COMPLETED:
         return observation, UserProfile.objects.get(user=user)
 
-    # Avoid holding DB locks across cloud access. The upload signature binds the exact SHA-256.
-    storage = StorageService()
+    # Validate the uploaded bytes before copying the verified object and awarding points.
+    storage = storage_for_provider(media[0].storage_provider)
     verified, failures = {}, {}
     for item in media:
         if item.upload_status == MediaStatus.VERIFIED:
@@ -153,7 +157,7 @@ def upload_state(observation):
     }
 
 
-def describe_observation(observation, storage=None, *, detail=False):
+def describe_observation(observation, get_storage=None, *, detail=False):
     state = upload_state(observation)
     media = list(observation.media.all())
     paired = {ObservationMedia.Kind.RGB, ObservationMedia.Kind.THERMAL} <= {item.kind for item in media}
@@ -169,9 +173,10 @@ def describe_observation(observation, storage=None, *, detail=False):
         state.update(description=observation.description, device=dict(
             phoneModel=observation.device_model, thermalDeviceModel=observation.thermal_device_model,
         ))
-    if observation.upload_status != UploadStatus.COMPLETED:
+    if observation.upload_status != UploadStatus.COMPLETED or not media:
         return state
-    storage = storage or StorageService()
+    get_storage = get_storage if get_storage is not None else storage_for_provider
+    storage = get_storage(media[0].storage_provider)
     if detail:
         urls = {item.kind: storage.sign_download(item) for item in media}
         state.update(rgbImageUrl=urls.get('rgb'), thermalImageUrl=urls.get('thermal'),

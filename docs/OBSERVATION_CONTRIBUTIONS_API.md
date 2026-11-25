@@ -2,9 +2,9 @@
 
 正式 API 基址是 `https://arklab-geoai.org.cn/platform/api`，请求路径保留末尾斜杠。机器可读接口见 [OpenAPI 3.0](android-contributions.openapi.yaml)，可导入 Postman 或 Apifox。
 
-当前联调状态（2026-11-22）。登录、贡献资料和权限校验可先对接。线上尚未配置私有 S3 Bucket，创建新上传任务当前会返回 503，真实图片直传需等待存储配置完成。
+登录、贡献资料和权限校验可独立联调。创建上传任务需要服务端已配置私有对象存储。未配置或不可用时返回 503。
 
-下文的 `/api/…` 路径用于本机访问。线上请在这些路径前加 `/platform`。认证沿用平台的 `POST /api/login/`，请求体为 `{"username":"…","password":"…"}`。APP 对业务请求发送 `Authorization: Token <token>`。这些接口返回 JSON，图片请求则直接发往 S3。只通过 HTTPS 使用正式环境。
+下文的 `/api/…` 路径用于本机访问。线上请在这些路径前加 `/platform`。认证沿用平台的 `POST /api/login/`，请求体为 `{"username":"…","password":"…"}`。APP 对业务请求发送 `Authorization: Token <token>`。这些接口返回 JSON，图片请求直接发往对象存储。只通过 HTTPS 使用正式环境。
 
 ## 1. 创建上传任务
 
@@ -48,7 +48,7 @@
     "headers": {
       "Content-Type": "image/jpeg",
       "Content-Length": "3456789",
-      "x-amz-checksum-sha256": "<S3 使用的 Base64 校验值>"
+      "x-oss-meta-sha256": "<OSS 使用的 64 位十六进制 SHA-256>"
     },
     "expiresAt": "2026-11-22T02:40:00Z"
   }]
@@ -59,7 +59,9 @@
 
 ## 2. APP 直传双光图片
 
-对每个任务向 `uploadUrl` 发原始文件的 PUT 请求，使用返回的所有请求头和确切的文件长度。Android 的请求体应能返回确定的 `contentLength()`。不要用 multipart，不要对图片重新编码，也不要把平台 Token 附加到 S3 请求。上传地址和短时下载地址属于临时凭证，不应写入日志或长期缓存。链接过期时重新申请任务。
+对每个任务向 `uploadUrl` 发原始文件的 PUT 请求。使用返回的所有请求头，Android 请求体的 `contentLength()` 应返回原文件的确切字节数。根据 `headers` 动态设置请求头，OSS 使用 `x-oss-meta-sha256`，S3 使用 `x-amz-checksum-sha256`。上传请求使用原始字节，不用 multipart、不重新编码、不带平台 Token。上传和下载地址属于临时凭证，链接过期后可重新申请任务。
+
+正式环境使用阿里云 OSS。APP 应直接使用本次响应里的完整 `uploadUrl`，并为图片传输使用独立的 OkHttp 客户端或不附加平台鉴权的请求。上传完 RGB 和红外图片后，再向平台提交完整确认清单。业务 API 基址和 Token 登录方式保持原样。
 
 ## 3. 确认、重试、查阅
 
@@ -124,13 +126,17 @@ APP 用历史贡献积分和服务端返回的 `rank`，不要再把手机记录
 
 ## 配置与迁移
 
-1. 为服务创建 AWS S3 通用型私有 Bucket，启用 Block Public Access。为 Django 运行身份授予该专用桶的 `s3:ListBucket`，并允许对 `contributions/staging/*` 和 `contributions/images/*` 执行所需的 `s3:GetObject`、`s3:PutObject`。原图下载地址只在服务端为所有者签发。
-2. 按 `.env.example` 将 `CONTRIBUTION_STORAGE_BUCKET`、`CONTRIBUTION_STORAGE_REGION` 注入 Django 进程环境。上传签名默认 600 秒，下载默认 300 秒，可通过 `CONTRIBUTION_UPLOAD_TTL`、`CONTRIBUTION_DOWNLOAD_TTL` 调整。建议用 IAM Role。环境凭证也由 AWS SDK 读取，切勿写入代码。
+1. 使用 OSS 时，为服务配置私有 Bucket 并开启版本控制。Django 必须读取并复制同一个已校验的暂存图片版本。给 ECS 绑定 RAM 角色，在该桶的 `contributions/staging/*` 上授予 `oss:PutObject`、`oss:GetObject`、`oss:GetObjectVersion`，在 `contributions/images/*` 上授予 `oss:PutObject`、`oss:GetObject`。部署时可用该桶上的 `oss:GetBucketVersioning` 检查版本控制。
+2. 把 `CONTRIBUTION_STORAGE_PROVIDER=oss`、`CONTRIBUTION_OSS_BUCKET`、`CONTRIBUTION_OSS_REGION` 和 `CONTRIBUTION_OSS_RAM_ROLE` 注入 Django 进程环境。SDK 使用 ECS 实例 IMDSv2 自动获取和刷新 STS 凭证。未使用 RAM 角色的环境通过 `OSS_ACCESS_KEY_ID`、`OSS_ACCESS_KEY_SECRET` 和可选 `OSS_SESSION_TOKEN` 配置访问。S3 仍使用 `CONTRIBUTION_STORAGE_BUCKET` 和 `CONTRIBUTION_STORAGE_REGION`。已经创建的任务按图片记录中保存的提供方继续执行，切换后保留已有对象对应的配置。
 3. 安装 `requirements.txt` 后先由部署人员在目标环境运行 `python manage.py migrate --plan`，再运行 `python manage.py migrate` 并发布新代码。迁移 `0011_observation_contributions` 扩展现有观测和积分档案，新增图片及流水表，无须手工改库。历史兑换余额原样保留，无法从旧余额可靠恢复历史贡献或已完成数量，两者从新流水开始统计。旧 Web 上报仍发 10 分。同时，小游戏分数继续由原个人资料接口记录到 `game_score`，兑换余额通过 `score` 读取。旧客户端提交的游戏分数不再增加兑换余额。
-4. 建议只为 `contributions/staging/` 设置例如 7 天过期的 S3 生命周期。七天后若尚未确认，重试所需图片要重新上传。正式对象保留时间、软删除后的清理以及云端孤立对象回收由项目部署方制定。已签发的 PUT 可在到期前重放，但签名绑定数据长度和 SHA-256，且只允许写暂存路径。确认时服务端读取 S3 原始字节核对 SHA-256 并解码图片，再由 S3 条件复制到正式路径。上传流量不经过 Django，确认环节仍会产生服务端读取图片的流量。
+4. 上传签名默认 600 秒，下载默认 300 秒。建议只为 `contributions/staging/` 设置暂存对象和历史版本的过期规则，例如 7 天。在链接有效期内，PUT 只允许写签名指定的暂存路径。确认时 Django 读取暂存图片，核对长度、格式和 SHA-256，再让对象存储复制已校验的版本或匹配的 ETag 到正式路径。短时下载地址只在归属检查通过后签发。
 5. 若目标环境已有 APP 网关、CDN 或反向代理，禁止缓存这些私有 API 响应。使用真实 Bucket 后，请用测试账号跑一遍登录、双光直传、确认、兑换、权限检查和短时 URL 过期。
 
-AWS 操作参考：[S3 PutObject](https://docs.aws.amazon.com/boto3/latest/reference/services/s3/client/put_object.html)、[S3 CopyObject](https://docs.aws.amazon.com/boto3/latest/reference/services/s3/client/copy_object.html)。
+中国内地地域的新 OSS 账号需要给桶绑定公网自定义域名和有效 HTTPS 证书。将该主机名写入 `CONTRIBUTION_OSS_PUBLIC_DOMAIN`，例如 `uploads.example.com`。同地域 ECS 可设置 `CONTRIBUTION_OSS_USE_INTERNAL_ENDPOINT=True`，让服务端校验和复制通过内网执行。APP 的上传和下载仍使用签名的公网域名。
+
+[OSS 自定义域名与 HTTPS 配置](https://www.alibabacloud.com/help/en/oss/user-guide/access-buckets-via-custom-domain-names)
+
+[OSS 预签名上传](https://www.alibabacloud.com/help/en/oss/user-guide/upload-files-using-presigned-urls) · [OSS 版本控制](https://www.alibabacloud.com/help/en/oss/user-guide/overview-78) · [OSS 条件复制](https://www.alibabacloud.com/help/en/oss/developer-reference/copy-object-using-oss-sdk-for-python-v2)
 
 ## 文件清单
 

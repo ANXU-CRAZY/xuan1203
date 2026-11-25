@@ -3,9 +3,10 @@ import io
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from urllib.parse import parse_qs, urlparse
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
+import alibabacloud_oss_v2 as oss
 import boto3
 from botocore.config import Config
 from botocore.response import StreamingBody
@@ -17,8 +18,9 @@ from PIL import Image
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
+from .contribution_oss import OSSStorage
 from .contribution_points import rank_for
-from .contribution_storage import InvalidUpload, StorageService
+from .contribution_storage import InvalidUpload, StorageService, StorageUnavailable, storage_for_provider
 from .models import ObservationMedia, ObservationRecord, PointTransaction, Product, SpeciesInfo, WetlandZone
 
 
@@ -48,10 +50,10 @@ class ContributionApiTests(TestCase):
         token = Token.objects.create(user=self.owner)
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
-        patcher = patch('app_monitor.contributions.StorageService')
-        storage_class = patcher.start()
+        patcher = patch('app_monitor.contributions.storage_for_provider')
+        self.get_storage = patcher.start()
         self.addCleanup(patcher.stop)
-        self.storage = storage_class.return_value
+        self.storage = self.get_storage.return_value
         self.storage.provider, self.storage.bucket = 's3', 'test-private-bucket'
         self.storage.upload_ttl = 600
         self.storage.sign_upload.side_effect = lambda media: ('https://example.invalid/put/' + media.upload_key, {})
@@ -99,7 +101,7 @@ class ContributionApiTests(TestCase):
         self.assertIn('private, no-store', response['Cache-Control'])
         self.assertTrue(response.json()['paired'])
         self.assertIn('contributions/images/', response.json()['rgbImageUrl'])
-        with patch('app_monitor.contribution_api.StorageService', return_value=self.storage):
+        with patch('app_monitor.contribution_api.storage_for_provider', return_value=self.storage):
             entries = self.client.get('/api/observations/mine/?status=completed&pageSize=1').json()
         self.assertEqual(entries['count'], 1)
         self.assertEqual(entries['results'][0]['observationId'], pk)
@@ -108,6 +110,25 @@ class ContributionApiTests(TestCase):
         self.assertEqual(self.client.post(START, payload, format='json').status_code, 404)
         self.assertIsNotNone(ObservationRecord.objects.get(pk=pk).deleted_at)
         self.assertEqual(self.client.get(PROFILE).json()['totalContributionPoints'], 1200)
+
+    def test_new_oss_capture_keeps_inflight_s3_capture_usable(self):
+        existing = upload_data('rgb')
+        pk, manifest = self.start(existing)
+        oss_storage = Mock(provider='oss', bucket='example-private-bucket', upload_ttl=600)
+        oss_storage.sign_upload.return_value = ('https://example.invalid/put', {})
+        oss_storage.verify_and_publish.return_value = (16, 20)
+        self.get_storage.side_effect = lambda provider=None: self.storage if provider == 's3' else oss_storage
+
+        new_id, oss_manifest = self.start(upload_data('rgb', 'thermal'))
+        providers = set(ObservationMedia.objects.filter(observation_id=new_id).values_list('storage_provider', flat=True))
+        self.assertEqual(providers, {'oss'})
+        self.storage.sign_upload.reset_mock()
+        self.assertEqual(self.client.post(START, existing, format='json').status_code, 200)
+        self.storage.sign_upload.assert_called_once()
+        self.assertEqual(self.complete(new_id, oss_manifest).json()['pointsAwarded'], 25)
+        self.assertEqual(self.complete(new_id, oss_manifest).json()['availablePoints'], 25)
+        self.assertEqual(self.complete(pk, manifest).json()['pointsAwarded'], 15)
+        self.assertEqual(PointTransaction.objects.count(), 2)
 
     def test_conflicts_and_partial_retry(self):
         payload = upload_data('rgb', 'thermal')
@@ -181,7 +202,7 @@ class ContributionApiTests(TestCase):
 
 
 class ConcurrentConfirmationTests(TransactionTestCase):
-    @patch('app_monitor.contributions.StorageService')
+    @patch('app_monitor.contributions.storage_for_provider')
     def test_two_verifiers_cannot_award_the_same_capture_twice(self, storage_class):
         owner = get_user_model().objects.create_user(username='concurrent')
         storage = storage_class.return_value
@@ -261,7 +282,7 @@ class S3StorageTests(SimpleTestCase):
         data = b'not a valid image'
         stream = StreamingBody(io.BytesIO(data), len(data))
         with self.assertRaises(InvalidUpload):
-            self.storage._validate_image(stream, self.media(data))
+            self.storage.validate_image(stream.iter_chunks(), self.media(data))
 
     def test_rank_boundaries(self):
         self.assertEqual(rank_for(199)['name'], '湿地新芽')
@@ -269,3 +290,95 @@ class S3StorageTests(SimpleTestCase):
         self.assertEqual(rank_for(600)['name'], '碧水银羽')
         self.assertEqual(rank_for(1200)['name'], '生态金翼')
         self.assertEqual(rank_for(2500)['name'], '方舟守望者')
+
+
+@override_settings(CONTRIBUTION_STORAGE_PROVIDER='oss', CONTRIBUTION_OSS_BUCKET='example-private-bucket',
+                   CONTRIBUTION_OSS_REGION='cn-wulanchabu', CONTRIBUTION_OSS_RAM_ROLE='',
+                   CONTRIBUTION_OSS_PUBLIC_DOMAIN='', CONTRIBUTION_OSS_USE_INTERNAL_ENDPOINT=False)
+class OSSStorageTests(SimpleTestCase):
+    def setUp(self):
+        credentials = oss.credentials.StaticCredentialsProvider('example-id', 'example-secret', 'example-sts')
+        with patch('app_monitor.contribution_oss.credentials_provider', return_value=credentials):
+            self.storage = storage_for_provider()
+        self.assertIsInstance(self.storage, OSSStorage)
+        image = io.BytesIO()
+        Image.new('RGB', (16, 20)).save(image, format='JPEG')
+        self.raw = image.getvalue()
+        self.media = ObservationMedia(
+            bucket_name=self.storage.bucket, storage_provider='oss', upload_key='contributions/staging/1/rgb.jpg',
+            object_key='contributions/images/1/rgb.jpg', mime_type='image/jpeg',
+            file_size=len(self.raw), sha256=hashlib.sha256(self.raw).hexdigest(),
+        )
+
+    def test_sdk_upload_signature_uses_public_https_and_exact_headers(self):
+        url, headers = self.storage.sign_upload(self.media)
+        parsed = urlparse(url)
+        self.assertEqual(parsed.scheme, 'https')
+        self.assertEqual(parsed.hostname, 'example-private-bucket.oss-cn-wulanchabu.aliyuncs.com')
+        self.assertEqual(parsed.path, '/' + self.media.upload_key)
+        query = parse_qs(parsed.query)
+        self.assertEqual(query['x-oss-signature-version'], ['OSS4-HMAC-SHA256'])
+        self.assertEqual(query['x-oss-additional-headers'], ['content-length'])
+        self.assertEqual(query['x-oss-security-token'], ['example-sts'])
+        self.assertEqual(headers, {'Content-Length': str(self.media.file_size), 'Content-Type': 'image/jpeg',
+                                   'x-oss-meta-sha256': self.media.sha256})
+        download = urlparse(self.storage.sign_download(self.media))
+        self.assertEqual(download.path, '/' + self.media.object_key)
+        self.assertEqual(parse_qs(download.query)['response-cache-control'], ['private, no-store'])
+
+    @override_settings(CONTRIBUTION_OSS_PUBLIC_DOMAIN='objects.example.com',
+                       CONTRIBUTION_OSS_USE_INTERNAL_ENDPOINT=True)
+    def test_oss_custom_public_domain_is_used_with_internal_server_client(self):
+        with patch('app_monitor.contribution_oss.credentials_provider', return_value=self.storage.credentials):
+            storage = storage_for_provider()
+        upload, _ = storage.sign_upload(self.media)
+        download = storage.sign_download(self.media)
+        self.assertEqual(urlparse(upload).netloc, 'objects.example.com')
+        self.assertEqual(urlparse(download).netloc, 'objects.example.com')
+        self.assertEqual(urlparse(download).path, '/' + self.media.object_key)
+        self.assertIsNot(storage.public_client, storage.client)
+
+    def test_version_checked_and_copied_even_if_staging_key_is_reuploaded(self):
+        client = Mock(spec=oss.Client)
+        self.storage.client = client
+        version, etag = 'verified-staging-version', '"verified-etag"'
+        client.head_object.return_value = oss.HeadObjectResult(
+            content_length=len(self.raw), content_type='image/jpeg', version_id=version, etag=etag,
+        )
+        body = Mock()
+        body.iter_bytes.return_value = iter([self.raw])
+        client.get_object.return_value = oss.GetObjectResult(body=body)
+        self.assertEqual(self.storage.verify_and_publish(self.media), (16, 20))
+        get = client.get_object.call_args.args[0]
+        copy = client.copy_object.call_args.args[0]
+        self.assertEqual((get.version_id, get.if_match), (version, etag))
+        self.assertEqual((copy.source_version_id, copy.if_match), (version, etag))
+        self.assertEqual((copy.source_key, copy.key), (self.media.upload_key, self.media.object_key))
+        body.close.assert_called_once()
+
+    def test_unversioned_images_are_never_published(self):
+        client = Mock(spec=oss.Client)
+        self.storage.client = client
+        client.head_object.return_value = oss.HeadObjectResult(
+            content_length=len(self.raw), content_type='image/jpeg', version_id='null',
+        )
+        with self.assertRaises(StorageUnavailable):
+            self.storage.verify_and_publish(self.media)
+        client.get_object.assert_not_called()
+        client.copy_object.assert_not_called()
+
+    def test_provider_errors_do_not_expose_credential_details(self):
+        client = Mock(spec=oss.Client)
+        self.storage.client = client
+        for status_code, error in [(404, InvalidUpload), (412, InvalidUpload), (403, StorageUnavailable)]:
+            with self.subTest(status_code=status_code):
+                client.head_object.side_effect = oss.exceptions.OperationError(
+                    name='HeadObject', error=oss.exceptions.ServiceError(
+                        status_code=status_code, code='Test', message='sensitive details', request_id='test',
+                        ec='', timestamp='', request_target='',
+                    ),
+                )
+                with self.assertRaises(error) as context:
+                    self.storage.verify_and_publish(self.media)
+                self.assertNotIn('sensitive details', str(context.exception))
+        client.copy_object.assert_not_called()

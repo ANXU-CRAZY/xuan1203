@@ -1,3 +1,5 @@
+from functools import cache
+
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.parsers import JSONParser
@@ -6,7 +8,7 @@ from rest_framework.response import Response
 from . import contributions
 from .contribution_points import contribution_profile
 from .contribution_serializers import CompleteInput, UploadSessionInput
-from .contribution_storage import StorageService, StorageUnavailable
+from .contribution_storage import StorageUnavailable, storage_for_provider
 from .models import ObservationRecord, UserProfile
 
 
@@ -67,11 +69,10 @@ class ContributionViewSet(viewsets.ViewSet):
         page, size = params['page'], params['pageSize']
         offset = (page - 1) * size
         records = list(queryset[offset:offset + size])
-        has_completed = any(item.upload_status == ObservationRecord.UploadStatus.COMPLETED for item in records)
-        storage = StorageService() if has_completed else None
+        get_storage = cache(storage_for_provider)
         return Response({
             'count': queryset.count(), 'page': page, 'pageSize': size,
-            'results': [contributions.describe_observation(item, storage) for item in records],
+            'results': [contributions.describe_observation(item, get_storage) for item in records],
         })
 
     def retrieve(self, request, observation_id):

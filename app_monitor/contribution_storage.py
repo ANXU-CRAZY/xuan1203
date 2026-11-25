@@ -1,4 +1,4 @@
-"""Private S3 storage for directly uploaded contribution images."""
+"""Private object storage for directly uploaded contribution images."""
 import base64
 import hashlib
 import tempfile
@@ -9,6 +9,7 @@ from PIL import Image
 from PIL.Image import open as open_image
 
 
+CHUNK_BYTES = 256 * 1024
 IMAGE_FORMATS = {
     'image/jpeg': ('JPEG', ('.jpg', '.jpeg')),
     'image/png': ('PNG', ('.png',)),
@@ -24,16 +25,50 @@ class InvalidUpload(Exception):
     pass
 
 
-class StorageService:
+class ObjectStorage:
+    def __init__(self, bucket, region):
+        self.bucket, self.region = bucket, region
+        self.upload_ttl = settings.CONTRIBUTION_UPLOAD_TTL
+        self.download_ttl = settings.CONTRIBUTION_DOWNLOAD_TTL
+        if (not bucket or not region
+                or not 300 <= self.upload_ttl <= 900 or not 60 <= self.download_ttl <= 900):
+            raise StorageUnavailable
+
+    @staticmethod
+    def validate_image(chunks, media):
+        size = 0
+        checksum = hashlib.sha256()
+        with tempfile.SpooledTemporaryFile(max_size=1024 * 1024) as data:
+            for chunk in chunks:
+                size += len(chunk)
+                if size > media.file_size:
+                    raise InvalidUpload('图片超过申报大小。')
+                checksum.update(chunk)
+                data.write(chunk)
+            if size != media.file_size or checksum.hexdigest() != media.sha256:
+                raise InvalidUpload('图片大小或 SHA-256 校验失败。')
+            data.seek(0)
+            expected_format = IMAGE_FORMATS[media.mime_type][0]
+            try:
+                with open_image(data, formats=[expected_format]) as image:
+                    width, height = image.size
+                    if (width * height > settings.CONTRIBUTION_MAX_IMAGE_PIXELS or
+                            getattr(image, 'n_frames', 1) != 1):
+                        raise InvalidUpload('图片像素过多或为动图。')
+                    image.verify()
+                data.seek(0)
+                with open_image(data, formats=[expected_format]) as image:
+                    image.load()
+            except (OSError, SyntaxError, ValueError, Image.DecompressionBombError):
+                raise InvalidUpload('图片内容损坏或实际格式与申报不符。') from None
+        return width, height
+
+
+class StorageService(ObjectStorage):
     provider = 's3'
 
     def __init__(self):
-        self.bucket = settings.CONTRIBUTION_STORAGE_BUCKET
-        self.upload_ttl = settings.CONTRIBUTION_UPLOAD_TTL
-        self.download_ttl = settings.CONTRIBUTION_DOWNLOAD_TTL
-        if (not self.bucket or not settings.CONTRIBUTION_STORAGE_REGION
-                or not 300 <= self.upload_ttl <= 900 or not 60 <= self.download_ttl <= 900):
-            raise StorageUnavailable
+        super().__init__(settings.CONTRIBUTION_STORAGE_BUCKET, settings.CONTRIBUTION_STORAGE_REGION)
         from boto3 import client
         from botocore.config import Config
         from botocore.exceptions import BotoCoreError, ClientError
@@ -41,7 +76,7 @@ class StorageService:
         self.errors = (BotoCoreError, ClientError)
         self.client_error = ClientError
         try:
-            self.client = client('s3', region_name=settings.CONTRIBUTION_STORAGE_REGION, config=Config(
+            self.client = client('s3', region_name=self.region, config=Config(
                 signature_version='s3v4', connect_timeout=4, read_timeout=15,
                 retries={'total_max_attempts': 2},
             ))
@@ -83,7 +118,7 @@ class StorageService:
             etag = metadata['ETag']
             response = self.client.get_object(**source, IfMatch=etag)
             with closing(response['Body']) as body:
-                dimensions = self._validate_image(body, media)
+                dimensions = self.validate_image(body.iter_chunks(chunk_size=CHUNK_BYTES), media)
             self.client.copy_object(
                 Bucket=media.bucket_name, Key=media.object_key, CopySource=source,
                 CopySourceIfMatch=etag, MetadataDirective='REPLACE', ContentType=media.mime_type,
@@ -97,31 +132,12 @@ class StorageService:
         except self.errors:
             raise StorageUnavailable from None
 
-    @staticmethod
-    def _validate_image(body, media):
-        size = 0
-        checksum = hashlib.sha256()
-        with tempfile.SpooledTemporaryFile(max_size=1024 * 1024) as data:
-            for chunk in body.iter_chunks(chunk_size=256 * 1024):
-                size += len(chunk)
-                if size > media.file_size:
-                    raise InvalidUpload('图片超过申报大小。')
-                checksum.update(chunk)
-                data.write(chunk)
-            if size != media.file_size or checksum.hexdigest() != media.sha256:
-                raise InvalidUpload('图片大小或 SHA-256 校验失败。')
-            data.seek(0)
-            expected_format = IMAGE_FORMATS[media.mime_type][0]
-            try:
-                with open_image(data, formats=[expected_format]) as image:
-                    width, height = image.size
-                    if (width * height > settings.CONTRIBUTION_MAX_IMAGE_PIXELS or
-                            getattr(image, 'n_frames', 1) != 1):
-                        raise InvalidUpload('图片像素过多或为动图。')
-                    image.verify()
-                data.seek(0)
-                with open_image(data, formats=[expected_format]) as image:
-                    image.load()
-            except (OSError, SyntaxError, ValueError, Image.DecompressionBombError):
-                raise InvalidUpload('图片内容损坏或实际格式与申报不符。') from None
-        return width, height
+
+def storage_for_provider(provider=None):
+    provider = settings.CONTRIBUTION_STORAGE_PROVIDER if provider is None else provider
+    if provider == 's3':
+        return StorageService()
+    if provider == 'oss':
+        from .contribution_oss import OSSStorage
+        return OSSStorage()
+    raise StorageUnavailable
